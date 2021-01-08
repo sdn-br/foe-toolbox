@@ -1,0 +1,117 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 guildfights.css
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              27.12.19, 12:37 Uhr
+ * zuletzt bearbeitet:       27.12.19, 12:37 Uhr
+ *
+ * Copyright © 2019
+ *
+ * **************************************************************************************
+ */
+
+#GildPlayers {
+	left: calc(50vw - 300px);
+	top: calc(50vw - 270px);
+	width: 600px;
+	height: 500px;
+}
+
+#GildPlayers.closed {
+	height: 22px !important;
+}
+
+
+#GildPlayersHeader small {
+	font-weight: lighter;
+}
+
+#GildPlayersBody {
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+#GildPlayersBody tr th  {
+	position: sticky;
+	top: 0;
+	background-color: rgba(0,0,0, 0.45);
+}
+
+#GildPlayersBody tr td img {
+	max-width: 40px;
+	border-radius: 50%;
+}
+
+#GildPlayersBody tr.mark-player td {
+	border-top: 1px solid var(--text-bright);
+	border-bottom: 1px solid var(--text-bright);
+}
+#GildPlayersBody tr.mark-player td:first-child {
+	border-left: 1px solid var(--text-bright);
+}
+#GildPlayersBody tr.mark-player td:last-child {
+	border-right: 1px solid var(--text-bright);
+}
+
+
+#GildPlayersBody tr.bg-green td {
+	background-color: var(--background-table-success);
+}
+
+#LiveGildFighting {
+	top: 30%;
+	right: 15%;
+	width: 900px;
+}
+
+#LiveGildFightingBody {
+	overflow: auto;
+}
+
+#LiveGildFightingBody tr th  {
+	position: sticky;
+	top: 0;
+	background-color: rgba(0,0,0, 0.45);
+	white-space: nowrap;
+}
+
+#LiveGildFightingBody tr th span.head-color {
+	height: 5px;
+	display: block;
+}
+
+#LiveGildFightingBody tr td {
+	transition: background-color .6s;
+}
+
+#LiveGildFightingBody tr td.red-pulse {
+	background-color: rgba(255, 0, 0, 0.45);
+	transition: background-color .6s;
+}
+
+#LiveGildFightingBody tr td span.attack {
+	display: block;
+	height: 5px;
+	background-color: rgba(255,255,255,0.45);
+}
+
+#LiveGildFightingBody tr td span.attack span {
+	height: 5px;
+	display: block;
+}
+
+/*************************************************************************************************************/
+
+#ProvinceMap {
+	width: 790px;
+	height: 620px;
+}
+
+#ProvinceMap #province-map {
+	height: 100%;
+	background: transparent url('../images/volcano_archipelago_bg.jpg');
+	background-size: 100%;
+}

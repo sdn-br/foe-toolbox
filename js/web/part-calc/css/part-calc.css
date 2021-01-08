@@ -1,0 +1,302 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 part-calc.css
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              27.12.19, 12:45 Uhr
+ * zuletzt bearbeitet:       27.12.19, 12:45 Uhr
+ *
+ * Copyright © 2019
+ *
+ * **************************************************************************************
+ */
+
+#OwnPartBox {
+	top: 100px;
+}
+
+#OwnPartBox.closed .OwnPartBoxBackground {
+	display: none;
+}
+
+#OwnPartBox .OwnPartDrops {
+	display: flex;
+}
+
+#OwnPartBox .OwnPartDrops div:first-child {
+	min-width: 90px;
+	margin-right: 10px;
+}
+
+#OwnPartBox .OwnPartDrops .dropLGStepSelect {
+	min-width: 40px;
+}
+
+#OwnPartBox .OwnPartDrops .inputWrapper {
+	margin-left: auto;
+	position: relative;
+	top: -3px;
+}
+
+#OwnPartBox .OwnPartDrops .inputWrapper input {
+	max-width: 45px;
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	text-align: right;
+	margin: 0;
+	font-size: 0.8rem;
+	height: 15px;
+}
+
+#OwnPartBox .OwnPartDrops div select {
+	line-height: 1.5;
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	max-width: 160px;
+}
+
+#OwnPartBoxBodyWrapper {
+	margin-top: 10px;
+}
+
+#OwnPartBox #OwnPartBoxBody {
+	position: relative;
+	margin-left: 0;
+	font-size: 85%;
+}
+
+#OwnPartBox #OwnPartBoxBody .btn-set-arc {
+	margin-right: 5px;
+}
+
+
+#OwnPartBox #OwnPartBoxBody strong {
+	color: var(--text-bright);
+}
+
+#OwnPartBox #OwnPartBoxBody strong.normal {
+	color: var(--text-bright);
+}
+
+#OwnPartBox #OwnPartBoxBody .success {
+	color: var(--text-success) !important;
+}
+
+#OwnPartBox #OwnPartBoxBody .info {
+	color: var(--text-info) !important;
+}
+
+#OwnPartBox #OwnPartTable .error {
+	color: #ec4d4d;
+}
+
+#OwnPartBox #OwnPartTable input, #PowerLevelingBox input {
+	line-height: 1.5;
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	width: 35px;
+	text-align: center;
+}
+
+#OwnPartBox #arc-percent {
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	text-align: center;
+	width: 30px;
+	margin: 0 5px;
+}
+
+#OwnPartBox .btn-default {
+	padding: 0.2rem 0.4rem;
+}
+
+#OwnPartBox #up-to-level-up {
+	color: var(--text-bright);
+}
+
+#OwnPartBox .black-bg {
+	position: absolute;
+	background-color: var(--65-black);
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
+.OwnPartBoxBackground {
+	position: absolute;
+	width: 210px;
+	top: 0;
+	left: -6px;
+}
+
+.OwnPartBoxBackground .divider {
+	display: block;
+	height: 0;
+	margin: 10px auto;
+	width: 80%;
+	border-top: 1px solid var(--text-medium2);
+	border-bottom: 1px solid #9e774e;
+}
+
+.OwnPartBoxBackground .outerArrow:before {
+	content: "";
+	width: 36px;
+	height: 36px;
+	background-position: 3px -52px;
+	position: absolute;
+	top: -13px;
+	left: -33px;
+	z-index: -1;
+}
+
+.OwnPartBoxBackground .outerArrow span.arrow {
+	width: 24px;
+	height: 24px;
+	background-position: -75px -2px;
+	position: absolute;
+	top: -6px;
+	left: -27px;
+}
+
+.OwnPartBoxBackground .outerArrow span.arrow:hover {
+	background-position: -75px -26px;
+}
+
+.show .OwnPartBoxBackground .outerArrow span.arrow {
+	background-position: -52px -2px;
+}
+
+.show .OwnPartBoxBackground .outerArrow span.arrow:hover {
+	background-position: -52px -26px;
+}
+
+
+.OwnPartBoxBackground .OwnPartBoxBackgroundBody {
+	width: 312px;
+	height: 0;
+	position: absolute;
+	overflow: hidden;
+	overflow-y: auto;
+	top: 0;
+	left: 55px;
+	padding: 0 15px;
+	border-width: 0 10px 10px 10px;
+	border-image-width: 0 28px 28px;
+	opacity: 0;
+	border-radius: 0 0 15px 15px;
+}
+
+.OwnPartBoxBackgroundBody > div > span:not(.btn-default) {
+	display: inline-block;
+	width: 70px;
+}
+
+.OwnPartBoxBackground .btn-outer {
+	margin-bottom: 6px;
+}
+
+.OwnPartBoxBackground input[id=player-name],
+.OwnPartBoxBackground select {
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	font-size: 0.8rem;
+	height: 18px;
+	width: 164px;
+	margin-bottom: 10px;
+	padding: 2px 5px;
+}
+
+.OwnPartBoxBackground input[id=build-name],
+.OwnPartBoxBackground select {
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	font-size: 0.8rem;
+	height: 18px;
+	width: 164px;
+	margin-bottom: 10px;
+	padding: 2px 5px;
+}
+
+.OwnPartBoxBackground input[id=copystring],
+.OwnPartBoxBackground select {
+	background-color: var(--background-light);
+	color: var(--text-medium);
+	background-clip: padding-box;
+	border: 1px solid var(--text-dark);
+	font-size: 0.6rem;
+	font-weight: bold;
+	height: 18px;
+	width: 300px;
+	margin-bottom: 10px;
+	padding: 2px 5px;
+}
+
+.OwnPartBoxBackground select {
+	height: 22px;
+	width: 176px;
+}
+
+.OwnPartBoxBackground .checkboxes {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.OwnPartBoxBackground label.form-check-label {
+	padding: 1px;
+	line-height: 1.4rem;
+	margin-bottom: 5px;
+	background-color: rgba(255,255,255, 0.07);
+	width: 100px;
+	vertical-align: middle;
+	transition: background-color 0.3s linear;
+}
+
+.OwnPartBoxBackground label.form-check-label:hover {
+	background-color: rgba(255,255,255, 0.1);
+}
+
+
+#PowerLevelingBox {
+	top: 30%;
+	left: 100px;
+	max-width: 700px;
+}
+
+#PowerLevelingBox #PowerLevelingBoxBody {
+	overflow-x: hidden;
+	overflow-y: auto;
+	max-height: 500px;
+}
+
+#PowerLevelingBox #PowerLevelingBoxBody .foe-table td, #PowerLevelingBox #PowerLevelingBoxBody .foe-table th {
+	text-align: center;
+}
+
+#PowerLevelingBox #PowerLevelingBoxBody .foe-table td:first-child, #PowerLevelingBox #PowerLevelingBoxBody .foe-table td:nth-child(6) {
+	border-right: 1px solid var(--text-dark);
+}
+
+#PowerLevelingBox #PowerLevelingBoxBody .foe-table td.bright, strong.bright {
+	color: var(--text-bright);
+	font-weight: bold;
+}
+
+#PowerLevelingBox #PowerLevelingBoxBody .success {
+	color: var(--text-success);
+}

@@ -1,0 +1,204 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 unit.css
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              22.12.19, 14:31 Uhr
+ * zuletzt bearbeitet:       22.12.19, 14:23 Uhr
+ *
+ * Copyright © 2019
+ *
+ * **************************************************************************************
+ */
+
+#units {
+	top: 30%;
+	right: 15%;
+	width: 490px;
+}
+
+#units .window-body {
+	max-height: 450px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.units-icon {
+	background: transparent url('../images/armyuniticons.png') no-repeat;
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+}
+
+#units .health {
+	display: block;
+	background-color: #ff5026;
+	height: 5px;
+	position: relative;
+}
+
+#units .health span {
+	position: relative;
+	background-color: #1e7e34;
+	height: 5px;
+	display: block;
+	border-radius: 10px;
+}
+
+#units span.percent {
+	display: block;
+	text-align: center;
+	font-size: 75%;
+	border-radius: 10px;
+}
+
+#units #unitsBody .tabs ul li a span {
+	width: 21px;
+	top: 6px;
+	background: transparent url('../images/unit-icons.png') 0 3px no-repeat;
+	background-size: 90px 20px;
+}
+
+#units #unitsBody .tabs ul li.defense a span {
+	background-position: -21px 3px;
+}
+
+#units #unitsBody .tabs ul li.pool a span {
+	background-position: -41px 3px;
+}
+
+#units #unitsBody .tabs ul li.alca a span {
+	background-position: -67px 3px;
+}
+
+.units-icon {background-size: 281px 437px}
+
+.ArcticFuture_champion {background-position: 0 0}
+.BronzeAge_champion {background-position: -32px 0}
+.ColonialAge_champion {background-position: -63px 0}
+.ContemporaryEra_champion {background-position: -94px 0}
+.EarlyMiddleAge_champion {background-position: -125px 0}
+.FutureEra_champion {background-position: -157px 0}
+.HighMiddleAge_champion {background-position: -188px 0}
+.IndustrialAge_champion {background-position: -219px 0}
+.IronAge_champion {background-position: -250px 0}
+.LateMiddleAge_champion {background-position: 0 -32px}
+.ModernEra_champion {background-position: -32px -32px}
+.OceanicFuture_champion {background-position: -63px -32px}
+.PostModernEra_champion {background-position: -94px -32px}
+.ProgressiveEra_champion {background-position: -125px -32px}
+.SpaceAgeAsteroidBelt_champion {background-position: -157px -32px}
+.SpaceAgeMars_champion {background-position: -188px -32px}
+.TomorrowEra_champion {background-position: -219px -32px}
+.VirtualFuture_champion {background-position: -250px -32px}
+.aa_vehicle {background-position: 0 -63px}
+.anti_material_sniper {background-position: -32px -63px}
+.archer {background-position: -63px -63px}
+.armored_car {background-position: -94px -63px}
+.armoredswordsman {background-position: -125px -63px}
+.assault_tank {background-position: -157px -63px}
+.attack_helicopter {background-position: -188px -63px}
+.augmented_samurai {background-position: -219px -63px}
+.automatic_rifleman {background-position: -250px -63px}
+.axe_hammer_warrior {background-position: 0 -94px}
+.clubman {background-position: 0 -94px}
+.balista {background-position: -32px -94px}
+.barbarian {background-position: -63px -94px}
+.barbarian_slinger {background-position: -94px -94px}
+.battle_fortress {background-position: -125px -94px}
+.battle_tank {background-position: -157px -94px}
+.bazooka {background-position: -188px -94px}
+.behemoth {background-position: -219px -94px}
+.belt {background-position: -250px -94px}
+.biedenhaender_mercenary {background-position: 0 -125px}
+.bombarde {background-position: -32px -125px}
+.brave_warrior {background-position: -63px -125px}
+.breech_loader {background-position: -94px -125px}
+.camel_archer {background-position: -125px -125px}
+.cannoniers {background-position: -157px -125px}
+.cataphract {background-position: -188px -125px}
+.catapult {background-position: -219px -125px}
+.color_guard {background-position: -250px -125px}
+.combat_drone {background-position: 0 -157px}
+.commando {background-position: -32px -157px}
+.conscript {background-position: -63px -157px}
+.crab_mech {background-position: -94px -157px}
+.crossbowman {background-position: -125px -157px}
+.dismounted_knight {background-position: -157px -157px}
+.dragon_drone {background-position: -188px -157px}
+.dragoon {background-position: -219px -157px}
+.drill_ranger {background-position: -250px -157px}
+.drone_swarm {background-position: 0 -188px}
+.exo_soldier {background-position: -32px -188px}
+.feudal_knight {background-position: -63px -188px}
+.gliders {background-position: -94px -188px}
+.grenadier {background-position: -125px -188px}
+.hoplite {background-position: -157px -188px}
+.horseman {background-position: -188px -188px}
+.hover_hammer {background-position: -219px -188px}
+.hover_tank {background-position: -250px -188px}
+.howitzer {background-position: 0 -219px}
+.hydroelectric_eel {background-position: -32px -219px}
+.imperial_knight {background-position: -63px -219px}
+.infantry_fighting_vehicle {background-position: -94px -219px}
+.jaeger {background-position: -125px -219px}
+.javeliner {background-position: -157px -219px}
+.khopesh_fighter {background-position: -188px -219px}
+.lancer {background-position: -219px -219px}
+.legionnaire {background-position: -250px -219px}
+.longbowman {background-position: 0 -250px}
+.manta {background-position: -32px -250px}
+.marksman {background-position: -63px -250px}
+.mech_artillery {background-position: -94px -250px}
+.mech_infantry {background-position: -125px -250px}
+.medusa {background-position: -157px -250px}
+.military_drummer {background-position: -188px -250px}
+.militiaman {background-position: -219px -250px}
+.missile_artillery {background-position: -250px -250px}
+.mobile_microwave_gun {background-position: 0 -281px}
+.mounted_bowman {background-position: -32px -281px}
+.mounted_brave {background-position: -63px -281px}
+.mounted_legionnaire {background-position: -94px -281px}
+.nail_storm {background-position: -125px -281px}
+.nautilus {background-position: -157px -281px}
+.ninja {background-position: -188px -281px}
+.nubian_archer {background-position: -219px -281px}
+.octopod {background-position: -250px -281px}
+.palintona {background-position: 0 -313px}
+.paratrooper {background-position: -32px -313px}
+.pikeman {background-position: -63px -313px}
+.plasma_artillery {background-position: -94px -313px}
+.rail_gun_unit {background-position: -125px -313px}
+.ranger {background-position: -157px -313px}
+.recon_raider {background-position: -188px -313px}
+.rf_cannon {background-position: -219px -313px}
+.rifleman {background-position: -250px -313px}
+.rocket_artillery {background-position: 0 -344px}
+.rocket_troop {background-position: -32px -344px}
+.rogue {background-position: -63px -344px}
+.ronin_bot {background-position: -94px -344px}
+.sat_uplink_unit {background-position: -125px -344px}
+.scimitar {background-position: -157px -344px}
+.sentinel {background-position: -188px -344px}
+.shredder {background-position: -219px -344px}
+.slinger {background-position: -250px -344px}
+.sniper {background-position: 0 -375px}
+.sniperbot {background-position: -32px -375px}
+.space_marine {background-position: -63px -375px}
+.spearman {background-position: -94px -375px}
+.stealth_tank {background-position: -125px -375px}
+.steel_warden {background-position: -157px -375px}
+.strike_team {background-position: -188px -375px}
+.sub_cruiser {background-position: -219px -375px}
+.surrogate_soldier {background-position: -250px -375px}
+.tank {background-position: 0 -406px}
+.tesla_walker {background-position: -32px -406px}
+.trebuchet {background-position: -63px -406px}
+.turturret {background-position: -94px -406px}
+.ultra_ap {background-position: -125px -406px}
+.universal_tank {background-position: -157px -406px}
+.war_chariot {background-position: -188px -406px}
+.war_elephant {background-position: -219px -406px}
+.warrior_monk {background-position: -250px -406px}

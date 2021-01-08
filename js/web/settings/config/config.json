@@ -1,0 +1,136 @@
+[
+	{
+		"name": "GlobalSend",
+		"status": false,
+		"group": "Sending",
+		"sort": 0
+	},
+	{
+		"name": "SendGEXInfo",
+		"status": false,
+		"group": "Sending",
+		"sort": 1
+	},
+	{
+		"name": "SendGildMemberLGInfo",
+		"status": false,
+		"group": "Sending",
+		"sort": 2
+	},
+	{
+		"name": "SendInvestigations",
+		"status": false,
+		"group": "Sending",
+		"sort": 3
+	},
+	{
+		"name": "SendPlayersMotivation",
+		"status": false,
+		"group": "Sending",
+		"sort": 4
+	},
+	{
+		"name": "AutomaticNegotiation",
+		"status": true,
+		"group": "Boxes",
+		"sort": 0
+	},
+	{
+		"name": "ShowInvestments",
+		"status": true,
+		"group": "Boxes",
+		"sort": 2
+	},
+	{
+		"name": "ShowGuildTreasuryLogExport",
+		"status": true,
+		"group": "Boxes",
+		"sort": 3
+	},
+	{
+		"name": "ShowMarketFilter",
+		"status": true,
+		"group": "Boxes",
+		"sort": 4
+	},
+	{
+		"name": "ShowOwnPartOnAllGBs",
+		"status": false,
+		"group": "Boxes",
+		"sort": 5
+	},
+	{
+		"name": "ShowEventChest",
+		"status": true,
+		"group": "Boxes",
+		"sort": 6
+	},
+	{
+		"name": "ShowRougeUnitWarning",
+		"status": true,
+		"group": "Boxes",
+		"sort": 7
+	},
+	{
+		"name": "ShowNeighborsLootables",
+		"status": true,
+		"group": "Boxes",
+		"sort": 6
+	},
+	{
+		"name": "ShowPlayersAttDeffValues",
+		"status": true,
+		"group": "Boxes",
+		"sort": 7
+	},
+	{
+		"name": "ShowPossibleInvestments",
+		"status": true,
+		"group": "Boxes",
+		"sort": 8
+	},
+	{
+		"name": "LGInvestmentSteps",
+		"status": [80, 85, 90],
+		"callback": "LGInvestmentStepsField",
+		"group": "Boxes",
+		"sort": 9
+	},
+	{
+		"name": "ChangeLanguage",
+		"callback": "LanguageDropdown",
+		"group": "Extension",
+		"sort": 0
+	},
+	{
+		"name": "MenuLength",
+		"callback": "MenuInputLength",
+		"group": "Extension",
+		"sort": 1
+	},
+	{
+		"name": "ResetBoxPositions",
+		"button": "ResetBoxCoords",
+		"group": "Extension",
+		"sort": 2
+	},
+	{
+		"name": "ExportSettings",
+		"callback": "ExportView",
+		"group": "Extension",
+		"sort": 3
+	},
+
+	{
+		"name": "About",
+		"callback": "About",
+		"group": "About",
+		"sort": 0
+	},
+	{
+		"name": "Version",
+		"callback": "VersionInfo",
+		"group": "About",
+		"sort": 1
+	}
+]

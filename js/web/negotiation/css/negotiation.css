@@ -1,0 +1,218 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 negotiation.css
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              27.12.19, 12:32 Uhr
+ * zuletzt bearbeitet:       27.12.19, 12:32 Uhr
+ *
+ * Copyright © 2019
+ *
+ * **************************************************************************************
+ */
+
+#negotiationBox {
+	top: 15%;
+	left: calc(50% + 15px);
+	width: 810px;
+	transform: translateX(-50%);
+}
+
+#negotiationBox #negotiationBoxBody .negotiation-setting {
+	margin: 0;
+	position: relative;
+	top: 2px;
+	left: 6px;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort {
+	display: flex;
+	margin-right: 15px;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort .good {
+	text-align: center;
+	width: 4em;
+	padding: 2px;
+	border-radius: 3px;
+	position: relative;
+}
+
+#negotiationBox #negotiationBoxBody .goods-sprite {
+	position: static;
+}
+
+#negotiationBox #negotiationBoxBody .goods-sprite.multiple {
+	position: relative;
+	min-width: 50px;
+	display: inline-block;
+}
+
+#negotiationBox #negotiationBoxBody .goods-sprite.cornered {
+	position: absolute;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort .good .goods-sprite::before {
+	bottom: auto;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort .good .goods-sprite::before {
+
+}
+
+#negotiationBox #negotiationBoxBody .goods-dragable .good:hover {
+	background-color: rgba(255,255,255, 0.33);
+	cursor: url('../../../../css/images/cursor_hover.cur'), auto;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort .good-drag {
+	opacity: 0.5;
+}
+
+#negotiationBox #negotiationBoxBody #good-sort .good span {
+	display: inline-block;
+}
+
+#negotiationBox #negotiationBoxBody p {
+	margin-top: 10px;
+	font-size: 140%;
+}
+
+#negotiationBox #negotiationBoxBody tr.total-row td {
+	border-top: 2px solid #efcf9a;
+	font-weight: 700;
+}
+
+#negotiationBox #negotiationBoxBody tr.resource-row td {
+	color: var(--text-bright);
+	font-weight: 700;
+}
+
+#negotiationBox #negotiationBoxBody tr.goods-opacity td {
+	opacity: .4;
+}
+#negotiationBox #negotiationBoxBody .wrong-goods tr.goods-opacity td {
+	opacity: 1;
+}
+
+#negotiationBox #negotiationBoxBody .text-danger {
+	color: #ff4040;
+	font-weight: 700;
+}
+
+#negotiationBox #negotiationBoxBody .text-success {
+	color: var(--text-success);
+	font-weight: 700;
+}
+
+#negotiationBox #negotiationBoxBody td.success {
+	color: var(--text-success);
+}
+
+#negotiationBox #negotiationBoxBody td.warning {
+	color: #FF6000;
+}
+
+#negotiationBox #negotiationBoxBody td.error {
+	color: #ff4040;
+}
+
+#negotiationBox #negotiationBoxBody .text-muted {
+	color: var(--text-muted);
+}
+
+#negotiationBox #negotiationBoxBody td {
+	position: relative;
+}
+
+#negotiationBox #negotiationBoxBody .diplomacy-ask {
+	font-weight: 700;
+	display: inline-block;
+	margin-left: 6px;
+	background: var(--text-info);
+	padding: 0 4px;
+	border-radius: 50%;
+	width: 10px;
+	line-height: 1.3em;
+	z-index: 1;
+}
+
+#negotiationBox #negotiationBoxBody .diplomacy-tip {
+	position: absolute;
+	white-space: nowrap;
+	text-align: left;
+	background: rgba(0,0,0, 0.7);
+	padding: 5px;
+	right: 6px;
+	top: 25px;
+	z-index: 1;
+	display: none;
+}
+
+#negotiationBox #negotiationBoxBody .diplomacy-ask:hover .diplomacy-tip {
+	display: block;
+}
+
+#negotiationBox #negotiationBoxBody th {
+	width: 20%;
+}
+
+#negotiationBox .hasToOccur {
+	border-radius: 25%;
+}
+
+#negotiationBox .hasToOccur,
+#negotiationBox .guess_wrong_person {
+	background-color: rgba(255,165,0,.2);
+	border: 2px solid rgba(255,165,0,.5);
+}
+#negotiationBox .guess_fail {
+	background-color: rgba(255,0,0,.2);
+	border: 2px solid rgba(255,0,0,.5);
+}
+#negotiationBox .guess_match {
+	background-color: rgba(0,150,0,.2);
+	border: 2px solid rgba(0,150,0,.5);
+}
+
+#negotiationBox .suggestion {
+	height: 4.5em;
+}
+#negotiationBox .numberIcon {
+	position: absolute;
+	top: 50%;
+	left: calc(50% + 0.5em);
+	height: 1.5em;
+	border: 1px solid rgba(10,10,10,.8);
+	background-color: rgba(200,200,200,.6);
+	display: inline-block;
+	padding: 0.2em;
+	margin: 0;
+	transform: translate(10px, 0px);
+	border-radius: 50%;
+	color: black;
+}
+
+#negotiationBox .missmatch {
+	border: 5px solid red;
+	border-radius: 25%;
+	width: 3em;
+}
+
+#negotiationBox .cornered {
+	position: absolute;
+	top: -8px;
+	right: 26px;
+	display: none;
+	transform: scale(0.5);
+}
+
+#negotiationBox td .cornered.missmatch,
+#negotiationBox td:hover .cornered {
+	display: block;
+	border: none;
+	margin: auto;
+}
+

@@ -1,0 +1,74 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 kits.css
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * zuletzt bearbeitet:        27.03.20, 15:44 Uhr
+ *
+ * Copyright © 2020
+ *
+ * **************************************************************************************
+ */
+
+/* Box */
+#kits {
+	top: 15%;
+	left: 50%;
+	width: 650px;
+	transform: translateX(-50%);
+}
+
+#kits #kitsBody {
+	overflow: hidden;
+	max-height: 550px;
+	overflow-y: auto;
+}
+
+#kits #kitsBody table.foe-table tr th,
+#kits #kitsBody table.foe-table tr td {
+	padding: 5px;
+}
+
+#kits #kitsBodyTopbar {
+	padding: 3px;
+	text-align: right;
+}
+
+#kits table.foe-table th {
+	color: var(--text-bright);
+}
+
+#kits table.foe-table th.head {
+	order-top: 1px solid var(--text-bright);
+}
+
+#kits .item-asset {
+	padding: 5px;
+}
+
+#kits .kits-image,
+#kits .asset-image {
+	max-width: 90px;
+	max-height: 70px;
+}
+
+#kits td div.assets-row {
+	display: flex;
+}
+
+#kits td div.assets-row .item-asset:not(:first-child) {
+	margin-left: 10px;
+}
+
+#kits td.assets-header {
+	background-color: rgba(0,0,0, 0.3);
+	padding: 0 5px !important;
+}
+
+#kits td.is-missing,
+#kits .item-asset.is-missing {
+	background-color: rgba(140, 0, 0, 0.5);
+	opacity: 0.7;
+}

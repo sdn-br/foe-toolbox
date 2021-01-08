@@ -1,0 +1,183 @@
+#lootingBody {
+    max-height: 600px;
+    width: 590px;
+    padding: 8px 0;
+    overflow: scroll;
+}
+
+#looting .header {
+    padding: 0 0 10px 10px;
+}
+
+
+#looting .no-data {
+    padding: 0 0 10px 10px;
+    text-align: center;
+}
+
+#looting .select-player:hover {
+	  background-color: rgba(255, 255, 255, .2);
+}
+
+#looting .action-row {
+    display: flex;
+    flex-direction: row;
+    padding: 2px;
+    border-top: 1px solid #7F5A34;
+    border-bottom: 1px solid #3D250F;
+    min-height: 90px;
+}
+
+#looting .action-row-type-2 {
+	margin-bottom: 6px;
+}
+
+#looting .avatar {
+    padding: 2px;
+    width: 95px;
+}
+
+#looting .info-column {
+	padding: 2px;
+	width: 110px;
+}
+
+#looting img.player-avatar {
+	max-width: 70px;
+	border: 1px solid black;
+}
+
+#looting .type-1 {
+    color: #1e1;
+}
+
+#looting .type-3 {
+    color: #ff5026;
+}
+
+#looting .action-row-type-1, #looting .action-row-type-2 {
+    background-color: rgba(128, 255, 128, .1);
+}
+
+#looting .action-row-type-3 {
+    background-color: rgba(255, 128, 128, .1);
+}
+
+#looting .action-row-type-4 {
+    background-color: rgba(255, 255, 128, .1);
+}
+
+#looting .action-row-type-5 {
+    background-color: rgba(128, 128, 255, .1);
+}
+
+#looting .action-content .content {
+
+}
+
+#looting .info-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    white-space: normal;
+    padding: 0 10px;
+    font-size: 12px;
+    width: 85px;
+    word-break: break-word;
+}
+
+#looting .info-column .era {
+	white-space: nowrap;
+	font-size: 10px;
+	color: #b39690;
+}
+
+#looting .info-column .discovered {
+	  font-size: 10px;
+	  color: #b39690;
+}
+
+#looting .loot-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+#looting .loot-wrap .name {
+    font-weight: bold;
+    word-wrap: break-word;
+}
+
+#looting .loot-wrap .sabotage,
+#looting .loot-wrap .doubleLoot {
+    /* width: 15px; */
+    height: 20px;
+    width: auto;
+}
+
+#looting .loot-items {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px;
+    font-size: 90%;
+    padding-left: 10px;
+}
+
+
+#looting .player-name {
+    font-weight: bold;
+    color: #FFB539;
+}
+
+#looting .army {
+}
+
+#looting .versus {
+    font-weight: bold;
+    padding-left: 20px;
+}
+
+#looting .unit-wrap {
+	display: flex;
+}
+
+#looting .unit {
+    padding: 2px;
+    width: 30px;
+}
+
+#looting .unit .stats {
+    font-size: 10px;
+}
+
+#looting .stats-same-for-all {
+    font-size: 0.75rem;
+	margin: 3px 0;
+}
+
+#looting .green {
+    color: #1e1;
+}
+
+#looting .red {
+    color: #ff5026;
+}
+
+#looting .health {
+	  display: block;
+	  background-color: #ff5026;
+	  height: 5px;
+	  position: relative;
+	  margin-top: 2px;
+}
+
+#looting .health span {
+	  position: relative;
+	  background-color: #1e7e34;
+	  height: 5px;
+	  display: block;
+}
+
+#looting .pagination {
+    margin: 4px 10px;
+}
