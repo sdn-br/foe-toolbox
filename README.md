@@ -1,4 +1,16 @@
 ## FoE Toolbox
-#### A small extension for the Chrome browser forked from FoE Helper extension
+#### Fork der Chrome Erweiterung FoE Helfer. Ich werde hier bis auf Weiteres immer wieder neue Versionen anbieten und interessante Änderungen aus dem Original migrieren.
 
-The plugin is currently not available in Chome Web Store, it is installable by using Chrome Development Mode only. There is only german as supported language as of now.
+###### Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr.
+
+##### Installationsanleitung für Google Chrome
+
+1. Datei in ein Verzeichnis entpacken
+2. Neuen Browser Tab öffnen und dort als Adresse chrome://extensions eingeben oder einfach auf das Puzzlesymbol klicken und dann auf "Erweiterungen verwalten" klicken
+3. In der Erweiterungsübersicht andere FoE Helfer deaktivieren oder entfernen
+4. Entwicklermodus anschalten (Schalter in der oberen rechten Ecke)
+5. Den Knopf "Entpackte Erweitung laden" klicken
+6. Verzeichnis in das die Erweiterung entpackt wurde auswählen
+7. Spiel neu laden
+
+fertig!
