@@ -1577,8 +1577,8 @@ let MainParser = {
 		ExtGuildID = d['clan_id'];
 		ExtWorld = window.location.hostname.split('.')[0];
 		CurrentEra = d['era'];
-        if (CurrentEra['era']) CurrentEra = CurrentEra['era'];
-        CurrentEraID = Technologies.Eras[CurrentEra];
+		if (CurrentEra['era']) CurrentEra = CurrentEra['era'];
+		CurrentEraID = Technologies.Eras[CurrentEra];
 
 		MainParser.sendExtMessage({
 			type: 'storeData',

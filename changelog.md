@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.5.4.2
+**Bugfix**
+- Forschungskosten
+    - Das Zeitalter wird jetzt immer richtig ermittelt
+
 ##### 1.5.4.1
 **Bugfix**
 - Menü aus des FoE Helfer übernommen, weil die Ansicht durch das neue dynamische Menü zerstört wurde
