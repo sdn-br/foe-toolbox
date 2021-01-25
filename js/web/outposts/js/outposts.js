@@ -57,7 +57,7 @@ let Outposts = {
 			const window = /** @type {HTMLElement} */(document.getElementById('outpostConsumables'));
 			window.addEventListener('change', (event) => {
 				const target = /** @type {HTMLInputElement} */(event.target);
-				const namePrefix = 'foe_helper_';
+				const namePrefix = 'foe_toolbox_';
 				if (target.tagName === 'INPUT' && target.type === 'radio' && target.checked && target.name.startsWith(namePrefix) && Outposts.OutpostData) {
 					const cultureName = Outposts.OutpostData.content;
 					const name = target.name.substr(namePrefix.length);
@@ -213,7 +213,7 @@ let Outposts = {
 			t.push(
 				HTML.i18nReplacer(i18n('Boxes.Outpost.infoLine'), {
 					runNumber: (currentRun.id||0)+1,
-					chanceX4: Math.round(currentRun.productionBonusProbability * 100)
+					chanceX4: MainParser.round(currentRun.productionBonusProbability * 100)
 				})
 			);
 		}
@@ -223,7 +223,7 @@ let Outposts = {
 			  '</span><span><strong>'
 			+ GoodsData[primaryResourceId].name + ': ' + HTML.Format(ResourceStock[primaryResourceId]||0)
 			+ '</strong> (+ '
-			+ (current4HProductionRate > 0 ? HTML.Format(Math.round(current4HProductionRate)) : '???')
+			+ (current4HProductionRate > 0 ? HTML.Format(MainParser.round(current4HProductionRate)) : '???')
 			+ '/4h)'
 			+ '</span>'
 		);
@@ -256,7 +256,7 @@ let Outposts = {
 				for (let resourceID of resourceIDs) {
 					if (resourceID === 'diplomacy' && displayAllTiles) {
 						t.push('<td class="text-center">'
-							+ '<label><input type="radio" value="#off" name="foe_helper_'+tileID+'" '
+							+ '<label><input type="radio" value="#off" name="foe_toolbox_'+tileID+'" '
 							+ (plannedTiles[tileID] == null ? ' checked' : '')
 							+ '/><span class="outpost_tile_off">'+i18n('Boxes.Outpost.tileNotPlanned')+'</span></label>'
 							+ '</td>'
@@ -269,7 +269,7 @@ let Outposts = {
 							if (displayAllTiles) {
 								t.push(
 									  '<td class="text-center'+(canPurchase?' text-success':'')+'">'
-									+ '<label><input type="radio" value="'+resourceID+'" name="foe_helper_'+tileID+'"'
+									+ '<label><input type="radio" value="'+resourceID+'" name="foe_toolbox_'+tileID+'"'
 									+ (isPlanned?' checked':'')
 									+ '/><span>'
 									+ cost

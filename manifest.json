@@ -2,7 +2,7 @@
 	"name": "__MSG_appName__",
 	"description": "__MSG_appDesc__",
 	"default_locale": "de",
-	"version": "1.5.4.2",
+	"version": "1.6.0.0",
   
 	"manifest_version": 2,
 	"permissions": [
@@ -18,6 +18,11 @@
 		"https://*.foe-rechner.de/*"
 	],
 
+	"browser_action": {
+		"default_title": "__MSG_appName__"
+	},
+
+	
 	"web_accessible_resources": [
 		"css/web/*.css",
 		"vendor/*.js",
@@ -34,19 +39,24 @@
 			"include_globs": [ "*forgeofempires.com/game*" ],
 			"run_at": "document_start",
 			"js": [
+				"vendor/browser-polyfill/browser-polyfill.min.js",
 				"js/web/_languages/js/_languages.js",
 				"js/inject.js"
 			]
 		}
 	],
 
-  	"externally_connectable" : {
-	  	"matches": ["https://*.forgeofempires.com/*"],
-	  	"ids": ["*"]
+	"externally_connectable" : {
+		"matches": ["https://*.forgeofempires.com/*"],
+		"ids": ["*"]
 	},
 
 	"background": {
-	  	"scripts": ["js/background.js"],
-	  	"persistent": true
+		"scripts": [
+			"vendor/browser-polyfill/browser-polyfill.min.js",
+			"vendor/dexie/dexie.min.js",
+			"js/background.js"
+		],
+		"persistent": true
 	}
 }

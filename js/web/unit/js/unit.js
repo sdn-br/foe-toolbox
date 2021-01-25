@@ -28,7 +28,7 @@ FoEproxy.addHandler('ArmyUnitManagementService', 'getArmyInfo', (data, postData)
 		$('#unit-Btn-closed').remove();
 	}
 
-	if ($('#units').length > 0) {
+	if ($('#UnitOverview').length > 0) {
 		Unit.BuildBox();
 	}
 });
@@ -74,9 +74,9 @@ let Unit = {
 	 */
 	Show: ()=> {
 
-		if ($('#units').length === 0) {
+		if ($('#UnitOverview').length === 0) {
 			let args = {
-				'id': 'units',
+				'id': 'UnitOverview',
 				'title': i18n('Boxes.Units.Title'),
 				'auto_close': true,
 				'dragdrop': true,
@@ -90,7 +90,7 @@ let Unit = {
 			HTML.AddCssFile('unit');
 
 		} else {
-			HTML.CloseOpenBox('units');
+			HTML.CloseOpenBox('UnitOverview');
 		}
 
 		Unit.BuildBox();
@@ -133,7 +133,8 @@ let Unit = {
 						harvest: moment.unix(Unit.alca['state']['next_state_transition_at']).format('HH:mm:ss')
 					});
 
-			} else {
+			}
+			else {
 				let countDownDate = moment.unix(Unit.alca['state']['next_state_transition_at']);
 
 				let x = setInterval(function() {
@@ -181,13 +182,14 @@ let Unit = {
 
         Unit.Attack = [];
 
-        for (let i in Unit.Cache['units']) {
-
+        for (let i in Unit.Cache['units'])
+        {
         	if(!Unit.Cache['units'].hasOwnProperty(i)){
         		break;
         	}
 
-            if (Unit.Cache['units'][i]['is_attacking']) {
+            if (Unit.Cache['units'][i]['is_attacking'])
+            {
                 Unit.Attack[Unit.Attack.length] = Unit.Cache['units'][i];
             }
         }
@@ -214,8 +216,8 @@ let Unit = {
 			let AttackBoost = Boosts['AttackAttackBoost'],
 				DefenseBoost = Boosts['AttackDefenseBoost']
 			
-			let Attack = Math.round(type['baseDamage'] * (AttackBoost / 100)) + type['baseDamage'],
-				Defense = Math.round(type['baseArmor'] * (DefenseBoost / 100)) + type['baseArmor'];
+			let Attack = MainParser.round(type['baseDamage'] * (AttackBoost / 100)) + type['baseDamage'],
+				Defense = MainParser.round(type['baseArmor'] * (DefenseBoost / 100)) + type['baseArmor'];
 
 			attack.push('<td class="text-center"><em><small>+' + AttackBoost + '%</small></em><br><strong class="text-success">= ' + Attack + '</strong></td>');
 			attack.push('<td class="text-center"><em><small>+' + DefenseBoost + '%</small></em><br><strong class="text-success">= ' + Defense + '</strong></td>');
@@ -284,8 +286,8 @@ let Unit = {
 			let AttackBoost = Boosts['DefenseAttackBoost'],
 				DefenseBoost = Boosts['DefenseDefenseBoost']
 
-			let Attack = Math.round(type['baseDamage'] * (AttackBoost / 100)) + type['baseDamage'],
-				Defense = Math.round(type['baseArmor'] * (DefenseBoost / 100)) + type['baseArmor'];
+			let Attack = MainParser.round(type['baseDamage'] * (AttackBoost / 100)) + type['baseDamage'],
+				Defense = MainParser.round(type['baseArmor'] * (DefenseBoost / 100)) + type['baseArmor'];
 
 			defense.push('<td class="text-center"><em><small>+' + AttackBoost + '%</small></em><br><strong class="text-success">= ' + Attack + '</strong></td>');
 			defense.push('<td class="text-center"><em><small>+' + DefenseBoost + '%</small></em><br><strong class="text-success">= ' + Defense + '</strong></td>');
@@ -394,7 +396,7 @@ let Unit = {
 		h.push('</div>');
 		
 
-		$('#units').find('#unitsBody').html( h.join('') ).promise().done(function(){
+		$('#UnitOverview').find('#UnitOverviewBody').html( h.join('') ).promise().done(function(){
 			$('.unit-tabs').tabslet({active: 1});
 		});
 	},
@@ -633,7 +635,7 @@ let Unit = {
 			last.push('<td>' + LastAlca[i]['name'] + '</td>');
 
 			last.push('<td class="text-center">' + LastAlca[i]['count'] + 'x</td>');
-			last.push('<td class="text-center">' + Math.round((LastAlca[i]['count'] * 100 ) / LastTotal) + '%</td>');
+			last.push('<td class="text-center">' + MainParser.round((LastAlca[i]['count'] * 100 ) / LastTotal) + '%</td>');
 
 			last.push('</tr>');
 

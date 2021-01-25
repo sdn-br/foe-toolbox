@@ -1,9 +1,20 @@
 ## Changelog - Extension
 
+##### 1.6.0.0
+**Update**
+- Einstellungen
+    - Einstellung hinzugefügt, die den Verhandlungsassistenten für die Gefechte abschaltbar macht
+	- Verhandlungsassistent für Gildengefechte und Nachbarschaftsplünderanzeige sind jetzt standardmäßig abgeschaltet
+
+**Foe-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.5.1 migriert
+
+
 ##### 1.5.4.2
 **Bugfix**
 - Forschungskosten
     - Das Zeitalter wird jetzt immer richtig ermittelt
+
 
 ##### 1.5.4.1
 **Bugfix**

@@ -13,6 +13,7 @@
  * **************************************************************************************
  */
 
+
 FoEproxy.addHandler('ResourceShopService', 'getContexts', (data)=> {
 	if (data['responseData']['0']['context'] !== 'forgePoints') {
 		return;
@@ -29,9 +30,6 @@ FoEproxy.addHandler('ResourceShopService', 'buyOffer', (data)=> {
 	StrategyPoints.RefreshBuyableForgePoints(data.responseData.formula);
 });
 
-window.addEventListener('resize', ()=>{
-    StrategyPoints.HandleWindowResize();
-});
 
 // GEX started
 FoEproxy.addHandler('GuildExpeditionService', 'getOverview', (data, postData) => {
@@ -49,12 +47,49 @@ FoEproxy.addHandler('AnnouncementsService', 'fetchAllAnnouncements', (data, post
 	StrategyPoints.HideFPBar();
 });
 
+
 /**
- * @type {{readonly AvailableFP: *|number, OldStrategyPoints: number, HandleWindowResize: StrategyPoints.HandleWindowResize, RefreshBuyableForgePoints: StrategyPoints.RefreshBuyableForgePoints, RefreshBar: StrategyPoints.RefreshBar, InventoryFP: number}}
+ * @type {{readonly AvailableFP: (*|number), ShowFPBar: (function(): (undefined)), HideFPBar: StrategyPoints.HideFPBar, OldStrategyPoints: number, checkForDB: (function(*): Promise<void>), pickupProductionId: null, pickupProductionBuilding: null, HandleWindowResize: StrategyPoints.HandleWindowResize, insertIntoDB: (function(*=): Promise<void>), RefreshBuyableForgePoints: StrategyPoints.RefreshBuyableForgePoints, RefreshBar: (function(*=): (undefined)), InventoryFP: number, db: null}}
  */
 let StrategyPoints = {
 	OldStrategyPoints: 0,
 	InventoryFP: 0,
+
+	pickupProductionId: null,
+	pickupProductionBuilding: null,
+
+	db: null,
+
+	/**
+	 *
+	 * @returns {Promise<void>}
+	 */
+	checkForDB: async (playerID)=> {
+		const FP_DBName = `FoeHelperDB_FPCollector_${playerID}`;
+
+		StrategyPoints.db = new Dexie(FP_DBName);
+
+		StrategyPoints.db.version(1).stores({
+			ForgePointsStats: '++id,place,event,notes,amount,date'
+		});
+		StrategyPoints.db.version(2).stores({
+			ForgePointsStats: '++id,counter,event,notes,amount,date'
+		});
+
+		StrategyPoints.db.open();
+	},
+
+
+	insertIntoDB: async (data)=> {
+
+		await StrategyPoints.db.ForgePointsStats.put(data);
+
+		// if fp-collector box is open, update
+		if( $('#fp-collectorBodyInner').length > 0 )
+		{
+			await FPCollector.buildBody();
+		}
+	},
 
 
 	/**
@@ -64,18 +99,33 @@ let StrategyPoints = {
 	 */
 	HandleWindowResize: () => {
 
-        if ( window.innerWidth < 1250 && ActiveMap !== 'gex'){
-            $('#fp-bar').removeClass('medium-screen');
-            $('#fp-bar').addClass('small-screen');
-        }
-        else if ( window.innerWidth < 1400 && ActiveMap !== 'gex'){
-            $('#fp-bar').removeClass('small-screen');
-            $('#fp-bar').addClass('medium-screen');
+		let width = window.innerWidth,
+			elem = $('#fp-bar').children().length;
+
+		switch (ActiveMap){
+			case 'gex':
+				if((elem === 3 && width <= 1313) || (elem === 2 && width <= 1170) || elem === 1 && width < 970)
+				{
+					$('#fp-bar').addClass('small-screen')
+				}
+				else {
+					$('#fp-bar').removeClass('small-screen')
+				}
+				break;
+
+			case 'gg':
+
+				break;
+
+			default: // main or unknown
+				if(elem === 1 && width < 1235)
+				{
+					$('#fp-bar').addClass('small-screen')
+				}
+				else {
+					$('#fp-bar').removeClass('small-screen')
+				}
 		}
-        else {
-            $('#fp-bar').removeClass('small-screen');
-            $('#fp-bar').removeClass('medium-screen');
-        }
 	},
 
 
@@ -86,7 +136,7 @@ let StrategyPoints = {
 		}
 
 		if( $('.fp-bar-main').length === 0){
-			$('#fp-bar').append(`<div class="fp-bar-main"><div class="number"></div><div class="bars"></div></div>`);
+			$('#fp-bar').addClass(`game-cursor ${ActiveMap}`).append(`<div class="fp-bar-main"><div class="number"></div><div class="bars"></div></div>`);
 
 		} else {
 			$('.fp-bar-main').show();
@@ -124,10 +174,10 @@ let StrategyPoints = {
 	 */
 	RefreshBuyableForgePoints: (formula) => {
 
-    	let amount = 0;
-    	let currentlyCosts = formula.baseValue;
-    	let boughtCount = formula.boughtCount;
-    	let factor = formula.factor;
+		let amount = 0;
+		let currentlyCosts = formula.baseValue;
+		let boughtCount = formula.boughtCount;
+		let factor = formula.factor;
 
 		for(let counter = 1; counter <= boughtCount; counter++) {
 			currentlyCosts += factor;
@@ -154,19 +204,20 @@ let StrategyPoints = {
 	 * @param value
 	 * @constructor
 	 */
-    RefreshBar: ( value ) => {
-        // noch nicht im DOM?
+	RefreshBar: ( value ) => {
+		// noch nicht im DOM?
 		if( $('#fp-bar').length < 1 ){
 			let div = $('<div />').attr({
 				id: 'fp-bar',
-				class: 'game-cursor'
+				class: `game-cursor ${ActiveMap}`
 			}).append( `<div class="fp-storage"><div>0</div></div>` );
 
 			$('body').append(div);
-            StrategyPoints.HandleWindowResize();
+			StrategyPoints.HandleWindowResize();
 		}
 
 		if ( isNaN( value ) ){ return; }
+
 		StrategyPoints.InventoryFP = value;
 
 		let delimiter = Number(1000).toLocaleString().substring(1,2);

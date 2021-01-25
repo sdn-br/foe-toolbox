@@ -138,15 +138,17 @@ let IndexDB = {
 
     _dbPromise: new Promise(resolveCb => window._dbPromiseResolver = resolveCb),
 
+
     /**
      * Resolve db when ready for using.
      * SHOULD be always used in FoEproxy.addHandler.
-     * In Boxes you can use IndexDB.db<<
+     * In Boxes you can use IndexDB.db
      * @returns {Promise<void>}
      */
     getDB: () => {
         return IndexDB._dbPromise;
     },
+
 
     Init: async (playerId) => {
         const primaryDBName = 'FoEToolboxDB_' + playerId; //Create different IndexDBs if two players are sharing the same PC playing on the same world
@@ -176,6 +178,7 @@ let IndexDB = {
             players: 'id,date',
             neighborhoodAttacks: '++id,playerId,date,type',
             greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
+			forgeStats: '++id,type,amount,date', // FP Collector
             statsGBGPlayers: 'date', // battleground
             statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
             statsRewards: 'date', // Collected rewards by Himeji, etc
@@ -210,7 +213,8 @@ let IndexDB = {
                 players: 'id,date',
 				neighborhoodAttacks: '++id,playerId,date,type',
 				greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-				statsGBGPlayers: 'date', // battleground
+				forgeStats: '++id,type,amount,date', // FP Collector
+                statsGBGPlayers: 'date', // battleground
 				statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
 				statsRewards: 'date', // Collected rewards by Himeji, etc
 				statsRewardTypes: 'id', // Human readable cache info about rewards
@@ -234,7 +238,8 @@ let IndexDB = {
                 players: 'id,date',
 				pvpActions: '++id,playerId,date,type',
 				greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-				statsGBGPlayers: 'date', // battleground
+				forgeStats: '++id,type,amount,date', // FP Collector
+                statsGBGPlayers: 'date', // battleground
 				statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
 				statsRewards: 'date', // Collected rewards by Himeji, etc
 				statsRewardTypes: 'id', // Human readable cache info about rewards
@@ -257,7 +262,8 @@ let IndexDB = {
                 players: 'players',
 				neighborhoodAttacks: 'neighborhoodAttacks',
 				greatbuildings: 'greatbuildings',
-				statsGBGPlayers: 'statsGBGPlayers',
+				forgeStats: 'forgeStats', // FP Collector
+                statsGBGPlayers: 'statsGBGPlayers',
 				statsGBGPlayerCache: 'statsGBGPlayerCache',
 				statsRewards: 'statsRewards',
 				statsRewardTypes: 'statsRewardTypes', 
@@ -274,7 +280,8 @@ let IndexDB = {
                 players: 'players',
 				pvpActions: 'neighborhoodAttacks',
 				greatbuildings: 'greatbuildings',
-				statsGBGPlayers: 'statsGBGPlayers',
+				forgeStats: 'forgeStats', // FP Collector
+                statsGBGPlayers: 'statsGBGPlayers',
 				statsGBGPlayerCache: 'statsGBGPlayerCache',
 				statsRewards: 'statsRewards',
 				statsRewardTypes: 'statsRewardTypes', 
@@ -316,6 +323,7 @@ let IndexDB = {
             localStorage.setItem('FH_IndexDBLastMigraion', logTxt);
         }
     },
+
 
     /**
      * Util function for making backup of db easier
@@ -369,6 +377,7 @@ let IndexDB = {
         });
     },
 
+
     /**
     * Remove old records from db to avoid overflow
     *
@@ -419,6 +428,7 @@ let IndexDB = {
         }
     },
 
+
     /**
      * Calculate estimated space used in db
      * In fact db is more compact than returned value because this is not json
@@ -434,6 +444,7 @@ let IndexDB = {
         }
         return parseInt(totalSize);
     },
+
 
     /**
      * Add user from PlayerDict if not added, without era information

@@ -643,7 +643,7 @@ let Looting = {
 	RenderUnit: ({unit, showDetails}) => {
 		const endHP = unit.endHp || 0;
 		const startHP = unit.startHP || 0;
-		const healtPerc = Math.round((1 - ((startHP - endHP) / startHP)) * 100);
+		const healtPerc = MainParser.round((1 - ((startHP - endHP) / startHP)) * 100);
 		const attBoost = unit.attBoost || 0;
 		const defBoost = unit.defBoost || 0;
 
