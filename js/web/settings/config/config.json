@@ -24,77 +24,94 @@
 		"sort": 3
 	},
 	{
-		"name": "SendPlayersMotivation",
-		"status": false,
-		"group": "Sending",
-		"sort": 4
-	},
-	{
 		"name": "AutomaticNegotiation",
 		"status": true,
 		"group": "Boxes",
 		"sort": 0
 	},
 	{
-		"name": "ShowInvestments",
+		"name": "AutomaticNegotiationForGbG",
 		"status": true,
 		"group": "Boxes",
 		"sort": 2
 	},
 	{
-		"name": "ShowGuildTreasuryLogExport",
+		"name": "ShowInvestments",
 		"status": true,
 		"group": "Boxes",
 		"sort": 3
 	},
 	{
-		"name": "ShowMarketFilter",
+		"name": "ShowGuildTreasuryLogExport",
 		"status": true,
 		"group": "Boxes",
 		"sort": 4
 	},
 	{
-		"name": "ShowOwnPartOnAllGBs",
+		"name": "ShowMarketFilter",
 		"status": false,
 		"group": "Boxes",
 		"sort": 5
 	},
 	{
+		"name": "ShowOwnPartOnAllGBs",
+		"status": false,
+		"group": "Boxes",
+		"sort": 6
+	},
+	{
 		"name": "ShowEventChest",
 		"status": true,
 		"group": "Boxes",
-		"sort": 6
+		"sort": 7
 	},
 	{
 		"name": "ShowRougeUnitWarning",
 		"status": true,
 		"group": "Boxes",
-		"sort": 7
+		"sort": 8
+	},
+	{
+		"name": "ShowBlueGalaxyHelper",
+		"status": true,
+		"group": "Boxes",
+		"sort": 9
+	},
+	{
+		"name": "ShowPlayersMotivation",
+		"status": true,
+		"group": "Boxes",
+		"sort": 10
+	},
+	{
+		"name": "AutoOpenInfoBox",
+		"status": false,
+		"group": "Boxes",
+		"sort": 11
+	},
+	{
+		"name": "InfoboxEntryCount",
+		"callback": "InfoboxInputEntryCount",
+		"group": "Boxes",
+		"sort": 12
 	},
 	{
 		"name": "ShowNeighborsLootables",
-		"status": true,
+		"status": false,
 		"group": "Boxes",
-		"sort": 6
+		"sort": 13
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"group": "Boxes",
-		"sort": 7
+		"sort": 14
 	},
 	{
 		"name": "ShowPossibleInvestments",
-		"status": true,
+		"status": false,
 		"group": "Boxes",
-		"sort": 8
-	},
-	{
-		"name": "LGInvestmentSteps",
-		"status": [80, 85, 90],
-		"callback": "LGInvestmentStepsField",
-		"group": "Boxes",
-		"sort": 9
+		"sort": 15
 	},
 	{
 		"name": "ChangeLanguage",
@@ -103,24 +120,42 @@
 		"sort": 0
 	},
 	{
+		"name": "SelectedMenu",
+		"callback": "MenuSelected",
+		"group": "Extension",
+		"sort": 1
+	},
+	{
 		"name": "MenuLength",
 		"callback": "MenuInputLength",
 		"group": "Extension",
-		"sort": 1
+		"sort": 2
 	},
 	{
 		"name": "ResetBoxPositions",
 		"button": "ResetBoxCoords",
 		"group": "Extension",
-		"sort": 2
+		"sort": 3
 	},
 	{
 		"name": "ExportSettings",
 		"callback": "ExportView",
 		"group": "Extension",
-		"sort": 3
+		"sort": 4
 	},
-
+	{
+		"name": "ShowNotifications",
+		"status": true,
+		"group": "Extension",
+		"sort": 5
+	},
+	{
+		"name": "NotificationsPosition",
+		"callback": "NotificationView",
+		"group": "Extension",
+		"status": "bottom-right",
+		"sort": 6
+	},
 	{
 		"name": "About",
 		"callback": "About",

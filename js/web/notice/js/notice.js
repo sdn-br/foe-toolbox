@@ -252,7 +252,7 @@ let Notice = {
 		});
 
 		$('body').on('click', '#notices-modalclose, #notices-modal-playersclose', function(){
-			$('.foe-helper-overlay').remove();
+			$('.foe-toolbox-overlay').remove();
 		});
 
 		// save content when close box
@@ -334,7 +334,7 @@ let Notice = {
 			auto_close: true,
 		});
 
-		$('body').prepend( $('<div class="foe-helper-overlay" />') );
+		$('body').prepend( $('<div class="foe-toolbox-overlay" />') );
 
 
 		let inp = $('<input />'),
@@ -462,7 +462,7 @@ let Notice = {
 			$('#notices-modal').fadeToggle('fast', function(){
 				$(this).remove();
 
-				$('.foe-helper-overlay').remove();
+				$('.foe-toolbox-overlay').remove();
 			});
 
 			Notice.EditMode = false;
@@ -505,7 +505,7 @@ let Notice = {
 			$('#notices-modal').fadeToggle('fast', function(){
 				$(this).remove();
 
-				$('.foe-helper-overlay').remove();
+				$('.foe-toolbox-overlay').remove();
 			});
 
 			Notice.EditMode = false;
@@ -552,7 +552,7 @@ let Notice = {
 			dragdrop: true
 		});
 
-		$('body').prepend( $('<div class="foe-helper-overlay" />') );
+		$('body').prepend( $('<div class="foe-toolbox-overlay" />') );
 
 		const mapper = {
 			guild: 'IsGuildMember',
@@ -626,7 +626,7 @@ let Notice = {
 			$('#notices-modal-players').fadeToggle('fast', function(){
 				$(this).remove();
 
-				$('.foe-helper-overlay').remove();
+				$('.foe-toolbox-overlay').remove();
 			});
 
 			Notice.buildBox();
@@ -750,7 +750,7 @@ let Notice = {
 			$('#notices-modal').fadeToggle('fast', function(){
 				$(this).remove();
 
-				$('.foe-helper-overlay').remove();
+				$('.foe-toolbox-overlay').remove();
 			});
 
 			Notice.EditMode = false;

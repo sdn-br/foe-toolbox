@@ -223,7 +223,8 @@ let BuildingsReader = {
 
 		h.push('</span>');
 		h.push('</strong></p>');
-		if (!BuildingsReader.IsLootable) {
+		if (!BuildingsReader.IsLootable && Settings.GetSetting('ShowNeighborsLootables'))
+		{
 			if (BuildingsReader.IsGuildMember || BuildingsReader.IsFriend || !BuildingsReader.IsNeighbor) {
 				let MsgType = (BuildingsReader.IsGuildMember ? 'NoAttackGuildMember' : (BuildingsReader.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'))
 				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.'+MsgType)}</strong></p>`);
@@ -238,93 +239,97 @@ let BuildingsReader = {
         
 		h.push('</p>');
 		
-        
-		h.push('<table style="width: 100%; margin-bottom: 5px;" id="attdeftab"><tbody><tr><td>');		
-		h.push('<table style="width:100%">');
-		h.push('<thead>');
-		h.push('<tr>');
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.AttackingArmy')}</strong></th>`);
-		h.push('</tr>');
-		h.push('</thead>');
-		h.push('</table>');
-		
-		h.push('</td><td>');
+        if (Settings.GetSetting('ShowPlayersAttDeffValues'))
+		{
+			h.push('<table style="width: 100%; margin-bottom: 5px;" id="attdeftab"><tbody><tr><td>');		
+			h.push('<table style="width:100%">');
+			h.push('<thead>');
+			h.push('<tr>');
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.AttackingArmy')}</strong></th>`);
+			h.push('</tr>');
+			h.push('</thead>');
+			h.push('</table>');
+			
+			h.push('</td><td>');
 
-		h.push('<table style="width:100%">');
-		h.push('<thead>');
-		h.push('<tr>');
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.DefendingArmy')}</strong></th>`);
-		h.push('</tr>');
-		h.push('</thead>');
-		h.push('</table>');
+			h.push('<table style="width:100%">');
+			h.push('<thead>');
+			h.push('<tr>');
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.DefendingArmy')}</strong></th>`);
+			h.push('</tr>');
+			h.push('</thead>');
+			h.push('</table>');
 
-		h.push('</td></tr><tr><td>');
+			h.push('</td></tr><tr><td>');
 
-		h.push('<table style="width:100%">');
-		h.push('<thead>');
-		h.push('<tr>');
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
-		h.push('</tr>');
-		h.push('</thead>');
-		h.push('<tbody>');
-		h.push('<tr>');
-		h.push(`<td class="text-center army-boost"><strong>${boosts.AttackAttackBoost}% (max ${boosts.AttackAttackBoost + 50}%)</strong></td>`);
-		h.push(`<td class="text-center army-boost"><strong>${boosts.AttackDefenseBoost}%</strong></td>`);
-		h.push('</tr>');
-		h.push('</tbody>');
-		h.push('</table>');
-		
-		h.push('</td><td>');
+			h.push('<table style="width:100%">');
+			h.push('<thead>');
+			h.push('<tr>');
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
+			h.push('</tr>');
+			h.push('</thead>');
+			h.push('<tbody>');
+			h.push('<tr>');
+			h.push(`<td class="text-center army-boost"><strong>${boosts.AttackAttackBoost}% (max ${boosts.AttackAttackBoost + 50}%)</strong></td>`);
+			h.push(`<td class="text-center army-boost"><strong>${boosts.AttackDefenseBoost}%</strong></td>`);
+			h.push('</tr>');
+			h.push('</tbody>');
+			h.push('</table>');
+			
+			h.push('</td><td>');
 
-		h.push('<table style="width:100%">');
-		h.push('<thead>');
-		h.push('<tr>');
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
-		h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
-		h.push('</tr>');
-		h.push('</thead>');
-		h.push('<tbody>');
-		h.push('<tr>');
-		h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseAttackBoost}%</strong></td>`);
-		h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseDefenseBoost}% (max ${boosts.DefenseDefenseBoost + 60}%)</strong></td>`);
-		h.push('</tr>');
-		h.push('</tbody>');
-		h.push('</table>');
-		
-		h.push('</td></tr></tbody></table>');
-		
+			h.push('<table style="width:100%">');
+			h.push('<thead>');
+			h.push('<tr>');
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
+			h.push('</tr>');
+			h.push('</thead>');
+			h.push('<tbody>');
+			h.push('<tr>');
+			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseAttackBoost}%</strong></td>`);
+			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseDefenseBoost}% (max ${boosts.DefenseDefenseBoost + 60}%)</strong></td>`);
+			h.push('</tr>');
+			h.push('</tbody>');
+			h.push('</table>');
+			
+			h.push('</td></tr></tbody></table>');
+		}
 		h.push('</div>');		
 
-		h.push('<table class="foe-table" style="margin-bottom: 5px; margin-top:2px;">');
+		if (Settings.GetSetting('ShowNeighborsLootables'))
+		{
+			h.push('<table class="foe-table" style="margin-bottom: 5px; margin-top:2px;">');
 
-		h.push('<thead>');
+			h.push('<thead>');
 
-		h.push('<tr>');
-		h.push(`<th${rd.length > 0 ? ' colspan="3"' : ''} class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th>`);
-		h.push('</tr>');
+			h.push('<tr>');
+			h.push(`<th${rd.length > 0 ? ' colspan="3"' : ''} class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th>`);
+			h.push('</tr>');
 
-		h.push('</thead>');
-		h.push('<tbody>');
+			h.push('</thead>');
+			h.push('<tbody>');
 
-		for (let i in rd) {
-			if (rd.hasOwnProperty(i)) {
-				h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : 'success'}">`);
-				h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
-				h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
-				h.push('<td><span class="show-entity" data-id="' + rd[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
-				h.push('</tr>');
+			for (let i in rd) {
+				if (rd.hasOwnProperty(i)) {
+					h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : 'success'}">`);
+					h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
+					h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
+					h.push('<td><span class="show-entity" data-id="' + rd[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
+					h.push('</tr>');
+				}
 			}
-		}
 
-		if (rd.length == 0) {
-			h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : ''}">`);
-			h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
-			h.push('</tr>');					
-		}
+			if (rd.length == 0) {
+				h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : ''}">`);
+				h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
+				h.push('</tr>');					
+			}
 
-		h.push('</tbody>');
-		h.push('</table>');
+			h.push('</tbody>');
+			h.push('</table>');
+		}
 
 		/*if (wk.length > 0) {
 

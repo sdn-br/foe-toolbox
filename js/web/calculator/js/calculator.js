@@ -27,6 +27,9 @@ let Calculator = {
 	Rankings : undefined,
 	CityMapEntity : undefined,
 	LastRecurringQuests: undefined,
+	DefaultButtons: [
+		80, 85, 90, 'ark'
+	],
 	Overview : undefined,
 	Initalized: false,
 
@@ -154,13 +157,14 @@ let Calculator = {
         // Wenn die Box noch nicht da ist, neu erzeugen und in den DOM packen
         if ($('#costCalculator').length === 0) {
             HTML.Box({
-				'id': 'costCalculator',
-				'title': i18n('Boxes.Calculator.Title'),
-				'ask': i18n('Boxes.Calculator.HelpLink'),
-				'auto_close': true,
-				'dragdrop': true,
-				'minimize': true,
-				'speaker': 'CalculatorTone'
+				id: 'costCalculator',
+				title: i18n('Boxes.Calculator.Title'),
+				ask: i18n('Boxes.Calculator.HelpLink'),
+				auto_close: true,
+				dragdrop: true,
+				minimize: true,
+				speaker: 'CalculatorTone',
+				settings: 'Calculator.ShowCalculatorSettings()'
 			});
 
 			// CSS in den DOM prügeln
@@ -232,27 +236,46 @@ let Calculator = {
 
 		h.push('<div class="dark-bg costFactorWrapper">');
 
-		h.push('<div>');
+		h.push(i18n('Boxes.Calculator.ArkBonus') + ': ' + MainParser.ArkBonus + '%<br>');
 
-		let investmentSteps = Array.from(Settings.GetSetting('LGInvestmentSteps'));
-		if (undefined === investmentSteps.find(e => e == MainParser.ArkBonus)) {
-			investmentSteps.push(MainParser.ArkBonus);
+		h.push('<div class="btn-group">');
+
+		// different arc bonus-buttons
+		let investmentSteps = [80, 85, 90, MainParser.ArkBonus],
+			customButtons = localStorage.getItem('CustomCalculatorButtons');
+
+		// custom buttons available
+		if(customButtons)
+		{
+			investmentSteps = [];
+			let bonuses = JSON.parse(customButtons);
+
+			bonuses.forEach(bonus => {
+				if(bonus === 'ark')
+				{
+					investmentSteps.push(MainParser.ArkBonus);
+				}
+				else {
+					investmentSteps.push(bonus);
+				}
+			})
 		}
+
+		investmentSteps = investmentSteps.filter((item, index) => investmentSteps.indexOf(item) === index); //Remove duplicates
 		investmentSteps.sort((a, b) => a - b);
 		investmentSteps.forEach(bonus => {
 			h.push(`<button class="btn btn-default btn-toggle-arc ${(bonus === Calculator.ForderBonus ? 'btn-default-active' : '')}" data-value="${bonus}">${bonus}%</button>`);
 		});
-
-		h.push('<br>');
+		h.push('</div><br>');
+		h.push('<table width="100%"><tr><td width="50%" style="text-align: left">');
 		
 		h.push('<span><strong>' + i18n('Boxes.Calculator.FriendlyInvestment') + '</strong> ' + '<input type="number" id="costFactor" step="0.1" min="12" max="200" value="' + Calculator.ForderBonus + '">%</span>');
 
-		h.push('</div><div>');
+		h.push('</td><td style="text-align: right">');
 
-		h.push(i18n('Boxes.Calculator.ArkBonus') + ': ' + MainParser.ArkBonus + '%<br>');
 		h.push('<strong>' + i18n('Boxes.Calculator.AggressiveInvestment') + '</strong><br>');
 
-        h.push('</div>');
+        h.push('</td></tr></table>');
 
         h.push('</div>');
 
@@ -313,7 +336,7 @@ let Calculator = {
 							RecurringQuestString = i18n('Boxes.Calculator.Done');
 						}
 
-						h.push('<div class="text-center" style="margin-top:5px;margin-bottom:5px;"><em>' + i18n('Boxes.Calculator.ActiveRecurringQuest') + ' <span id="recurringquests" style="color:#FFB539">' + RecurringQuestString + '</span></em></div>');
+						h.push('<div class="text-center dark-bg" style="margin-top:5px;margin-bottom:5px;"><em>' + i18n('Boxes.Calculator.ActiveRecurringQuest') + ' <span id="recurringquests" style="color:#FFB539">' + RecurringQuestString + '</span></em></div>');
 					}
 				}
 			}
@@ -398,18 +421,18 @@ let Calculator = {
 			Einzahlungen[Rank] = 0;
 
 			if (Calculator.Rankings[i]['reward']['strategy_point_amount'] !== undefined)
-				FPNettoRewards[Rank] = Math.round(Calculator.Rankings[i]['reward']['strategy_point_amount']);
+				FPNettoRewards[Rank] = MainParser.round(Calculator.Rankings[i]['reward']['strategy_point_amount']);
 
 			if (Calculator.Rankings[i]['reward']['blueprints'] !== undefined)
-				BPRewards[Rank] = Math.round(Calculator.Rankings[i]['reward']['blueprints']);
+				BPRewards[Rank] = MainParser.round(Calculator.Rankings[i]['reward']['blueprints']);
 
 			if (Calculator.Rankings[i]['reward']['resources']['medals'] !== undefined)
-				MedalRewards[Rank] = Math.round(Calculator.Rankings[i]['reward']['resources']['medals']);
+				MedalRewards[Rank] = MainParser.round(Calculator.Rankings[i]['reward']['resources']['medals']);
 
-			FPRewards[Rank] = Math.round(FPNettoRewards[Rank] * arc);
-			BPRewards[Rank] = Math.round(BPRewards[Rank] * arc);
-			MedalRewards[Rank] = Math.round(MedalRewards[Rank] * arc);
-			ForderFPRewards[Rank] = Math.round(FPNettoRewards[Rank] * ForderArc);
+			FPRewards[Rank] = MainParser.round(FPNettoRewards[Rank] * arc);
+			BPRewards[Rank] = MainParser.round(BPRewards[Rank] * arc);
+			MedalRewards[Rank] = MainParser.round(MedalRewards[Rank] * arc);
+			ForderFPRewards[Rank] = MainParser.round(FPNettoRewards[Rank] * ForderArc);
 
 			if (EigenPos !== undefined && i > EigenPos) {
 				ForderStates[Rank] = 'NotPossible';
@@ -434,18 +457,18 @@ let Calculator = {
 				for (let j = i + 1; j < Calculator.Rankings.length; j++) {
 					//Spieler selbst oder Spieler gelöscht => nächsten Rang überprüfen
 					if (Calculator.Rankings[j]['rank'] !== undefined && Calculator.Rankings[j]['rank'] !== -1 && Calculator.Rankings[j]['forge_points'] !== undefined) {
-						SaveRankCosts[Rank] = Math.round((Calculator.Rankings[j]['forge_points'] + RestFP) / 2);
+						SaveRankCosts[Rank] = MainParser.round((Calculator.Rankings[j]['forge_points'] + RestFP) / 2);
 						break;
 					}
 				}
 
 				if (SaveRankCosts[Rank] === undefined)
-					SaveRankCosts[Rank] = Math.round(RestFP / 2); // Keine Einzahlung gefunden => Rest / 2
+					SaveRankCosts[Rank] = MainParser.round(RestFP / 2); // Keine Einzahlung gefunden => Rest / 2
 
 				ForderRankCosts[Rank] = Math.max(ForderFPRewards[Rank], SaveRankCosts[Rank]);
 			}
 			else {
-				SaveRankCosts[Rank] = Math.round((Einzahlungen[Rank] + RestFP) / 2);
+				SaveRankCosts[Rank] = MainParser.round((Einzahlungen[Rank] + RestFP) / 2);
 				ForderRankCosts[Rank] = Math.max(ForderFPRewards[Rank], SaveRankCosts[Rank]);
 				ForderRankCosts[Rank] = Math.min(ForderRankCosts[Rank], RestFP);
 
@@ -520,17 +543,17 @@ let Calculator = {
 		// Tabellen ausgeben
 		hFordern.push('<thead>' +
 			'<th>#</th>' +
-			'<th>' + i18n('Boxes.Calculator.Commitment') + '</th>' +
+			'<th><span class="forgepoints" title="' + i18n('Boxes.Calculator.Commitment') + '"></span></th>' +
 			'<th>' + i18n('Boxes.Calculator.Profit') + '</th>' +
 			'</thead>');
 
 		hBPMeds.push('<thead>' +
-			'<th>' + i18n('Boxes.Calculator.BPs') + '</th>' +
-			'<th>' + i18n('Boxes.Calculator.Meds') + '</th>' +
+			'<th><span class="blueprint" title="' + i18n('Boxes.Calculator.BPs') + '"></span></th>' +
+			'<th><span class="medal" title="' + i18n('Boxes.Calculator.Meds') + '"></span></th>' +
 			'</thead>');
 
 		hAggressiveInvestment.push('<thead>' +
-			'<th>' + i18n('Boxes.Calculator.Commitment') + '</th>' +
+			'<th><span class="forgepoints" title="' + i18n('Boxes.Calculator.Commitment') + '"></span></th>' +
 			'<th>' + i18n('Boxes.Calculator.Profit') + '</th>' +
 			'<th>' + i18n('Boxes.Calculator.Rate') + '</th>' +
 			'</thead>');
@@ -542,7 +565,7 @@ let Calculator = {
 			let ForderGewinn = FPRewards[Rank] - ForderCosts,
 				ForderRankDiff = (ForderRankCosts[Rank] !== undefined ? ForderRankCosts[Rank] - ForderFPRewards[Rank] : 0),
 				SaveGewinn = FPRewards[Rank] - SaveCosts,
-				Kurs = (FPNettoRewards[Rank] > 0 ? Math.round(SaveCosts / FPNettoRewards[Rank] * 1000)/10 : 0);
+				Kurs = (FPNettoRewards[Rank] > 0 ? MainParser.round(SaveCosts / FPNettoRewards[Rank] * 1000)/10 : 0);
 
 			if (SaveStates[Rank] !== 'Self' && Kurs > 0) {
 				if (Kurs < BestKurs) {
@@ -1000,8 +1023,8 @@ let Calculator = {
 				if (CurrentGB != undefined && CurrentGB['level'] === GBLevel && CurrentGB['currentFp'] == CurrentProgress) {
 					BestKursNettoFP = CurrentGB['bestRateNettoFp'];
 					BestKursEinsatz = CurrentGB['bestRateCosts'];
-					BestKurs = Math.round(BestKursEinsatz / BestKursNettoFP * 1000) / 10;
-					Gewinn = Math.round(BestKursNettoFP * arc) - BestKursEinsatz;
+					BestKurs = MainParser.round(BestKursEinsatz / BestKursNettoFP * 1000) / 10;
+					Gewinn = MainParser.round(BestKursNettoFP * arc) - BestKursEinsatz;
                 }
 
 				let EraName = GreatBuildings.GetEraName(EntityID);
@@ -1028,8 +1051,8 @@ let Calculator = {
 						if (CurrentProgress === 0)
 						{
 							StrongClass = ' class="warning"'; // Möglicherweise nicht freigeschaltet
-							GewinnString = HTML.Format(Math.round(P1 * arc) - Math.ceil((MaxProgress - CurrentProgress) / 2));
-							KursString = Calculator.FormatKurs(Math.round(MaxProgress / P1 / 2 * 1000) / 10);
+							GewinnString = HTML.Format(MainParser.round(P1 * arc) - Math.ceil((MaxProgress - CurrentProgress) / 2));
+							KursString = Calculator.FormatKurs(MainParser.round(MaxProgress / P1 / 2 * 1000) / 10);
 						}
 						else if (Gewinn === undefined)
 						{
@@ -1103,4 +1126,89 @@ let Calculator = {
             Calculator.SoundFile.play();
         }
     },
+    
+
+	ShowCalculatorSettings: ()=> {
+		let c = [],
+			buttons,
+			defaults = Calculator.DefaultButtons,
+			sB = localStorage.getItem('CustomCalculatorButtons'),
+			nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
+
+
+		if(sB)
+		{
+			// buttons = [...new Set([...defaults,...JSON.parse(sB)])];
+			buttons = JSON.parse(sB);
+
+			buttons = buttons.filter((item, index) => buttons.indexOf(item) === index); // remove duplicates
+			buttons.sort((a, b) => a - b); // order
+		}
+		else {
+			buttons = defaults;
+		}
+
+
+		buttons.forEach(bonus => {
+			if(bonus === 'ark')
+			{
+				c.push(`<p class="text-center"><input type="hidden" class="settings-values" value="ark"> <button class="btn btn-default">${MainParser.ArkBonus}%</button></p>`);
+			}
+			else {
+				c.push(`<p class="btn-group flex"><button class="btn btn-default">${bonus}%</button> <input type="hidden" class="settings-values" value="${bonus}"> <span class="btn btn-default btn-delete" onclick="Calculator.SettingsRemoveRow(this)">x</span> </p>`);
+			}
+		});
+
+		// new own button
+		c.push(nV);
+
+		// save button
+		c.push(`<hr><p><button id="save-calculator-settings" class="btn btn-default" style="width:100%" onclick="Calculator.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button></p>`);
+
+		// insert into DOM
+		$('#costCalculatorSettingsBox').html(c.join(''));
+	},
+
+
+	SettingsInsertNewRow: ()=> {
+    	let nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
+
+		$(nV).insertAfter( $('.new-row:eq(-1)') );
+	},
+
+
+	SettingsRemoveRow: ($this)=> {
+		$($this).closest('p').fadeToggle('fast', function(){
+			$(this).remove();
+		});
+	},
+
+
+	SettingsSaveValues: ()=> {
+
+    	let values = [];
+
+    	// get each visible value
+		$('.settings-values').each(function(){
+			let v = $(this).val().trim();
+
+			if(v){
+				if(v !== 'ark'){
+					values.push( parseFloat(v) );
+				} else {
+					values.push(v);
+				}
+			}
+		});
+
+		// save new buttons
+		localStorage.setItem('CustomCalculatorButtons', JSON.stringify(values));
+
+		$(`#costCalculatorSettingsBox`).fadeToggle('fast', function(){
+			$(this).remove();
+
+			// reload box
+			Calculator.Show();
+		});
+	}
 };
