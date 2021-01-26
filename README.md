@@ -3,6 +3,8 @@
 
 ###### Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr.
 
+Die letzte aktuelle Version kann immer hier herunter geladen werden: https://github.com/sdn-br/foe-toolbox/releases/latest
+
 ##### Installationsanleitung für Google Chrome
 
 1. Datei in ein Verzeichnis entpacken
