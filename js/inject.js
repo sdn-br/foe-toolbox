@@ -126,6 +126,34 @@
 			(document.head || document.documentElement).appendChild(script);
 			// The script was (supposedly) executed directly and can be removed again.
 			script.remove();
+			// Firefox does not support direct communication with background.js but API injections
+			// So the the messages have to be forwarded and this exports an API-Function to do so
+			if (!chrome.app && exportFunction && window.wrappedJSObject) {
+				function callBgApi(data) {
+					return new window.Promise(
+						exportFunction(
+							function (resolve, reject) {
+								if (typeof data !== 'object' || typeof data.type !== 'string') {
+									reject('invalid request, data has to be of sceme: {type: string, ...}');
+									return;
+								}
+								browser.runtime.sendMessage(chrome.runtime.id, data)
+									.then(
+										data => {
+											resolve(cloneInto(data, window));
+										},
+										error => {
+											console.error('FoeHelper BgAPI error', error);
+											reject("An error occurred while sending the message to the extension");
+										}
+									);
+							}
+							, window
+						)
+					);
+				}
+				exportFunction(callBgApi, window, {defineAs: 'foeHelperBgApiHandler'});
+			}
 
 			// load the main
 			await promisedLoadCode(chrome.extension.getURL(`js/web/_main/js/_main.js?v=${v}`));
@@ -151,7 +179,7 @@
 					'date-range/lightpick',
 					'lit-html/lit-html.bundle.min',
 					'SimpleMarkdown/simple-markdown.min',
-					'dexie/dexie.min', // indexDB helper lib
+					'dexie/dexie.min',
 				];
 
 			// load all vendor scripts first (unknown order)
@@ -174,6 +202,7 @@
 				'productions',
 				'part-calc',
 				'unit',
+				'alerts',
 				'looting',
 				'guildfights',
 				'stats',
@@ -190,7 +219,6 @@
 				'citymap',
 				'hidden-rewards',
 				'greatbuildings',
-				'alerts',
 				'notice',
 				'inventory-tracker',
 				'ws-chat',
@@ -200,7 +228,7 @@
 				'eventhandler',
 				'fp-collector',
 				'unit-gex',
-				'maptradewarning',
+				'maptradewarning'
 			];
 
 			// load scripts (one after the other)
@@ -225,23 +253,6 @@
 			// make sure that the packet buffer in the FoEproxy does not fill up in the event of an incomplete loading.
 			window.dispatchEvent(new CustomEvent('foe-toolbox#error-loading'));
 		}
-	}
-
-	// Firefox does not support direct communication with background.js
-	// so the messages have to be forwarded.
-	// @ts-ignore
-	if (!chrome.app) {
-		// listen on the window object for special messages under '<extID> #message'
-		// and forward them if they come from this site
-		window.addEventListener(chrome.runtime.id+'#message', (/** @type {CustomEvent} */ evt) => {
-			if (evt.srcElement === window) {
-				try {
-					chrome.runtime.sendMessage(chrome.runtime.id, evt.detail);
-				} catch (err) {
-					console.error('chrome', err);
-				}
-			}
-		});
 	}
 
 	// End of the separation from the global scope

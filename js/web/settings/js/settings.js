@@ -522,7 +522,7 @@ let Settings = {
 
 	NotificationView: () => {
 		let elements = [],
-			settingPos = localStorage.getItem('NotificationPosition'),
+			settingPos = localStorage.getItem('NotificationsPosition'),
 			positions = [
 				'bottom-left',
 				'bottom-right',
@@ -548,6 +548,8 @@ let Settings = {
 		elements.push('</select>');
 
 		$('#SettingsBoxBody').on('change', '#notification-position', function () {
+			$('.jq-toast-wrap').remove();
+
 			let pos = $(this).val();
 
 			localStorage.setItem('NotificationsPosition', pos);
@@ -558,6 +560,7 @@ let Settings = {
 				icon: 'success',
 				hideAfter: 6000,
 				position: pos,
+				extraClass: localStorage.getItem('SelectedMenu') || 'bottombar',
 				afterHidden: function () {
 					$('.jq-toast-wrap').remove();
 				}
@@ -566,7 +569,36 @@ let Settings = {
 
 		return elements.join('');
 	},
-	
+
+
+	NotificationStack: ()=> {
+		let ip = $('<input />').addClass('setting-input').attr({
+				type: 'number',
+				id: 'toast-amount',
+				step: 1,
+				min: 1
+			}),
+			value = localStorage.getItem('NotificationStack');
+
+		ip[0].defaultValue = ip[0].value = value;
+
+		if (null !== value) {
+			ip.val(value);
+		}
+
+		$('#SettingsBox').on('keyup', '#toast-amount', function () {
+			let value = $(this).val();
+
+			if (value > 0) {
+				localStorage.setItem('NotificationStack', value);
+			} else {
+				localStorage.removeItem('NotificationStack');
+			}
+		});
+
+		return ip;
+	},
+
 	LGInvestmentStepsField: () => {
 		let ip = $('<input />').addClass('setting-input').attr({
 					type: 'text',

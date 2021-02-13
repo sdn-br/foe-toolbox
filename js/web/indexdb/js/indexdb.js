@@ -190,6 +190,24 @@ let IndexDB = {
             statsTreasureClanH: 'date, clanId',
             statsTreasureClanD: 'date, clanId',
         });
+
+        db.version(2).stores({
+            players: 'id,date',
+            neighborhoodAttacks: '++id,playerId,date,type',
+            greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
+            investhistory: '++id,playerId,entity_id,&[playerId+entity_id],name,level,max_progress,current_progress,profit,currentFp,fphistory,date',
+            forgeStats: '++id,type,amount,date', // FP Collector
+            statsGBGPlayers: 'date', // battleground
+            statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
+            statsRewards: 'date', // Collected rewards by Himeji, etc
+            statsRewardTypes: 'id', // Human readable cache info about rewards
+            statsUnitsD: 'date',
+            statsUnitsH: 'date',
+            statsTreasurePlayerH: 'date',
+            statsTreasurePlayerD: 'date',
+            statsTreasureClanH: 'date, clanId',
+            statsTreasureClanD: 'date, clanId',
+        });
     },
 
     /**
@@ -200,7 +218,7 @@ let IndexDB = {
         if (await IndexDB.db.players.count()) { return; }
         clearLog();
 
-        log('Looks like your db is empty, trying to populate db using old databases');
+        //log('Looks like your db is empty, trying to populate db using old databases');
 
         let foeHelperPrivDB = null;
 		let foeHelperDB = null;
