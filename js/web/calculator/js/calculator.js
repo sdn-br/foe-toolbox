@@ -906,6 +906,115 @@ let Calculator = {
 
 
 	/**
+	 * Spielt einen Sound im Calculator ab
+	 *
+	 * @returns {string}
+	 */
+    PlaySound: () => {
+        if (Calculator.PlayInfoSound) {
+            Calculator.SoundFile.play();
+        }
+    },
+
+
+    /**
+    * Spielt einen Sound in der Overview ab
+    *
+    * @returns {string}
+    */
+    PlayOverviewSound: () => {
+        if (Calculator.PlayOverviewInfoSound) {
+            Calculator.SoundFile.play();
+        }
+    },
+    
+
+	ShowCalculatorSettings: ()=> {
+		let c = [],
+			buttons,
+			defaults = Calculator.DefaultButtons,
+			sB = localStorage.getItem('CustomCalculatorButtons'),
+			nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
+
+
+		if(sB)
+		{
+			// buttons = [...new Set([...defaults,...JSON.parse(sB)])];
+			buttons = JSON.parse(sB);
+
+			buttons = buttons.filter((item, index) => buttons.indexOf(item) === index); // remove duplicates
+			buttons.sort((a, b) => a - b); // order
+		}
+		else {
+			buttons = defaults;
+		}
+
+
+		buttons.forEach(bonus => {
+			if(bonus === 'ark')
+			{
+				c.push(`<p class="text-center"><input type="hidden" class="settings-values" value="ark"> <button class="btn btn-default">${MainParser.ArkBonus}%</button></p>`);
+			}
+			else {
+				c.push(`<p class="btn-group flex"><button class="btn btn-default">${bonus}%</button> <input type="hidden" class="settings-values" value="${bonus}"> <span class="btn btn-default btn-delete" onclick="Calculator.SettingsRemoveRow(this)">x</span> </p>`);
+			}
+		});
+
+		// new own button
+		c.push(nV);
+
+		// save button
+		c.push(`<hr><p><button id="save-calculator-settings" class="btn btn-default" style="width:100%" onclick="Calculator.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button></p>`);
+
+		// insert into DOM
+		$('#costCalculatorSettingsBox').html(c.join(''));
+	},
+
+
+	SettingsInsertNewRow: ()=> {
+    	let nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
+
+		$(nV).insertAfter( $('.new-row:eq(-1)') );
+	},
+
+
+	SettingsRemoveRow: ($this)=> {
+		$($this).closest('p').fadeToggle('fast', function(){
+			$(this).remove();
+		});
+	},
+
+
+	SettingsSaveValues: ()=> {
+
+    	let values = [];
+
+    	// get each visible value
+		$('.settings-values').each(function(){
+			let v = $(this).val().trim();
+
+			if(v){
+				if(v !== 'ark'){
+					values.push( parseFloat(v) );
+				} else {
+					values.push(v);
+				}
+			}
+		});
+
+		// save new buttons
+		localStorage.setItem('CustomCalculatorButtons', JSON.stringify(values));
+
+		$(`#costCalculatorSettingsBox`).fadeToggle('fast', function(){
+			$(this).remove();
+
+			// reload box
+			Calculator.Show();
+		});
+	},
+
+
+	/**
 	 * Übersicht der LGs scannen
 	 *
 	 * @param DisableAudio
@@ -1101,114 +1210,5 @@ let Calculator = {
 		h.push('</table>');
 
         $('#LGInvestmentOverviewBox').find('#LGInvestmentOverviewBoxBody').html(h.join(''));
-	},
-
-
-	/**
-	 * Spielt einen Sound im Calculator ab
-	 *
-	 * @returns {string}
-	 */
-    PlaySound: () => {
-        if (Calculator.PlayInfoSound) {
-            Calculator.SoundFile.play();
-        }
-    },
-
-
-    /**
-    * Spielt einen Sound in der Overview ab
-    *
-    * @returns {string}
-    */
-    PlayOverviewSound: () => {
-        if (Calculator.PlayOverviewInfoSound) {
-            Calculator.SoundFile.play();
-        }
-    },
-    
-
-	ShowCalculatorSettings: ()=> {
-		let c = [],
-			buttons,
-			defaults = Calculator.DefaultButtons,
-			sB = localStorage.getItem('CustomCalculatorButtons'),
-			nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
-
-
-		if(sB)
-		{
-			// buttons = [...new Set([...defaults,...JSON.parse(sB)])];
-			buttons = JSON.parse(sB);
-
-			buttons = buttons.filter((item, index) => buttons.indexOf(item) === index); // remove duplicates
-			buttons.sort((a, b) => a - b); // order
-		}
-		else {
-			buttons = defaults;
-		}
-
-
-		buttons.forEach(bonus => {
-			if(bonus === 'ark')
-			{
-				c.push(`<p class="text-center"><input type="hidden" class="settings-values" value="ark"> <button class="btn btn-default">${MainParser.ArkBonus}%</button></p>`);
-			}
-			else {
-				c.push(`<p class="btn-group flex"><button class="btn btn-default">${bonus}%</button> <input type="hidden" class="settings-values" value="${bonus}"> <span class="btn btn-default btn-delete" onclick="Calculator.SettingsRemoveRow(this)">x</span> </p>`);
-			}
-		});
-
-		// new own button
-		c.push(nV);
-
-		// save button
-		c.push(`<hr><p><button id="save-calculator-settings" class="btn btn-default" style="width:100%" onclick="Calculator.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button></p>`);
-
-		// insert into DOM
-		$('#costCalculatorSettingsBox').html(c.join(''));
-	},
-
-
-	SettingsInsertNewRow: ()=> {
-    	let nV = `<p class="new-row">${i18n('Boxes.Calculator.Settings.newValue')}: <input type="number" class="settings-values" style="width:30px"> <span class="btn btn-default btn-green" onclick="Calculator.SettingsInsertNewRow()">+</span></p>`;
-
-		$(nV).insertAfter( $('.new-row:eq(-1)') );
-	},
-
-
-	SettingsRemoveRow: ($this)=> {
-		$($this).closest('p').fadeToggle('fast', function(){
-			$(this).remove();
-		});
-	},
-
-
-	SettingsSaveValues: ()=> {
-
-    	let values = [];
-
-    	// get each visible value
-		$('.settings-values').each(function(){
-			let v = $(this).val().trim();
-
-			if(v){
-				if(v !== 'ark'){
-					values.push( parseFloat(v) );
-				} else {
-					values.push(v);
-				}
-			}
-		});
-
-		// save new buttons
-		localStorage.setItem('CustomCalculatorButtons', JSON.stringify(values));
-
-		$(`#costCalculatorSettingsBox`).fadeToggle('fast', function(){
-			$(this).remove();
-
-			// reload box
-			Calculator.Show();
-		});
 	}
 };

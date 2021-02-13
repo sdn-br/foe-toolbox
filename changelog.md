@@ -1,5 +1,9 @@
 ## Changelog - Extension
 
+##### 1.7.0.0
+**Foe-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.0 migriert
+
 ##### 1.6.1.0
 **Bugfix**
 - Einstellungen
