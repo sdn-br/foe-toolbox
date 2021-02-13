@@ -678,7 +678,7 @@ let _menu = {
 	 * @returns {*|jQuery}
 	 */
 	alerts_Btn: () => {
-		let btn = $('<div />').attr({ 'id': 'Alerts-Btn', 'data-slug': 'Alerts' }).addClass('hud-btn');
+		let btn = $('<div />').attr({ 'id': 'Alerts-Btn', 'data-slug': 'alerts' }).addClass('hud-btn');
 
 		// Tooltip einbinden
 		_menu.toolTippBox(i18n('Menu.Alerts.Title'), i18n('Menu.Alerts.Desc'), 'Alerts-Btn');
