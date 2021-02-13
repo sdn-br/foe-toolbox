@@ -784,7 +784,7 @@ const FoEproxy = (function () {
 	// Nachbarn/Gildenmitglieder/Freunde Tab geöffnet
 	FoEproxy.addHandler('OtherPlayerService', 'all', (data, postData) => {
 		if (data.requestMethod === 'getNeighborList' || data.requestMethod === 'getFriendsList' || data.requestMethod === 'getClanMemberList') {
-			MainParser.UpdatePlayerDict(data.responseData, 'PlayerList');
+			MainParser.UpdatePlayerDict(data.responseData, 'PlayerList', data.requestMethod);
 		} else if (data.requestMethod === 'getOtherPlayerVO') {
 			MainParser.UpdatePlayerDict(data.responseData, 'PlayerVO');
 		} else if (data.requestMethod === 'getEventsPaginated') {
