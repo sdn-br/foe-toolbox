@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.6.1.0
+**Bugfix**
+- Einstellungen
+    - Verhandlungsassistent für Gildengefechte ist jetzt standardmäßig abgeschaltet
+- Moppelassistent
+    - Buttons (Nachbarn, Gildenmitglieder, Freunde) werden jetzt korrekt freigeschaltet, wenn man in der Socialbar die entsprechende Liste öffnet
+
+
 ##### 1.6.0.0
 **Update**
 - Einstellungen
