@@ -3,7 +3,9 @@
 
 ###### Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr.
 
-Die letzte aktuelle Version kann immer hier herunter geladen werden: https://github.com/sdn-br/foe-toolbox/releases/latest
+Die letzte aktuelle Version kann immer hier herunter geladen werden: [Latest Release](https://github.com/sdn-br/foe-toolbox/releases/latest)
+
+Die Unterschiede zum FoE Helfer können hier eingesehen werden: [Unterschiede zum FoE-Helfer](https://github.com/sdn-br/foe-toolbox/wiki/Unterschiede-zum-FoE-Helfer)
 
 ##### Installationsanleitung für Google Chrome
 
