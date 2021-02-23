@@ -1,6 +1,12 @@
 ## Changelog - Extension
 
 
+##### 1.8.1.0
+**Bugfix**
+- Allgemein
+    - Fehlendes Extension PopUp hinzugefügt
+
+
 ##### 1.8.0.0
 **Neu**
 - Allgemein
