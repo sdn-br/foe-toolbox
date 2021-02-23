@@ -2,7 +2,7 @@
 	"name": "__MSG_appName__",
 	"description": "__MSG_appDesc__",
 	"default_locale": "de",
-	"version": "1.7.1.0",
+	"version": "1.8.0.0",
   
 	"manifest_version": 2,
 	"permissions": [
@@ -19,9 +19,16 @@
 	],
 
 	"browser_action": {
+		"default_icon": "images/app16.png",
+		"default_popup": "content/popup.html",
 		"default_title": "__MSG_appName__"
 	},
 
+	"icons": {
+		"16": "images/app16.png",
+		"48": "images/app48.png",
+		"128": "images/app128.png"
+	},
 	
 	"web_accessible_resources": [
 		"css/web/*.css",

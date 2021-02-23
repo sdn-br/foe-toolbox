@@ -121,7 +121,7 @@
 					extUrl='${chrome.extension.getURL('')}',
 					GuiLng='${lng}',
 					extVersion='${v}',
-					devMode=${!('update_url' in chrome.runtime.getManifest())};
+					devMode=false;
 			`;
 			(document.head || document.documentElement).appendChild(script);
 			// The script was (supposedly) executed directly and can be removed again.
@@ -137,7 +137,8 @@
 									reject('invalid request, data has to be of sceme: {type: string, ...}');
 									return;
 								}
-								browser.runtime.sendMessage(chrome.runtime.id, data)
+								// Note: the message is packed, so background.js knows it is an external message, even though it is sent by inject.js
+								browser.runtime.sendMessage(chrome.runtime.id, {type: 'packed', data: data})
 									.then(
 										data => {
 											resolve(cloneInto(data, window));
@@ -228,7 +229,8 @@
 				'eventhandler',
 				'fp-collector',
 				'unit-gex',
-				'maptradewarning'
+				'maptradewarning',
+				'guildmemberstat'
 			];
 
 			// load scripts (one after the other)
