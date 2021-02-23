@@ -1,6 +1,12 @@
 ## Changelog - Extension
 
 
+##### 1.8.2.0
+**Bugfix**
+- Allgemein
+    - FoE-Helfer Donation Link gefixed
+
+
 ##### 1.8.1.0
 **Bugfix**
 - Allgemein
