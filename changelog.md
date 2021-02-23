@@ -1,6 +1,19 @@
 ## Changelog - Extension
 
 
+##### 1.8.0.0
+**Neu**
+- Allgemein
+    - Logo hinzugefügt
+
+**Bugfix**
+- Alarme
+    - Funktionieren jetzt
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.2 migriert
+
+
 ##### 1.7.1.0
 **Bugfix**
 - Menü
