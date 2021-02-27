@@ -1,8 +1,9 @@
 ## FoE Toolbox
-#### Fork der Chrome Erweiterung FoE Helfer. Ich werde hier bis auf Weiteres immer wieder neue Versionen anbieten und interessante Änderungen aus dem Original migrieren.
+**Fork der Chrome Erweiterung FoE Helfer. Ich werde hier bis auf Weiteres immer wieder neue Versionen anbieten und interessante Änderungen aus dem Original migrieren.**
+
 Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mit einigen Features, die es nicht in den FoE Helfer schaffen werden bzw. dort nicht mehr vorhanden sind.
 
-###### Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr.
+**Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr!**
 
 Die letzte aktuelle Version kann immer hier herunter geladen werden: [Latest Release](https://github.com/sdn-br/foe-toolbox/releases/latest)
 
