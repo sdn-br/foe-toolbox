@@ -5,10 +5,9 @@ Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mi
 
 **Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr!**
 
-Die letzte aktuelle Version kann immer hier herunter geladen werden: [Latest Release](https://github.com/sdn-br/foe-toolbox/releases/latest)
-
-Die Unterschiede zum FoE Helfer können hier eingesehen werden: [Unterschiede zum FoE-Helfer](https://github.com/sdn-br/foe-toolbox/wiki/Unterschiede-zum-FoE-Helfer)
-Das FAQ ist hier zu finden: [FAQ](https://github.com/sdn-br/foe-toolbox/wiki/FAQ)
+* Die letzte aktuelle Version kann immer hier herunter geladen werden: [Latest Release](https://github.com/sdn-br/foe-toolbox/releases/latest)
+* Die Unterschiede zum FoE Helfer können hier eingesehen werden: [Unterschiede zum FoE-Helfer](https://github.com/sdn-br/foe-toolbox/wiki/Unterschiede-zum-FoE-Helfer)
+* Das FAQ ist hier zu finden: [FAQ](https://github.com/sdn-br/foe-toolbox/wiki/FAQ)
 
 ##### Installationsanleitung für Google Chrome
 
