@@ -1,5 +1,12 @@
 ## Changelog - Extension
 
+##### 1.8.3.0
+**Bugfix**
+- Allgemein
+    - Einige Migrationsfehler aus der letzten FoE Helfer Migration korrigiert
+- Plünderhilfe
+	- Druidentempel wird jetzt nicht mehr als plünderbar angezeigt
+
 
 ##### 1.8.2.0
 **Bugfix**
