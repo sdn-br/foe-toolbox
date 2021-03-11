@@ -1,5 +1,11 @@
 ## Changelog - Extension
 
+##### 1.8.4.0
+**Bugfix**
+- Gebäude-Kits
+    - Anzahl der Items wird jetzt korrekt angezeigt
+
+
 ##### 1.8.3.0
 **Bugfix**
 - Allgemein
