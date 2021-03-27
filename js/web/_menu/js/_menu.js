@@ -25,11 +25,7 @@ let _menu = {
 	HudHeight: 0,
 	HudWidth: 0,
 
-	MenuOptions:[
-		{'BottomBar':"_menu_bottom.BuildOverlayMenu()"},
-		{'RightBar':"_menu_right.BuildOverlayMenu()"},
-		{'Box':"_menu_box.BuildBoxMenu()"}
-	],
+	MenuOptions: ['BottomBar', 'RightBar', 'Box'],
 
 	Items: [
 		'calculator',
@@ -69,13 +65,14 @@ let _menu = {
 	 * @constructor
 	 */
 	CallSelectedMenu: (selMenu = 'BottomBar') => {
-
-		for (let index = 0; index < _menu.MenuOptions.length; index++)
-		{
-			const element = _menu.MenuOptions[index];
-			if(element[selMenu]){
-				eval(element[selMenu]);
+		if (selMenu === 'BottomBar') {
+			_menu_bottom.BuildOverlayMenu();
+		}
+		else if (selMenu === 'RightBar') {
+			_menu_right.BuildOverlayMenu();
 			}
+		else if (selMenu === 'Box') {
+			_menu_box.BuildBoxMenu();
 		}
 
 		if(Settings.GetSetting('AutoOpenInfoBox')){
@@ -768,7 +765,7 @@ let _menu = {
 		let btn = $('<div />').attr({ 'id': 'alerts-Btn', 'data-slug': 'alerts' }).addClass('hud-btn');
 
 		// Tooltip einbinden
-		_menu.toolTippBox(i18n('Menu.Alerts.Title'), i18n('Menu.Alerts.Desc'), 'alerts-Btn');
+		_menu.toolTippBox(i18n('Menu.Alerts.Title'), i18n('Menu.Alerts.Desc'), 'Alerts-Btn');
 
 		let btn_sp = $('<span />');
 

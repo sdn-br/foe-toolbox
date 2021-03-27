@@ -151,7 +151,7 @@ let HiddenRewards = {
 
             if (StartTime.isValid() && EndTime > MainParser.getCurrentDateTime()) {
                 h.push('<tr>');
-                h.push('<td class="incident" title="' + hiddenReward.type + '"><img src="' + extUrl + 'js/web/hidden-rewards/images/' + hiddenReward.type + '.png" alt=""></td>');
+                h.push('<td class="incident" title="' + HTML.i18nTooltip(hiddenReward.type) + '"><img src="' + extUrl + 'js/web/hidden-rewards/images/' + hiddenReward.type + '.png" alt=""></td>');
                 h.push('<td>' + hiddenReward.position + '</td>');
 
                 if (StartTime > MainParser.getCurrentDateTime()) {

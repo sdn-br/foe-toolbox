@@ -20,3 +20,5 @@ Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mi
 7. Spiel neu laden
 
 fertig!
+
+Dies ist ein Open Source Projekt unter der [AGPLv3 Lizenz](LICENSE.md)._

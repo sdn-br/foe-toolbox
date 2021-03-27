@@ -1,3 +1,18 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 guildmemberstat.js
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              24.02.21, 09:49 Uhr
+ * zuletzt bearbeitet:       21.03.21, 22:46 Uhr
+ *
+ * Copyright © 2021
+ *
+ * **************************************************************************************
+ */
+
 FoEproxy.addHandler('ClanService', 'getOwnClanData', (data, postData) => {
     let requestMethod = postData[0]['requestMethod'];
     if (requestMethod === 'getOwnClanData')
@@ -122,7 +137,7 @@ let GuildMemberStat = {
      */
     checkForDB: async (playerID) => {
 
-        const DBName = `FoeHelperDB_GuildMemberStat_${playerID}`;
+        const DBName = `FoeToolboxDB_GuildMemberStat_${playerID}`;
 
         GuildMemberStat.db = new Dexie(DBName);
 

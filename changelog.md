@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.9.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.3 migriert
+
+
 ##### 1.8.4.0
 **Bugfix**
 - Gebäude-Kits

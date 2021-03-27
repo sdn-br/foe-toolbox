@@ -16,6 +16,7 @@
 
 let Calculator = {
 
+	Alerts: [],
 	ForderBonus: 90,
     SoundFile: new Audio(extUrl + 'vendor/sounds/message.mp3'),
     PlayerName: undefined,
@@ -543,17 +544,17 @@ let Calculator = {
 		// Tabellen ausgeben
 		hFordern.push('<thead>' +
 			'<th>#</th>' +
-			'<th><span class="forgepoints" title="' + i18n('Boxes.Calculator.Commitment') + '"></span></th>' +
+			'<th><span class="forgepoints" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Commitment')) + '"></span></th>' +
 			'<th>' + i18n('Boxes.Calculator.Profit') + '</th>' +
 			'</thead>');
 
 		hBPMeds.push('<thead>' +
-			'<th><span class="blueprint" title="' + i18n('Boxes.Calculator.BPs') + '"></span></th>' +
-			'<th><span class="medal" title="' + i18n('Boxes.Calculator.Meds') + '"></span></th>' +
+			'<th><span class="blueprint" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.BPs')) + '"></span></th>' +
+			'<th><span class="medal" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Meds')) + '"></span></th>' +
 			'</thead>');
 
 		hAggressiveInvestment.push('<thead>' +
-			'<th><span class="forgepoints" title="' + i18n('Boxes.Calculator.Commitment') + '"></span></th>' +
+			'<th><span class="forgepoints" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Commitment')) + '"></span></th>' +
 			'<th>' + i18n('Boxes.Calculator.Profit') + '</th>' +
 			'<th>' + i18n('Boxes.Calculator.Rate') + '</th>' +
 			'</thead>');
@@ -688,9 +689,9 @@ let Calculator = {
 			}
 
 			hFordern.push('<tr class="' + RowClass + '">');
-			hFordern.push('<td class="text-center"><strong class="' + RankClass + ' td-tooltip" title="' + RankTooltip.join('<br>') + '">' + RankText + '</strong></td>');
-			hFordern.push('<td class="text-center"><strong class="' + EinsatzClass + ' td-tooltip" title="' + EinsatzTooltip.join('<br>') + '">' + EinsatzText + '</strong></td>');
-			hFordern.push('<td class="text-center"><strong class="' + GewinnClass + ' td-tooltip" title="' + GewinnTooltip.join('<br>') + '">' + GewinnText + '</strong></td>');
+			hFordern.push('<td class="text-center"><strong class="' + RankClass + ' td-tooltip" title="' + HTML.i18nTooltip(RankTooltip.join('<br>')) + '">' + RankText + '</strong></td>');
+			hFordern.push('<td class="text-center"><strong class="' + EinsatzClass + ' td-tooltip" title="' + HTML.i18nTooltip(EinsatzTooltip.join('<br>')) + '">' + EinsatzText + '</strong></td>');
+			hFordern.push('<td class="text-center"><strong class="' + GewinnClass + ' td-tooltip" title="' + HTML.i18nTooltip(GewinnTooltip.join('<br>')) + '">' + GewinnText + '</strong></td>');
 			hFordern.push('</tr>');
 
 
@@ -811,9 +812,9 @@ let Calculator = {
 			}
 
 			hAggressiveInvestment.push('<tr class="' + RowClass + '">');
-			hAggressiveInvestment.push('<td class="text-center"><strong class="' + EinsatzClass + ' td-tooltip" title="' + EinsatzTooltip.join('<br>') + '">' + EinsatzText + '</strong></td>');
-			hAggressiveInvestment.push('<td class="text-center"><strong class="' + GewinnClass + ' td-tooltip" title="' + GewinnTooltip.join('<br>') + '">' + GewinnText + '</strong></td>');
-			hAggressiveInvestment.push('<td class="text-center"><strong class="' + KursClass + ' td-tooltip" title="' + KursTooltip.join('<br>') + '">' + KursText + '</strong></td>');
+			hAggressiveInvestment.push('<td class="text-center"><strong class="' + EinsatzClass + ' td-tooltip" title="' + HTML.i18nTooltip(EinsatzTooltip.join('<br>')) + '">' + EinsatzText + '</strong></td>');
+			hAggressiveInvestment.push('<td class="text-center"><strong class="' + GewinnClass + ' td-tooltip" title="' + HTML.i18nTooltip(GewinnTooltip.join('<br>')) + '">' + GewinnText + '</strong></td>');
+			hAggressiveInvestment.push('<td class="text-center"><strong class="' + KursClass + ' td-tooltip" title="' + HTML.i18nTooltip(KursTooltip.join('<br>')) + '">' + KursText + '</strong></td>');
 			hAggressiveInvestment.push('</tr>');
 		}
 
@@ -1036,11 +1037,12 @@ let Calculator = {
         {
 
 			HTML.Box({
-				'id': 'LGInvestmentOverviewBox',
-				'title': i18n('Boxes.LGInvestmentOverviewBox.Title'),
-				'auto_close': true,
-				'dragdrop': true,
-				'speaker': 'CalculatorOverviewTone'
+				id: 'LGInvestmentOverviewBox',
+				title: i18n('Boxes.LGInvestmentOverviewBox.Title'),
+				auto_close: true,
+				dragdrop: true,
+				minimize: true,
+				speaker: 'CalculatorOverviewTone'
 			});
 
 			// CSS in den DOM prügeln
@@ -1080,9 +1082,9 @@ let Calculator = {
 
 		h.push('<span class="color-description">?' +
 					'<span>' +
-						'<span style="color:#FFB539">' + i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundNew') + '</span>' +
-						'<span style="color:#29b206">' + i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundAgain') + '</span>' +
-						'<span style="color:#FF6000">' + i18n('Boxes.LGInvestmentOverviewBox.Tooltip.NoPayment') + '</span>' +
+						'<span style="color:#FFB539">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundNew')) + '</span>' +
+						'<span style="color:#29b206">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundAgain')) + '</span>' +
+						'<span style="color:#FF6000">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.NoPayment')) + '</span>' +
 					'</span>' +
 				'</span>' +
 			'</p>');
@@ -1211,4 +1213,72 @@ let Calculator = {
 
         $('#LGInvestmentOverviewBox').find('#LGInvestmentOverviewBoxBody').html(h.join(''));
 	}
+
+	/*,
+	
+	GetAlerts: ()=> {
+
+		// is alert.js included?
+		if(!Alerts){
+			return ;
+		}
+
+		// fetch all alerts and search the id
+		Alerts.getAll().then((resp)=> {
+			if(resp.length === 0){
+				return ;
+			}
+
+			let currentTime = MainParser.getCurrentDateTime();
+
+			resp.forEach((alert) => {
+				if(alert['data']['category'] === 'looting')
+				{
+					let alertTime = alert['data']['expires'],
+						name = alert['data']['title'],
+						prov = GildFights.MapData['map']['provinces'].find(
+							e => e.title === name && alertTime > currentTime
+						);
+
+					GildFights.Alerts.push(prov['id']);
+				}
+			})
+		});
+	},
+
+
+	SetAlert: (id)=> {
+		let prov = GildFights.MapData['map']['provinces'].find(e => e.id === id);
+
+		GildFights.Alerts.push(id);
+
+		const data = {
+			title: prov.title,
+			body: HTML.i18nReplacer(i18n('Boxes.Gildfights.SaveAlert'), {provinceName: prov.title}),
+			expires: (prov.lockedUntil - 30) * 1000, // -30s * Microtime
+			repeat: -1,
+			persistent: true,
+			tag: '',
+			category: 'gbg',
+			vibrate: false,
+			actions: null
+		};
+
+		MainParser.sendExtMessage({
+			type: 'alerts',
+			playerId: ExtPlayerID,
+			action: 'create',
+			data: data,
+		});
+
+		HTML.ShowToastMsg({
+			head: i18n('Boxes.Gildfights.SaveMessage.Title'),
+			text: HTML.i18nReplacer(i18n('Boxes.Gildfights.SaveMessage.Desc'), {provinceName: prov.title}),
+			type: 'success',
+			hideAfter: 5000
+		});
+
+		$(`#alert-${id}`).html('&#10004;');
+	},*/
+
 };
