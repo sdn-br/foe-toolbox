@@ -427,6 +427,7 @@ let BuildingsReader = {
 			BuildingsReader.IsFriend = BuildingsReader.OtherPlayer.is_friend;
 			BuildingsReader.IsGuildMember = BuildingsReader.OtherPlayer.is_guild_member;
 			BuildingsReader.IsNeighbor = BuildingsReader.OtherPlayer.is_neighbor;
+			BuildingsReader.IsSabotageable = BuildingsReader.OtherPlayer.canSabotage;
 
 			BuildingsReader.IsLootable = (BuildingsReader.IsNeighbor && !BuildingsReader.IsFriend && !BuildingsReader.IsGuildMember && (BuildingsReader.OtherPlayer.next_interaction_in === undefined || BuildingsReader.OtherPlayer.canSabotage));
 			
