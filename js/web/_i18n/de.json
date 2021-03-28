@@ -574,6 +574,7 @@
     "Boxes.Sobotage.Title": "Stadtinformationen",
 	"Boxes.Sabotage.AlreadySetAlarm": "Alarm &#10004;",
     "Boxes.Sabotage.AttackingArmy": "Angriffsarmee",
+    "Boxes.Sabotage.CanSabotage": "Der Spieler kann bis __nextattacktime__ geplündert werden.",
     "Boxes.Sabotage.DefendingArmy": "Verteidigungsarmee",
     "Boxes.Sabotage.Attack": "Angriff",
     "Boxes.Sabotage.Defense": "Verteidigung",

@@ -61,6 +61,7 @@ let BuildingsReader = {
 	CityEntities: [],
 	ArmyBoosts: [],
 	IsLootable: false,
+	IsSabotageable: false,
 	
 	/**
 	 * Die Gebäude ermitteln
@@ -79,7 +80,7 @@ let BuildingsReader = {
 		BuildingsReader.IsFriend = BuildingsReader.OtherPlayer.is_friend;
 		BuildingsReader.IsGuildMember = BuildingsReader.OtherPlayer.is_guild_member;
 		BuildingsReader.IsNeighbor = BuildingsReader.OtherPlayer.is_neighbor;
-
+		BuildingsReader.IsSabotageable = BuildingsReader.OtherPlayer.canSabotage;
 		BuildingsReader.IsLootable = (BuildingsReader.IsNeighbor && !BuildingsReader.IsFriend && !BuildingsReader.IsGuildMember && (BuildingsReader.OtherPlayer.next_interaction_in === undefined || BuildingsReader.OtherPlayer.canSabotage));
 
 		// Werte des letzten Nachbarn löschen
@@ -181,7 +182,7 @@ let BuildingsReader = {
 					BoostDict[BoostType] |= 0;
 					BoostDict[BoostType] += BoostValue;
 					//if (BoostType === 'att_boost_attacker' || BoostType === 'military_boost' || BoostType === 'advanced_tactics') {
-					//	console.log(MainParser.CityEntities[Building['cityentity_id']].name + ' ' + BoostType + '_ ' + BoostValue + '%');
+					//		(MainParser.CityEntities[Building['cityentity_id']].name + ' ' + BoostType + '_ ' + BoostValue + '%');
 					//}
 				}
 			}
@@ -227,16 +228,20 @@ let BuildingsReader = {
 
 		h.push('</span>');
 		h.push('</strong></p>');
-		if (!BuildingsReader.IsLootable && Settings.GetSetting('ShowNeighborsLootables'))
+		if ((!BuildingsReader.IsLootable || BuildingsReader.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables'))
 		{
+			let nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds');
 			if (BuildingsReader.IsGuildMember || BuildingsReader.IsFriend || !BuildingsReader.IsNeighbor) {
 				let MsgType = (BuildingsReader.IsGuildMember ? 'NoAttackGuildMember' : (BuildingsReader.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'))
 				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.'+MsgType)}</strong></p>`);
+			} else if (BuildingsReader.IsSabotageable) {
+				h.push(`<p class="success"><strong>${HTML.i18nReplacer(i18n('Boxes.Sabotage.CanSabotage'), {
+					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')
+				})}</strong></p>`);
 			} else {
-				let nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds');
 				h.push(`<p class="error"><strong>${HTML.i18nReplacer(i18n('Boxes.Sabotage.NextAttackTimeInfo'), {
-					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')}
-				)}</strong>`);
+					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')
+				})}</strong>`);
 				
 				if (await BuildingsReader.GetAlert(BuildingsReader.OtherPlayer.player_id) === undefined) {
 					h.push(`  <button class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}"  onclick="BuildingsReader.SetAlert(${BuildingsReader.OtherPlayer.player_id}, ${nextAttackTime.unix()})">${i18n('Boxes.Sabotage.SetAlarm')}</button>`);
