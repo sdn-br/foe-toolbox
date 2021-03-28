@@ -21,4 +21,4 @@ Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mi
 
 fertig!
 
-Dies ist ein Open Source Projekt unter der [AGPLv3 Lizenz](LICENSE.md)._
+_Dies ist ein Open Source Projekt unter der [AGPLv3 Lizenz](LICENSE.md)._
