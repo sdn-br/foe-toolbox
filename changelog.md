@@ -1,5 +1,20 @@
 ## Changelog - Extension
 
+##### 1.9.1.0
+**Neu**
+- Menü
+	- Neuer Menüeintrag für die Stadtinformationen von anderen Spielern (Plünderhilfe)
+- Plünderhilfe
+	- Nach erfolgreicher Plünderung kann jetzt einfach direkt ein entsprechender Alarm für den nächsten Besuch eingestellt werden
+	
+**Update**
+- Plünderhilfe
+	- Die Plünderhilfe aktualisiert sich jetzt automatisch nach der Plünderung
+	
+**Bugfix**
+- Plünderhilfe
+	- Beim Start des Angriffs wurde das Informationsfenster immer geschlossen. Das Fenster bleibt jetzt geöffnet.
+
 ##### 1.9.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.3 migriert

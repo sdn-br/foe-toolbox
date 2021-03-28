@@ -37,11 +37,14 @@ let UnimportantProds = [
 	'money'     // Münzen
 ];
 
-FoEproxy.addHandler('ArmyUnitManagementService', 'getArmyInfo', (data, postData) => {
+/*FoEproxy.addHandler('ArmyUnitManagementService', 'getArmyInfo', (data, postData) => {
+	console.log(data);
 	$('#sabotageInfo').remove();
+});*/
+
+FoEproxy.addHandler('OtherPlayerService', 'updatePlayer', (data, postData) => {
+	BuildingsReader.UpdatePlayer(data.responseData[0]);	
 });
-
-
 /**
  *
  * @type {{data: {}, CityEntities: [], ShowFunction: BuildingsReader.ShowFunction, OtherPlayersBuildings: BuildingsReader.OtherPlayersBuildings, player_name: string, showResult: BuildingsReader.showResult}}
@@ -189,7 +192,7 @@ let BuildingsReader = {
 	/**
 	 *  HTML Box anzeigen
 	 */
-	showResult: () => {
+	showResult: async() => {
 		// let d = helper.arr.multisort(BuildingsReader.data, ['name'], ['ASC']);
 		let rd = helper.arr.multisort(BuildingsReader.data.ready, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']);
 		
@@ -230,9 +233,17 @@ let BuildingsReader = {
 				let MsgType = (BuildingsReader.IsGuildMember ? 'NoAttackGuildMember' : (BuildingsReader.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'))
 				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.'+MsgType)}</strong></p>`);
 			} else {
+				let nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds');
 				h.push(`<p class="error"><strong>${HTML.i18nReplacer(i18n('Boxes.Sabotage.NextAttackTimeInfo'), {
-					nextattacktime: moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds').format('DD.MM.YYYY HH:mm:ss')}
-				)}`);
+					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')}
+				)}</strong>`);
+				
+				if (await BuildingsReader.GetAlert(BuildingsReader.OtherPlayer.player_id) === undefined) {
+					h.push(`  <button class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}"  onclick="BuildingsReader.SetAlert(${BuildingsReader.OtherPlayer.player_id}, ${nextAttackTime.unix()})">${i18n('Boxes.Sabotage.SetAlarm')}</button>`);
+				} else {
+					h.push(`  <button disabled class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}">${i18n('Boxes.Sabotage.AlreadySetAlarm')}</button>`);
+				}
+				h.push('</p>');
 			}
 		}
 		
@@ -401,6 +412,75 @@ let BuildingsReader = {
 				target.addClass('pulsate');
 			}, 200);
 		}
+	},
+	
+	UpdatePlayer: (ud) => {
+		if (ud.player_id = BuildingsReader.OtherPlayer.player_id) {
+		
+			BuildingsReader.OtherPlayer = ud;
+
+			BuildingsReader.IsFriend = BuildingsReader.OtherPlayer.is_friend;
+			BuildingsReader.IsGuildMember = BuildingsReader.OtherPlayer.is_guild_member;
+			BuildingsReader.IsNeighbor = BuildingsReader.OtherPlayer.is_neighbor;
+
+			BuildingsReader.IsLootable = (BuildingsReader.IsNeighbor && !BuildingsReader.IsFriend && !BuildingsReader.IsGuildMember && (BuildingsReader.OtherPlayer.next_interaction_in === undefined || BuildingsReader.OtherPlayer.canSabotage));
+			
+			if ($('#sabotageInfo').is(':visible')) {
+					BuildingsReader.showResult();
+			}
+		}
+	},
+	
+	
+	GetAlert: async(PlayerID)=> {
+
+		// is alert.js included?
+		if(!Alerts){
+			return ;
+		}
+
+		// fetch all alerts and search the id
+		return Alerts.getAll().then((resp)=> {
+			if(resp.length === 0){
+				return ;
+			}
+
+			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === PlayerDict[PlayerID]['PlayerName'] && alert['data']['expires'] > MainParser.getCurrentDateTime());
+		});
+	},
+
+
+	SetAlert: (PlayerID, nextAttackTime)=> {
+		let title = PlayerDict[PlayerID]['PlayerName'];
+		const data = {
+			title: title,
+			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), {playerName: title}),
+			expires: (nextAttackTime - 30) * 1000, // -30s * Microtime
+			repeat: -1,
+			persistent: true,
+			tag: '',
+			category: 'sabotage',
+			vibrate: false,
+			actions: null
+		};
+
+		MainParser.sendExtMessage({
+			type: 'alerts',
+			playerId: ExtPlayerID,
+			action: 'create',
+			data: data,
+		});
+
+		HTML.ShowToastMsg({
+			head: i18n('Boxes.Sabotage.SaveMessage.Title'),
+			text: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveMessage.Desc'), {playerName: title}),
+			type: 'success',
+			hideAfter: 5000
+		});
+
+		$(`#alert-sabotage-${PlayerID}`).html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
+		$(`#alert-sabotage-${PlayerID}`).prop('onclick', null);
+		$(`#alert-sabotage-${PlayerID}`).attr('disabled', '');
 	}
 };
 

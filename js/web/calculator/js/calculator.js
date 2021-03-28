@@ -16,7 +16,6 @@
 
 let Calculator = {
 
-	Alerts: [],
 	ForderBonus: 90,
     SoundFile: new Audio(extUrl + 'vendor/sounds/message.mp3'),
     PlayerName: undefined,
@@ -1213,72 +1212,4 @@ let Calculator = {
 
         $('#LGInvestmentOverviewBox').find('#LGInvestmentOverviewBoxBody').html(h.join(''));
 	}
-
-	/*,
-	
-	GetAlerts: ()=> {
-
-		// is alert.js included?
-		if(!Alerts){
-			return ;
-		}
-
-		// fetch all alerts and search the id
-		Alerts.getAll().then((resp)=> {
-			if(resp.length === 0){
-				return ;
-			}
-
-			let currentTime = MainParser.getCurrentDateTime();
-
-			resp.forEach((alert) => {
-				if(alert['data']['category'] === 'looting')
-				{
-					let alertTime = alert['data']['expires'],
-						name = alert['data']['title'],
-						prov = GildFights.MapData['map']['provinces'].find(
-							e => e.title === name && alertTime > currentTime
-						);
-
-					GildFights.Alerts.push(prov['id']);
-				}
-			})
-		});
-	},
-
-
-	SetAlert: (id)=> {
-		let prov = GildFights.MapData['map']['provinces'].find(e => e.id === id);
-
-		GildFights.Alerts.push(id);
-
-		const data = {
-			title: prov.title,
-			body: HTML.i18nReplacer(i18n('Boxes.Gildfights.SaveAlert'), {provinceName: prov.title}),
-			expires: (prov.lockedUntil - 30) * 1000, // -30s * Microtime
-			repeat: -1,
-			persistent: true,
-			tag: '',
-			category: 'gbg',
-			vibrate: false,
-			actions: null
-		};
-
-		MainParser.sendExtMessage({
-			type: 'alerts',
-			playerId: ExtPlayerID,
-			action: 'create',
-			data: data,
-		});
-
-		HTML.ShowToastMsg({
-			head: i18n('Boxes.Gildfights.SaveMessage.Title'),
-			text: HTML.i18nReplacer(i18n('Boxes.Gildfights.SaveMessage.Desc'), {provinceName: prov.title}),
-			type: 'success',
-			hideAfter: 5000
-		});
-
-		$(`#alert-${id}`).html('&#10004;');
-	},*/
-
 };

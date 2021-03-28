@@ -848,7 +848,7 @@ let GildFights = {
 		Alerts.getAll().then((resp)=> {
 			if(resp.length === 0){
 				return ;
-	}
+			}
 
 			let currentTime = MainParser.getCurrentDateTime();
 

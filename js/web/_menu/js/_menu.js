@@ -40,6 +40,7 @@ let _menu = {
 		'campagneMap',
 		'citymap',
 		'unit',
+		'sabotage',
 		'looting',
 		'settings',
 		'stats',
@@ -498,6 +499,27 @@ let _menu = {
 	},
 
   	/**
+	 * Looting actions
+	 * @returns {*|jQuery}
+	 */
+	sabotage_Btn: () => {
+		let btn_SabotageBG = $('<div />').attr({ 'id': 'sabotage-Btn', 'data-slug': 'sabotage' }).addClass('hud-btn hud-btn-red');
+
+		_menu.toolTippBox(i18n('Menu.Sabotage.Title'), '<em id="sabotage-Btn-closed" class="tooltip-error">' + i18n('Menu.Sabotage.Warning') + '<br></em>' + i18n('Menu.Sabotage.Desc'), 'sabotage-Btn');
+		
+		let btn_Sabotage = $('<span />');
+
+		btn_Sabotage.on('click', function () {
+      		BuildingsReader.showResult();
+		});
+
+		btn_SabotageBG.append(btn_Sabotage);
+
+		return btn_SabotageBG;
+	},
+
+
+	/**
 	 * Looting actions
 	 * @returns {*|jQuery}
 	 */

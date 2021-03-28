@@ -1023,8 +1023,11 @@ const FoEproxy = (function () {
 	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
 			BuildingsReader.OtherPlayersBuildings(data.responseData);
+			$('#sabotage-Btn').removeClass('hud-btn-red');
+			$('#sabotage-Btn-closed').remove();
 		}
 		else {
+			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
 			$('#sabotageInfo').remove();
 		}
 	});

@@ -434,6 +434,10 @@ p {
 	background-image: url('../images/menu/units.png');
 }
 
+#sabotage-Btn span {
+	background-image: url('../images/menu/sabotage.png');
+}
+
 #looting-Btn span {
 	background-image: url('../images/menu/looting.png');
 }
