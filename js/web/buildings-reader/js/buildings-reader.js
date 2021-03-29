@@ -358,16 +358,16 @@ let BuildingsReader = {
 
 			for (let i in rd) {
 				if (rd.hasOwnProperty(i)) {
-					h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : 'success'}">`);
-					h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
-					h.push(`<td${!BuildingsReader.IsLootable ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
+					h.push(`<tr class="${!BuildingsReader.IsLootable || isShielded ? 'bg-red' : 'success'}">`);
+					h.push(`<td${!BuildingsReader.IsLootable || isShielded ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
+					h.push(`<td${!BuildingsReader.IsLootable || isShielded ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
 					h.push('<td><span class="show-entity" data-id="' + rd[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
 					h.push('</tr>');
 				}
 			}
 
 			if (rd.length == 0) {
-				h.push(`<tr class="${!BuildingsReader.IsLootable ? 'bg-red' : ''}">`);
+				h.push(`<tr class="${!BuildingsReader.IsLootable || isShielded ? 'bg-red' : ''}">`);
 				h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
 				h.push('</tr>');					
 			}
