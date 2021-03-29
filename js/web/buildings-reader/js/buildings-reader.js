@@ -60,6 +60,7 @@ let BuildingsReader = {
 	IsNeighbor: false,
 	CityEntities: [],
 	ArmyBoosts: [],
+	PlunderRepel :0,
 	IsLootable: false,
 	IsSabotageable: false,
 	
@@ -98,7 +99,7 @@ let BuildingsReader = {
         BuildingsReader.CityEntities = d;      
 
 		let BoostDict = [];
-        for (let i in d) {
+		for (let i in d) {
 			if (d.hasOwnProperty(i)) {
 			let id = d[i]['cityentity_id'];
 
@@ -117,6 +118,7 @@ let BuildingsReader = {
 					for (let ability in BuildingData['abilities']) {
 						if (!BuildingData['abilities'].hasOwnProperty(ability))  continue;
 						let CurrentAbility = BuildingData['abilities'][ability];
+						
 						if (CurrentAbility['boostHints'] !== undefined) {
 							for (let boostHint in CurrentAbility['boostHints']) {
 								if (!CurrentAbility['boostHints'].hasOwnProperty(boostHint)) continue;
@@ -157,6 +159,7 @@ let BuildingsReader = {
 		}
 
 		BuildingsReader.ArmyBoosts = Unit.GetBoostSums(BoostDict);
+		BuildingsReader.PlunderRepel = BoostDict['plunder_repel'];
 
 		BuildingsReader.showResult();
 	},
@@ -228,27 +231,50 @@ let BuildingsReader = {
 
 		h.push('</span>');
 		h.push('</strong></p>');
-		if ((!BuildingsReader.IsLootable || BuildingsReader.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables'))
+		
+		let shieldTime = await BuildingsReader.GetActiveShield(BuildingsReader.OtherPlayer.player_id);
+		let isShielded = (shieldTime !== undefined);
+		
+		if ((!BuildingsReader.IsLootable || isShielded || BuildingsReader.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables'))
 		{
-			let nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds');
 			if (BuildingsReader.IsGuildMember || BuildingsReader.IsFriend || !BuildingsReader.IsNeighbor) {
 				let MsgType = (BuildingsReader.IsGuildMember ? 'NoAttackGuildMember' : (BuildingsReader.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'))
 				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.'+MsgType)}</strong></p>`);
-			} else if (BuildingsReader.IsSabotageable) {
-				h.push(`<p class="success"><strong>${HTML.i18nReplacer(i18n('Boxes.Sabotage.CanSabotage'), {
-					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')
-				})}</strong></p>`);
 			} else {
-				h.push(`<p class="error"><strong>${HTML.i18nReplacer(i18n('Boxes.Sabotage.NextAttackTimeInfo'), {
-					nextattacktime: nextAttackTime.format('DD.MM.YYYY HH:mm:ss')
-				})}</strong>`);
+				let nextInteractionTime,
+					nextAttackTime,
+				    textClass,
+				    i18nId,
+					alertAvailable,
+					buttonAction,
+					buttonI18nId,
+					alertButtonDisabled;
+					
+				nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(BuildingsReader.OtherPlayer.next_interaction_in, 'seconds');
+				alertAvailable = (await BuildingsReader.GetAlert(BuildingsReader.OtherPlayer.player_id) !== undefined);
+				alertButtonDisabled = (alertAvailable ? ' disabled' : ''); 
+				buttonI18nId = (!alertAvailable ? 'Boxes.Sabotage.SetAlarm' : 'Boxes.Sabotage.AlreadySetAlarm'); 
 				
-				if (await BuildingsReader.GetAlert(BuildingsReader.OtherPlayer.player_id) === undefined) {
-					h.push(`  <button class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}"  onclick="BuildingsReader.SetAlert(${BuildingsReader.OtherPlayer.player_id}, ${nextAttackTime.unix()})">${i18n('Boxes.Sabotage.SetAlarm')}</button>`);
+				if (BuildingsReader.IsSabotageable) {
+					textClass = 'success';
+					i18nId = 'Boxes.Sabotage.CanSabotage';
+					nextInteractionTime = nextAttackTime;
+				} else if (isShielded) {
+					textClass = 'error';
+					i18nId = 'Boxes.Sabotage.NextAttackTimeInfoShielded';
+					nextInteractionTime = shieldTime;
 				} else {
-					h.push(`  <button disabled class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}">${i18n('Boxes.Sabotage.AlreadySetAlarm')}</button>`);
+					textClass = 'error';
+					i18nId = 'Boxes.Sabotage.NextAttackTimeInfo';
+					nextInteractionTime = nextAttackTime;
 				}
-				h.push('</p>');
+				
+				buttonAction = (!alertAvailable ? ` onclick="BuildingsReader.SetAlert(${BuildingsReader.OtherPlayer.player_id}, ${nextInteractionTime.unix()})"` : ''); 
+				
+				h.push(`<p class="${textClass}"><strong>${HTML.i18nReplacer(i18n(i18nId), {
+					nextattacktime: nextInteractionTime.format('DD.MM.YYYY HH:mm:ss')
+				})}</strong> <button${alertButtonDisabled} class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${BuildingsReader.OtherPlayer.player_id}"${buttonAction}>${i18n(buttonI18nId)}</button></p>`);
+				
 			}
 		}
 		
@@ -301,12 +327,14 @@ let BuildingsReader = {
 			h.push('<tr>');
 			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
 			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
+			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.PlunderRepel')}</strong></th>`);
 			h.push('</tr>');
 			h.push('</thead>');
 			h.push('<tbody>');
 			h.push('<tr>');
 			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseAttackBoost}%</strong></td>`);
 			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseDefenseBoost}% (max ${boosts.DefenseDefenseBoost + 60}%)</strong></td>`);
+			h.push(`<td class="text-center army-boost"><strong>${BuildingsReader.PlunderRepel}%</strong></td>`);
 			h.push('</tr>');
 			h.push('</tbody>');
 			h.push('</table>');
@@ -438,7 +466,18 @@ let BuildingsReader = {
 	},
 	
 	
-	GetAlert: async(PlayerID)=> {
+	GetActiveShield: async(PlayerID) => {
+		let lastShieldAction = await IndexDB.db.neighborhoodAttacks.where({playerId: PlayerID}).and(it => it.type === Looting.ACTION_TYPE_SHIELDED).last();
+		if (!lastShieldAction) { return; }
+		let shieldTime = moment.unix(lastShieldAction.expireTime);
+		if (shieldTime.isBefore(moment())) {
+			return;
+		}
+		return shieldTime;
+	},
+
+
+	GetAlert: async(PlayerID) => {
 
 		// is alert.js included?
 		if(!Alerts){
@@ -454,13 +493,12 @@ let BuildingsReader = {
 			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === PlayerDict[PlayerID]['PlayerName'] && alert['data']['expires'] > MainParser.getCurrentDateTime());
 		});
 	},
-
-
+	
 	SetAlert: (PlayerID, nextAttackTime)=> {
 		let title = PlayerDict[PlayerID]['PlayerName'];
 		const data = {
 			title: title,
-			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), {playerName: title}),
+			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), {playerName: title, nextattacktime: moment.unix(nextAttackTime).format('DD.MM.YYYY HH:mm:ss')}),
 			expires: (nextAttackTime - 30) * 1000, // -30s * Microtime
 			repeat: -1,
 			persistent: true,

@@ -37,7 +37,7 @@
 #sabotageInfo {
 	left: calc(50vw - 250px);
 	top: calc(50vh - 220px);
-	min-width: 500px;
+	min-width: 550px;
 	max-width: 600px;
 }
 

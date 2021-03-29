@@ -1825,6 +1825,8 @@ let MainParser = {
 		});
 
 		Infoboard.Init();
+		TimeManager.start();
+		Alerts.init();
 	},
 
 

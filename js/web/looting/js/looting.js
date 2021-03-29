@@ -256,7 +256,7 @@ let Looting = {
 		const {entityId, playerId} = payload;
 		if (!entityId || !playerId) { return; }
 
-    await IndexDB.getDB();
+		await IndexDB.getDB();
 
 		await IndexDB.db.transaction('rw', IndexDB.db.neighborhoodAttacks, async () => {
 			// Fetch last loot action that happen just few seconds ago (1 minute ago)
