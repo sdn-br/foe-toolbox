@@ -1,5 +1,17 @@
 ## Changelog - Extension
 
+##### 1.9.2.0
+**Update**
+- Plünderhilfe
+    - Ein Stadtschild wird jetzt erkannt und entsprechend angezeigt
+    - Alarme können jetzt in allen Fällen gesetzt werden
+    - Plünderabwehr (z.B. durch Galataturm) wird jetzt angezeigt
+	
+**Bugfix**
+- Alarme
+    - Die Garbage Collection der Alarme funktioniert jetzt
+
+
 ##### 1.9.1.0
 **Neu**
 - Menü
@@ -14,6 +26,7 @@
 **Bugfix**
 - Plünderhilfe
 	- Beim Start des Angriffs wurde das Informationsfenster immer geschlossen. Das Fenster bleibt jetzt geöffnet.
+
 
 ##### 1.9.0.0
 **FoE-Helfer**
