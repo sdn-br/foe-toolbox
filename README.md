@@ -1,7 +1,7 @@
 ## FoE Toolbox
 **Fork der Chrome Erweiterung FoE Helfer. Ich werde hier bis auf Weiteres immer wieder neue Versionen anbieten und interessante Änderungen aus dem Original migrieren.**
 
-Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mit einigen Features, die es nicht in den FoE Helfer schaffen werden bzw. dort nicht mehr vorhanden sind. Die FoE Toolbox Entwicklung findet unabhängig statt und steht in keiner Beziehung zum FoE Helfer.
+Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mit einigen Features, die es nicht in den FoE Helfer schaffen werden bzw. dort nicht mehr vorhanden sind. Die FoE Toolbox Entwicklung findet unabhängig vom FoE Helfer statt, ist nicht mit dem FoE Helfer Team abgestimmt und steht auch sonst in keiner Beziehung zum FoE Helfer. Ich behalte mir aber vor, weiterhin den frei verfügbaren Quellcode des FoE Helfers als Basis für die FoE Toolbox zu verwenden.
 
 **Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr!**
 
