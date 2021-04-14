@@ -1,5 +1,11 @@
 ## Changelog - Extension
 
+##### 1.9.3.0
+**Bugfix**
+- Plünderhilfe
+    - Anzeige bei nicht vorhandener Plünderabwehr korrigiert
+
+
 ##### 1.9.2.0
 **Update**
 - Plünderhilfe
