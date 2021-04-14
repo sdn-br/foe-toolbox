@@ -120,6 +120,7 @@
 				const extID='${chrome.runtime.id}',
 					extUrl='${chrome.extension.getURL('')}',
 					GuiLng='${lng}',
+					extBaseVersion='2.5.6.3',
 					extVersion='${v}',
 					devMode=false;
 			`;

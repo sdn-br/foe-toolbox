@@ -354,7 +354,7 @@ alertsDB.version(1).stores({
 		// @ts-ignore
 		const askText = ask[lng];
 		// No developer and player ask if the game can be reloaded
-		if(!isDevMode() && confirm(unescape(askText)) === true){
+		if(confirm(unescape(askText)) === true){
 			browser.tabs.query({active: true, currentWindow: true}).then((tabs)=> {
 				// are we in FoE?
 				if(tabs[0].url && tabs[0].url.indexOf('forgeofempires.com/game/index') > -1){
@@ -365,7 +365,7 @@ alertsDB.version(1).stores({
 			});
 
 			browser.tabs.create({
-				url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog`
+				url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
 			});
 		}
 	});

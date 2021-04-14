@@ -822,7 +822,7 @@
     "Menu.RightBar": "Rechts",
     "Menu.Sabotage.Desc": "Angriffs- und Verteidigungswerte einsehen, Stadtplan aufrufen und aktuelle Ernte einsehen",
     "Menu.Sabotage.Title": "Stadtinformationen",
-	"Menu.Sabotage.Warning": "Bitte zuerst die Stadt eines anderen Spielers öffnen!",
+	"Menu.Sabotage.Warning": "Öffne zuerst die Stadt eines anderen Spielers!",
     "Menu.SaveMessage.Desc": "Die neue Menü-Reihenfolge wurde gespeichert",
     "Menu.SaveMessage.Title": "Gespeichert!",
     "Menu.Settings.Desc": "Hier stellst du ein paar Kleinigkeiten ein",

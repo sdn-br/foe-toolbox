@@ -510,7 +510,7 @@ let _menu = {
 		let btn_Sabotage = $('<span />');
 
 		btn_Sabotage.on('click', function () {
-      		BuildingsReader.showResult();
+      		Sabotage.showResult();
 		});
 
 		btn_SabotageBG.append(btn_Sabotage);

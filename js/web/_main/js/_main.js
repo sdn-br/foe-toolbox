@@ -1022,7 +1022,7 @@ const FoEproxy = (function () {
 
 	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
-			BuildingsReader.OtherPlayersBuildings(data.responseData);
+			Sabotage.OtherPlayersBuildings(data.responseData);
 			$('#sabotage-Btn').removeClass('hud-btn-red');
 			$('#sabotage-Btn-closed').remove();
 		}
@@ -1851,7 +1851,7 @@ let MainParser = {
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
-			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extVersion}`,
+			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extBaseVersion}`,
 			data: JSON.stringify(data)
 		});
 	},
