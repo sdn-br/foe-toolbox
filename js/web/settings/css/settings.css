@@ -92,7 +92,7 @@
 	flex-direction: row;
 	flex-wrap: wrap;
 	justify-content: flex-end;
-	width: 173px;
+	width: 200px;
 	user-select: text;
 }
 
@@ -100,7 +100,7 @@
 	width: 86px;
 }
 #SettingsBoxBody .item-row dl dd {
-	width: 86px;
+	width: 114px;
 	margin-inline-start: 0;
 }
 

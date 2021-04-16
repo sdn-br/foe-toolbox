@@ -231,7 +231,8 @@ alertsDB.version(1).stores({
 					// @ts-ignore
 					contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://"),
 					iconUrl: '/images/app128.png',
-					eventTime: alert.data.expires
+					eventTime: alert.data.expires,
+					requireInteraction: alert.data.persistent
 				}
 			);
 		}
@@ -476,7 +477,7 @@ alertsDB.version(1).stores({
 
 					// Deaktiviere die standard behandlung durch die entfernung der id
 					delete alert.id;
-					await Alerts.trigger(alert)
+					await Alerts.trigger(alert);
 					return APIsuccess(true);
 				}
 
@@ -644,7 +645,6 @@ alertsDB.version(1).stores({
 
 		case 'send2Api': { // type
 			let xhr = new XMLHttpRequest();
-
 			xhr.open('POST', request.url);
 			xhr.setRequestHeader('Content-Type', 'application/json');
 			xhr.send(request.data);

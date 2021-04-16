@@ -166,6 +166,28 @@ let HTML = {
 			min.insertAfter(title);
 		}
 
+		if(args['dragdrop']) {
+			let set = $('<span />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
+			set.insertAfter(title);
+			let draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
+			if (draggable == null) { draggable = true; }
+			if (!draggable) {
+				set.addClass('deactivated');
+			}
+			set.bind('click', function(){
+				draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
+				if (draggable == null) { draggable = true; }
+				if(draggable === true)
+				{
+					set.addClass('deactivated');
+				}
+				else {
+					set.removeClass('deactivated');
+				}
+				HTML.DragBox($(`#${args['id']}`).get(0), true, true);
+			});
+		}
+
 		// insert a wrench icon
 		// set a click event on it
 		if(args['settings']){
@@ -364,26 +386,44 @@ let HTML = {
 		});
 	},
 
-
 	/**
 	 * Makes an HTML BOX Dragable
 	 *
 	 * @param el
 	 * @param save
+	 * @param toggle
 	 */
-	DragBox: (el, save = true)=> {
+	DragBox: (el, save = true, toggle = false) => {
 
 		document.getElementById(el.id + "Header").removeEventListener("pointerdown", dragMouseDown);
 
-		let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, top = 0, left = 0, id;
+		let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, top = 0, left = 0, id, draggable;
+		toggle = !!toggle;
 
 		id = el.id;
 
+		draggable = JSON.parse(localStorage.getItem(el.id + 'Draggable'));
+		if (draggable == null) { draggable = true; }
+		if (!!toggle) { draggable = !draggable;	}
+		
+		if (draggable) {
 		if (document.getElementById(el.id + "Header")) {
 			document.getElementById(el.id + "Header").onpointerdown = dragMouseDown;
 		} else {
 			el.onpointerdown = dragMouseDown;
 		}
+		} else {
+			if (document.getElementById(el.id + "Header")) {
+				document.getElementById(el.id + "Header").onpointerdown = null;
+			} else {
+				el.onpointerdown = null;
+			}
+		}
+
+		if (toggle) {
+			localStorage.setItem(id + 'Draggable', JSON.stringify(draggable));
+		}
+
 
 		function dragMouseDown(e) {
 			e = e || window.event;

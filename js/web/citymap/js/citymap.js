@@ -437,6 +437,10 @@ let CityMap = {
 	 */
 	SubmitData: ()=> {
 
+		if (!window.confirm(i18n('Boxes.CityMap.SendDoubleOptIn'))) {
+			return;
+		}
+
 		let d = {
 			entities: MainParser.CityMapData,
 			areas: CityMap.UnlockedAreas,

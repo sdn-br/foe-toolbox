@@ -1,7 +1,7 @@
 /*
  * **************************************************************************************
  *
- * Dateiname:                 buildings-reader.js (Original Name: read-buildings.js)
+ * Dateiname:                 sabotage.js (Original Name: read-buildings.js)
  * Projekt:                   foe-chrome
  *
  * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
@@ -53,6 +53,7 @@ let Sabotage = {
 
 	data: {},
 	OtherPlayer: undefined,
+	PlayerId: undefined,
 	PlayerName: undefined,
 	ClanName: undefined,
 	IsFriend: false,
@@ -86,8 +87,8 @@ let Sabotage = {
 
 		// Werte des letzten Nachbarn löschen
 		CityMap.CityData = null;
-
-		let PlayerID = Sabotage.OtherPlayer.player_id;
+		Sabotage.PlayerId = Sabotage.OtherPlayer.player_id;
+		let PlayerID = Sabotage.PlayerId;
 
 		Sabotage.PlayerName = PlayerDict[PlayerID]['PlayerName'];
 		Sabotage.ClanName = PlayerDict[PlayerID]['ClanName'];
@@ -215,7 +216,7 @@ let Sabotage = {
 			});
 
 			// CSS in den DOM prügeln
-			HTML.AddCssFile('buildings-reader');
+			HTML.AddCssFile('sabotage');
 		}
 
 		let div = $('#sabotageInfo'),
@@ -525,7 +526,7 @@ let Sabotage = {
 		$(`#alert-sabotage-${PlayerID}`).html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
 		$(`#alert-sabotage-${PlayerID}`).prop('onclick', null);
 		$(`#alert-sabotage-${PlayerID}`).attr('disabled', '');
-	}
+	},
 };
 
 

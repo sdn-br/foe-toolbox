@@ -111,6 +111,7 @@ let Settings = {
 				let d = grps[x],
 					status = d['status'],
 					button = d['button'],
+					doubleoptin = !!d['doubleoptin'],
 					c = $('<div />').addClass('item'),
 					cr = $('<div />').addClass('item-row'),
 					ct = $('<h2 />'),
@@ -155,6 +156,7 @@ let Settings = {
 				if (status) {
 					cs.find('input.setting-check').attr('checked', '');
 				}
+				cs.find('input.setting-check').addClass(doubleoptin ? 'doubleoptin' : '');
 				cs.find('.check').addClass(status ? '' : 'unchecked');
 				cs.find('.toogle-word').text(status ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive'));
 
@@ -202,6 +204,13 @@ let Settings = {
 	StoreSettings: (el, changeText = true) => {
 		let id = $(el).data('id'),
 			v = $(el).prop('checked');
+
+		if ($(el).hasClass('doubleoptin') && v === true) {
+			if (!window.confirm(i18n(`Settings.${id}.DoubleOptIn`))) {
+				$(el).prop('checked', false);
+				return;
+			}
+		}
 
 		localStorage.setItem(id, v);
 
@@ -256,9 +265,10 @@ let Settings = {
 	 */
 	VersionInfo: () => {
 
-		return `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion)}</p>
+		return `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion.replaceAll('.', ''))}</p>
 				<dl class="info-box">
 					<dt>${i18n('Settings.Version.Title')}</dt><dd>${extVersion}</dd>
+					<dt>${i18n('Settings.Version.Base')}</dt><dd>FoE Helfer ${extBaseVersion}</dd>
 					<dt>${i18n('Settings.Version.PlayerId')}</dt><dd>${ExtPlayerID}</dd>
 					<dt>${i18n('Settings.Version.GuildId')}</dt><dd>${ExtGuildID}</dd>
 					<dt>${i18n('Settings.Version.World')}</dt><dd>${ExtWorld}</dd>

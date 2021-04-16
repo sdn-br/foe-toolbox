@@ -159,4 +159,8 @@ let _menu_box = {
 		if ($('#menu_boxBody').has(`div#${buttonId}`))
 			$($('#menu_boxBody').children(`div#${buttonId}`)[0]).show();
 	},
+
+	ToggleDraggable: () => {
+		HTML.DragBox(document.getElementById('menu_box'), true, true);
+	},
 };

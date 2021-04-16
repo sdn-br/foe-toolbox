@@ -25,7 +25,6 @@
 		return new Promise(async (resolve, reject) => {
 			let sc = document.createElement('script');
 			sc.src = src;
-
 			sc.addEventListener('load', function() {
 				this.remove();
 				resolve();
@@ -56,6 +55,11 @@
 
 
 	const v = chrome.runtime.getManifest().version;
+	let bv = chrome.runtime.getManifest().version_name;
+	if (bv != '') {
+		bv = bv.match(/\((\d\.\d\.\d\.\d)\)/);
+		bv = bv != null ? bv = bv[1] : '';
+	}
 
 	let   lng = chrome.i18n.getUILanguage();
 	const uLng = localStorage.getItem('user-language');
@@ -107,7 +111,6 @@
 				css.rel = 'stylesheet';
 				document.head.appendChild(css);
 			}
-
 			clearInterval(tid);
 		}
 	}
@@ -120,7 +123,7 @@
 				const extID='${chrome.runtime.id}',
 					extUrl='${chrome.extension.getURL('')}',
 					GuiLng='${lng}',
-					extBaseVersion='2.5.6.3',
+					extBaseVersion='${bv}',
 					extVersion='${v}',
 					devMode=false;
 			`;
@@ -213,7 +216,7 @@
 				'technologies',
 				'negotiation',
 				'eventchests',
-				'buildings-reader',
+				'sabotage',
 				'settings',
 				'investment',
 				'strategy-points',

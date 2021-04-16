@@ -833,6 +833,7 @@ FP-Bar */
 .game-cursor,
 .game-cursor option,
 .window-minimize,
+.window-dragtoggle,
 .window-settings,
 .window-map,
 .window-close,
@@ -851,6 +852,7 @@ FP-Bar */
 .game-cursor:hover,
 .game-cursor option:hover,
 .window-minimize:hover,
+.window-dragtoggle:hover,
 .window-settings:hover,
 .window-map:hover,
 .window-close:hover,
@@ -867,6 +869,7 @@ FP-Bar */
 .OwnPartBoxBackground .outerArrow:before,
 .OwnPartBoxBackground .outerArrow span.arrow,
 .window-minimize,
+.window-dragtoggle,
 .window-ask,
 .window-settings,
 .window-speaker,
@@ -994,6 +997,26 @@ FP-Bar */
 	background-position: -77px -1px, -28px -26px;
 }
 
+.window-head span.window-dragtoggle {
+	background-position: -220px -2px, -2px -26px;
+	margin-right: 3px;
+	width: 22px;
+	height: 22px;
+	display: inline-block;
+	position: relative;
+}
+
+.window-head span.window-dragtoggle:hover {
+	background-position: -220px -26px, -28px -26px;
+}
+
+.window-head span.window-dragtoggle.deactivated {
+	background-position: -220px -26px, -2px -26px;
+}
+
+.window-head span.window-dragtoggle.deactivated:hover {
+	background-position: -220px -2px, -28px -26px;
+}
 
 .window-head span.window-settings {
 	background-position: -192px -2px, -2px -26px;

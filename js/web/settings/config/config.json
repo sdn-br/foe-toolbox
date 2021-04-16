@@ -2,18 +2,21 @@
 	{
 		"name": "GlobalSend",
 		"status": false,
+		"doubleoptin": true,
 		"group": "Sending",
 		"sort": 0
 	},
 	{
 		"name": "SendGEXInfo",
 		"status": false,
+		"doubleoptin": true,
 		"group": "Sending",
 		"sort": 1
 	},
 	{
 		"name": "SendGildMemberLGInfo",
 		"status": false,
+		"doubleoptin": true,
 		"group": "Sending",
 		"sort": 2
 	},
@@ -26,6 +29,7 @@
 	{
 		"name": "AutomaticNegotiationForGbG",
 		"status": false,
+		"doubleoptin": true,
 		"group": "Boxes",
 		"sort": 2
 	},
@@ -90,22 +94,30 @@
 		"sort": 12
 	},
 	{
-		"name": "ShowNeighborsLootables",
-		"status": false,
+		"name": "ShowMapTradeWarning",
+		"status": true,
 		"group": "Boxes",
 		"sort": 13
-	},
-	{
-		"name": "ShowPlayersAttDeffValues",
-		"status": true,
+	},{
+		"name": "ShowNeighborsLootables",
+		"status": false,
+		"doubleoptin": true,
 		"group": "Boxes",
 		"sort": 14
 	},
 	{
-		"name": "ShowPossibleInvestments",
-		"status": false,
+		"name": "ShowPlayersAttDeffValues",
+		"status": true,
+		"doubleoptin": true,
 		"group": "Boxes",
 		"sort": 15
+	},
+	{
+		"name": "ShowPossibleInvestments",
+		"status": false,
+		"doubleoptin": true,
+		"group": "Boxes",
+		"sort": 16
 	},
 	{
 		"name": "ChangeLanguage",

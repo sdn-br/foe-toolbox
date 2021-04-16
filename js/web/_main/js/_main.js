@@ -611,7 +611,7 @@ const FoEproxy = (function () {
 	FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 
 		window.addEventListener("error", function (e) {
-			console.error(e.error);
+			console.error(e);
 			e.preventDefault();
 		});
 

@@ -1,5 +1,22 @@
 ## Changelog - Extension
 
+##### 1.9.4.0
+**Update**
+- Allgemein
+    - Alle verschiebbaren Fenster können jetzt auch per Button in der Kopfzeile fixiert werden
+- Einstellungen
+    - DoubleOptIn beim Aktivieren einigen Features über die Einstellungen eingebaut
+    - Fehlende Handelsblocker-Option hinzugefügt
+- Gildengefechte
+    - Alarme können jetzt auch per Knopfdruck wieder gelöscht werden.
+- Alarme
+    - Wählt man bei den Alarmen "Bleibt geöffnet" aus, dann verschwinden diese jetzt nicht mehr im Info Center unter Windows.
+
+**Bugfix**
+- Handleswarnung
+    - Die Box war nicht ideal positioniert und es war weiterhin möglich den Button zu klicken
+
+
 ##### 1.9.3.0
 **Bugfix**
 - Plünderhilfe
