@@ -1,14 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 fp-collector.js
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              28.11.20, 21:29 Uhr
- * zuletzt bearbeitet:       28.11.20, 21:25 Uhr
- *
- * Copyright © 2020
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -219,7 +217,7 @@ let FPCollector = {
 			return;
 		}
 
-		FPCollector.buildBody();
+		await FPCollector.buildBody();
 	},
 
 
@@ -248,15 +246,15 @@ let FPCollector = {
 				const sumTotal = await FPCollector.calculateTotalByType(event);
 				const entriesEvent = await StrategyPoints.db['ForgePointsStats'].where({date: FPCollector.currentDateFilter, event: event}).toArray();
 
-				tr.push(`<div class="foetoolbox-accordion ${event}">`);
+				tr.push(`<div class="foehelper-accordion ${event}">`);
 
-				tr.push(	`<div class="foetoolbox-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
+				tr.push(	`<div class="foehelper-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
 								<span class="image"></span>
 								<strong class="text-warning">${sumTotal}</strong>
 								<span>${i18n('Boxes.FPCollector.' + event)}</span>
 							</div>`);
 
-				tr.push(	`<div class="foetoolbox-accordion-body ${event}-body">`);
+				tr.push(	`<div class="foehelper-accordion-body ${event}-body">`);
 
 				 entriesEvent.forEach(e => {
 					 tr.push(`<div>
@@ -279,9 +277,9 @@ let FPCollector = {
 
 
 	/**
- * Handles FP collected from Quests
- * 
- */
+	 * Handles FP collected from Quests
+	 *
+	 */
 	HandleAdvanceQuest: (PostData) => {
 		if (PostData['requestData'] && PostData['requestData'][0]) {
 			let QuestID = PostData['requestData'][0];
@@ -406,7 +404,7 @@ let FPCollector = {
 		let $this = $(`.${event}`),
 			isOpen = $this.hasClass('open');
 
-		$('#fp-collectorBodyInner .foetoolbox-accordion').removeClass('open');
+		$('#fp-collectorBodyInner .foehelper-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

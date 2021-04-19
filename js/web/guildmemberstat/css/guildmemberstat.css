@@ -1,14 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 guildmemberstat.css
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              24.02.21, 09:49 Uhr
- * zuletzt bearbeitet:       24.02.21, 09:47 Uhr
- *
- * Copyright © 2021
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -200,6 +198,10 @@
     position: relative
 }
 
+#GuildMemberStatBody table tr td.dark {
+    background-color: var(--black-50) !important;
+}
+
 #GuildMemberStatBody table tr td.increased:after {
     content: '';
     position: absolute;
@@ -371,8 +373,6 @@
 }
 
 #GuildMemberStat #gms-filter-input {
-    width: 30%;
-    float: right;
     background-color: var(--background-light);
     font-size: 1rem;
     padding: 3px 5px;
@@ -411,4 +411,48 @@
 
 #GuildMemberStat tr.nohover:hover {
     background-color: var(--background-table-odd);
+}
+
+#GuildMemberStat .goods-sprite-50.sm {
+    width: 25px;
+    height: 19px;
+    vertical-align: middle;
+}
+
+#GuildMemberStat .goods-sprite-50.sm::before {
+    zoom: 0.7;
+    overflow: hidden;
+    position: static;
+    display: inline-block;
+}
+
+#GuildMemberStat .goods-count {
+    font-size: 0.8em;
+}
+
+#GuildMemberStat td.goods-image {
+    padding: 0;
+    width: 25px;
+    text-align: center;
+}
+
+#GuildMemberStat #TreasuryGoodsTable tbody tr td:first-child {
+    white-space: nowrap;
+}
+
+#GuildMemberStat #TreasuryGoodsTable tbody tr td.dark {
+    background-color: var(--black-50) !important;
+}
+
+#GuildMemberStat #TreasuryGoodsTable tbody tr td.detail {
+    width: 50%;
+    padding: 0;
+}
+
+#GuildMemberStat #TreasuryGoodsTable tbody tr td.detail tr:first-child td {
+    border-top: none;
+}
+
+#GuildMemberStat #TreasuryGoodsTable tbody tr td.detail tr:last-child td {
+    border-bottom: none;
 }

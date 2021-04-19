@@ -1,14 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 helper.js
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              22.12.19, 14:31 Uhr
- * zuletzt bearbeitet:       22.12.19, 14:29 Uhr
- *
- * Copyright © 2019
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -123,6 +121,7 @@ helper.permutations = (()=>{
 let HTML = {
 
 	customFunctions: [],
+	IsReversedFloatFormat: undefined,
 
 	/**
 	 * Creates an HTML box in the DOM
@@ -194,8 +193,7 @@ let HTML = {
 			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-settings`);
 			set.insertAfter(title);
 
-			if (typeof args['settings'] !== 'boolean')
-			{
+			if (typeof args['settings'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}Settings`] = args['settings'];
 			}
 		}
@@ -204,8 +202,7 @@ let HTML = {
 			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-popout`);
 			set.insertAfter(title);
 
-			if (typeof args['popout'] !== 'boolean')
-			{
+			if (typeof args['popout'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}PopOut`] = args['popout'];
 			}
 		}
@@ -214,8 +211,7 @@ let HTML = {
 			let set = $('<span />').addClass('window-map').attr('id', `${args['id']}-map`);
 			set.insertAfter(title);
 
-			if (typeof args['map'] !== 'boolean')
-			{
+			if (typeof args['map'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}Map`] = args['map'];
 			}
 		}
@@ -272,22 +268,18 @@ let HTML = {
 				HTML.DragBox(document.getElementById(args['id']), args['saveCords']);
 
 				// is there a callback function?
-				if (typeof args['dragdrop'] !== 'boolean')
-				{
+				if (typeof args['dragdrop'] !== 'boolean') {
 					HTML.customFunctions[args['id']] = args['dragdrop'];
 				}
 			}
 
 			// is there a callback function?
-			if(args['settings'])
-			{
-				if (typeof args['settings'] !== 'boolean')
-				{
+			if (args['settings']) {
+				if (typeof args['settings'] !== 'boolean') {
 					$(`#${args['id']}`).on('click', `#${args['id']}-settings`, function(){
 
 						// exist? remove!
-						if( $(`#${args['id']}SettingsBox`).length > 0 )
-						{
+						if ($(`#${args['id']}SettingsBox`).length > 0) {
 							$(`#${args['id']}SettingsBox`).fadeToggle('fast', function(){
 								$(this).remove();
 							});
@@ -301,25 +293,20 @@ let HTML = {
 				}
 			}
 
-			if(args['popout'])
-			{
-				if (typeof args['popout'] !== 'boolean')
-				{
+			if (args['popout']) {
+				if (typeof args['popout'] !== 'boolean') {
 					$(`#${args['id']}`).on('click', `#${args['id']}-popout`, function(){
 						HTML.PopOutBox(args['id']);
 					});
 				}
 			}
 			
-			if(args['map'])
-			{
-				if (typeof args['map'] !== 'boolean')
-				{
+			if (args['map']) {
+				if (typeof args['map'] !== 'boolean') {
 					$(`#${args['id']}`).on('click', `#${args['id']}-map`, function(){
 
 						// exist? remove!
-						if( $(`#${args['id']}MapBox`).length > 0 )
-						{
+						if ($(`#${args['id']}MapBox`).length > 0) {
 							$(`#${args['id']}MapBox`).fadeToggle('fast', function(){
 								$(this).remove();
 							});
@@ -372,8 +359,7 @@ let HTML = {
 			let box = $(this).closest('.window-box'),
 				open = box.hasClass('open');
 
-			if(open === true)
-			{
+			if (open === true) {
 				box.removeClass('open');
 				box.addClass('closed');
 				box.find('.window-body').css("visibility", "hidden");
@@ -385,6 +371,7 @@ let HTML = {
 			}
 		});
 	},
+
 
 	/**
 	 * Makes an HTML BOX Dragable
@@ -471,8 +458,7 @@ let HTML = {
 			document.onpointermove = null;
 
 			// is there a callback function after drag&drop
-			if(HTML.customFunctions[id])
-			{
+			if (HTML.customFunctions[id]) {
 				new Function(`${HTML.customFunctions[id]}`)();
 			}
 		}
@@ -492,14 +478,12 @@ let HTML = {
 			sizeLS = localStorage.getItem(id + 'Size');
 
 		// Size was defined, set
-		if(sizeLS !== null)
-		{
+		if (sizeLS !== null) {
 			let s = sizeLS.split('|');
 
 			// Does the box fit into the Viewport in terms of height?
 			// No, height is set automatically, width taken over
-			if( $(window).height() - s[1] < 20 )
-			{
+			if ($(window).height() - s[1] < 20) {
 				box.width(s[0]);
 			}
 			// ja, gespeicherte Daten sezten
@@ -678,8 +662,7 @@ let HTML = {
 			return ;
 		}
 
-		for(let key in args)
-		{
+		for (let key in args) {
 			if(!args.hasOwnProperty(key)){
 				break;
 			}
@@ -754,6 +737,16 @@ let HTML = {
 	},
 
 
+	escapeHtml: (text)=> {
+		return text
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#039;");
+	},
+
+
 	ShowToastMsg: (d)=> {
 
 		if (!Settings.GetSetting('ShowNotifications') && !d['show']) return;
@@ -796,5 +789,152 @@ let HTML = {
 		);
 
 		return winObject;
-	}
+	},
+
+
+	ExportTable: (Table, Format, FileName) => {
+		if (!Table || Table.length === 0) return;
+
+		$(Table).each(function () {
+			let ColumnNames = [];
+
+			$(Table).find('th').each(function () {
+				let ColumnCount = $(this).attr('colspan');
+				if (ColumnCount) {
+					ColumnCount = ColumnCount - 0;
+				}
+				else {
+					ColumnCount = 1;
+                }
+
+				if (ColumnCount === 1) {
+					ColumnNames.push($(this).attr('columnname'))
+				}
+				else {
+					for (let i = 0; i < ColumnCount; i++) {
+						ColumnNames.push($(this).attr('columnname' + (i + 1)));
+					}
+                }
+			});
+
+			let DataRows = [];
+			$(Table).find('tr').each(function () {
+				let CurrentRow = {};
+				let ColumnID = 0;
+				$(this).find('td').each(function () {
+					if (ColumnNames[ColumnID]) { //skip if no columnname set
+						let Key = ColumnNames[ColumnID];
+						let Value;
+						if ($(this).attr('exportvalue')) {
+							Value = $(this).attr('exportvalue');
+							Value = HTML.ParseFloatNonLocalIfPossible(Value);
+						}
+						else if ($(this).attr('data-number')) {
+							Value = $(this).attr('data-number');
+							Value = HTML.ParseFloatNonLocalIfPossible(Value);
+						}
+						else {
+							Value = $(this).text();
+							if (Value === '-') Value = '0';
+							Value = HTML.ParseFloatLocalIfPossible(Value);
+						}
+						
+						CurrentRow[Key] = Value;
+					}
+
+					let ColumnCount = $(this).attr('colspan');
+					if (ColumnCount) {
+						ColumnID += ColumnCount;
+					}
+					else {
+						ColumnID += 1;
+					}
+					 ColumnCount;
+				});
+
+				if(Object.keys(CurrentRow).length > 0) DataRows.push(CurrentRow); //Dont push empty rows
+			});
+
+			let FileContent;
+			if (Format === 'json') {
+				FileContent = JSON.stringify(DataRows);
+			}
+			else if (Format === 'csv') {
+				let Rows = [];
+
+				let ValidColumnNames = ColumnNames.filter(function (a) { return a !== undefined });
+				Rows.push(ValidColumnNames.join(';'));
+
+				for (let i = 0; i < DataRows.length; i++) {
+					let DataRow = DataRows[i];
+					let CurrentCells = [];
+
+					for (let j = 0; j < ValidColumnNames.length; j++) {
+						let CurrentCell = DataRow[ValidColumnNames[j]];
+						if (CurrentCell !== undefined) {
+							if ($.isNumeric(CurrentCell)) {
+								CurrentCells.push(Number(CurrentCell).toLocaleString(i18n('Local')));
+							}
+							else {
+								CurrentCells.push(CurrentCell);
+                            }
+						}
+						else {
+							CurrentCells.push('');
+                        }
+					}
+					Rows.push(CurrentCells.join(';'));
+				}
+				FileContent = Rows.join('\r\n');
+			}
+			else { //Invalid format
+				return;
+			}
+
+			let BOM = "\uFEFF";
+			let Blob1 = new Blob([BOM + FileContent], { type: "application/octet-binary;charset=ANSI" });
+			MainParser.ExportFile(Blob1, FileName + '.' + Format);
+		});
+	},
+
+
+	ParseFloatLocalIfPossible: (NumberString) => {
+		if (HTML.IsReversedFloatFormat === undefined) { //FloatFormat bestimmen, wenn noch unbekannt
+			let ExampleNumberString = Number(1.2).toLocaleString(i18n('Local'))
+			if (ExampleNumberString.charAt(1) === ',') {
+				HTML.IsReversedFloatFormat = true;
+			}
+			else {
+				HTML.IsReversedFloatFormat = false;
+			}
+		}
+
+		let Ret = NumberString;
+		if (HTML.IsReversedFloatFormat) {
+			Ret = Ret.replace(/\./g, "") //1000er Trennzeichen entfernen
+			Ret = Ret.replace(/,/g, ".") //Komma ersetzen
+		}
+		else {
+			Ret = Ret.replace(/,/g, "") //1000er Trennzeichen entfernen
+		}
+
+		let RetNumber = Number(Ret);
+		if (isNaN(RetNumber)) {
+			return NumberString;
+		}
+		else {
+			return RetNumber;
+		}
+	},
+
+
+	ParseFloatNonLocalIfPossible: (NumberString) => {
+		let Ret = Number(NumberString);
+		if (isNaN(Ret)) {
+			return NumberString;
+		}
+		else {
+			return Ret;
+        }
+	},
 };

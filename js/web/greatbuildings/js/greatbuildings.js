@@ -1,14 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 greatbuildings.js
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              26.04.20, 15:37 Uhr
- * zuletzt bearbeitet:       26.04.20, 15:32 Uhr
- *
- * Copyright 2020
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -35,6 +33,7 @@ let GreatBuildings =
         17: [10, 15, 25, 40, 50, 65, 80, 95, 110, 125, 140, 155, 170, 185, 205, 220, 235, 255, 270, 290, 305, 325, 345, 360, 380, 400, 415, 435, 455, 475, 495, 510, 530, 550, 570, 590, 610, 630, 650, 670, 690, 715, 735, 755, 775, 795, 815, 840, 860, 880, 900, 925, 945, 965, 990, 1010, 1030, 1055, 1075, 1095, 1120, 1140, 1165, 1185, 1210, 1230, 1255, 1275, 1300, 1320, 1345, 1365, 1390, 1415, 1435, 1460, 1485, 1505, 1530, 1555, 1575, 1600, 1625, 1645, 1670, 1695, 1720, 1745, 1765, 1790, 1815, 1840, 1860, 1885, 1910, 1935, 1960, 1985, 2010, 2030, 2055, 2080, 2105, 2130, 2155, 2180, 2205, 2230, 2255, 2280, 2305, 2330, 2355, 2380, 2405, 2430, 2455, 2480, 2505, 2530, 2555, 2580, 2610, 2635, 2660, 2685, 2710, 2735, 2760, 2785, 2815, 2840, 2865, 2890, 2915, 2945, 2970, 2995, 3020, 3050, 3075, 3100, 3125, 3155, 3180, 3205],
         18: [10, 15, 25, 40, 55, 70, 80, 95, 115, 125, 145, 160, 175, 195, 210, 230, 245, 265, 280, 300, 320, 335, 355, 375, 395, 415, 435, 455, 470, 490, 510, 535, 550, 575, 595, 615, 635, 655, 675, 700, 720, 740, 760, 785, 805, 825, 850, 870, 890, 915, 935, 960, 980, 1005, 1025, 1050, 1070, 1095, 1115, 1140, 1160, 1185, 1210, 1230, 1255, 1280, 1300, 1325, 1350, 1370, 1395, 1420, 1445, 1470, 1490, 1515, 1540, 1565, 1590, 1615, 1635, 1660, 1685, 1710, 1735, 1760, 1785, 1810, 1835, 1860, 1885, 1910, 1935, 1960, 1985, 2010, 2035, 2060, 2085, 2110, 2135, 2160, 2185, 2215, 2240, 2265, 2290, 2315, 2340, 2365, 2395, 2420],
         19: [10, 15, 30, 40, 55, 70, 85, 100, 115, 130, 150, 165, 185, 200, 220, 235, 255, 275, 295, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 575, 595, 615, 635, 660, 680, 700, 725, 745, 770, 790, 810, 835, 855, 880, 905, 925, 950, 970, 995, 1015, 1040, 1065, 1085, 1110, 1135, 1160, 1180, 1205, 1230, 1255, 1275, 1300, 1325, 1350, 1375, 1400, 1425, 1450, 1470, 1500, 1520, 1545, 1570, 1595, 1620, 1650, 1670, 1695, 1725, 1750, 1775, 1800, 1825, 1850, 1875, 1900, 1930, 1955, 1980, 2005, 2030, 2060, 2085, 2110, 2135, 2160, 2190, 2215, 2240, 2265, 2295, 2320, 2350, 2375, 2400, 2430, 2455, 2480, 2510, 2535, 2565, 2590, 2615, 2645, 2670, 2700, 2725, 2755, 2780],
+        20: [10, 15, 30, 40, 60, 70, 90, 105, 120, 135, 155, 170, 190, 210, 225, 245, 265, 285, 305, 325, 340, 360, 380, 405, 425, 445, 465, 485, 505, 530, 550, 570, 595, 615, 635, 660, 680, 705, 725, 750, 770, 795, 820, 840, 865, 890, 910, 935, 960, 980, 1005, 1030, 1080, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300, 1325, 1350, 1375, 1400, 1425, 1450, 1475, 1500, 1525, 1550, 1575, 1600, 1630, 1655, 1680, 1705, 1730, 1760, 1785, 1810, 1835, 1865, 1890, 1915, 1945, 1970, 1995, 2025],
     },
 
     GreatBuildingsData: [
@@ -85,10 +84,10 @@ let GreatBuildings =
     EventDict: {},
     GalaxyBuildings: [],
     DetailsVisible: {},
-    
-	/**
-	 * Zeigt die Box an oder schließt sie
-	 */
+
+    /**
+     * Zeigt die Box an oder schließt sie
+     */
     Show: () => {
         if ($('#greatbuildings').length === 0) {
 
@@ -152,7 +151,7 @@ let GreatBuildings =
                     v = $this.prop('checked');
 
                 GreatBuildings.HideNewGBs = v;
-                               
+
                 GreatBuildings.CalcBody();
             });
 
@@ -232,7 +231,7 @@ let GreatBuildings =
             HTML.CloseOpenBox('greatbuildings');
         }
 
-        GreatBuildings.CalcBody();
+        GreatBuildings.CalcBody();       
     },
 
 
@@ -291,7 +290,7 @@ let GreatBuildings =
         h.push('<br>');
         h.push(i18n('Boxes.GreatBuildings.SuggestionDescription'));
         h.push('</div>');
-    
+
         h.push('<table class="foe-table">');
 
         h.push('<thead>');
@@ -311,7 +310,7 @@ let GreatBuildings =
 
         let AllROIResults = [],
             IsNewGBs = [];
-
+        
         for (let i = 0; i < GreatBuildings.GreatBuildingsData.length; i++) {
             let GBData = GreatBuildings.GreatBuildingsData[i];
 
@@ -321,9 +320,9 @@ let GreatBuildings =
                 }
                 else { // Keine Galaxy für andere Spieler weil keine FP Daten vorhanden sind
                     continue;
-                }                                  
+                }
             }
-
+                        
             let CityEntity = MainParser.CityEntities[GBData.ID];
             if (!CityEntity) continue; //Great building has been removed from the game => skip
 
@@ -358,14 +357,14 @@ let GreatBuildings =
                     GoodsValue = GreatBuildings.GoodsValue0;
                 }
                 else if (GBData.ID === 'X_FutureEra_Landmark1') { // Arche
-                        let arc = 1 + MainParser.ArkBonus / 100;
+                    let arc = 1 + MainParser.ArkBonus / 100;
                     FPProductions[j] = GBData.Rewards[j] * GreatBuildings.RewardPerDay / arc;
-                    }
-                    else {
+                }
+                else {
                     if (GBData.FPProductions) {
                         if (j < 10) {
                             FPProductions[j] = GBData.FPProductions[j];
-                    }
+                        }
                         else {
                             FPProductions[j] = Math.floor(GBData.FPProductions[9] * (j + 1) / 10);
                         }
@@ -391,8 +390,8 @@ let GreatBuildings =
                     if (CurrentEraID >= 10) { //ModernEra or higher => unrefined goods
                         GoodsValue = GreatBuildings.GoodsValue3;
                         GoodsProductions[j] *= 2;
-                }
-                else {
+                    }
+                    else {
                         GoodsValue = GreatBuildings.GoodsValue0;
                     }
                 }
@@ -449,7 +448,7 @@ let GreatBuildings =
         for (let i = 0; i < GreatBuildings.GreatBuildingsData.length; i++) {
             if (!ROIResultMap[i]['ROIResults'] || !ROIResultMap[i]['ROIResults'][0]) continue;
 
-            let Index = ROIResultMap[i]['index'];            
+            let Index = ROIResultMap[i]['index'];
             let GBData = GreatBuildings.GreatBuildingsData[Index];
             let OwnGB = Object.values(CurrentCityMapData).find(obj => (obj['cityentity_id'] === GBData.ID));;
             let IsRandomFP = (GBData.ID === 'X_OceanicFuture_Landmark3' || GBData.ID === 'X_VirtualFuture_Landmark2' || GBData.ID === 'X_SpaceAgeAsteroidBelt_Landmark1');
@@ -501,38 +500,38 @@ let GreatBuildings =
                     }
 
                     h.push('<td>' + MainParser.CityEntities[GBData.ID]['name'] + '</td>');
-                h.push('<td style="white-space:nowrap">' + CurrentLevel + ' &rarr; ' + (BestLevel + 1) + '</td>');
+                    h.push('<td style="white-space:nowrap">' + CurrentLevel + ' &rarr; ' + (BestLevel + 1) + '</td>');
                     h.push('<td title="' + HTML.i18nTooltip(CostsTT) + '">' + HTML.Format(MainParser.round(Costs)) + '</td>');
                     h.push('<td title="' + HTML.i18nTooltip(FPProductionTT) + '">' + (IsRandomFP ? 'Ø ' : '') + HTML.Format(MainParser.round(FPProduction * 10) / 10) + '</td>');
                     if (GreatBuildings.ShowGoods) h.push('<td>' + (IsRandomFP ? 'Ø ' : '') + HTML.Format(MainParser.round(GoodsProduction * 10) / 10) + '</td>');
                     h.push('<td title="' + HTML.i18nTooltip(BreakEvenTT) + '"><strong class="text-bright">' + HTML.i18nReplacer(i18n('Boxes.GreatBuildings.BreakEvenUnit'), { 'days': BreakEvenString }) + '</strong></td>');
-            }
-            else { //LG zu hoch => Keine Daten mehr verfügbar oder Güterkosten zu hoch
+                }
+                else { //LG zu hoch => Keine Daten mehr verfügbar oder Güterkosten zu hoch
                     h.push('<td></td>');
                     h.push('<td>' + MainParser.CityEntities[GBData.ID]['name'] + '</td>');
-                h.push('<td>-</td>');
-                h.push('<td>-</td>');
-                h.push('<td>-</td>');
+                    h.push('<td>-</td>');
+                    h.push('<td>-</td>');
+                    h.push('<td>-</td>');
                     if (GreatBuildings.ShowGoods) h.push('<td>-</td>');
-                h.push('<td>-</td>');
-            }
+                    h.push('<td>-</td>');
+                }
 
                 if (j === 0) {
                     if (IsNewGBs[Index]) {
                         h.push('<td><input title="' + HTML.i18nTooltip(i18n('Boxes.GreatBuildings.TTGoodCosts')) + '" type="number" id="GreatBuildingsGoodCosts' + Index + '" step="1" min="0" max="999999" value="' + GBData.GoodCosts + '"></td>');
-            }
-            else {
-                h.push('<td class="text-center">-</td>');
-            }
+                    }
+                    else {
+                        h.push('<td class="text-center">-</td>');
+                    }
                 }
                 else { //j>0
                     h.push('<td></td>')
                 }
-
+                                
                 h.push('</tr>');
             }
         }
-                       
+
         h.push('</table');
 
         $('#greatbuildingsBody').html(h.join(''));
@@ -567,10 +566,10 @@ let GreatBuildings =
                         let GoodID = GoodsList[j]['id'];
                         if (Production['motivatedproducts'][GoodID]) {
                             GoodsSum += Production['motivatedproducts'][GoodID];
+                        }
+                    }
                 }
-            }
-        }
-
+                
                 if (FP > 0 || GoodsSum > 0) {
                     GreatBuildings.GalaxyBuildings.push({ ID: ID, FP: FP, Goods: GoodsSum });
                 }
@@ -607,7 +606,7 @@ let GreatBuildings =
 
         let DoubleCollections = [];
         if (Charges) {
-          
+
             for (let i = 0; i < 100; i++) {
                 DoubleCollections[i] = GreatBuildings.GetGalaxyProduction(FPProductions, Charges, Level, true)['FP'];
                 DoubleCollections[i] += GreatBuildings.GetGalaxyProduction(FPProductions, Charges, Level, true)['Goods'] * GoodsValue;
@@ -616,7 +615,7 @@ let GreatBuildings =
 
         let StartFPProduction = 0,
             StartGoodsProduction = 0,
-            CurrentInvestment=0;
+            CurrentInvestment = 0;
 
         if (Level === -1) {
             StartFPProduction = BuildDailyCosts;
@@ -745,7 +744,7 @@ let GreatBuildings =
             if (Rank > 5) continue;
 
             let Maezen = GreatBuildings.GetMaezen(Reward, MainParser.ArkBonus);
-            let FPReward = Maezen[Rank-1];
+            let FPReward = Maezen[Rank - 1];
 
             GreatBuildings.FPRewards += FPReward;
         }

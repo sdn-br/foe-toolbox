@@ -1,13 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 notice.js
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              24.05.20, 14:22 Uhr
- *
- * Copyright © 2020
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -33,14 +32,18 @@ let Notice = {
 
 	ActiveTab: 1,
 	ActiveSubTab: 1,
+	Banned: false,
 
 	/**
 	 * On init get the content
 	 */
 	init: ()=> {
-
-		if(Notice.notes === null){
+		if(Notice.notes === null && Settings.GetSetting('GlobalSend') === true) {
 			MainParser.send2Server({isEmpty:true}, 'Notice/get',(resp)=>{
+				if (resp.status == 'OK' && resp.notice === undefined) {
+					Notice.Banned = true;
+				}
+				
 				Notice.notes = resp.notice;
 
 				Notice.buildBox();
@@ -77,13 +80,13 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		if(Settings.GetSetting('GlobalSend')){
+		if(Settings.GetSetting('GlobalSend') && !Notice.Banned){
 			Notice.prepareContent();
 		}
 
 		// global send is deactivated
 		else {
-			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(i18n('Boxes.Notice.GlobalSendRequired')) );
+			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(Notice.Banned ? i18n('Boxes.Notice.BannedFromApi') : i18n('Boxes.Notice.GlobalSendRequired')) );
 		}
 	},
 
@@ -521,10 +524,16 @@ let Notice = {
 	 * @constructor
 	 */
 	SaveContent: ($this)=> {
+		if (Settings.GetSetting('GlobalSend') === true) {
+			return;
+		}
+
 		let itmID = parseInt($this.data('id')),
 			grpID = parseInt($this.data('parent')),
 			head = $this.find('.content-head').html(),
 			cont = $this.find('.content-text').html();
+
+		
 
 		// send content changes to server und change local object
 		MainParser.send2Server({id:itmID,type:'cnt',head:head,cont:cont}, 'Notice/set', (resp)=>{

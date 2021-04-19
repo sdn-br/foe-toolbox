@@ -98,26 +98,33 @@
 		"status": true,
 		"group": "Boxes",
 		"sort": 13
-	},{
+	},
+	{
+		"name": "Show2kQuestMark",
+		"status": false,
+		"group": "Boxes",
+		"sort": 14
+	},
+	{
 		"name": "ShowNeighborsLootables",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 14
+		"sort": 15
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 15
+		"sort": 16
 	},
 	{
 		"name": "ShowPossibleInvestments",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 16
+		"sort": 17
 	},
 	{
 		"name": "ChangeLanguage",
@@ -132,41 +139,47 @@
 		"sort": 1
 	},
 	{
+		"name": "MenuContent",
+		"callback": "MenuContent",
+		"group": "Extension",
+		"sort": 2
+	},	
+	{
 		"name": "MenuLength",
 		"callback": "MenuInputLength",
 		"group": "Extension",
-		"sort": 2
+		"sort": 3
 	},
 	{
 		"name": "ResetBoxPositions",
 		"button": "ResetBoxCoords",
 		"group": "Extension",
-		"sort": 3
+		"sort": 4
 	},
 	{
 		"name": "ExportSettings",
 		"callback": "ExportView",
 		"group": "Extension",
-		"sort": 4
+		"sort": 5
 	},
 	{
 		"name": "ShowNotifications",
 		"status": true,
 		"group": "Extension",
-		"sort": 5
+		"sort": 6
 	},
 	{
 		"name": "NotificationsPosition",
 		"callback": "NotificationView",
 		"group": "Extension",
 		"status": "bottom-right",
-		"sort": 6
+		"sort": 7
 	},
 	{
 		"name": "NotificationsStack",
 		"callback": "NotificationStack",
 		"group": "Extension",
-		"sort": 7
+		"sort": 8
 	},
 	{
 		"name": "About",

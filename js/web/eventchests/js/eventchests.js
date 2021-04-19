@@ -1,14 +1,12 @@
 /*
  * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
- * Dateiname:                 eventchests.js
- * Projekt:                   foe-chrome
- *
- * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
- * erstellt am:	              07.01.2020, 13:06 Uhr
- * zuletzt bearbeitet:       07.01.2020, 13:06 Uhr
- *
- * Copyright 2019
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
  *
  * **************************************************************************************
  */
@@ -56,7 +54,7 @@ FoEproxy.addHandler('ChestEventService', 'getOverview', (data, postData) => {
         ChestData[ChestData.length] = CurrentChest;
     }
 
-    // Ungültige Daten => Event wird nicht unterstützt => Fenster nicht anzeigen
+    // UngÃ¼ltige Daten => Event wird nicht unterstÃ¼tzt => Fenster nicht anzeigen
     if (ChestData.length === 0) return;
 
     EventChests.Chests = ChestData;
