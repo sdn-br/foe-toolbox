@@ -99,8 +99,9 @@ let BlueGalaxy = {
             let Production = Productions.readType(CityMap[i]);
             if (Production['products']) {
                 let FP = Production['products']['strategy_points'];
+                let Diamonds = Production['products']['premium'];
                 if (!FP) FP = 0;
-
+                if (!Diamonds) Diamonds = 0;
                 let GoodsSum = 0;
                 for (j = 0; j < GoodsList.length; j++) {
                     let GoodID = GoodsList[j]['id'];
@@ -109,14 +110,14 @@ let BlueGalaxy = {
                     }
                 }
 
-                Buildings.push({ ID: ID, EntityID: EntityID, FP: FP, Goods: GoodsSum, In: Production['in'], At: Production['at'] });
+                Buildings.push({ ID: ID, EntityID: EntityID, FP: FP, Diamonds: Diamonds, Goods: GoodsSum, In: Production['in'], At: Production['at'] });
             }
         }
                 
-        Buildings = Buildings.filter(obj => ((obj['FP'] > 0 || obj['Goods'] > 0) && obj['In'] < 23 * 3600)); // Hide everything above 23h
+        Buildings = Buildings.filter(obj => ((obj['FP'] > 0 || obj['Diamonds'] > 0 || obj['Goods'] > 0) && obj['In'] < 23 * 3600)); // Hide everything above 23h
 
         Buildings = Buildings.sort(function (a, b) {
-            return (b['FP'] - a['FP']) + BlueGalaxy.GoodsValue * (b['Goods'] - a['Goods']);
+            return (b['Diamonds'] - a['Diamonds']) + (b['FP'] - a['FP']) + BlueGalaxy.GoodsValue * (b['Goods'] - a['Goods']);
         });
 
         let DoubleCollections = 0,
@@ -167,6 +168,7 @@ let BlueGalaxy = {
                 '<tr>' +
                 '<th>' + i18n('Boxes.BlueGalaxy.Building') + '</th>' +
                 '<th>' + i18n('Boxes.BlueGalaxy.FP') + '</th>' +
+                '<th>' + i18n('Boxes.BlueGalaxy.Diamonds') + '</th>' +
                 '<th>' + i18n('Boxes.BlueGalaxy.Goods') + '</th>' +
                 '<th>' + i18n('Boxes.BlueGalaxy.DoneIn') + '</th>' +
                 '<th></th>' +
@@ -176,6 +178,7 @@ let BlueGalaxy = {
             let CollectionsLeft = DoubleCollections,
                 FPBonusSum = 0,
                 GoodsBonusSum = 0;
+                DiamondsBonusSum = 0;
 
             for (let i = 0; i < Buildings.length; i++) {
                 if (CollectionsLeft <= 0) break;
@@ -185,6 +188,7 @@ let BlueGalaxy = {
                 table.push('<tr>');
                 table.push('<td>' + BuildingName + '</td>');
                 table.push('<td class="text-center">' + HTML.Format(Buildings[i]['FP']) + '</td>');
+                table.push('<td class="text-center">' + HTML.Format(Buildings[i]['Diamonds']) + '</td>');
                 table.push('<td class="text-center">' + HTML.Format(Buildings[i]['Goods']) + '</td>');
                 if (Buildings[i]['At'] * 1000 <= MainParser.getCurrentDateTime()) {
                     table.push('<td style="white-space:nowrap"><strong class="success">' + i18n('Boxes.BlueGalaxy.Done') + '</strong></td>');
@@ -192,6 +196,7 @@ let BlueGalaxy = {
 
                     FPBonusSum += Buildings[i]['FP'] * GalaxyFactor;
                     GoodsBonusSum += Buildings[i]['Goods'] * GalaxyFactor;
+                    DiamondsBonusSum += Buildings[i]['Diamonds'] * GalaxyFactor;
                 }
                 else {
                     table.push('<td style="white-space:nowrap"><strong class="error">' + moment.unix(Buildings[i]['At']).fromNow() + '</strong></td>');
@@ -202,8 +207,8 @@ let BlueGalaxy = {
 
             table.push('</table');
 
-            if (FPBonusSum > 0 || GoodsBonusSum > 0) {
-                h.push(HTML.i18nReplacer(i18n('Boxes.BlueGalaxy.EstimatedBonus'), { FP: Math.round(FPBonusSum), Goods: Math.round(GoodsBonusSum)}));
+            if (FPBonusSum > 0 || DiamondsBonusSum > 0 || GoodsBonusSum > 0) {
+                h.push(HTML.i18nReplacer(i18n('Boxes.BlueGalaxy.EstimatedBonus'), { FP: Math.round(FPBonusSum), Diamonds: Math.round(DiamondsBonusSum), Goods: Math.round(GoodsBonusSum)}));
                 h.push('<br>');
             }
         }
