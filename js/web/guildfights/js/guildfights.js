@@ -397,6 +397,7 @@ let GildFights = {
 	 */
 	BuildFightContent: () => {
 
+		GildFights.CopyCache = [];
 		GildFights.Tabs = [];
 		GildFights.TabsContent = [];
 
