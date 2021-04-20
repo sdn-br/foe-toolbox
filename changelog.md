@@ -1,6 +1,12 @@
 ## Changelog - Extension
 
 ##### 1.10.0.0
+**Update**
+- Gildengefechte
+    - Angriffszeiten können jetzt durch Markieren der Zeilen und Strg+C in die Zwischenablage kopiert werden
+- Blauegalaxie
+    - Diamanten werden jetzt mit angezeigt
+
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.7.1 migriert
 
