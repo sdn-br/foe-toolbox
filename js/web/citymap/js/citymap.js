@@ -229,7 +229,7 @@ let CityMap = {
 		$('#grid-outer').find('.entity').remove();
 
 		CityMap.OccupiedArea = 0;
-        	CityMap.OccupiedArea2 = [];
+		CityMap.OccupiedArea2 = [];
 		let StreetsNeeded = 0;
 
 		if(CityMap.IsExtern === false) {
@@ -266,8 +266,8 @@ let CityMap = {
 
 			let AreaNeeded = parseInt(d['width']) * parseInt(d['length']);
 			CityMap.OccupiedArea += (AreaNeeded);
-            
-		        if(!CityMap.OccupiedArea2[d.type]) CityMap.OccupiedArea2[d.type] = 0;
+
+			if(!CityMap.OccupiedArea2[d.type]) CityMap.OccupiedArea2[d.type] = 0;
 			CityMap.OccupiedArea2[d.type] += (AreaNeeded);
 
 			if (d.type !== 'street' && CityMap.CityData[b]['state']['__class__'] !== 'UnconnectedState') {
@@ -355,9 +355,9 @@ let CityMap = {
 
 		// Non player city => Unlocked areas cant be detected => dont show free space
 		if (!CityMap.IsExtern) {
-		$('.occupied-area').html(txtFree);
-        }
-        
+			$('.occupied-area').html(txtFree);
+		}
+
 		sortable = [];
 		for( x in CityMap.OccupiedArea2) sortable.push([x, CityMap.OccupiedArea2[x]]);
 		sortable.sort((a, b) => a[1] - b[1]);
@@ -395,7 +395,7 @@ let CityMap = {
 	/**
 	 * Show the submit box
 	 */
-	showSumbitBox: ()=> {
+	showSumbitBox: () => {
 		if ($('#CityMapSubmit').length > 0) {
 			$('#CityMapSubmit').remove();
 		}
