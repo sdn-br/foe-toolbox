@@ -485,14 +485,16 @@ let CityMap = {
 	/**
 	 * Copy citydata to the clipboard
 	 */
-	copyMetaInfos:()=> {
-		helper.str.copyToClipboard(JSON.stringify({CityMapData:MainParser.CityMapData,CityEntities:MainParser.CityEntities,UnlockedAreas:CityMap.UnlockedAreas}));
-
-		HTML.ShowToastMsg({
-			head: i18n('Boxes.CityMap.ToastHeadCopyData'),
-			text: i18n('Boxes.CityMap.ToastBodyCopyData'),
-			type: 'info',
-			hideAfter: 4000,
-		});
+	copyMetaInfos: () => {
+		helper.str.copyToClipboard(
+			JSON.stringify({CityMapData:MainParser.CityMapData,CityEntities:MainParser.CityEntities,UnlockedAreas:CityMap.UnlockedAreas})
+		).then(() => {
+			HTML.ShowToastMsg({
+				head: i18n('Boxes.CityMap.ToastHeadCopyData'),
+				text: i18n('Boxes.CityMap.ToastBodyCopyData'),
+				type: 'info',
+				hideAfter: 4000,
+			})
+		});	
 	}
 };
