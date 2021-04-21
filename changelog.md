@@ -1,10 +1,19 @@
 ## Changelog - Extension
 
+##### 1.10.1.0
+**Update**
+- Gildengefechte
+    - Kopieren per Strg+C durch kopieren per Knopf ersetzt, da Strg+C nicht verlässlich genug funktioniert hat
+
+**Bugfix**
+- Stadtübersicht
+    - Kopieren der Stadtdaten funktioniert jetzt wieder
+
 ##### 1.10.0.0
 **Update**
 - Gildengefechte
     - Angriffszeiten können jetzt durch Markieren der Zeilen und Strg+C in die Zwischenablage kopiert werden
-- Blauegalaxie
+- Blaue Galaxie Helfer
     - Diamanten werden jetzt mit angezeigt
 
 **FoE-Helfer**
