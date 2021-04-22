@@ -104,9 +104,9 @@ let Unit = {
 		Unit.RefreshAlca();
 
 		if (Unit.alca)
-					{
+		{
 			top.push('<div style="padding: 4px;" class="text-center dark-bg" id="alca-timer"></div>');
-			}
+		}
 
 		// Attack army
 		let attack = [];
@@ -291,12 +291,12 @@ let Unit = {
 		pool.push('<table class="foe-table">');
 
 		pool.push('<thead>');
-		pool.push('<tr>');
-		pool.push('<th></th>');
-		pool.push('<th>' + i18n('Boxes.Units.Unit') + '</th>');
-		pool.push('<th class="text-center">' + i18n('Boxes.Units.Bind') + '</th>');
-		pool.push('<th class="text-center">' + i18n('Boxes.Units.Unbind') + '</th>');
-		pool.push('</tr>');
+			pool.push('<tr>');
+				pool.push('<th></th>');
+				pool.push('<th>' + i18n('Boxes.Units.Unit') + '</th>');
+				pool.push('<th class="text-center">' + i18n('Boxes.Units.Bind') + '</th>');
+				pool.push('<th class="text-center">' + i18n('Boxes.Units.Unbind') + '</th>');
+			pool.push('</tr>');
 		pool.push('</thead>');
 
 		pool.push('<tbody>');
@@ -319,10 +319,10 @@ let Unit = {
 				}
 
 				pool.push('<tr>');
-				pool.push('<td><span class="units-icon ' + eras[era][i]['id'] + '"></span></td>');
-				pool.push('<td>' + eras[era][i]['name'] + '</td>');
-				pool.push('<td class="text-center">' + eras[era][i]['attached'] + '</td>');
-				pool.push('<td class="text-center">' + eras[era][i]['unattached'] + '</td>');
+					pool.push('<td><span class="units-icon ' + eras[era][i]['id'] + '"></span></td>');
+					pool.push('<td>' + eras[era][i]['name'] + '</td>');
+					pool.push('<td class="text-center">' + eras[era][i]['attached'] + '</td>');
+					pool.push('<td class="text-center">' + eras[era][i]['unattached'] + '</td>');
 				pool.push('</tr>');
 			}
 
@@ -531,7 +531,7 @@ let Unit = {
 	 * @param Boosts
 	 * @returns {[]}
 	 * @constructor
-		 */
+	 */
 	GetBoostSums: (Boosts) => {
 		let Ret = [],
 			CurrentBoost = undefined;
@@ -647,12 +647,12 @@ let Unit = {
 		last.push('<table class="foe-table">');
 
 		last.push('<thead>');
-		last.push('<tr>');
-		last.push('<th class="text-warning">' + LastTotal + 'x</th>');
-		last.push('<th>' + i18n('Boxes.Units.Unit') + '</th>');
-		last.push('<th class="text-center">' + i18n('Boxes.Units.Quantity') + '</th>');
-		last.push('<th class="text-center">' + i18n('Boxes.Units.Proportionally') + '</th>');
-		last.push('</tr>');
+			last.push('<tr>');
+				last.push('<th class="text-warning">' + LastTotal + 'x</th>');
+				last.push('<th>' + i18n('Boxes.Units.Unit') + '</th>');
+				last.push('<th class="text-center">' + i18n('Boxes.Units.Quantity') + '</th>');
+				last.push('<th class="text-center">' + i18n('Boxes.Units.Proportionally') + '</th>');
+			last.push('</tr>');
 		last.push('</thead>');
 
 		last.push('<tbody>');
@@ -668,11 +668,11 @@ let Unit = {
 
 			last.push('<tr data-era="' + LastAlca[i]['era'] + '">');
 
-			last.push('<td><span class="units-icon ' + LastAlca[i]['id'] + '"></span></td>');
-			last.push('<td>' + LastAlca[i]['name'] + '</td>');
+				last.push('<td><span class="units-icon ' + LastAlca[i]['id'] + '"></span></td>');
+				last.push('<td>' + LastAlca[i]['name'] + '</td>');
 
-			last.push('<td class="text-center">' + LastAlca[i]['count'] + 'x</td>');
-			last.push('<td class="text-center">' + MainParser.round((LastAlca[i]['count'] * 100 ) / LastTotal) + '%</td>');
+				last.push('<td class="text-center">' + LastAlca[i]['count'] + 'x</td>');
+				last.push('<td class="text-center">' + MainParser.round((LastAlca[i]['count'] * 100 ) / LastTotal) + '%</td>');
 
 			last.push('</tr>');
 

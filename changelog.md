@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.10.2.0
+**Bugfix**
+- Infoboard
+    - Sonderzeichen werden jetzt immer korrekt angezeigt
+
 ##### 1.10.1.0
 **Update**
 - Gildengefechte
