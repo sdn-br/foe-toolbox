@@ -29,7 +29,8 @@ FoEproxy.addHandler('HiddenRewardService', 'getOverview', (data, postData) => {
 let HiddenRewards = {
 
     Cache: null,
-    FilteredCache : [],
+    ActiveCache : [],
+    FutureCache : [],
     FirstCycle: true,
     
 	/**
@@ -114,13 +115,16 @@ let HiddenRewards = {
      * 
      */
     RefreshGui: () => {       
-        HiddenRewards.FilteredCache = [];
+        HiddenRewards.ActiveCache = [];
+        HiddenRewards.FutureCache = [];
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
             let StartTime = moment.unix(HiddenRewards.Cache[i].starts),
                 EndTime = moment.unix(HiddenRewards.Cache[i].expires);
 
             if (StartTime < MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()) {
-                HiddenRewards.FilteredCache.push(HiddenRewards.Cache[i]);
+                HiddenRewards.ActiveCache.push(HiddenRewards.Cache[i]);
+            } else {
+                HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
             }
         }
 
@@ -191,10 +195,16 @@ let HiddenRewards = {
 
 
 	SetCounter: ()=> {
-		if(HiddenRewards.FilteredCache.length > 0){
-			$('#hidden-reward-count').text(HiddenRewards.FilteredCache.length).show();
+		if(HiddenRewards.FutureCache.length > 0){
+			$('#hidden-future-reward-count').text(HiddenRewards.FutureCache.length).show();
+		} else {
+			$('#hidden-future-reward-count').hide();
+		}
+        if(HiddenRewards.ActiveCache.length > 0){
+			$('#hidden-reward-count').text(HiddenRewards.ActiveCache.length).show();
 		} else {
 			$('#hidden-reward-count').hide();
 		}
+        
 	}
 };

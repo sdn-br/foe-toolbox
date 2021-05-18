@@ -533,8 +533,6 @@ let Notice = {
 			head = $this.find('.content-head').html(),
 			cont = $this.find('.content-text').html();
 
-		
-
 		// send content changes to server und change local object
 		MainParser.send2Server({id:itmID,type:'cnt',head:head,cont:cont}, 'Notice/set', (resp)=>{
 

@@ -223,7 +223,7 @@ alertsDB.version(1).stores({
 		function triggerAlert(alert) {
 			return browser.notifications.create(
 				alert.id != null ? (prefix + alert.id) : previevId,
-{
+				{
 					type: 'basic',
 					title: alert.data.title,
 					message: alert.data.body,
@@ -416,7 +416,7 @@ alertsDB.version(1).stores({
 	 * @param {browser.runtime.MessageSender} sender 
 	 * @returns {Promise<{ok: true, data: any} | {ok: false, error: string}>}
 	 */
-	async function handleWebpageRequests(request, sender) {
+	async function handleWebpageRequests(request, sender, sendResponse) {
 		"use strict";
 		if (!sender.origin) sender.origin = sender.url;
 		// remove sender.id if it was just a forwarded message, so it can't run into private API's
@@ -592,14 +592,40 @@ alertsDB.version(1).stores({
 
 		} // end of alerts-API
 
+		case "send2Server": {
+			let data = request.data;
+			let playerId = request.playerId;
+			let guildId = request.guildId | '';
+			let world = request.world;
+
+			console.log({data: data});
+			return fetch(
+				request.url + request.endpoint + '/?player_id=' + playerId + '&guild_id=' + guildId + '&world=' + world,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({data})
+				}
+			).then(response => { 
+				return response.json().then(body => {
+					return APIsuccess({
+						status: response.status,
+						body: body
+					});
+				})
+			});
+		}
+
 		case 'message': { // type
 			let t = request.time;
 			const opt = {
-					type: "basic",
-					title: request.title,
-					message: request.msg,
-					iconUrl: "images/app48.png"
-				};
+				type: "basic",
+				title: request.title,
+				message: request.msg,
+				iconUrl: "images/app48.png"
+			};
 
 			// Compose desktop message
 			// @ts-ignore
@@ -622,17 +648,17 @@ alertsDB.version(1).stores({
 				// already exists, bring it to the "front"
 				await browser.windows.update(tabs[0].windowId, {
 					focused: true
-			});
+				});
 			} else {
 				// create a new popup
 				await browser.windows.create({
-						url: url,
-						type: 'popup',
-						width: 500,
-						height: 520,
+					url: url,
+					type: 'popup',
+					width: 500,
+					height: 520,
 					// @ts-ignore
 					focused: true,
-					});
+				});
 			}
 			return APIsuccess(true);
 		}
@@ -640,7 +666,7 @@ alertsDB.version(1).stores({
 		case 'storeData': { // type
 			await browser.storage.local.set({ [request.key] : request.data });
 			return APIsuccess(true);
-				}
+		}
 
 		case 'send2Api': { // type
 			let xhr = new XMLHttpRequest();
@@ -698,12 +724,12 @@ alertsDB.version(1).stores({
 				return APIsuccess(false);
 			}
 			return APIsuccess(true);
-	}
+		}
 
 		} // end of switch type
 
 		return APIerror(`unknown request type: ${type}`);
-}
+	}
 
 	browser.runtime.onMessage.addListener(handleWebpageRequests);
 	browser.runtime.onMessageExternal.addListener(handleWebpageRequests);

@@ -1524,31 +1524,23 @@ let MainParser = {
 	 * @param successCallback
 	 */
 	send2Server: (data, ep, successCallback)=> {
-
-		const pID = ExtPlayerID;
-		const cW = ExtWorld;
-		const gID = ExtGuildID;
-
-
-		let req = fetch(
-			ApiURL + ep + '/?player_id=' + pID + '&guild_id=' + gID + '&world=' + cW,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({data})
-			}
-		);
+		if (!Settings.GetSetting('GlobalSend')) {
+			return;
+		}
+		let req = MainParser.sendExtMessage({
+			type: 'send2Server',
+			url: ApiURL,
+			endpoint: ep,
+			playerId: ExtPlayerID,
+			guildId: ExtGuildID,
+			world: ExtWorld,
+			data: data
+		});
 
 		if (successCallback !== undefined) {
-			req
-				.then(response => {
+			req.then(response => {
 					if (response.status === 200) {
-						response
-							.json()
-							.then(successCallback)
-						;
+						successCallback(response.body);
 					}
 				})
 			;

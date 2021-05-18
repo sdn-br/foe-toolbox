@@ -45,13 +45,21 @@ let UnimportantProds = [
 FoEproxy.addHandler('OtherPlayerService', 'updatePlayer', (data, postData) => {
 	Sabotage.UpdatePlayer(data.responseData[0]);	
 });
+
+FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
+	Sabotage.RemovePlunderedEntity(data.responseData[0]);
+});
+
 /**
  *
  * @type {{data: {}, CityEntities: [], ShowFunction: Sabotage.ShowFunction, OtherPlayersBuildings: Sabotage.OtherPlayersBuildings, player_name: string, showResult: Sabotage.showResult}}
  */
 let Sabotage = {
 
-	data: {},
+	data: {
+		ready: [],
+		work: []
+	},
 	OtherPlayer: undefined,
 	PlayerId: undefined,
 	PlayerName: undefined,
@@ -72,10 +80,8 @@ let Sabotage = {
 	 */
 	OtherPlayersBuildings: (dp) => {
 		
-		Sabotage.data = {
-			ready: [],
-			work: []
-		};
+		Sabotage.data.ready = [];
+		Sabotage.data.work = [];
 
 		Sabotage.OtherPlayer = dp.other_player;
 
@@ -88,10 +94,10 @@ let Sabotage = {
 		// Werte des letzten Nachbarn löschen
 		CityMap.CityData = null;
 		Sabotage.PlayerId = Sabotage.OtherPlayer.player_id;
-		let PlayerID = Sabotage.PlayerId;
+		let PlayerId = Sabotage.PlayerId;
 
-		Sabotage.PlayerName = PlayerDict[PlayerID]['PlayerName'];
-		Sabotage.ClanName = PlayerDict[PlayerID]['ClanName'];
+		Sabotage.PlayerName = PlayerDict[PlayerId]['PlayerName'];
+		Sabotage.ClanName = PlayerDict[PlayerId]['ClanName'];
 
 		$('#sabotageInfo').remove();
 
@@ -233,7 +239,7 @@ let Sabotage = {
 		h.push('</span>');
 		h.push('</strong></p>');
 		
-		let shieldTime = await Sabotage.GetActiveShield(Sabotage.OtherPlayer.player_id);
+		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId);
 		let isShielded = (shieldTime !== undefined);
 		
 		if ((!Sabotage.IsLootable || isShielded || Sabotage.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables'))
@@ -252,7 +258,7 @@ let Sabotage = {
 					alertButtonDisabled;
 					
 				nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(Sabotage.OtherPlayer.next_interaction_in, 'seconds');
-				alertAvailable = (await Sabotage.GetAlert(Sabotage.OtherPlayer.player_id) !== undefined);
+				alertAvailable = (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
 				alertButtonDisabled = (alertAvailable ? ' disabled' : ''); 
 				buttonI18nId = (!alertAvailable ? 'Boxes.Sabotage.SetAlarm' : 'Boxes.Sabotage.AlreadySetAlarm'); 
 				
@@ -279,7 +285,7 @@ let Sabotage = {
 			}
 		}
 		
-		h.push('<p><span class="btn-default button-showcity">' + i18n('Boxes.Sabotage.ShowCity') + '</span></p>');
+		h.push('<p><span class="btn-default button-showcity">' + i18n('Boxes.Sabotage.ShowCity') + '</span><span class="btn-default button-showloot">' + i18n('Boxes.Sabotage.ShowLoot') + '</span></p>');
         
 		h.push('</p>');
 		
@@ -415,6 +421,12 @@ let Sabotage = {
 		$('body').on('click', '.button-showcity', function () {
 			Sabotage.ShowFunction();
 		});
+
+		$('body').on('click', '.button-showloot', function () {
+			Looting.filterByPlayerId = Sabotage.PlayerId;
+			Looting.page = 1;
+			Looting.Show();
+		});
 	},
 
 
@@ -465,10 +477,18 @@ let Sabotage = {
 			}
 		}
 	},
+
+	RemovePlunderedEntity: (pd) => {
+		if (pd.player_id = Sabotage.OtherPlayer.player_id) {
+			Sabotage.data.ready = Sabotage.data.ready.filter(e => e.id !== pd.id);
+			if ($('#sabotageInfo').is(':visible')) {
+					Sabotage.showResult();
+			}
+		}
+	},	
 	
-	
-	GetActiveShield: async(PlayerID) => {
-		let lastShieldAction = await IndexDB.db.neighborhoodAttacks.where({playerId: PlayerID}).and(it => it.type === Looting.ACTION_TYPE_SHIELDED).last();
+	GetActiveShield: async(PlayerId) => {
+		let lastShieldAction = await IndexDB.db.neighborhoodAttacks.where({playerId: PlayerId}).and(it => it.type === Looting.ACTION_TYPE_SHIELDED).last();
 		if (!lastShieldAction) { return; }
 		let shieldTime = moment.unix(lastShieldAction.expireTime);
 		if (shieldTime.isBefore(moment())) {
@@ -478,7 +498,7 @@ let Sabotage = {
 	},
 
 
-	GetAlert: async(PlayerID) => {
+	GetAlert: async(PlayerId) => {
 
 		// is alert.js included?
 		if(!Alerts){
@@ -491,12 +511,12 @@ let Sabotage = {
 				return ;
 			}
 
-			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === PlayerDict[PlayerID]['PlayerName'] && alert['data']['expires'] > MainParser.getCurrentDateTime());
+			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === PlayerDict[PlayerId]['PlayerName'] && alert['data']['expires'] > MainParser.getCurrentDateTime());
 		});
 	},
 	
-	SetAlert: (PlayerID, nextAttackTime)=> {
-		let title = PlayerDict[PlayerID]['PlayerName'];
+	SetAlert: (PlayerId, nextAttackTime)=> {
+		let title = PlayerDict[PlayerId]['PlayerName'];
 		const data = {
 			title: title,
 			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), {playerName: title, nextattacktime: moment.unix(nextAttackTime).format('DD.MM.YYYY HH:mm:ss')}),
@@ -523,9 +543,9 @@ let Sabotage = {
 			hideAfter: 5000
 		});
 
-		$(`#alert-sabotage-${PlayerID}`).html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
-		$(`#alert-sabotage-${PlayerID}`).prop('onclick', null);
-		$(`#alert-sabotage-${PlayerID}`).attr('disabled', '');
+		$(`#alert-sabotage-${PlayerId}`).html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
+		$(`#alert-sabotage-${PlayerId}`).prop('onclick', null);
+		$(`#alert-sabotage-${PlayerId}`).attr('disabled', '');
 	},
 };
 

@@ -115,6 +115,39 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 	}
 });
 
+FoEproxy.addHandler('OtherPlayerService', 'plunderById', async (data, postData) => {
+	console.log([data, postData]);
+	if (!Array.isArray(postData)) { return; }
+
+	if (postData.length === 0) { return; }
+
+	if (!data.responseData) { return; }
+
+	const playerId = postData[0].requestData[0];
+	const entityId = postData[0].requestData[1];
+	const lastVisitedPlayer = Looting.lastVisitedPlayer;
+
+	if (!lastVisitedPlayer) { return; }
+	if (playerId !== lastVisitedPlayer.other_player.player_id) { return; }
+	
+	const entity = lastVisitedPlayer.city_map.entities.find(e => entityId === e.id);
+
+	if (data.responseData.result === 'repelled') {	
+
+		await IndexDB.getDB();
+		
+		await IndexDB.db.neighborhoodAttacks.add({
+			type: Looting.ACTION_TYPE_REPELLED,
+			playerId: playerId,
+			entityId: entity.id,
+			buildId: entity.cityentity_id,
+			date: new Date
+		});
+	}
+
+});
+
+
 FoEproxy.addHandler('CityMapService', 'reset', async (data, postData) => {
 	const r = data.responseData;
 
@@ -127,7 +160,7 @@ FoEproxy.addHandler('CityMapService', 'reset', async (data, postData) => {
 	r.forEach(async (it) => {
 		const entityId = it.id;
 		const playerId = it.player_id;
-		if (it.state.__class__ !== 'LootedState') {
+		if (it.state.__class__ !== 'LootedState' && it.state.__class__ !== 'PlunderedState') {
 			return;
 		}
 
@@ -226,6 +259,7 @@ let Looting = {
 	ACTION_TYPE_BATTLE_LOSS: 3,
 	ACTION_TYPE_BATTLE_SURRENDERED: 4,
 	ACTION_TYPE_SHIELDED: 5,
+	ACTION_TYPE_REPELLED: 6,
 
 	inited: false,
 
@@ -416,15 +450,23 @@ let Looting = {
 			};
 		});
 
+		let playerName = '';
+		let clanName = ''
+
+		if (filterByPlayerId) {
+			playerName = PlayerDict[filterByPlayerId].PlayerName;
+			clanName = PlayerDict[filterByPlayerId].ClanName;
+		}
+
 		$('#lootingBody').html(`
 			<div class="header">
 				<div class="strategy-points">
 					Calculating strategy points...
 				</div>
 				<div class="filter">
-					${filterByPlayerId ? `${i18n('Boxes.Looting.filteredByUser')}. <button class="btn btn-default select-player" data-value="">
-						${i18n('Boxes.Looting.showAllPlayers')}</button>` : i18n('Boxes.Looting.AllPlayers')
-					}
+					<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b> ${filterByPlayerId ? `<span class="player-name">${playerName} ${clanName ? `[${clanName}]` : ''}</span></div><div class="show-all-button"><button class="btn btn-default select-player" data-value="">
+						${i18n('Boxes.Looting.showAllPlayers')}</button>` : `<span class="player-name">${i18n('Boxes.Looting.AllPlayers')}</span>`
+					}</div>
 				</div>
 			</div>
 			${actions.length === 0 ? `<div class="no-data"> - ${i18n('Boxes.Looting.noData')} - </div>` : ''}
@@ -509,6 +551,7 @@ let Looting = {
 			[Looting.ACTION_TYPE_BATTLE_LOSS]: i18n('Boxes.Looting.actionBattleLost'),
 			[Looting.ACTION_TYPE_BATTLE_SURRENDERED]: i18n('Boxes.Looting.actionSurrendered'),
 			[Looting.ACTION_TYPE_SHIELDED]: i18n('Boxes.Looting.actionShielded'),
+			[Looting.ACTION_TYPE_REPELLED]: i18n('Boxes.Looting.actionRepelled'),
 		}[action.type] || 'Unknown';
 
 		const avatar = action.avatar && `${MainParser.InnoCDN}assets/shared/avatars/${MainParser.PlayerPortraits[action.avatar]}.jpg`;
@@ -565,12 +608,20 @@ let Looting = {
 	 */
 	RenderActionContent: (action) => {
 		switch (action.type) {
+			case Looting.ACTION_TYPE_REPELLED:
+				return `<div class="loot-wrap">
+							<div class="name">
+								<img class="sabotage" src="${extUrl}css/images/plunderrepel.png" alt="Plunder Repel" title="${i18n('Boxes.Looting.actionRepelled')}" />
+								
+								${(MainParser.CityEntities[action.buildId] || {name: '-'}).name}
+							</div>
+						</div>`;
 			case Looting.ACTION_TYPE_LOOTED:
 				const goodsIds = Object.keys(action.resources);
 
 				return `<div class="loot-wrap">
 							<div class="name">
-								<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="Sabotage" title="Sabotage" />
+								<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="Sabotage" title="${i18n('Boxes.Looting.actionLooted')}" />
 								${action.doubleLoot ? `<img class="doubleLoot" src="${extUrl}css/images/sabotage.png" alt="Double Loot Bonus" title="Double Loot Bonus"/>` : ''}
 
 								${(MainParser.CityEntities[action.buildId] || {name: '-'}).name}

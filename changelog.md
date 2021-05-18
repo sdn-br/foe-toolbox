@@ -1,5 +1,18 @@
 ## Changelog - Extension
 
+##### 1.10.3.0
+**Update**
+- Plünderhilfe
+    - Nachbarschaftsangriffe des Spielers können direkt aufgerufen werden
+- Nachbarschaftsangriffe
+    - Abwehr durch Galataturm wird als Event angezeigt
+
+**Bugfix**
+- Plünderhilfe
+    - geplündertes Gebäude wird nach der Plünderung sofort aus der Liste der "Fertigen Produktionen" entfernt
+- Nachbarschaftsangriffe
+    - Plünderungen werden wieder richtig registriert, angezeigt und gezählt
+
 ##### 1.10.2.0
 **Bugfix**
 - Infoboard
