@@ -479,7 +479,7 @@ let Sabotage = {
 	},
 
 	RemovePlunderedEntity: (pd) => {
-		if (pd.player_id = Sabotage.OtherPlayer.player_id) {
+		if (pd.player_id === Sabotage.PlayerId) {
 			Sabotage.data.ready = Sabotage.data.ready.filter(e => e.id !== pd.id);
 			if ($('#sabotageInfo').is(':visible')) {
 					Sabotage.showResult();
