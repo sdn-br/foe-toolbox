@@ -123,7 +123,7 @@ let HiddenRewards = {
 
             if (StartTime < MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()) {
                 HiddenRewards.ActiveCache.push(HiddenRewards.Cache[i]);
-            } else {
+            } else if (StartTime > MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()){
                 HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
             }
         }

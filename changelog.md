@@ -1,7 +1,14 @@
 ## Changelog - Extension
 
+##### 1.10.4.0
+**Bugfix**
+- Menü
+    - Vorhandene Relikte in der Gildenexpedition werden jetzt nicht mehr als zukünftige Ereignisse gezählt
+
 ##### 1.10.3.0
 **Update**
+- Menü
+    - Anzahl der Zukünftige Ereignisse wird im Menü mit angezeigt
 - Plünderhilfe
     - Nachbarschaftsangriffe des Spielers können direkt aufgerufen werden
 - Nachbarschaftsangriffe
