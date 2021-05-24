@@ -269,7 +269,7 @@ let Calculator = {
 		investmentSteps = investmentSteps.filter((item, index) => investmentSteps.indexOf(item) === index); //Remove duplicates
 		investmentSteps.sort((a, b) => a - b);
 		investmentSteps.forEach(bonus => {
-			h.push(`<button class="btn btn-default btn-toggle-arc ${(bonus === Calculator.ForderBonus ? 'btn-default-active' : '')}" data-value="${bonus}">${bonus}%</button>`);
+			h.push(`<button class="btn btn-default btn-toggle-arc ${(bonus === Calculator.ForderBonus ? 'btn-active' : '')}" data-value="${bonus}">${bonus}%</button>`);
 		});
 		h.push('</div><br>');
 		h.push('<table width="100%"><tr><td width="50%" style="text-align: left">');
@@ -397,7 +397,8 @@ let Calculator = {
 			BestGewinn = -999999,
 			SaveLastRankCost = undefined;
 
-		for (let i = 0; i < Calculator.Rankings.length; i++) {
+		for (let i = 0; i < Calculator.Rankings.length; i++)
+		{
 			let Rank,
 				CurrentFP,
 				TotalFP,

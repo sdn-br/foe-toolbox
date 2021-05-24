@@ -115,6 +115,7 @@ let _menu = {
 	/**
 	 * Tooltip Box
 	 *
+	 * @param {object} btn
 	 * @param {string} title
 	 * @param {string} desc
 	 * @param {string} id
