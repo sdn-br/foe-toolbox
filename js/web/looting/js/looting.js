@@ -116,7 +116,6 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 });
 
 FoEproxy.addHandler('OtherPlayerService', 'plunderById', async (data, postData) => {
-	console.log([data, postData]);
 	if (!Array.isArray(postData)) { return; }
 
 	if (postData.length === 0) { return; }
