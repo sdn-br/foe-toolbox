@@ -441,7 +441,7 @@ const FoEproxy = (function () {
 	/**
 	 * This function gets the callbacks from proxyMap[service][method] and executes them.
 	 */
-	function _proxyAction(service, method, data, postData) {
+	function _proxyAction(service, method, data, postData, responseData) {
 		const map = proxyMap[service];
 		if (!map) {
 			return;
@@ -452,7 +452,7 @@ const FoEproxy = (function () {
 		}
 		for (let callback of list) {
 			try {
-				callback(data, postData);
+				callback(data, postData, responseData);
 			} catch (e) {
 				console.error(e);
 			}
@@ -462,11 +462,11 @@ const FoEproxy = (function () {
 	/**
 	 * This function gets the callbacks from proxyMap[service][method],proxyMap[service]['all'] and proxyMap['all']['all'] and executes them.
 	 */
-	function proxyAction(service, method, data, postData) {
-		_proxyAction(service, method, data, postData);
-		_proxyAction('all', method, data, postData);
-		_proxyAction(service, 'all', data, postData);
-		_proxyAction('all', 'all', data, postData);
+	function proxyAction(service, method, data, postData, responseData) {
+		_proxyAction(service, method, data, postData, responseData);
+		_proxyAction('all', method, data, postData, responseData);
+		_proxyAction(service, 'all', data, postData, responseData);
+		_proxyAction('all', 'all', data, postData, responseData);
 	}
 
 	// Achtung! Die XMLHttpRequest.prototype.open und XMLHttpRequest.prototype.send funktionen werden nicht zurück ersetzt,
@@ -560,13 +560,13 @@ const FoEproxy = (function () {
 				// StartUp Service zuerst behandeln
 				for (let entry of d) {
 					if (entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, d);
 					}
 				}
 
 				for (let entry of d) {
 					if (!(entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData')) {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, d);
 					}
 				}
 
@@ -823,6 +823,11 @@ const FoEproxy = (function () {
 	// Nachricht geöffnet
 	FoEproxy.addHandler('ConversationService', 'getConversation', (data, postData) => {
 		MainParser.UpdatePlayerDict(data.responseData, 'Conversation');
+	});
+
+	// PvPArena geöffnet
+	FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
+		MainParser.UpdatePlayerDict(data.responseData, 'PvPArena');
 	});
 
 	// Kampf beendet
@@ -1315,9 +1320,11 @@ let MainParser = {
 	 * Speichert alle aktiven Boosts
 	 */
 	BoostSums: {
+		'att_boost_defender': 0,
 		'def_boost_defender': 0,
 		'happiness_amount': 0,
 		'att_boost_attacker': 0,
+		'def_boost_attacker': 0,
 		'coin_production': 0,
 		'supply_production': 0
 	},
@@ -2147,12 +2154,42 @@ let MainParser = {
 			promise = MainParser.UpdatePlayerDictCore(d.other_player);
 		}
 
+		else if (Source === 'PvPArena') {
+			for (let i in d['opponents']) {
+				if(!d['opponents'].hasOwnProperty(i)) continue;
+				promise = MainParser.UpdatePlayerDictCore(d['opponents'][i].opposingPlayer.player);
+			}
+		}
+
 		else {
 			promise.resolve();
 		}
 		return promise;
 	},
 
+	loadPlayerIntoDict: (PlayerID) => {
+		let promise = Promise.resolve();
+		if (PlayerDict[PlayerID] === undefined) {
+			promise = IndexDB.loadPlayer(PlayerID).then(PlayerFromDB => {
+					if (PlayerFromDB) {
+						PlayerDict[PlayerID] = {};
+						PlayerDict[PlayerID]['PlayerID'] = PlayerID;
+						if (PlayerFromDB['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = PlayerFromDB['name'];
+						if (PlayerFromDB['clanName'] !== undefined) PlayerDict[PlayerID]['ClanName'] = PlayerFromDB['clanName'];
+						if (PlayerFromDB['clanId'] !== undefined) PlayerDict[PlayerID]['ClanId'] = PlayerFromDB['clanId'];
+						if (PlayerFromDB['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = PlayerFromDB['avatar'];
+						if (PlayerFromDB['era'] !== undefined) PlayerDict[PlayerID]['Era'] = PlayerFromDB['era'];
+						if (PlayerFromDB['score'] !== undefined) PlayerDict[PlayerID]['Score'] = PlayerFromDB['score'];
+						if (PlayerFromDB['wonBattles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = PlayerFromDB['wonBattles'];
+						if (PlayerFromDB['lastWonBattlesReceiveDate'] !== undefined) PlayerDict[PlayerID]['WonBattlesReceiveDate'] = PlayerFromDB['lastWonBattlesReceiveDate'];
+						if (PlayerFromDB['lastWonBattlesChangeDate'] !== undefined) PlayerDict[PlayerID]['WonBattlesDate'] = PlayerFromDB['lastWonBattlesChangeDate'];
+						if (PlayerFromDB['lastScoreReceiveDate'] !== undefined) PlayerDict[PlayerID]['ScoreReceiveDate'] = PlayerFromDB['lastScoreReceiveDate'];
+						if (PlayerFromDB['lastScoreChangeDate'] !== undefined) PlayerDict[PlayerID]['ScoreDate'] = PlayerFromDB['lastScoreChangeDate'];
+					}
+				});
+		}
+		return promise;
+	},
 
 	/**
 	 * Update player information

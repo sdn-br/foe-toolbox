@@ -41,7 +41,7 @@ FoEproxy.addHandler('OtherPlayerService', 'getCityProtections', async(data, post
 	}, 1);
 });
 
-FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
+FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData, responseData) => {
 	const isAutoBattle = data.responseData.isAutoBattle; // isAutoBattle is part of BattleRealm only
 	//
 	const state = data.responseData.__class__ === 'BattleRealm' ? data.responseData.state : data.responseData;
@@ -65,7 +65,15 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 
 	const myUnits = unitsOrder.filter(it => it.teamFlag === 1).map(adaptUnit(true));
 	const otherUnits = unitsOrder.filter(it => it.teamFlag === 2).map(adaptUnit(false));
-	const defenderPlayerId = data.responseData.defenderPlayerId || otherUnits[0].ownerId;
+	let defenderPlayerId = data.responseData.defenderPlayerId || otherUnits[0].ownerId;
+	let isPvpArena = responseData.find(e => e.requestClass === 'PVPArenaService') !== undefined;
+
+	if(defenderPlayerId <= 0) {
+		let logEntry = responseData.find(e => e.requestClass === 'PVPArenaService' && e.requestMethod === 'addLog');
+		if (logEntry !== undefined) {
+			defenderPlayerId = logEntry.responseData.otherPlayer.player.player_id;
+		}
+	}
 
 	// defenderPlayerId = -1 if PVE
 	if (defenderPlayerId <= 0) {
@@ -85,6 +93,7 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 		playerId: defenderPlayerId,
 		date: new Date(),
 		type: actionType,
+		pvpArena: !!isPvpArena,
 		battle: {
 			myArmy: myUnits,
 			otherArmy: otherUnits,
@@ -236,21 +245,38 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', async (data, postData) 
 	Looting.lastVisitedPlayer = playerData;
 	Looting.page = 1;
 	Looting.filterByPlayerId = playerData.other_player.player_id;
+	Looting.filterByPvPArena = false;
  	MainParser.UpdatePlayerDict(playerData, 'VisitPlayer').then(() => {
 		//await Looting.collectPlayer(playerData);
 		Looting.UpdateBoxIfVisible();
 	});
 });
 
-let Looting = {
+// PvPArena geöffnet
+FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
+	Looting.lastPvPArenaOpponents = [];
+	let opponents = data['responseData']['opponents'];
+	for (let i in opponents) {
+		if(!opponents.hasOwnProperty(i)) continue;
+		Looting.lastPvPArenaOpponents.push(opponents[i].opposingPlayer.player.player_id);
+	}
+	Looting.filterByPvPArena = true;
+	Looting.filterByPlayerId = null;
+	Looting.UpdateBoxIfVisible();
+});
 
-	// Cached last visited player for getting info about city before looting
-	// Sadly loot event have no info about city entity, just collected resources
-	lastVisitedPlayer: null,
+let Looting = {
 
 	// Filter and pagination.
 	page: 1,
 	filterByPlayerId: null,
+	filterByPvPArena: false,
+
+	// Cached last visited player for getting info about city before looting
+	// Sadly loot event have no info about city entity, just collected resources
+	lastVisitedPlayer: null,
+	// Cached last known opponents of pvpArena
+	lastPvPArenaOpponents: [],
 
 	// Enum for action type
 	ACTION_TYPE_LOOTED: 1,
@@ -385,6 +411,22 @@ let Looting = {
 
 			Looting.page = 1;
 			Looting.filterByPlayerId = id ? +id : null;
+			Looting.filterByPvPArena = false;
+			Looting.Show();
+
+			$('#lootingBody').animate({scrollTop: 0}, 'fast');
+		});
+
+		$('#looting').on('click', '#lootingBody .select-pvp-arena-opponents', function () {
+			if (Looting.loading) {
+				return;
+			}
+			
+			console.log($(this));
+
+			Looting.page = 1;
+			Looting.filterByPlayerId = null;
+			Looting.filterByPvPArena = true;
 			Looting.Show();
 
 			$('#lootingBody').animate({scrollTop: 0}, 'fast');
@@ -398,47 +440,58 @@ let Looting = {
 	 * @returns {Promise<void>}
 	 */
 	Render: async () => {
-		const {page, filterByPlayerId} = Looting;
+		const {page, filterByPlayerId, filterByPvPArena} = Looting;
 		const perPage = 20;
 		Looting.loading = true;
-
+		
 		const offset = (page - 1) * perPage,
-			actionsSelect = filterByPlayerId ?
+			actionsSelect = (filterByPlayerId ?
 				(IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId)) :
-				(IndexDB.db.neighborhoodAttacks.orderBy('date'));
+				(filterByPvPArena ? 
+					(IndexDB.db.neighborhoodAttacks.where('playerId').anyOf(Looting.lastPvPArenaOpponents)) :
+					(IndexDB.db.neighborhoodAttacks.orderBy('date'))));
 
-		let actions = await actionsSelect.offset(offset).limit(perPage).desc().toArray();
-
-		const countSelect = filterByPlayerId ?
-			(IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId)) :
-			(IndexDB.db.neighborhoodAttacks);
+		let actions = 
+			await actionsSelect
+				.filter((action) => {
+					return !filterByPvPArena || action.pvpArena !== undefined && action.pvpArena
+				}) 
+				.reverse()
+				.offset(offset)
+				.limit(perPage)
+				.sortBy('date')
+			;
+				
+		
+		const countSelect = 
+			(filterByPlayerId ? 
+				(IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId)) :
+				(filterByPvPArena ? 
+					(IndexDB.db.neighborhoodAttacks.where('playerId').anyOf(Looting.lastPvPArenaOpponents)) :
+					(IndexDB.db.neighborhoodAttacks)));
 
 		let pages = Math.ceil((await countSelect.count()) / perPage);
 
 		// enrich actions with player info
-		const players = await IndexDB.db.players.where('id').anyOf(actions.map(it => it.playerId)).toArray();
+		for (let action of actions) {
+			await MainParser.loadPlayerIntoDict(action.playerId);
+		}
+		
 		actions = actions.map(it => {
-			const player = players.find(p => p.id === it.playerId);
-			const playerFromDict = PlayerDict[it.playerId];
+			const player = PlayerDict[it.playerId];
+
 			// Try get info about player from indexdb, if not possible than from PlayerDict
 			const playerInfo = player ? ({
-				playerName: player.name,
-				avatar: player.avatar,
-				playerDate: player.date,
-				clanId: player.clanId,
-				clanName: player.clanName || i18n('Boxes.Looting.HasNoClan'),
-				playerEra: player.era
-			}) : playerFromDict ? ({
-				playerName: playerFromDict.PlayerName,
-				clanId: playerFromDict.ClanId || 0,
-				clanName: playerFromDict.ClanName || i18n('Boxes.Looting.HasNoClan'),
-				avatar: playerFromDict.Avatar,
-				playerEra: 'unknown',
+				playerName: player.PlayerName,
+				clanId: player.ClanId || 0,
+				clanName: player.ClanName || 'unknown',
+				avatar: player.Avatar,
+				playerEra: player.Era || 'unknown',
 				playerDate: null,
 			}) : ({
-				playerName: 'Unknown',
+				playerName: 'unknown',
 				clanId: 'N/A',
-				clanName: 'Unknown',
+				clanName: 'unknown',
 				avatar: null,
 				playerEra: 'unknown',
 				playerDate: null,
@@ -453,8 +506,8 @@ let Looting = {
 		let clanName = ''
 
 		if (filterByPlayerId) {
-			playerName = PlayerDict[filterByPlayerId].PlayerName;
-			clanName = PlayerDict[filterByPlayerId].ClanName;
+			playerName = PlayerDict[filterByPlayerId] !== undefined ? PlayerDict[filterByPlayerId].PlayerName : i18n('Boxes.Looting.Unknown');
+			clanName =  PlayerDict[filterByPlayerId] !== undefined ? PlayerDict[filterByPlayerId].ClanName : i18n('Boxes.Looting.Unknown');
 		}
 
 		$('#lootingBody').html(`
@@ -463,9 +516,21 @@ let Looting = {
 					Calculating strategy points...
 				</div>
 				<div class="filter">
-					<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b> ${filterByPlayerId ? `<span class="player-name">${playerName} ${clanName ? `[${clanName}]` : ''}</span></div><div class="show-all-button"><button class="btn btn-default select-player" data-value="">
-						${i18n('Boxes.Looting.showAllPlayers')}</button>` : `<span class="player-name">${i18n('Boxes.Looting.AllPlayers')}</span>`
-					}</div>
+					<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b> 
+						<span class="player-name">
+							${filterByPlayerId ? 
+								`${playerName} ${clanName ? `[${clanName}]` : ''}` : 
+								filterByPvPArena ? 
+									`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
+									`${i18n('Boxes.Looting.AllPlayers')}`
+							}
+						</span>
+					</div>
+					<div class="filter-buttons">
+						<div><button${Looting.lastPvPArenaOpponents.length == 0  ? " disabled" : " "} class="btn btn-default select-pvp-arena-opponents${filterByPvPArena ? ' btn-active' : ' '}" data-value="" title="${Looting.lastPvPArenaOpponents.length == 0 ? HTML.i18nTooltip(i18n('Boxes.Looting.PvPArenaOpponentsInactive')) : ''}">${i18n('Boxes.Looting.showPvPArenaOpponents')}</button></div>
+						<div><button class="btn btn-default select-player${!filterByPvPArena && filterByPlayerId === null ? ' btn-active' : ''}" data-value="">${i18n('Boxes.Looting.showAllPlayers')}</button></div>
+						
+					</div>
 				</div>
 			</div>
 			${actions.length === 0 ? `<div class="no-data"> - ${i18n('Boxes.Looting.noData')} - </div>` : ''}
@@ -477,7 +542,7 @@ let Looting = {
 				${pages > page ? `<button class="btn btn-default load-next-page">${i18n('Boxes.Looting.nextPage')}</button>` : ''}
 			</div>`);
 
-		await Looting.calculateSP(filterByPlayerId);
+		await Looting.calculateSP(filterByPlayerId, filterByPvPArena);
 		Looting.loading = false;
 	},
 
@@ -488,15 +553,17 @@ let Looting = {
 	 * @param filterByPlayerId
 	 * @returns {Promise<void>}
 	 */
-	calculateSP: async (filterByPlayerId) => {
+	calculateSP: async (filterByPlayerId, filterByPvPArena) => {
 		const dateThisWeek = moment().subtract(1, 'weeks').toDate();
 		const dateToday = moment().startOf('day').toDate();
 
 		let todaySP = 0;
 		let thisWeekSP = 0;
-		let totalSPSelect = filterByPlayerId ?
+		let totalSPSelect = (filterByPlayerId ?
 			(IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId)) :
-			(IndexDB.db.neighborhoodAttacks.where('type').equals(Looting.ACTION_TYPE_LOOTED));
+			(filterByPvPArena ? 
+				(IndexDB.db.neighborhoodAttacks.where('playerId').anyOf(Looting.lastPvPArenaOpponents)) :
+				(IndexDB.db.neighborhoodAttacks.where('type').equals(Looting.ACTION_TYPE_LOOTED))));
 
 		let totalSP = 0;
 
@@ -551,13 +618,16 @@ let Looting = {
 			[Looting.ACTION_TYPE_BATTLE_SURRENDERED]: i18n('Boxes.Looting.actionSurrendered'),
 			[Looting.ACTION_TYPE_SHIELDED]: i18n('Boxes.Looting.actionShielded'),
 			[Looting.ACTION_TYPE_REPELLED]: i18n('Boxes.Looting.actionRepelled'),
-		}[action.type] || 'Unknown';
+		}[action.type] || 'unknown';
 
 		const avatar = action.avatar && `${MainParser.InnoCDN}assets/shared/avatars/${MainParser.PlayerPortraits[action.avatar]}.jpg`;
 		const date = moment(action.date).format(i18n('DateTime'));
 		const dateFromNow = moment(action.date).fromNow();
 
 		let era = '';
+		const playerName = action.playerName !== 'unknown' ? action.playerName : i18n('Boxes.Looting.Unknown');
+		const clanName = action.clanName !== 'unknown' ? action.clanName : i18n('Boxes.Looting.Unknown');
+		const pvpArena = action.pvpArena ? `</br><span class="pvparena">${i18n('Boxes.Looting.PvPArenaAction')}</span>` : '';
 
 		if(action.playerEra && action.playerEra !== 'unknown'){
 			let eraName = i18n('Eras.' + Technologies.Eras[action.playerEra]);
@@ -567,8 +637,9 @@ let Looting = {
 
 		return `<div class="action-row action-row-type-${action.type}">
 					<div class="avatar select-player" data-value="${action.playerId}">
-						${isSamePlayer || !avatar? '' : `<img class="player-avatar" src="${avatar}" alt="${action.playerName}" /><br>`}
+						${isSamePlayer || !avatar? '' : `<img class="player-avatar" src="${avatar}" alt="${playerName}" /><br>`}
 						<span class="type text-${action.type === 1 ? 'success' : (action.type === 3 ? 'danger' : 'success')}">${type}</span>
+						${pvpArena}
 					</div>
 					<div class="info-column">
 						<div>
@@ -590,7 +661,7 @@ let Looting = {
 					<div class="action-content">
 						${isSamePlayer ? '' : `
 						<div class="player-name select-player" data-value="${action.playerId}">
-							${action.playerName} <span class="clan">[${action.clanName}]</span>
+							${playerName} <span class="clan">[${clanName}]</span>
 						</div>
 						`}
 						<div class="content">${Looting.RenderActionContent(action)}</div>

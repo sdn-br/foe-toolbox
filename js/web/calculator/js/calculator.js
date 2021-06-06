@@ -229,7 +229,7 @@ let Calculator = {
 		
 		h.push('</strong>');
 		if (!PlayerDict[Calculator.CityMapEntity['player_id']].IsActive) {
-			h.push(`<strong class="error">${i18n('Boxes.Calculator.PlayerInactive')}</strong><br/>`);
+			h.push(`<strong class="error">${i18n(`Boxes.Calculator.${PlayerDict[Calculator.CityMapEntity['player_id']].IsActive === undefined ? 'PlayerActivityUnknown' : 'PlayerInactive'}`)}</strong><br/>`);
 		}
 
 		h.push('<br>' + i18n('Boxes.Calculator.Step') + '' + Level + ' &rarr; ' + (Level + 1) + ' | ' + i18n('Boxes.Calculator.MaxLevel') + ': ' + MaxLevel + '</p>');
@@ -1094,7 +1094,7 @@ let Calculator = {
 			'</p>');
 		
 		if (!PlayerDict[Calculator.Overview['0']['player']['player_id']].IsActive) {
-			h.push(`<p><strong class="error">${i18n('Boxes.Calculator.PlayerInactive')}<strong></p>`);
+			h.push(`<p><strong class="error">${i18n(`Boxes.Calculator.${PlayerDict[Calculator.Overview['0']['player']['player_id']].IsActive === undefined ? 'PlayerActivityUnknown' : 'PlayerInactive'}`)}<strong></p>`);
 		}
 		
 		h.push('</div>');

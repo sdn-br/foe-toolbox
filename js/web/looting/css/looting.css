@@ -56,10 +56,15 @@
 }
 
 #looting div.filter {
-    display: flex;
-    justify-content: space-between;
     padding-right: 4px;
 }
+
+#looting div.filter-buttons {
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: row;
+    padding-right: 4px;
+}    
 
 #looting .action-row-type-1, #looting .action-row-type-2 {
     background-color: rgba(128, 255, 128, .1);
@@ -135,9 +140,6 @@
     color: #FFB539;
 }
 
-#looting .army {
-}
-
 #looting .versus {
     font-weight: bold;
     padding-left: 20px;
@@ -190,4 +192,8 @@
 
 #looting .btn-default {
 	padding: 0.2rem 0.4rem;
+}
+
+#looting .pvparena {
+    font-weight: bold;
 }
