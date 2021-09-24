@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -615,6 +615,7 @@ let GildFights = {
 		});
 	},
 
+
 	ToggleCopyButton: () => {
 		if ($('#nextup').is(':visible') && $('.timer.highlight-row').length > 0) {
 			$('.copybutton').show();
@@ -623,17 +624,21 @@ let GildFights = {
 		}
 	},
 
+
 	CopyToClipBoard: () => {
 		let copy = '';
 		let copycache = []; 
 		$('.timer.highlight-row').each(function() {
 			copycache.push(GildFights.MapData['map']['provinces'].find((mapItem) => mapItem.id == $(this).data('id')));
-		})
+		});
+
 		copycache.sort(function(a,b) { return a.lockedUntil - b.lockedUntil});
 		copycache.forEach((mapElem) => {
 			copy += `${moment.unix(mapElem.lockedUntil - 2).format('HH:mm')} ${mapElem.title}\n`; 
 		});
-		if (copy != '') {
+
+		if (copy !== '')
+		{
 			helper.str.copyToClipboard(copy).then(() => {
 				HTML.ShowToastMsg({
 					head: i18n('Boxes.Gildfights.CopyToClipBoard.Title'),
@@ -858,12 +863,13 @@ let GildFights = {
 	SettingsExport: (type)=> {
 
 		let blob, file;
+		let BOM = "\uFEFF";
 
 		if(type === 'json')
 		{
 			let json = JSON.stringify(GildFights.PlayerBoxContent);
 
-			blob = new Blob([json], {
+			blob = new Blob([BOM + json], {
 				type: 'application/json;charset=utf-8'
 			});
 			file = `ggfights-${ExtWorld}.json`;
@@ -884,7 +890,7 @@ let GildFights = {
 				csv.push(`${r['player']};${r['negotiationsWon']};${r['battlesWon']};${r['total']}`);
 			}
 
-			blob = new Blob([csv.join('\r\n')], {
+			blob = new Blob([BOM + csv.join('\r\n')], {
 				type: 'text/csv;charset=utf-8'
 			});
 			file = `ggfights-${ExtWorld}.csv`;
@@ -907,8 +913,9 @@ let GildFights = {
 
 			// fetch all alerts and search the id
 			return Alerts.getAll().then((resp)=> {
-				if(resp.length === 0){
-						resolve();
+				if(resp.length === 0)
+				{
+					resolve();
 				}
 
 				let currentTime = MainParser.getCurrentDateTime();
@@ -923,7 +930,9 @@ let GildFights = {
 							prov = GildFights.MapData['map']['provinces'].find(
 								e => e.title === name && alertTime > currentTime
 							);
-						if (prov !== undefined) {
+
+						if (prov !== undefined)
+						{
 							GildFights.Alerts.push({provId: prov['id'], alertId: alert.id});
 						}
 					}

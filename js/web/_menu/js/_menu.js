@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to 
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md 
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md 
  * for full license details.
  *
  * **************************************************************************************
@@ -25,7 +25,7 @@ let _menu = {
 	HudWidth: 0,
 
 	MenuOptions: ['BottomBar', 'RightBar', 'Box'],
-
+	
 	Items: [
 		'calculator',
 		'partCalc',
@@ -43,7 +43,6 @@ let _menu = {
 		'looting',
 		'settings',
 		'stats',
-		'chat',
 		'kits',
 		'greatbuildings',
 		'market',
@@ -53,7 +52,9 @@ let _menu = {
 		'gildfight',
 		'investment',
 		'alerts',
-		'guildmemberstat'
+		'guildmemberstat',
+		'gexstat',
+		'productionsrating',
 		// 'unitsGex',
 	],
 
@@ -75,7 +76,7 @@ let _menu = {
 		else if (selMenu === 'RightBar') {
 			_menu.selectedMenu = 'RightBar';
 			_menu_right.BuildOverlayMenu();
-			}
+		}
 		else if (selMenu === 'Box') {
 			_menu.selectedMenu = 'Box';
 			_menu_box.BuildBoxMenu();
@@ -315,7 +316,7 @@ let _menu = {
 		btn_Own.on('click', function () {
 			// nur wenn es für diese Session ein LG gibt zünden
 			if (Parts.CityMapEntity !== undefined && Parts.Rankings !== undefined) {
-				Parts.buildBox();
+				Parts.Show();
 			}
 		});
 
@@ -349,11 +350,14 @@ let _menu = {
 		let btn_outpost = $('<span />');
 
 		btn_outpost.bind('click', function () {
-			let OutpostBuildings = localStorage.getItem('OutpostBuildings');
-
-			if (OutpostBuildings !== null) {
-				Outposts.BuildInfoBox();
+			if ($('#outpost-Btn').hasClass('hud-btn-red') === false) {
+				let OutpostBuildings = localStorage.getItem('OutpostBuildings');
+	
+				if (OutpostBuildings !== null) {
+					Outposts.BuildInfoBox();
+				}
 			}
+			
 		});
 
 		btn_outPBG.append(btn_outpost);
@@ -381,6 +385,28 @@ let _menu = {
 		btn_FPsBG.append(btn_FPs);
 
 		return btn_FPsBG;
+	},
+
+	/**
+	 * Outpost Button
+	 *
+	 * @returns {*|jQuery}
+	 */
+	productionsrating_Btn: () => {
+		let btn_prodratBG = $('<div />').attr({ 'id': 'productionsrating-Btn', 'data-slug': 'productionsrating' }).addClass('hud-btn');
+
+		// Tooltip einbinden
+		btn_prodratBG = _menu.toolTipp(btn_prodratBG, i18n('Menu.ProductionsRating.Title'), i18n('Menu.ProductionsRating.Desc'));
+
+		let btn_prodrat = $('<span />');
+
+		btn_prodrat.bind('click', function () {
+			Productions.ShowRating();
+		});
+
+		btn_prodratBG.append(btn_prodrat);
+
+		return btn_prodratBG;
 	},
 
 	/**
@@ -495,13 +521,13 @@ let _menu = {
 
 		btn_City.on('click', function () {
 			if (LastMapPlayerID === ExtPlayerID) {
-			CityMap.init();
+				CityMap.init(false);
 			}
 			else {
 				let Player = PlayerDict[LastMapPlayerID];
 				let PlayerName = (Player ? Player['PlayerName'] : '???');
-				CityMap.init(MainParser.OtherPlayerCityMapData, PlayerName);
-            }
+				CityMap.init(false, MainParser.OtherPlayerCityMapData, PlayerName);
+			}
 		});
 
 		btn_CityBG.append(btn_City);
@@ -558,7 +584,7 @@ let _menu = {
 		return btn_UnitBG;
 	},
 
-  	/**
+	/**
 	 * Looting actions
 	 * @returns {*|jQuery}
 	 */
@@ -570,7 +596,7 @@ let _menu = {
 		let btn_Sabotage = $('<span />');
 
 		btn_Sabotage.on('click', function () {
-      		Sabotage.showResult();
+			Sabotage.showResult();
 		});
 
 		btn_SabotageBG.append(btn_Sabotage);
@@ -591,7 +617,7 @@ let _menu = {
 		let btn_Looting = $('<span />');
 
 		btn_Looting.on('click', function () {
-      		Looting.page = 1;
+			Looting.page = 1;
 			Looting.Show();
 		});
 
@@ -658,7 +684,7 @@ let _menu = {
 		btn_Stats.on('click', function () {
 			Stats.page = 1;
 			Stats.filterByPlayerId = null;
-			Stats.Show();
+			Stats.Show(false);
 		});
 
 		btn_StatsBG.append(btn_Stats);
@@ -666,35 +692,6 @@ let _menu = {
 		return btn_StatsBG;
 	},
 
-	/**
-	 * Chat Button
-	 *
-	 * @returns {*|jQuery}
-	 */
-	chat_Btn: () => {
-
-		let btn = $('<div />').attr({ 'id': 'chat-Btn', 'data-slug': 'chat' }).addClass('hud-btn');
-
-		// Tooltip einbinden
-		btn = _menu.toolTipp(btn, i18n('Menu.Chat.Title'), i18n('Menu.Chat.Desc'));
-
-		let btn_sp = $('<span />');
-
-		btn_sp.on('click', function () {
-			MainParser.sendExtMessage({
-				type: 'chat',
-				player: ExtPlayerID,
-				name: ExtPlayerName,
-				guild: ExtGuildID,
-				world: ExtWorld,
-				lang: MainParser.Language
-			});
-		});
-
-		btn.append(btn_sp);
-
-		return btn;
-	},
 
 	/**
 	 * Set Übersicht
@@ -751,7 +748,7 @@ let _menu = {
 
 		btn_Market.bind('click', function () {
 			if ($('#market-Btn').hasClass('hud-btn-red') === false) {
-				Market.Show();
+				Market.Show(false);
 			}
 		});
 
@@ -784,7 +781,7 @@ let _menu = {
 			BlueGalaxy.Show();
 		});
 
-		btn.append(btn_sp);
+		btn.append(btn_sp, $('<span id="hidden-blue-galaxy-count" class="hud-counter">0</span>'));
 
 		return btn;
 	},
@@ -922,7 +919,7 @@ let _menu = {
 		}).addClass('hud-btn');
 
 		// Tooltip einbinden
-		btn= _menu.toolTipp(btn, i18n('Menu.Investment.Title'), i18n('Menu.Investment.Desc'));
+		btn = _menu.toolTipp(btn, i18n('Menu.Investment.Title'), i18n('Menu.Investment.Desc'));
 
 		let btn_sp = $('<span />').on('click', function () {
 			Investment.BuildBox(false);
@@ -944,7 +941,7 @@ let _menu = {
 		}).addClass('hud-btn hud-btn-red');
 
 		// Tooltip einbinden
-		btn = _menu.toolTipp(btn, i18n('Menu.GuildMemberStat.Title'), '<em id="guildmemberstat-Btn-closed" class="tooltip-error">' + i18n('Menu.GuildMemberStat.Warning') + '<br></em>' + i18n('Menu.GuildMemberStat.Desc'), 'guildmemberstat-Btn');
+		btn = _menu.toolTipp(btn, i18n('Menu.GuildMemberStat.Title'), '<em id="guildmemberstat-Btn-closed" class="tooltip-error">' + i18n('Menu.GuildMemberStat.Warning') + '<br></em>' + i18n('Menu.GuildMemberStat.Desc'));
 
 		let btn_sp = $('<span />').bind('click', function () {
 			if ($('#guildmemberstat-Btn').hasClass('hud-btn-red') === false) {
@@ -955,5 +952,30 @@ let _menu = {
 		btn.append(btn_sp);
 
 		return btn;
-	}
+	},
+
+
+	/**
+	 * GEX statistic
+	 */
+	gexstat_Btn: () => {
+		let btn = $('<div />').attr({
+			'id': 'gexstat-Btn',
+			'data-slug': 'gexstat'
+		}).addClass('hud-btn');
+
+		// Tooltip einbinden
+		btn = _menu.toolTipp(btn, i18n('Menu.GexStat.Title'), i18n('Menu.GexStat.Desc'));
+
+		let btn_sp = $('<span />').bind('click', function () {
+			if ($('#gexstat-Btn').hasClass('hud-btn-red') === false) {
+				GexStat.BuildBox(false);
+			}
+		});
+
+		btn.append(btn_sp);
+
+		return btn;
+	},
+	
 };

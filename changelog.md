@@ -1,5 +1,15 @@
 ## Changelog - Extension
 
+##### 1.12.0.0
+**Bugfix**
+- Plünderhilfe
+	- Piratenversteck wird jetzt nicht mehr als plünderbar angezeigt
+	- Bei der Berechnung der Werte der Angriffsarmeen wird die Verdopplung durch das Hippodrom jetzt beachtet
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.9.2 migriert
+
+
 ##### 1.11.1.0
 **Update**
 - Allgemein

@@ -29,6 +29,16 @@ let BlackListBuildingsString = [
 	'R_MultiAge_SummerBonus19', //Großer Leuchtturm
 	'R_MultiAge_Battlegrounds1', //Ehrenstatue
 	'R_MultiAge_PatrickBonus21', //Druidentempel
+	'R_MultiAge_SummerBonus21', // Piratenversteck
+];
+
+let BoostInUnconnectedState = [
+	'A_MultiAge_CarnivalBonus19a', // Piazza Turm St. 1
+	'A_MultiAge_CarnivalBonus19b', // Piazza Turm St. 2
+];
+
+let DoubleChains = [
+	'hippodrome'
 ];
 
 // grau darzustellende Produktionen
@@ -64,6 +74,7 @@ let Sabotage = {
 	PlayerId: undefined,
 	PlayerName: undefined,
 	ClanName: undefined,
+	PlayerEra: undefined,
 	IsFriend: false,
 	IsGuildMember: false,
 	IsNeighbor: false,
@@ -98,6 +109,7 @@ let Sabotage = {
 
 		Sabotage.PlayerName = PlayerDict[PlayerId]['PlayerName'];
 		Sabotage.ClanName = PlayerDict[PlayerId]['ClanName'];
+		Sabotage.PlayerEra = PlayerDict[PlayerId]['Era'];
 
 		$('#sabotageInfo').remove();
 
@@ -106,69 +118,121 @@ let Sabotage = {
         Sabotage.CityEntities = d;      
 
 		let BoostDict = [];
+		let ChainDict = {};
+
 		for (let i in d) {
 			if (d.hasOwnProperty(i)) {
-			let id = d[i]['cityentity_id'];
+				let id = d[i]['cityentity_id'];
 
-			if (d[i]['bonus'] !== undefined) {
-				let BoostType = d[i]['bonus']['type'];
-				let BoostValue = d[i]['bonus']['value'];
-				if (BoostType !== undefined && BoostValue !== undefined) {
-					BoostDict[BoostType] |= 0;
-					BoostDict[BoostType] += BoostValue;
+				if (d[i]['bonus'] !== undefined) {
+					let BoostType = d[i]['bonus']['type'];
+					let BoostValue = d[i]['bonus']['value'];
+					if (BoostType !== undefined && BoostValue !== undefined) {
+						BoostDict[BoostType] |= 0;
+						BoostDict[BoostType] += BoostValue;
+					}
 				}
-			}
 
-			let BuildingData = MainParser.CityEntities[id];
-			if (d[i]['state'] !== undefined && d[i]['state']['__class__'] !== 'ConstructionState' && d[i]['state']['__class__'] !== 'UnconnectedState') {
-				if (BuildingData['abilities'] !== undefined) {
-					for (let ability in BuildingData['abilities']) {
-						if (!BuildingData['abilities'].hasOwnProperty(ability))  continue;
-						let CurrentAbility = BuildingData['abilities'][ability];
-						
-						if (CurrentAbility['boostHints'] !== undefined) {
-							for (let boostHint in CurrentAbility['boostHints']) {
-								if (!CurrentAbility['boostHints'].hasOwnProperty(boostHint)) continue;
+				let BuildingData = MainParser.CityEntities[id];
 
-								let CurrentBoostHint = CurrentAbility['boostHints'][boostHint];
-								Sabotage.HandleBoostEraMap(BoostDict, CurrentBoostHint['boostHintEraMap'], d[i]);
+				if (d[i]['state'] !== undefined && d[i]['state']['__class__'] !== 'ConstructionState' && (d[i]['state']['__class__'] !== 'UnconnectedState' || BoostInUnconnectedState.includes(id))) {
+					if (BuildingData['abilities'] !== undefined) {
+						let ChainId,
+						    Chain = BuildingData['abilities'].find(e => e['chainId'] !== undefined);
+
+						if (Chain !== undefined) {
+							ChainId = Chain['chainId'];
+							if (ChainDict[ChainId] === undefined) {
+								ChainDict[ChainId] = {
+									mainBuildings: [], 
+									boostDict: []
+								};
 							}
 						}
 
-						if (CurrentAbility['bonuses'] !== undefined) {
-							for (let bonus in CurrentAbility['bonuses']) {
-								if (!CurrentAbility['bonuses'].hasOwnProperty(bonus)) continue;
-
-								let CurrentBonus = CurrentAbility['bonuses'][bonus];
-								Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i]);
+						let isMainChainBuilding = (Chain !== undefined && Chain['__class__'] == 'ChainStartAbility');
+						let isFirstOccurance = false;
+						if (isMainChainBuilding) {
+							if (ChainDict[ChainId]['mainBuildings'].find(e => e.id === id) === undefined) {
+								ChainDict[ChainId]['mainBuildings'].push({id: id, boostDict: []});
+								isFirstOccurance = true;
 							}
 						}
+						for (let ability in BuildingData['abilities']) {
+							if (!BuildingData['abilities'].hasOwnProperty(ability))  continue;
+							let CurrentAbility = BuildingData['abilities'][ability];
+							let CurrentChainId = CurrentAbility['chainId'];
+							
+							if (CurrentAbility['boostHints'] !== undefined) {
+								for (let boostHint in CurrentAbility['boostHints']) {
+									if (!CurrentAbility['boostHints'].hasOwnProperty(boostHint)) continue;
 
-						if (CurrentAbility['bonusGiven'] !== undefined) {
-							let CurrentBonus = CurrentAbility['bonusGiven'];
-							Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i]);
-                           }
+									let CurrentBoostHint = CurrentAbility['boostHints'][boostHint];
+									Sabotage.HandleBoostEraMap(BoostDict, CurrentBoostHint['boostHintEraMap'], d[i]);
+									if (isMainChainBuilding && isFirstOccurance) {
+										let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
+										Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBoostHint['boostHintEraMap'], d[i]);
+									}
+								}
+							}
+
+							if (CurrentAbility['bonuses'] !== undefined) {
+								for (let bonus in CurrentAbility['bonuses']) {
+									if (!CurrentAbility['bonuses'].hasOwnProperty(bonus)) continue;
+
+									let CurrentBonus = CurrentAbility['bonuses'][bonus];
+									Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i]);
+									if (isMainChainBuilding && isFirstOccurance) {
+										let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
+										Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBonus['boost'], d[i]);
+									}
+								}
+							}
+
+							if (CurrentAbility['bonusGiven'] !== undefined) {
+								let CurrentBonus = CurrentAbility['bonusGiven'];
+								let Dict = BoostDict;
+								if (CurrentChainId !== undefined) {
+									Dict = ChainDict[CurrentChainId]['boostDict'];
+								}
+								Sabotage.HandleBoostEraMap(Dict, CurrentBonus['boost'], d[i]);
+								if (isMainChainBuilding && isFirstOccurance) {
+									let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
+									Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBonus['boost'], d[i]);
+								}
+							}
+						}
+					}
+									
+					if (BlackListBuildingsArray.includes(id) === false && BlackListBuildingsString.indexOf(id.substring(0, id.length-1)) === -1) {
+						if (d[i]['state'] !== undefined && d[i]['state']['current_product'] !== undefined) {
+							if (d[i]['type'] === 'goods') {
+								GoodsParser.readType(d[i]);
+							}
+							else if ((d[i]['type'] === 'residential' || d[i]['type'] === 'production' || d[i]['type'] === 'clan_power_production') && d[i]['state']['is_motivated'] === false) {
+								GoodsParser.readType(d[i]);
+							}
 						}
 					}
 				}
-				                
-                if (BlackListBuildingsArray.includes(id) === false && BlackListBuildingsString.indexOf(id.substring(0, id.length-1)) === -1) {
-                    if (d[i]['state'] !== undefined && d[i]['state']['current_product'] !== undefined) {
-                        if (d[i]['type'] === 'goods') {
-                            GoodsParser.readType(d[i]);
-                        }
-                        else if ((d[i]['type'] === 'residential' || d[i]['type'] === 'production' || d[i]['type'] === 'clan_power_production') && d[i]['state']['is_motivated'] === false) {
-                            GoodsParser.readType(d[i]);
-                        }
-                    }
-                }
-            }
+			}
 		}
+
+		Sabotage.ApplyChainDict(ChainDict, BoostDict);
 
 		Sabotage.ArmyBoosts = Unit.GetBoostSums(BoostDict);
 		Sabotage.PlunderRepel = (BoostDict['plunder_repel'] !== undefined ? BoostDict['plunder_repel'] : 0 );
 
 		Sabotage.showResult();
+	},
+
+	ApplyChainDict: (ChainDict, BoostDict) => {
+		Object.keys(ChainDict).forEach(chainId => {
+			Object.keys(ChainDict[chainId]['boostDict']).forEach(boost => {
+				let multiplier = (DoubleChains.includes(chainId) === true && ChainDict[chainId]['mainBuildings'].length >=2 ? 2 : 1);
+				BoostDict[boost] += ChainDict[chainId]['boostDict'][boost] * multiplier;
+			})
+		});
 	},
 
 
@@ -230,14 +294,15 @@ let Sabotage = {
         const boosts = Sabotage.ArmyBoosts;
 		h.push('<div class="text-center dark-bg" style="padding:5px 0 3px;">');
 		h.push('<p class="header"><strong>');
-        h.push('<span class="player-name">' + Sabotage.PlayerName);
+        h.push('<span class="player-name">' + MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName));
 
 		if (Sabotage.ClanName) {
-			h.push(` [${Sabotage.ClanName}]`);
+			h.push(`<br>[${Sabotage.ClanName}]`);
 		}
 
 		h.push('</span>');
 		h.push('</strong></p>');
+		h.push(`<p><strong>${i18n('Boxes.Sabotage.PlayerEra')}: ${i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra])}</strong></p>`);
 		
 		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId);
 		let isShielded = (shieldTime !== undefined);
@@ -285,7 +350,7 @@ let Sabotage = {
 			}
 		}
 		
-		h.push('<p><span class="btn-default button-showcity">' + i18n('Boxes.Sabotage.ShowCity') + '</span><span class="btn-default button-showloot">' + i18n('Boxes.Sabotage.ShowLoot') + '</span></p>');
+		h.push(`<p><span class="btn-default button-showcity">${i18n('Boxes.Sabotage.ShowCity')}</span>${!Sabotage.IsGuildMember ? `<span class="btn-default button-showloot">${i18n('Boxes.Sabotage.ShowLoot')}</span>` : ''}</p>`);
         
 		h.push('</p>');
 		
@@ -442,26 +507,11 @@ let Sabotage = {
 		// CSS in den DOM prügeln
 		HTML.AddCssFile('citymap');
 
-		if ($('#map' + h).length < 1) {
-			CityMap.init(Sabotage.CityEntities, Sabotage.PlayerName);
-		}
-
-		$('[data-entityid]').removeClass('pulsate');
-		
-		if (id !== undefined) {
-
-			setTimeout(() => {
-				let target = $('[data-entityid="' + id + '"]');
-
-				$('#map-container').scrollTo(target, 800, {offset: {left: -280, top: -280}, easing: 'swing'});
-
-				target.addClass('pulsate');
-			}, 200);
-		}
+		CityMap.init(true, Sabotage.CityEntities, Sabotage.PlayerName, id);
 	},
 	
 	UpdatePlayer: (ud) => {
-		if (ud.player_id = Sabotage.OtherPlayer.player_id) {
+		if (ud.player_id != Sabotage.OtherPlayer.player_id) {
 		
 			Sabotage.OtherPlayer = ud;
 

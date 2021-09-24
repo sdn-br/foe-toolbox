@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -251,15 +251,15 @@ let FPCollector = {
 				const sumTotal = await FPCollector.calculateTotalByType(event);
 				const entriesEvent = FPCollector.getEntriesByEvent(event);
 
-				tr.push(`<div class="foehelper-accordion ${event}">`);
+				tr.push(`<div class="foetoolbox-accordion ${event}">`);
 
-				tr.push(	`<div class="foehelper-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
+				tr.push(	`<div class="foetoolbox-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
 								<span class="image"></span>
 								<strong class="text-warning">${sumTotal}</strong>
 								<span>${i18n('Boxes.FPCollector.' + event)}</span>
 							</div>`);
 
-				tr.push(	`<div class="foehelper-accordion-body ${event}-body">`);
+				tr.push(	`<div class="foetoolbox-accordion-body ${event}-body">`);
 
 				 entriesEvent.forEach(e => {
 					 tr.push(`<div>
@@ -307,8 +307,8 @@ let FPCollector = {
 				}
 
 				// Belohnung einer Schleifenquest
-				if (Quest['rewards']) {
-					for (let Reward of Quest['rewards']) {
+				if (Quest['genericRewards']) {
+					for (let Reward of Quest['genericRewards']) {
 						if (Reward['type'] === 'forgepoint_package') {
 							StrategyPoints.insertIntoDB({
 								place: 'Quest',
@@ -368,7 +368,7 @@ let FPCollector = {
 
 		FPCollector.DatePicker = new Litepicker({
 			element: document.getElementById('FPCollectorPicker'),
-			format: i18n('Date'),
+			format: 'YYYY-MM-DD',
 			lang: MainParser.Language,
 			singleMode: false,
 			splitView: false,
@@ -443,7 +443,7 @@ let FPCollector = {
 		let $this = $(`.${event}`),
 			isOpen = $this.hasClass('open');
 
-		$('#fp-collectorBodyInner .foehelper-accordion').removeClass('open');
+		$('#fp-collectorBodyInner .foetoolbox-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

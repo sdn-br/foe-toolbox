@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -15,7 +15,7 @@
 	// jQuery detection
 	let intval = -1;
 	function checkForJQuery() {
-		if (typeof jQuery !== 'undefined'){
+		if (typeof jQuery !== 'undefined') {
 			clearInterval(intval);
 			window.dispatchEvent(new CustomEvent('foe-toolbox#jQuery-loaded'));
 		}
@@ -28,6 +28,7 @@ let ApiURL = 'https://api.foe-rechner.de/',
 	LastMapPlayerID = null,
 	ExtPlayerID = 0,
 	ExtPlayerName = null,
+	ExtPlayerAvatar = null,
 	ExtGuildID = 0,
 	ExtGuildPermission = 0,
 	ExtWorld = '',
@@ -49,14 +50,15 @@ let ApiURL = 'https://api.foe-rechner.de/',
 	Fights = [],
 	OwnUnits = [],
 	EnemyUnits = [],
-	possibleMaps = ['main', 'gex', 'gg', 'era_outpost', 'gvg'];
+	possibleMaps = ['main', 'gex', 'gg', 'era_outpost', 'gvg'],
+	PlayerLinkFormat = 'https://foe.scoredb.io/__world__/Player/__playerid__';
 
 // Übersetzungen laden
 let i18n_loaded = false;
-const i18n_loadPromise = (async() => {
+const i18n_loadPromise = (async () => {
 	const sleep = delay => new Promise(resolve => setTimeout(resolve, delay));
 	const vendorsLoadedPromise = new Promise(resolve =>
-		window.addEventListener('foe-toolbox#vendors-loaded', resolve, {passive: true, once: true})
+		window.addEventListener('foe-toolbox#vendors-loaded', resolve, { passive: true, once: true })
 	);
 
 	try {
@@ -74,11 +76,11 @@ const i18n_loadPromise = (async() => {
 			languages
 				.map(lang =>
 					// frage die Sprachdatei an
-					fetch(extUrl + 'js/web/_i18n/'+lang+'.json')
+					fetch(extUrl + 'js/web/_i18n/' + lang + '.json')
 						// lade die antwort als JSON
 						.then(response => response.text())
 						// im fehlerfall wird ein leeres Objekt zurück gegeben
-						.catch(()=>({}))
+						.catch(() => ({}))
 				)
 		);
 
@@ -97,18 +99,18 @@ const i18n_loadPromise = (async() => {
 })();
 
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
 	// note current world
 	ExtWorld = window.location.hostname.split('.')[0];
 	localStorage.setItem('current_world', ExtWorld);
 
 	// register resize functions
-	window.addEventListener('resize', ()=>{
+	window.addEventListener('resize', () => {
 		MainParser.ResizeFunctions();
 	});
 
 	// Detect and process fullscreen
-	$(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange', function(){
+	$(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange', function () {
 		if (!window.screenTop && !window.screenY) {
 			HTML.LeaveFullscreen();
 		} else {
@@ -131,7 +133,7 @@ const FoEproxy = (function () {
 		let data = requestInfoHolder.get(xhr);
 		if (data != null) return data;
 
-		data = {url: null, method: null, postData: null};
+		data = { url: null, method: null, postData: null };
 		requestInfoHolder.set(xhr, data);
 		return data;
 	}
@@ -164,7 +166,7 @@ const FoEproxy = (function () {
 		 * TODO: Genaueren Typ für den Callback definieren
 		 * @param {(data: FoE_NETWORK_TYPE, postData: any) => void} callback Der Handler, welcher mit der Antwort aufgerufen werden soll.
 		 */
-		addHandler: function(service, method, callback) {
+		addHandler: function (service, method, callback) {
 			// default service and method to 'all'
 			if (method === undefined) {
 				// @ts-ignore
@@ -191,7 +193,7 @@ const FoEproxy = (function () {
 			list.push(callback);
 		},
 
-		removeHandler: function(service, method, callback) {
+		removeHandler: function (service, method, callback) {
 			// default service and method to 'all'
 			if (method === undefined) {
 				callback = service;
@@ -213,7 +215,7 @@ const FoEproxy = (function () {
 		},
 
 		// for metadata requests: metadata?id=<meta>-<hash>
-		addMetaHandler: function(meta, callback) {
+		addMetaHandler: function (meta, callback) {
 			let list = proxyMetaMap[meta];
 			if (!list) {
 				proxyMetaMap[meta] = list = [];
@@ -226,7 +228,7 @@ const FoEproxy = (function () {
 			list.push(callback);
 		},
 
-		removeMetaHandler: function(meta, callback) {
+		removeMetaHandler: function (meta, callback) {
 			let list = proxyMetaMap[meta];
 			if (!list) {
 				return;
@@ -235,7 +237,7 @@ const FoEproxy = (function () {
 		},
 
 		// for raw requests access
-		addRawHandler: function(callback) {
+		addRawHandler: function (callback) {
 			if (proxyRaw.indexOf(callback) !== -1) {
 				// already registered
 				return;
@@ -244,7 +246,7 @@ const FoEproxy = (function () {
 			proxyRaw.push(callback);
 		},
 
-		removeRawHandler: function(callback) {
+		removeRawHandler: function (callback) {
 			proxyRaw = proxyRaw.filter(c => c !== callback);
 		},
 
@@ -255,7 +257,7 @@ const FoEproxy = (function () {
 		 * TODO: Genaueren Typ für den Callback definieren
 		 * @param {(data: FoE_NETWORK_TYPE) => void} callback Der Handler, welcher mit der Nachricht aufgerufen werden soll.
 		 */
-		addWsHandler: function(service, method, callback) {
+		addWsHandler: function (service, method, callback) {
 			// default service and method to 'all'
 			if (method === undefined) {
 				// @ts-ignore
@@ -282,7 +284,7 @@ const FoEproxy = (function () {
 			list.push(callback);
 		},
 
-		removeWsHandler: function(service, method, callback) {
+		removeWsHandler: function (service, method, callback) {
 			// default service and method to 'all'
 			if (method === undefined) {
 				callback = service;
@@ -312,7 +314,7 @@ const FoEproxy = (function () {
 		},
 
 		// for raw requests access
-		addRawWsHandler: function(callback) {
+		addRawWsHandler: function (callback) {
 			if (wsRawHandler.indexOf(callback) !== -1) {
 				// already registered
 				return;
@@ -321,7 +323,7 @@ const FoEproxy = (function () {
 			wsRawHandler.push(callback);
 		},
 
-		removeRawWsHandler: function(callback) {
+		removeRawWsHandler: function (callback) {
 			wsRawHandler = wsRawHandler.filter(c => c !== callback);
 		},
 
@@ -339,13 +341,13 @@ const FoEproxy = (function () {
 
 		xhrQ.forEach(xhrRequest => xhrOnLoadHandler.call(xhrRequest));
 		wsQ.forEach(wsMessage => wsMessageHandler(wsMessage));
-	}, {capture:false, once: true, passive: true});
+	}, { capture: false, once: true, passive: true });
 
 	window.addEventListener('foe-toolbox#error-loading', () => {
 		xhrQueue = null;
 		wsQueue = null;
 		proxyEnabled = false;
-	}, {capture:false, once: true, passive: true});
+	}, { capture: false, once: true, passive: true });
 
 	// ###########################################
 	// ############## Websocket-Proxy ############
@@ -399,7 +401,7 @@ const FoEproxy = (function () {
 		try {
 			if (evt.data === 'PONG') return;
 			/** @type {FoE_NETWORK_TYPE[]|FoE_NETWORK_TYPE} */
-			const data  = JSON.parse(evt.data);
+			const data = JSON.parse(evt.data);
 
 			// do raw-ws-handlers
 			for (let callback of wsRawHandler) {
@@ -430,7 +432,7 @@ const FoEproxy = (function () {
 		oldWSSend.call(this, data);
 		if (proxyEnabled && !observedWebsockets.has(this)) {
 			observedWebsockets.add(this);
-			this.addEventListener('message', wsMessageHandler, {capture: false, passive: true});
+			this.addEventListener('message', wsMessageHandler, { capture: false, passive: true });
 		}
 	};
 
@@ -463,10 +465,12 @@ const FoEproxy = (function () {
 	 * This function gets the callbacks from proxyMap[service][method],proxyMap[service]['all'] and proxyMap['all']['all'] and executes them.
 	 */
 	function proxyAction(service, method, data, postData, responseData) {
-		_proxyAction(service, method, data, postData, responseData);
-		_proxyAction('all', method, data, postData, responseData);
-		_proxyAction(service, 'all', data, postData, responseData);
-		_proxyAction('all', 'all', data, postData, responseData);
+		let filteredPostData = postData.filter(r => r && r.requestId && data && data.requestId && r.requestId === data.requestId); //Nur postData mit zugehöriger requestId weitergeben
+
+		_proxyAction(service, method, data, filteredPostData, responseData);
+		_proxyAction('all', method, data, filteredPostData, responseData);
+		_proxyAction(service, 'all', data, filteredPostData, responseData);
+		_proxyAction('all', 'all', data, filteredPostData, responseData);
 	}
 
 	// Achtung! Die XMLHttpRequest.prototype.open und XMLHttpRequest.prototype.send funktionen werden nicht zurück ersetzt,
@@ -479,7 +483,7 @@ const FoEproxy = (function () {
 	 * @param {string} method
 	 * @param {string} url
 	 */
-	XHR.open = function(method, url){
+	XHR.open = function (method, url) {
 		if (proxyEnabled) {
 			const data = getRequestData(this);
 			data.method = method;
@@ -551,22 +555,22 @@ const FoEproxy = (function () {
 		// nur die jSON mit den Daten abfangen
 		if (url.indexOf("game/json?h=") > -1) {
 
-			let d = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
+			let responseData = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
 
 			let requestData = postData;
 
 			try {
 				requestData = JSON.parse(new TextDecoder().decode(postData));
 				// StartUp Service zuerst behandeln
-				for (let entry of d) {
+				for (let entry of responseData) {
 					if (entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, d);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
 					}
 				}
 
-				for (let entry of d) {
+				for (let entry of responseData) {
 					if (!(entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData')) {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, d);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
 					}
 				}
 
@@ -581,7 +585,7 @@ const FoEproxy = (function () {
 		if (proxyEnabled) {
 			const data = getRequestData(this);
 			data.postData = postData;
-			this.addEventListener('load', xhrOnLoadHandler, {capture: false, passive: true});
+			this.addEventListener('load', xhrOnLoadHandler, { capture: false, passive: true });
 		}
 
 		// @ts-ignore
@@ -591,25 +595,48 @@ const FoEproxy = (function () {
 	return proxy;
 })();
 
-(function() {
+(function () {
 
 	// globale Handler
 	// die Gebäudenamen übernehmen
 	FoEproxy.addMetaHandler('city_entities', (xhr, postData) => {
 		let EntityArray = JSON.parse(xhr.responseText);
-		MainParser.CityEntities = Object.assign({}, ...EntityArray.map((x) => ({ [x.id]: x })));;
+		MainParser.CityEntities = Object.assign({}, ...EntityArray.map((x) => ({ [x.id]: x })));
+	});
+
+	// Updatestufen der Eventgebäude
+	FoEproxy.addMetaHandler('selection_kits', (xhr, postData) => {
+		let SelectKitArray = JSON.parse(xhr.responseText)
+		MainParser.BuildingSelectionKits = Object.assign({}, ...SelectKitArray.map((x) => ({ [x.id]: x })));
+	});
+
+	// Building-Sets
+	FoEproxy.addMetaHandler('building_sets', (xhr, postData) => {
+		let BuildingSetArray = JSON.parse(xhr.responseText);
+		MainParser.BuildingSets = Object.assign({}, ...BuildingSetArray.map((x) => ({ [x.id]: x })));
+	});
+
+	// Building-Chains
+	FoEproxy.addMetaHandler('building_chains', (xhr, postData) => {
+		let BuildingChainsArray = JSON.parse(xhr.responseText);
+		MainParser.BuildingChains = Object.assign({}, ...BuildingChainsArray.map((x) => ({ [x.id]: x })));
+	});
+
+	// Castle-System-Levels
+	FoEproxy.addMetaHandler('castle_system_levels', (xhr, postData) => {
+		MainParser.CastleSystemLevels = JSON.parse(xhr.responseText);
 	});
 
 	// Portrait-Mapping für Spieler Avatare
 	FoEproxy.addRawHandler((xhr, requestData) => {
 		const idx = requestData.url.indexOf("/assets/shared/avatars/Portraits");
 
-		if(idx !== -1) {
-			MainParser.InnoCDN = requestData.url.substring(0, idx+1);
-			MainParser.sendExtMessage({type: 'setInnoCDN', url: MainParser.InnoCDN});
+		if (idx !== -1) {
+			MainParser.InnoCDN = requestData.url.substring(0, idx + 1);
+			MainParser.sendExtMessage({ type: 'setInnoCDN', url: MainParser.InnoCDN });
 			let portraits = {};
 
-			$(xhr.responseText).find('portrait').each(function(){
+			$(xhr.responseText).find('portrait').each(function () {
 				portraits[$(this).attr('name')] = $(this).attr('src');
 			});
 
@@ -634,6 +661,7 @@ const FoEproxy = (function () {
 		EventHandler.checkForDB(ExtPlayerID);
 		UnitGex.checkForDB(ExtPlayerID);
 		GuildMemberStat.checkForDB(ExtPlayerID);
+		GexStat.checkForDB(ExtPlayerID);
 
 		// which tab is active in StartUp Object?
 		let vals = {
@@ -642,7 +670,7 @@ const FoEproxy = (function () {
 			getClanMemberList: 0,
 		}
 
-		for(let i in data.responseData.socialbar_list){
+		for (let i in data.responseData.socialbar_list) {
 			vals.getNeighborList += (data.responseData.socialbar_list[i].is_neighbor ? 1 : 0);
 			vals.getFriendsList += (data.responseData.socialbar_list[i].is_friend ? 1 : 0);
 			vals.getClanMemberList += (data.responseData.socialbar_list[i].is_guild_member ? 1 : 0);
@@ -667,9 +695,10 @@ const FoEproxy = (function () {
 
 		// freigeschaltete Erweiterungen sichern
 		CityMap.UnlockedAreas = data.responseData.city_map.unlocked_areas;
+		CityMap.BlockedAreas = data.responseData.city_map.blocked_areas;
 
 		// EventCountdown
-		let eventCountDownFeature = data.responseData.feature_flags.features.filter((v)=>{return (v.feature === "event_start_countdown")});
+		let eventCountDownFeature = data.responseData.feature_flags.features.filter((v) => { return (v.feature === "event_start_countdown") });
 		EventCountdown = eventCountDownFeature.length > 0 ? eventCountDownFeature[0]["time_string"] : false;
 
 		Stats.Init();
@@ -791,12 +820,6 @@ const FoEproxy = (function () {
 		}
 	});
 
-	// Gebäude verschoben (einzeln oder Umbaumodus), FP eingezahlt etc.
-	FoEproxy.addHandler('CityMapService', (data, postData) => {
-		if (data.requestMethod === 'moveEntity' || data.requestMethod === 'moveEntities' || data.requestMethod === 'updateEntity') {
-			MainParser.UpdateCityMap(data.responseData);
-		}
-	});
 
 	// Produktion wird eingesammelt/gestartet/abgebrochen
 	FoEproxy.addHandler('CityProductionService', (data, postData) => {
@@ -916,7 +939,7 @@ const FoEproxy = (function () {
 
 		// wenn schon offen, den Inhalt updaten
 		if ($('#LGInvestmentOverviewBox').is(':visible')) {
-				Calculator.ShowPossibleInvestments(false);
+			Calculator.ShowPossibleInvestments(false);
 		}
 	});
 
@@ -944,15 +967,15 @@ const FoEproxy = (function () {
 			IsLevelScroll = true;
 		}
 		else if (contributeForgePoints != null) {
-				Rankings = contributeForgePoints.responseData;
-				IsLevelScroll = false;
-			}
+			Rankings = contributeForgePoints.responseData;
+			IsLevelScroll = false;
+		}
 
 		if (Rankings) {
 			if (!lgUpdateData || !lgUpdateData.CityMapEntity) {
-				lgUpdateData = { Rankings: Rankings, CityMapEntity: null, Bonus: null};
+				lgUpdateData = { Rankings: Rankings, CityMapEntity: null, Bonus: null };
 				// reset lgUpdateData sobald wie möglich (nachdem alle einzelnen Handler ausgeführt wurden)
-				Promise.resolve().then(()=>lgUpdateData = null);
+				Promise.resolve().then(() => lgUpdateData = null);
 
 			} else {
 				lgUpdateData.Rankings = Rankings;
@@ -974,9 +997,9 @@ const FoEproxy = (function () {
 
 	FoEproxy.addHandler('CityMapService', 'updateEntity', (data, postData) => {
 		if (!lgUpdateData || !lgUpdateData.Rankings) {
-			lgUpdateData = { Rankings: null, CityMapEntity: data};
+			lgUpdateData = { Rankings: null, CityMapEntity: data };
 			// reset lgUpdateData sobald wie möglich (nachdem alle einzelnen Handler ausgeführt wurden)
-			Promise.resolve().then(()=>lgUpdateData = null);
+			Promise.resolve().then(() => lgUpdateData = null);
 		} else {
 			lgUpdateData.CityMapEntity = data;
 			lgUpdate();
@@ -985,9 +1008,11 @@ const FoEproxy = (function () {
 
 	// Update Funktion, die ausgeführt wird, sobald beide Informationen in lgUpdateData vorhanden sind.
 	function lgUpdate() {
-		const { CityMapEntity, Rankings, Bonus} = lgUpdateData;
+		const { CityMapEntity, Rankings, Bonus } = lgUpdateData;
 		lgUpdateData = null;
 		let IsPreviousLevel = false;
+
+		if (!Rankings) return; //Keine Rankings => Fehlermeldung z.B. "Stufe wurde bereits erhöht" wenn man versucht einzuzahlen obwohl schon gelevelt wurde
 
 		//Eigenes LG
 		if (CityMapEntity.responseData[0].player_id === ExtPlayerID || Settings.GetSetting('ShowOwnPartOnAllGBs')) {
@@ -1025,18 +1050,13 @@ const FoEproxy = (function () {
 			$('#partCalc-Btn-closed').remove();
 
 			if ($('#OwnPartBox').length > 0) {
-				Parts.Show();
-			}
-
-			if (!IsLevelScroll) {
-				MainParser.OwnLG(CityMapEntity.responseData[0]);
+				Parts.CalcBody();
 			}
 		}
 
-		//Fremdes LG
-		if (CityMapEntity.responseData[0].player_id !== ExtPlayerID && !IsLevelScroll) {
-			LastKostenrechnerOpenTime = MainParser.getCurrentDateTime()
-
+		// Fremdes LG
+		if (CityMapEntity.responseData[0].player_id !== ExtPlayerID && !IsLevelScroll)
+		{
 			$('#calculator-Btn').removeClass('hud-btn-red');
 			$('#calculator-Btn-closed').remove();
 
@@ -1051,18 +1071,6 @@ const FoEproxy = (function () {
 		}
 
 	}
-
-	// --------------------------------------------------------------------------------------------------
-	// Gilden-GüterLog wird aufgerufen
-
-	/*
-	FoEproxy.addHandler('ClanService', 'getTreasuryLogs', (data, postData) => {
-		if (Settings.GetSetting('GlobalSend')) {
-			MainParser.SendGoodsLog(data['responseData']['logs']);
-		}
-	});
-	*/
-
 
 	// --------------------------------------------------------------------------------------------------
 	// Ernten anderer Spieler
@@ -1084,60 +1092,6 @@ const FoEproxy = (function () {
 		ResourceStock = data.responseData.resources; // Lagerbestand immer aktualisieren. Betrifft auch andere Module wie Technologies oder Negotiation
 		Outposts.CollectResources();
 		StrategyPoints.ShowFPBar();
-	});
-
-
-	// Verarbeite Daten die an foe-rechner.de geschickt werden können
-
-	// eigene LG Daten speichern
-	FoEproxy.addHandler('InventoryService', 'getGreatBuildings', (data, postData) => {
-		if (!Settings.GetSetting('GlobalSend')) {
-			return;
-		}
-		MainParser.SaveLGInventory(data.responseData);
-	});
-
-
-	//--------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------
-
-
-	// LGs des eigenen Clans auslesen
-	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
-		if (!Settings.GetSetting('GlobalSend') || !Settings.GetSetting('SendGildMemberLGInfo')) {
-			return;
-		}
-		MainParser.OtherPlayersLGs(data['responseData']);
-	});
-
-	//--------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------
-
-
-	// Gildenmitglieder in der GEX (Fortschritt, Plazierung usw.)
-	FoEproxy.addHandler('GuildExpeditionService', 'getContributionList', (data, postData) => {
-		if (!Settings.GetSetting('GlobalSend') || !Settings.GetSetting('SendGEXInfo')) {
-			return;
-		}
-		if (MainParser.checkNextUpdate('GuildExpedition') !== true) {
-			return;
-		}
-		MainParser.GuildExpedition(data.responseData);
-	});
-
-	//--------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------
-
-
-	// Gildenplatzierung in der GEX
-	FoEproxy.addHandler('ChampionshipService', 'getOverview', (data, postData) => {
-		if (!Settings.GetSetting('GlobalSend') || !Settings.GetSetting('SendGEXInfo')) {
-			return;
-		}
-		if (MainParser.checkNextUpdate('Championship') !== true){
-			return;
-		}
-		MainParser.Championship(data.responseData);
 	});
 
 
@@ -1165,12 +1119,12 @@ const FoEproxy = (function () {
 			MenuSetting = MenuSetting || 'BottomBar';
 			MainParser.SelectedMenu = MenuSetting;
 			_menu.CallSelectedMenu(MenuSetting);
-
+			
 			MainParser.setLanguage();
 
 			Quests.init();
 		}
-		GameTimeOffset = data.responseData.time*1000 - new Date().getTime();
+		GameTimeOffset = data.responseData.time * 1000 - new Date().getTime();
 		MainParser.LastResponseTimestamp = data.responseData.time;
 	});
 
@@ -1179,10 +1133,10 @@ const FoEproxy = (function () {
 	// GüterUpdate nach angenommenen Handel
 	FoEproxy.addRawWsHandler((data) => {
 		let Msg = data[0];
-		if(Msg === undefined || Msg['requestClass'] === undefined){
-			return ;
+		if (Msg === undefined || Msg['requestClass'] === undefined) {
+			return;
 		}
-		if(Msg['requestMethod'] === "newEvent" && Msg['responseData']['type'] === "trade_accepted"){
+		if (Msg['requestMethod'] === "newEvent" && Msg['responseData']['type'] === "trade_accepted") {
 			let d = Msg['responseData'];
 			ResourceStock[d['need']['good_id']] += d['need']['value'];
 		}
@@ -1202,7 +1156,7 @@ const FoEproxy = (function () {
 
 
 	// Alte, nich mehr benötigte localStorage einträge löschen (in 2 min)
-	setTimeout(()=>{
+	setTimeout(() => {
 		const keys = Object.keys(localStorage);
 		for (let k of keys) {
 			if (/^(OV_)?[0-9]+\/X_[A-Za-z_]+[0-9]*$/.test(k)) {
@@ -1211,7 +1165,7 @@ const FoEproxy = (function () {
 				localStorage.removeItem(k);
 			}
 		}
-	}, 1000*60*2);
+	}, 1000 * 60 * 2);
 
 
 })();
@@ -1229,19 +1183,17 @@ let HelperBeta = {
 };
 
 /**
- *
- * @type {{BuildingSelectionKits: null, StartUpType: null, SetArkBonus: MainParser.SetArkBonus, CityBuildingsUpgradesMetaId: null, setGoodsData: MainParser.setGoodsData, SaveLGInventory: MainParser.SaveLGInventory, SaveBuildings: MainParser.SaveBuildings, Conversations: [], UpdateCityMap: MainParser.UpdateCityMap, UpdateInventory: MainParser.UpdateInventory, SelectedMenu: string, foeHelperBgApiHandler: null, CityEntities: null, ArkBonus: number, InnoCDN: string, OtherPlayersMotivation: MainParser.OtherPlayersMotivation, Boosts: {}, obj2FormData: obj2FormData, GuildExpedition: (function(*=): undefined), UpdatePlayerDict: MainParser.UpdatePlayerDict, PlayerPortraits: null, Quests: null, i18n: null, ResizeFunctions: MainParser.ResizeFunctions, getAddedDateTime: (function(*=, *=): number), loadJSON: MainParser.loadJSON, ExportFile: MainParser.ExportFile, getCurrentDate: (function(): Date), SocialbarList: (function(*): undefined), Championship: MainParser.Championship, activateDownload: boolean, Inventory: {}, compareTime: (function(number, number): (string|boolean)), EmissaryService: null, setLanguage: MainParser.setLanguage, BoostMapper: Record<string, string>, SelfPlayer: (function(*): undefined), UnlockedAreas: null, CityEntitiesMetaId: null, CollectBoosts: MainParser.CollectBoosts, sendExtMessage: (function(*): Promise<*|undefined>), BoostSums: {supply_production: number, coin_production: number, def_boost_defender: number, att_boost_attacker: number, happiness_amount: number}, ClearText: (function(*): *), VersionSpecificStartupCode: MainParser.VersionSpecificStartupCode, checkNextUpdate: (function(*=): string|boolean), CitySetsMetaId: null, Language: string, UpdatePlayerDictCore: MainParser.UpdatePlayerDictCore, BonusService: null, SendLGData: (function(*): boolean), setConversations: MainParser.setConversations, StartUp: MainParser.StartUp, OtherPlayersLGs: (function(*): boolean), CityMapData: {}, OtherPlayerCityMapData: {}, CityMapEraOutpostData: null, getCurrentDateTime: (function(): number), OwnLG: (function(*=): boolean), round: (function(number): number), savedFight: null, BuildingSets: null, loadFile: MainParser.loadFile, send2Server: MainParser.send2Server}}
+ * @type {{BuildingSelectionKits: null, StartUpType: null, SetArkBonus: MainParser.SetArkBonus, CityBuildingsUpgradesMetaId: null, setGoodsData: MainParser.setGoodsData, SaveBuildings: MainParser.SaveBuildings, Conversations: *[], UpdateCityMap: MainParser.UpdateCityMap, BuildingChains: null, UpdateInventory: MainParser.UpdateInventory, SelectedMenu: string, foeHelperBgApiHandler: ((function(({type: string}&Object)): Promise<{ok: true, data: *}|{ok: false, error: string}>)|null), CityEntities: null, GetPlayerLink: ((function(*=, *): (string|*))|*), ArkBonus: number, InnoCDN: string, Boosts: {}, obj2FormData: obj2FormData, UpdatePlayerDict: MainParser.UpdatePlayerDict, PlayerPortraits: null, Quests: null, i18n: null, ResizeFunctions: MainParser.ResizeFunctions, getAddedDateTime: (function(*=, *=): number), loadJSON: MainParser.loadJSON, ExportFile: MainParser.ExportFile, getCurrentDate: (function(): Date), activateDownload: boolean, Inventory: {}, compareTime: ((function(number, number): (string|boolean))|*), EmissaryService: null, setLanguage: MainParser.setLanguage, BoostMapper: Record<string, string>, SelfPlayer: MainParser.SelfPlayer, UnlockedAreas: null, CityEntitiesMetaId: null, CollectBoosts: MainParser.CollectBoosts, sendExtMessage: ((function(*): Promise<*|undefined>)|*), BoostSums: {supply_production: number, def_boost_attacker: number, coin_production: number, def_boost_defender: number, att_boost_attacker: number, att_boost_defender: number, happiness_amount: number}, ClearText: (function(*): *), VersionSpecificStartupCode: MainParser.VersionSpecificStartupCode, checkNextUpdate: (function(*=): string|boolean), CitySetsMetaId: null, Language: string, SendLGData: ((function(*): boolean)|*), UpdatePlayerDictCore: MainParser.UpdatePlayerDictCore, BonusService: null, setConversations: MainParser.setConversations, StartUp: MainParser.StartUp, CityMapData: {}, DebugMode: boolean, OtherPlayerCityMapData: {}, CityMapEraOutpostData: null, getCurrentDateTime: (function(): number), round: ((function(number): number)|*), savedFight: null, BuildingSets: null, CastleSystemLevels: null, loadFile: MainParser.loadFile, send2Server: MainParser.send2Server}}
  */
 let MainParser = {
 
 	foeHelperBgApiHandler: /** @type {null|((request: {type: string}&object) => Promise<{ok:true, data: any}|{ok:false, error:string}>)}*/ (null),
 	LastResponseTimestamp: null,
 	activateDownload: false,
-	savedFight:null,
+	savedFight: null,
 	DebugMode: false,
 	Language: 'en',
 	SelectedMenu: 'BottomBar',
-	Buildings: null,
 	i18n: null,
 	BonusService: null,
 	Boosts: {},
@@ -1252,6 +1204,7 @@ let MainParser = {
 	CitySetsMetaId: null,
 	CityBuildingsUpgradesMetaId: null,
 	CityEntities: null,
+	CastleSystemLevels: null,
 	StartUpType: null,
 
 	// all buildings of the player
@@ -1271,13 +1224,16 @@ let MainParser = {
 	// Building sets
 	BuildingSets: null,
 
+	//Winterzug etc.
+	BuildingChains: null,
+
 
 	InnoCDN: 'https://foede.innogamescdn.com/',
 
 
 	/**
 	* Version specific StartUp Code
-    * Todo: Add code that should be executed only until the next update
+	* Todo: Add code that should be executed only until the next update
 	*
 	*/
 	VersionSpecificStartupCode: () => {
@@ -1300,19 +1256,24 @@ let MainParser = {
 		else {
 			MainParser.StartUpType = 'RegularStart';
 			/* Normal start */
-        }
+		}
 
 		localStorage.setItem('LastStartedVersion', extVersion);
 		localStorage.setItem('LastAgreedVersion', extVersion); //Comment out this line if you have something the player must agree on
-    },
+	},
 
 
 	/** @type {Record<string,string>} */
 	BoostMapper: {
-		'supplies_boost': 'supply_production',
-		'happiness' : 'happiness_amount',
-		'military_boost' : 'att_boost_attacker',
-		'money_boost' : 'coin_production'
+		'supplies_boost': ['supply_production'],
+		'happiness': ['happiness_amount'],
+		'military_boost': ['att_boost_attacker', 'def_boost_attacker'],
+		'att_def_boost_attacker': ['att_boost_attacker', 'def_boost_attacker'],
+		'fierce_resistance': ['att_boost_defender', 'def_boost_defender'],
+		'att_def_boost_defender': ['att_boost_defender', 'def_boost_defender'],
+		'advanced_tactics': ['att_boost_attacker', 'def_boost_attacker', 'att_boost_defender', 'def_boost_defender'],
+		'money_boost': ['coin_production'],
+		
 	},
 
 
@@ -1320,11 +1281,11 @@ let MainParser = {
 	 * Speichert alle aktiven Boosts
 	 */
 	BoostSums: {
+		'att_boost_attacker': 0,
+		'def_boost_attacker': 0,
 		'att_boost_defender': 0,
 		'def_boost_defender': 0,
 		'happiness_amount': 0,
-		'att_boost_attacker': 0,
-		'def_boost_attacker': 0,
 		'coin_production': 0,
 		'supply_production': 0
 	},
@@ -1355,10 +1316,10 @@ let MainParser = {
 		}
 
 		const responsePromise = _responsePromise;
-		
+
 		const response = await new Promise((resolve, reject) => {
 			responsePromise.then(resolve, reject);
-			setTimeout(()=>resolve({ok: false, error: "response timeout for: "+JSON.stringify(data)}), 1000)
+			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 1000)
 		});
 
 		if (typeof response !== 'object' || typeof response.ok !== 'boolean') {
@@ -1369,7 +1330,7 @@ let MainParser = {
 			return response.data;
 		}
 		else {
-			throw new Error('EXT-API error: '+response.error);
+			throw new Error('EXT-API error: ' + response.error);
 		}
 	},
 
@@ -1377,7 +1338,7 @@ let MainParser = {
 	/**
 	 *
 	 */
-	setLanguage: ()=>{
+	setLanguage: () => {
 		// Translation
 		MainParser.Language = GuiLng;
 	},
@@ -1390,14 +1351,14 @@ let MainParser = {
 	 * @param min
 	 * @returns {number}
 	 */
-	getAddedDateTime: (hrs, min = 0)=> {
+	getAddedDateTime: (hrs, min = 0) => {
 
 		let time = MainParser.getCurrentDateTime(),
 			h = hrs || 0,
 			m = min || 0,
 
 			// Zeit aufschlagen
-			newTime = time + (1000*60*m) + (1000*60*60*h),
+			newTime = time + (1000 * 60 * m) + (1000 * 60 * 60 * h),
 
 			// daraus neues Datumsobjekt erzeugen
 			newDate = new Date(newTime);
@@ -1451,35 +1412,35 @@ let MainParser = {
 	 * @param {number} storage
 	 * @returns {string|boolean}
 	 */
-	compareTime: (actual, storage)=> {
+	compareTime: (actual, storage) => {
 
 		// es gibt noch keinen Eintrag
-		if(storage === null){
+		if (storage === null) {
 			return true;
 
-		} else if(actual > storage){
+		} else if (actual > storage) {
 			return true;
 
 			// Zeit Differenz berechnen
-		} else if(storage > actual){
+		} else if (storage > actual) {
 
 			let diff = Math.abs(actual - storage),
 				timeDiff = new Date(diff);
 
 			let hh = Math.floor(timeDiff / 1000 / 60 / 60);
-			if(hh < 10) {
+			if (hh < 10) {
 				hh = '0' + hh;
 			}
 			timeDiff -= hh * 1000 * 60 * 60;
 
 			let mm = Math.floor(timeDiff / 1000 / 60);
-			if(mm < 10) {
+			if (mm < 10) {
 				mm = '0' + mm;
 			}
 			timeDiff -= mm * 1000 * 60;
 
 			let ss = Math.floor(timeDiff / 1000);
-			if(ss < 10) {
+			if (ss < 10) {
 				ss = '0' + ss;
 			}
 
@@ -1494,11 +1455,28 @@ let MainParser = {
 	 * @param ep
 	 * @returns {*}
 	 */
-	checkNextUpdate: (ep)=> {
+	checkNextUpdate: (ep) => {
 		let s = localStorage.getItem(ep),
 			a = MainParser.getCurrentDateTime();
 
 		return MainParser.compareTime(a, s);
+	},
+
+
+	/**
+	 * @param PlayerID
+	 * @param PlayerName
+	 */
+	GetPlayerLink: (PlayerID, PlayerName) => {
+		if (Settings.GetSetting('ShowPlayerLinks'))
+		{
+			let PlayerLink = HTML.i18nReplacer(PlayerLinkFormat, { 'world': ExtWorld.toUpperCase(), 'playerid': PlayerID });
+
+			return `<a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${PlayerName} <svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+		}
+		else {
+			return PlayerName;
+		}
 	},
 
 
@@ -1518,7 +1496,7 @@ let MainParser = {
 					obj2FormData(formData, `${prefix}[${k}]`, value[k]);
 				}
 			} else {
-				formData.append(prefix, ''+value);
+				formData.append(prefix, '' + value);
 			}
 		}
 		return obj2FormData;
@@ -1551,87 +1529,8 @@ let MainParser = {
 					if (response.status === 200) {
 						successCallback(response.body);
 					}
-				})
-			;
+				});
 		}
-	},
-
-
-	/**
-	 * Stitching through guild members
-	 *
-	 * @param d
-	 */
-	SocialbarList: (d)=> {
-
-		if (!Settings.GetSetting('GlobalSend') || !MainParser.checkNextUpdate('OtherPlayers')) {
-			return ;
-		}
-
-		let player = [];
-
-		// guild members on website
-		for(let k in d){
-			if(d.hasOwnProperty(k)){
-
-				const p = d[k];
-
-				// if is a guild member, update data
-				if(ExtGuildID === p['clan_id']){
-					let info = {
-						avatar: p['avatar'],
-						city_name: p['city_name'],
-						clan_id: p['clan_id'],
-						name: p['name'],
-						player_id: p['player_id'],
-						rank: p['rank'],
-						title: p['title'],
-						won_battles: p['won_battles'],
-						score: p['score'],
-						profile_text: p['profile_text'],
-					};
-
-					player.push(info);
-				}
-			}
-		}
-
-
-		// not empty, send it
-		if(player.length > 0){
-			MainParser.sendExtMessage({
-				type: 'send2Api',
-				url: ApiURL + 'OtherPlayers/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-				data: JSON.stringify(player)
-			});
-		}
-	},
-
-
-	/**
-	 * Update own LGs
-	 * Time slot - 15min
-	 *
-	 * @param d
-	 * @returns {boolean}
-	 */
-	OwnLG: (d)=> {
-
-		let lg_name = 'LG-' + d['cityentity_id'] + '-' + ExtPlayerID,
-			time = MainParser.checkNextUpdate(lg_name);
-
-		// noch nicht wieder updaten oder es ist kein "eigenes" LG
-		if (!time || d['player_id'] !== ExtPlayerID) {
-			return false;
-		}
-
-		MainParser.send2Server(d, 'OwnLG', function (r) {
-
-			// nach Erfolg, Zeitstempel in den LocalStorage
-			if (r['status'] === 'OK') {
-				localStorage.setItem(lg_name, MainParser.getAddedDateTime(0, 15));
-			}
-		});
 	},
 
 
@@ -1650,137 +1549,12 @@ let MainParser = {
 				ranking: d['Rankings'],
 				bonus: d['Bonus'],
 				era: d['Era'],
-		}
+			}
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
 			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extBaseVersion}`,
 			data: JSON.stringify(realData)
-		});
-	},
-
-
-	/**
-	 * Update other players' LGs, but only guilds' own LGs.
-	 *
-	 * @param d
-	 * @returns {boolean}
-	 */
-	OtherPlayersLGs: (d)=> {
-
-		// gehört nicht zur Gilde
-		if(ExtGuildID !== d['other_player']['clan_id']){
-			return false;
-		}
-
-		let lg = d['city_map']['entities'],
-			data = [],
-			player = {
-				player_id: d['other_player']['player_id'],
-				name: d['other_player']['name'],
-				guild_id: d['other_player']['clan_id'],
-			},
-			lgs = [];
-
-		data.push(player);
-
-		for(let k in lg){
-
-			if(!lg.hasOwnProperty(k)){
-				break;
-			}
-
-			// nur wenn es eines dieser Gebäude ist
-			if (lg[k]['type'] === 'greatbuilding') {
-				let lgd = {
-
-					cityentity_id: lg[k]['cityentity_id'],
-					level: lg[k]['level'],
-					max_level: lg[k]['max_level'],
-					invested_forge_points: lg[k]['state']['invested_forge_points'],
-					forge_points_for_level_up: lg[k]['state']['forge_points_for_level_up']
-				};
-
-				lgs.push(lgd);
-			}
-		}
-
-		if(lgs.length > 0){
-			data.push({lgs: lgs});
-
-			// ab zum Server
-			MainParser.sendExtMessage({
-				type: 'send2Api',
-				url: ApiURL + 'OtherPlayersLGs/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-				data: JSON.stringify(data)
-			});
-
-			HTML.ShowToastMsg({
-				head: d['other_player']['name'] + ' updated',
-				text: HTML.i18nReplacer(
-					i18n('API.LGGildMember'),
-					{
-						'player' : d['other_player']['name']
-					}
-				),
-				type: 'success',
-			});
-		}
-	},
-
-
-	/**
-	 * Collect gex stats from players for website
-	 *
-	 * @param d
-	 */
-	GuildExpedition: (d)=> {
-
-		// Suppress double sending
-		let time = MainParser.checkNextUpdate('API-GEXPlayer');
-
-		if(time !== true){
-			return;
-		}
-
-		MainParser.sendExtMessage({
-			type: 'send2Api',
-			url: ApiURL + 'GEXPlayer/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-			data: JSON.stringify(d)
-		});
-
-		HTML.ShowToastMsg({
-			head: i18n('API.UpdateSuccess'),
-				text: i18n('API.GEXPlayer'),
-			type: 'success',
-			});
-
-		localStorage.setItem('API-GEXPlayer', MainParser.getAddedDateTime(0, 1));
-	},
-
-
-	/**
-	 * Collect gild overview from current gex
-	 *
-	 * @param d
-	 */
-	Championship: (d)=> {
-
-		let data = {
-			participants: d['participants'],
-			ranking: d['ranking'],
-		};
-
-		MainParser.sendExtMessage({
-			type: 'send2Api',
-			url: ApiURL + 'GEXChampionship/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-			data: JSON.stringify(data)
-		});
-
-		HTML.ShowToastMsg({
-			head: i18n('API.UpdateSuccess'),
-			text: i18n('API.GEXChampionship'),
-			type: 'success',
 		});
 	},
 
@@ -1834,6 +1608,8 @@ let MainParser = {
 			data: ExtPlayerName
 		});
 
+		ExtPlayerAvatar = d.portrait_id;
+
 		MainParser.sendExtMessage({
 			type: 'setPlayerData',
 			data: {
@@ -1857,7 +1633,7 @@ let MainParser = {
 	 *
 	 * @param d
 	 */
-	SelfPlayer: (d)=>{
+	SelfPlayer: (d) => {
 
 		if (Settings.GetSetting('GlobalSend') === false) {
 			return;
@@ -1884,7 +1660,7 @@ let MainParser = {
 	 *
 	 * @param d
 	 */
-	SaveBuildings: (d)=>{
+	SaveBuildings: (d) => {
 		let lgs = [];
 
 		for (let i in d) {
@@ -1901,9 +1677,12 @@ let MainParser = {
 
 				lgs.push(b);
 
-				if (d[i]['bonus'] !== undefined && MainParser.BoostMapper[d[i]['bonus']['type']] !== undefined) {
+				if (d[i]['bonus'] !== undefined && MainParser.BoostMapper[d[i]['bonus']['type']]) {
 					if (d[i]['bonus']['type'] !== 'happiness') { //Nicht als Boost zählen => Wird Productions extra geprüft und ausgewiesen
-						MainParser.BoostSums[MainParser.BoostMapper[d[i]['bonus']['type']]] += d[i]['bonus']['value']
+						let Boosts = MainParser.BoostMapper[d[i]['bonus']['type']];
+						for (let j = 0; j < Boosts.length;j++) {
+							MainParser.BoostSums[Boosts[j]] += d[i]['bonus']['value'];
+						}
 					}
 				}
 			}
@@ -1925,7 +1704,7 @@ let MainParser = {
 	 *
 	 * @param d
 	 */
-	CollectBoosts: (d)=>{
+	CollectBoosts: (d) => {
 		MainParser.Boosts = {};
 
 		for (let i in d) {
@@ -1946,111 +1725,6 @@ let MainParser = {
 
 
 	/**
-	 * Save LGs of the player
-	 *
-	 * @param d
-	 */
-	SaveLGInventory: (d)=>{
-		MainParser.sendExtMessage({
-			type: 'send2Api',
-			url: ApiURL + 'LGInventory/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-			data: JSON.stringify(d)
-		});
-	},
-
-
-	/**
-	 * Motivating Polishing Tracking, if desired
-	 *
-	 * @param d
-	 */
-	OtherPlayersMotivation: (d)=>{
-
-		let page = d['page'],
-			ev = d['events'],
-			data = [],
-			pm = [];
-
-		data.push({page: page});
-
-		for(let i in ev){
-
-			if (ev.hasOwnProperty(i)) {
-
-				let pd = { };
-
-				if(ev[i]['type'] === 'social_interaction' || ev[i]['type'] === 'friend_tavern_sat_down' || ev[i]['type'] === 'battle') {
-					pd = {
-						id: ev[i]['id'],
-						date: ev[i]['date'],
-						entity_id: '',
-						is_friend: ev[i]['other_player']['is_friend'],
-						is_guild_member: ev[i]['other_player']['is_guild_member'],
-						is_neighbor: ev[i]['other_player']['is_neighbor'],
-						name: ev[i]['other_player']['name'],
-						player_id: ev[i]['other_player']['player_id']
-					};
-
-					let entity =  '';
-
-					if(ev[i]['entity_id'] !== undefined){
-						entity = MainParser.CityEntities[ev[i]['entity_id']]['name'];
-					}
-
-					if(ev[i]['type'] === 'social_interaction'){
-						pd['entity_id'] = entity;
-						pd['action'] = ev[i]['interaction_type'] || '';
-
-					} else if (ev[i]['type'] === 'friend_tavern_sat_down'){
-						pd['action'] = 'friend_tavern_sat_down';
-
-					}  else if (ev[i]['type'] === 'battle'){
-						pd['action'] = 'battle|' + ev[i]['status'];
-						pd['entity_id'] = entity;
-					}
-
-					pm.push(pd);
-				}
-			}
-		}
-
-		if(pm.length > 0){
-			data.push({players: pm});
-
-			MainParser.send2Server(data, 'OtherPlayersMotivation', function(r){
-
-				// nach Erfolg, Zeitstempel in den LocalStorage
-				if(r['status'] === 'OK'){
-					localStorage.setItem('OtherPlayersMotivation-' + page, MainParser.getAddedDateTime(0, 10));
-
-					HTML.ShowToastMsg({
-						head: i18n('Boxes.Investment.PlayerFound'),
-						text: HTML.i18nReplacer(
-							r.new === 1 ? i18n('Boxes.Investment.PlayerFoundCount') : i18n('Boxes.Investment.PlayerFoundCounter'),
-							{
-								count: r.new
-							}
-						),
-						type: 'success',
-						hideAfter: 2600
-					});
-
-				} else if (r['status'] === 'NOTICE') {
-					localStorage.setItem('OtherPlayersMotivation-' + page, MainParser.getAddedDateTime(1, 0));
-
-					HTML.ShowToastMsg({
-						head: i18n('Boxes.Investment.AllUpToDate'),
-						text: i18n('Boxes.Investment.AllUpToDateDesc'),
-						type: 'success',
-						hideAfter: 6000
-					});
-				}
-			});
-		}
-	},
-
-
-	/**
 	 * Determine ark bonus globally
 	 *
 	 * @param LimitedBonuses
@@ -2060,7 +1734,7 @@ let MainParser = {
 
 		for (let i in LimitedBonuses) {
 
-			if(!LimitedBonuses.hasOwnProperty(i)){break}
+			if (!LimitedBonuses.hasOwnProperty(i)) { break }
 
 			if (LimitedBonuses[i].type === 'contribution_boost') {
 				ArkBonus += LimitedBonuses[i].value;
@@ -2083,7 +1757,7 @@ let MainParser = {
 		let promise = new Promise((resolve, reject)=>{});
 		if (Source === 'Conversation') {
 			for (let i in d['messages']) {
-				if(!d['messages'].hasOwnProperty(i))
+				if (!d['messages'].hasOwnProperty(i))
 					continue;
 
 				let Message = d['messages'][i];
@@ -2099,9 +1773,8 @@ let MainParser = {
 		}
 
 		else if (Source === 'LGContributions') {
-			for (let i in d)
-			{
-				if(!d.hasOwnProperty(i))
+			for (let i in d) {
+				if (!d.hasOwnProperty(i))
 					continue;
 
 				promise = MainParser.UpdatePlayerDictCore(d[i].player);
@@ -2110,7 +1783,7 @@ let MainParser = {
 
 		else if (Source === 'PlayerList') {
 			for (let i in d) {
-				if(!d.hasOwnProperty(i))
+				if (!d.hasOwnProperty(i))
 					continue;
 
 				promise = MainParser.UpdatePlayerDictCore(d[i]);
@@ -2123,19 +1796,11 @@ let MainParser = {
 				PlayerDictGuildUpdated = true;
 			}
 			else if (ListType === 'getFriendsList') {
-					PlayerDictFriendsUpdated = true;
+				PlayerDictFriendsUpdated = true;
 			}
 
 			if ($('#moppelhelper').length > 0) {
 				EventHandler.CalcMoppelHelperBody();
-			}
-
-			if (Settings.GetSetting('GlobalSend') && ListType === 'getClanMemberList') {
-				MainParser.sendExtMessage({
-					type: 'send2Api',
-					url: `${ApiURL}GuildMembers/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}`,
-					data: JSON.stringify(d)
-				});
 			}
 		}
 		else if (Source === 'PlayerVO') {
@@ -2203,7 +1868,7 @@ let MainParser = {
 		let PlayerID = Player['player_id'];
 
 		if (PlayerID !== undefined) {
-			if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {};
+			if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {'Activity': 0};
 
 			PlayerDict[PlayerID]['PlayerID'] = PlayerID;
 			if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
@@ -2218,6 +1883,7 @@ let MainParser = {
 			if (Player['is_active'] !== undefined) PlayerDict[PlayerID]['IsActive'] = Player['is_active'];
 			if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
 			if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
+			if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
 			
 			promise = IndexDB.loadPlayer(PlayerID).then((PlayerFromDB) => {
 				if (PlayerFromDB) {
@@ -2245,9 +1911,9 @@ let MainParser = {
 	 *
 	 * @param d
 	 */
-	setGoodsData: (d)=> {
-		for(let i in d){
-			if(d.hasOwnProperty(i)) {
+	setGoodsData: (d) => {
+		for (let i in d) {
+			if (d.hasOwnProperty(i)) {
 				GoodsData[d[i]['id']] = d[i];
 			}
 		}
@@ -2301,23 +1967,26 @@ let MainParser = {
 	 *
 	 * @param d
 	 */
-	setConversations: (d)=> {
+	setConversations: (d) => {
 
 		// If the cache is empty, read out the memory.
-		if (MainParser.Conversations.length === 0) {
+		if (MainParser.Conversations.length === 0)
+		{
 			let StorageHeader = localStorage.getItem('ConversationsHeaders');
 			if (StorageHeader !== null) {
 				MainParser.Conversations = JSON.parse(StorageHeader);
 			}
 		}
 
-		if (d['teasers']) {
-			for (let k in d['teasers']) {
+		if (d['teasers'])
+		{
+			for (let k in d['teasers'])
+			{
 				if (!d['teasers'].hasOwnProperty(k)) {
 					continue;
 				}
 
-				let key = MainParser.Conversations.findIndex((obj)=> (obj.id === d['teasers'][k]['id']));
+				let key = MainParser.Conversations.findIndex((obj) => (obj.id === d['teasers'][k]['id']));
 
 				// Is a key already available?
 				if (key !== -1) {
@@ -2335,7 +2004,7 @@ let MainParser = {
 						title: d['teasers'][k]['title'],
 						hidden: d['teasers'][k]['isHidden'],
 						favorite: d['teasers'][k]['isFavorite'],
-						favorite: d['teasers'][k]['isImportant']
+						important: d['teasers'][k]['isImportant']
 					});
 				}
 
@@ -2348,7 +2017,7 @@ let MainParser = {
 					continue;
 				}
 
-				let key = MainParser.Conversations.findIndex((obj)=> (obj.id === d['category']['teasers'][k]['id']));
+				let key = MainParser.Conversations.findIndex((obj) => (obj.id === d['category']['teasers'][k]['id']));
 
 				// Is a key already available?
 				if (key !== -1) {
@@ -2367,13 +2036,14 @@ let MainParser = {
 						title: d['category']['teasers'][k]['title'],
 						hidden: d['category']['teasers'][k]['isHidden'],
 						favorite: d['category']['teasers'][k]['isFavorite'],
-						favorite: d['category']['teasers'][k]['isImportant']
+						important: d['category']['teasers'][k]['isImportant']
 					});
 				}
 			}
 		}
 
-		if (MainParser.Conversations.length > 0) {
+		if (MainParser.Conversations.length > 0)
+		{
 			// Dopplungen entfernen und Daten lokal abspeichern
 			MainParser.Conversations = [...new Set(MainParser.Conversations.map(s => JSON.stringify(s)))].map(s => JSON.parse(s));
 			localStorage.setItem('ConversationsHeaders', JSON.stringify(MainParser.Conversations));
@@ -2385,7 +2055,7 @@ let MainParser = {
 	 * Get a jSON via Ajax
 	 *
 	 */
-	loadJSON: (url, callback)=> {
+	loadJSON: (url, callback) => {
 
 		let xobj = new XMLHttpRequest();
 		xobj.overrideMimeType("application/json");
@@ -2399,19 +2069,27 @@ let MainParser = {
 	},
 
 
-	loadFile: (url, callback)=> {
+	/**
+	 * Loads a file from a given URL
+	 *
+	 * @param url
+	 * @param callback
+	 */
+	loadFile: (url, callback) => {
 
 		let xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
 		xhr.responseType = 'blob';
 		xhr.onreadystatechange = function () {
-			if (xhr.readyState === 4 && xhr.status === 200) {
+			if (xhr.readyState === 4 && xhr.status === 200)
+			{
 				let reader = new FileReader();
 				reader.readAsArrayBuffer(xhr.response);
-				reader.onload =  function(e){
+				reader.onload = function (e) {
 					callback(e.target.result);
 				};
-			} else {
+			}
+			else {
 				callback(false);
 			}
 		};
@@ -2420,14 +2098,14 @@ let MainParser = {
 	},
 
 
-	ClearText: (text)=> {
+	ClearText: (text) => {
 		let RegEx = new RegExp(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi);
 
 		return text.replace(RegEx, '');
 	},
 
 
-	ResizeFunctions: ()=> {
+	ResizeFunctions: () => {
 
 		// FP-Bar
 		StrategyPoints.HandleWindowResize();

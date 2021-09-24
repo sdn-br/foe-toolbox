@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -14,7 +14,7 @@
 
 /**
  *
- * @type {{init: CityMap.init, showSumbitBox: CityMap.showSumbitBox, UnlockedAreas: null, SubmitData: CityMap.SubmitData, SetBuildings: CityMap.SetBuildings, CityData: null, ScaleUnit: number, CityView: string, hashCode: (function(*): number), OccupiedArea: number, IsExtern: boolean, getAreas: CityMap.getAreas, PrepareBox: CityMap.PrepareBox, BuildGrid: CityMap.BuildGrid}}
+ * @type {{highlightOldBuildings: CityMap.highlightOldBuildings, EfficiencyFactor: number, init: CityMap.init, UnlockedAreas: null, BlockedAreas: null, SubmitData: CityMap.SubmitData, SetBuildings: CityMap.SetBuildings, CityData: null, ScaleUnit: number, CityView: string, CityEntities: null, hashCode: (function(*): *), OccupiedArea: number, IsExtern: boolean, showSubmitBox: CityMap.showSubmitBox, getAreas: CityMap.getAreas, PrepareBox: CityMap.PrepareBox, BuildGrid: CityMap.BuildGrid, copyMetaInfos: CityMap.copyMetaInfos, GetBuildingSize: (CityMapEntity)}}
  */
 let CityMap = {
 	CityData: null,
@@ -22,9 +22,11 @@ let CityMap = {
 	ScaleUnit: 100,
 	CityView: 'skew',
 	UnlockedAreas: null,
+	BlockedAreas: null,
 	OccupiedArea: 0,
 	EfficiencyFactor: 0,
 	IsExtern: false,
+	ActiveEntityId : null,
 
 
 	/**
@@ -33,7 +35,7 @@ let CityMap = {
 	 * @param Data
 	 * @param Title
 	 */
-	init: (Data = null, Title = i18n('Boxes.CityMap.YourCity') + '...')=> {
+	init: (event, Data = null, Title = i18n('Boxes.CityMap.YourCity') + '...', ActiveEntityId = null)=> {
 
 		if (Data === null) { // No data => own city
 			CityMap.IsExtern = false;
@@ -43,6 +45,8 @@ let CityMap = {
 		else {
 			CityMap.IsExtern = true;
 		}
+
+		CityMap.ActiveEntityId = ActiveEntityId;
 
 		CityMap.CityData = Object.values(Data).sort(function (X1, X2) {
 			if (X1.x < X2.x) return -1;
@@ -82,21 +86,14 @@ let CityMap = {
 			}, 100);
 
 		}
+		else if (!event)
+		{
+			HTML.CloseOpenBox('city-map-overlay');
+			return;
+		}
 
 		setTimeout(()=>{
-
-			// separate city
-			if(Data === false)
-			{
-				setTimeout(()=>{
-					CityMap.SetBuildings();
-
-				}, 100);
-
-			} else {
-				CityMap.SetBuildings(Data);
-			}
-
+			CityMap.SetBuildings();
 		}, 100);
 	},
 
@@ -110,7 +107,7 @@ let CityMap = {
 		let oB = $('#city-map-overlayBody'),
 			w = $('<div />').attr({'id':'wrapper'});
 
-			w.append( $('<div />').attr('id', 'map-container').append( $('<div />').attr('id', 'grid-outer').attr('data-unit', CityMap.ScaleUnit).attr('data-view', CityMap.CityView).append( $('<div />').attr('id', 'map-grid') ) ) ).append( $('<div />').attr({'id': 'sidebar'}) );
+		w.append( $('<div />').attr('id', 'map-container').append( $('<div />').attr('id', 'grid-outer').attr('data-unit', CityMap.ScaleUnit).attr('data-view', CityMap.CityView).append( $('<div />').attr('id', 'map-grid') ) ) ).append( $('<div />').attr({'id': 'sidebar'}) );
 
 		$('#city-map-overlayHeader > .title').attr('id', 'map' + CityMap.hashCode(Title));
 
@@ -152,9 +149,9 @@ let CityMap = {
 			$('#grid-outer').attr('data-unit', unit);
 			localStorage.setItem('CityMapScale', unit);
 
-			CityMap.SetBuildings(CityMap.CityData, false);
+			CityMap.SetBuildings();
 
-			$('#map-container').scrollTo( $('.pulsate') , 800, {offset: {left: -280, top: -280}, easing: 'swing'});
+			CityMap.scrollToActiveElementOrCenter();
 		});
 
 		// Button for submit Box
@@ -163,7 +160,7 @@ let CityMap = {
 
 			menu.append($('<button />').addClass('btn-default ml-auto').attr({ id: 'copy-meta-infos', onclick: 'CityMap.copyMetaInfos()' }).text(i18n('Boxes.CityMap.CopyMetaInfos')));
 
-			menu.append($('<button />').addClass('btn-default ml-auto').attr({ id: 'show-submit-box', onclick: 'CityMap.showSumbitBox()' }).text(i18n('Boxes.CityMap.ShowSubmitBox')));
+			menu.append($('<button />').addClass('btn-default ml-auto').attr({ id: 'show-submit-box', onclick: 'CityMap.showSubmitBox()' }).text(i18n('Boxes.CityMap.ShowSubmitBox')));
 		}
 
 
@@ -218,11 +215,9 @@ let CityMap = {
 	 *
 	 * @param Data
 	 */
-	SetBuildings: (Data = null)=> {
+	SetBuildings: ()=> {
 
 		// https://foede.innogamescdn.com/assets/city/buildings/R_SS_MultiAge_SportBonus18i.png
-
-		let ActiveId = $('#grid-outer').find('.pulsate').data('entityid') || null;
 
 		// einmal komplett leer machen, wenn gewünscht
 		$('#grid-outer').find('.map-bg').remove();
@@ -242,41 +237,33 @@ let CityMap = {
 			MaxX = 63,
 			MaxY = 63;
 
-		for (let b in CityMap.CityData)
-		{
-			if (!CityMap.CityData.hasOwnProperty(b) || CityMap.CityData[b]['x'] < MinX || CityMap.CityData[b]['x'] > MaxX || CityMap.CityData[b]['y'] < MinY || CityMap.CityData[b]['y'] > MaxY)
-				continue;
+		for (let b in CityMap.CityData) {
+			if (!CityMap.CityData.hasOwnProperty(b) || CityMap.CityData[b]['x'] < MinX || CityMap.CityData[b]['x'] > MaxX || CityMap.CityData[b]['y'] < MinY || CityMap.CityData[b]['y'] > MaxY) continue;
 
-			let	d = MainParser.CityEntities[ CityMap.CityData[b]['cityentity_id'] ],
-		
-				x = (CityMap.CityData[b]['x'] === undefined ? 0 : ((parseInt(CityMap.CityData[b]['x']) * CityMap.ScaleUnit) / 100 )),
-				y = (CityMap.CityData[b]['y'] === undefined ? 0 : ((parseInt(CityMap.CityData[b]['y']) * CityMap.ScaleUnit) / 100 )),
-				w = ((parseInt(d['width']) * CityMap.ScaleUnit) / 100),
-				h = ((parseInt(d['length']) * CityMap.ScaleUnit) / 100),
-			
+			let d = MainParser.CityEntities[CityMap.CityData[b]['cityentity_id']],
+				BuildingSize = CityMap.GetBuildingSize(CityMap.CityData[b]),
+
+				x = (CityMap.CityData[b]['x'] === undefined ? 0 : ((parseInt(CityMap.CityData[b]['x']) * CityMap.ScaleUnit) / 100)),
+				y = (CityMap.CityData[b]['y'] === undefined ? 0 : ((parseInt(CityMap.CityData[b]['y']) * CityMap.ScaleUnit) / 100)),
+				xsize = ((parseInt(BuildingSize['xsize']) * CityMap.ScaleUnit) / 100),
+				ysize = ((parseInt(BuildingSize['ysize']) * CityMap.ScaleUnit) / 100),
+
 				f = $('<span />').addClass('entity ' + d['type']).css({
-						width: w + 'em',
-						height: h + 'em',
-						left: x + 'em',
-						top: y + 'em'
-					})
+					width: xsize + 'em',
+					height: ysize + 'em',
+					left: x + 'em',
+					top: y + 'em'
+				})
 					.attr('title', d['name'])
 					.attr('data-entityid', CityMap.CityData[b]['id']),
 				era;
 
-			let AreaNeeded = parseInt(d['width']) * parseInt(d['length']);
-			CityMap.OccupiedArea += (AreaNeeded);
+			CityMap.OccupiedArea += (BuildingSize['building_area']);
 
-			if(!CityMap.OccupiedArea2[d.type]) CityMap.OccupiedArea2[d.type] = 0;
-			CityMap.OccupiedArea2[d.type] += (AreaNeeded);
+			if (!CityMap.OccupiedArea2[d.type]) CityMap.OccupiedArea2[d.type] = 0;
+			CityMap.OccupiedArea2[d.type] += (BuildingSize['building_area']);
 
-			if (d.type !== 'street' && CityMap.CityData[b]['state']['__class__'] !== 'UnconnectedState') {
-				let RequiredStreet = d['requirements']['street_connection_level'] | 0
-
-				if (RequiredStreet) {
-					StreetsNeeded += Math.min(parseFloat(d['width']), parseFloat(d['length'])) * RequiredStreet / 2;
-				}
-			}
+			StreetsNeeded += BuildingSize['street_area'];
 
 			// Search age
 			if (d['is_multi_age'] && CityMap.CityData[b]['level']) {
@@ -284,7 +271,7 @@ let CityMap = {
 
 			}
 			// Great building
-			else if (d['strategy_points_for_upgrade']) {
+			else if (d['type'] === 'greatbuilding') {
 				era = CurrentEraID;
 			}
 			else {
@@ -309,7 +296,7 @@ let CityMap = {
 			}
 
 			// die Größe wurde geändert, wieder aktivieren
-			if (ActiveId !== null && ActiveId === CityMap.CityData[b]['id'])
+			if (CityMap.ActiveEntityId !== undefined && CityMap.ActiveEntityId !== null && CityMap.ActiveEntityId === CityMap.CityData[b]['id'])
 			{
 				f.addClass('pulsate');
 			}
@@ -329,8 +316,20 @@ let CityMap = {
 		$('#grid-outer').draggable();
 
 		CityMap.getAreas();
+
+		CityMap.scrollToActiveElementOrCenter();
 	},
 
+	/**
+	 * Scrollls the map to the active element
+	 */
+	scrollToActiveElementOrCenter: () => {
+		if (CityMap.ActiveEntityId !== undefined && CityMap.ActiveEntityId !== null) {
+			$('#map-container').scrollTo( $('.pulsate') , 800, {offset: {left: -($('#map-container').width()/2), top:  -($('#map-container').height()/2)}, easing: 'swing'});
+		} else {
+			//$('#map-container').scrollTo( $('.pulsate') , 800, {offset: {left: -($('#map-container').width()/2), top:  -($('#map-container').height()/2)}, easing: 'swing'});
+		}
+	},
 
 	/**
 	 * Statistiken in die rechte Sidebar
@@ -347,14 +346,13 @@ let CityMap = {
 			aW.append( $('<p />').addClass('total-area') );
 			aW.append( $('<p />').addClass('occupied-area') );
 			aW.append( $('<p />').addClass('building-count-area') );
-            
+
 			$('#sidebar').append(aW);
 		}
 
-		$('.total-area').html(txtTotal);
-
 		// Non player city => Unlocked areas cant be detected => dont show free space
 		if (!CityMap.IsExtern) {
+			$('.total-area').html(txtTotal);
 			$('.occupied-area').html(txtFree);
 		}
 
@@ -365,16 +363,16 @@ let CityMap = {
 
 		let txtCount = [];
 		for( x in sortable ){
-		    let type =  sortable[x][0];
+			let type =  sortable[x][0];
 			let TypeName = i18n('Boxes.CityMap.' + type)
 			const count = sortable[x][1];
-		    const pct = parseFloat(100*count/CityMap.OccupiedArea).toFixed(1);
+			const pct = parseFloat(100*count/CityMap.OccupiedArea).toFixed(1);
 			let str = `${TypeName}:<br> ${count} (${pct}%)<br>`;
 			if (type === 'street') {
 				str = str + HTML.Format(Math.round(CityMap.EfficiencyFactor * 10000) / 100) + '% ' + i18n('Boxes.Citymap.Efficiency') + '<br>';
 			}
 			str = str + '<br>';
-		    txtCount.push(str);
+			txtCount.push(str);
 		}
 		$('.building-count-area').html(txtCount.join(''));
 
@@ -395,12 +393,15 @@ let CityMap = {
 	/**
 	 * Show the submit box
 	 */
-	showSumbitBox: () => {
-		if ($('#CityMapSubmit').length > 0) {
-			$('#CityMapSubmit').remove();
+	showSubmitBox: () => {
+		let $CityMapSubmit = $('#CityMapSubmit');
+
+		if ($CityMapSubmit.length > 0)
+		{
+			$CityMapSubmit.remove();
 		}
 
-		if ($('#CityMapSubmit').length < 1)
+		if ($CityMapSubmit.length < 1)
 		{
 			HTML.Box({
 				'id': 'CityMapSubmit',
@@ -409,12 +410,11 @@ let CityMap = {
 				'saveCords': false
 			});
 
-			// CSS in den DOM prügeln
 			HTML.AddCssFile('citymap');
 
 			let desc = '<p class="text-center">' + i18n('Boxes.CityMap.Desc1') + '</p>';
 
-			desc += '<p class="text-center" id="msg-line"><button class="btn-default" onclick="CityMap.SubmitData()">' + i18n('Boxes.CityMap.Desc2') + '</button></p>';
+			desc += '<p class="text-center" id="msg-line"><button class="btn-default" onclick="CityMap.SubmitData()">' + i18n('Boxes.CityMap.Submit') + '</button></p>';
 
 			$('#CityMapSubmitBody').html(desc);
 		}
@@ -439,15 +439,25 @@ let CityMap = {
 			return;
 		}
 
-		let d = {
-			entities: MainParser.CityMapData,
-			areas: CityMap.UnlockedAreas,
-			metaIDs: {
-				entity: MainParser.CityEntitiesMetaId,
-				set: MainParser.CitySetsMetaId,
-				upgrade: MainParser.CityBuildingsUpgradesMetaId
-			}
-		};
+		let currentDate = new Date(),
+			d = {
+				time: currentDate.toISOString().split('T')[0] + ' ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds(),
+				player: {
+					name: ExtPlayerName,
+					id: ExtPlayerID,
+					world: ExtWorld,
+					avatar: ExtPlayerAvatar
+				},
+				eras: Technologies.Eras,
+				entities: MainParser.CityMapData,
+				areas: CityMap.UnlockedAreas,
+				blockedAreas: CityMap.BlockedAreas,
+				metaIDs: {
+					entity: MainParser.CityEntitiesMetaId,
+					set: MainParser.CitySetsMetaId,
+					upgrade: MainParser.CityBuildingsUpgradesMetaId
+				}
+			};
 
 		MainParser.send2Server(d, 'CityPlanner', function(resp){
 
@@ -495,6 +505,40 @@ let CityMap = {
 				type: 'info',
 				hideAfter: 4000,
 			})
-		});	
-	}
+		});
+	},
+
+
+	GetBuildingSize: (CityMapEntity) => {
+		let CityEntity = MainParser.CityEntities[CityMapEntity['cityentity_id']];
+
+		let Ret = {};
+
+		Ret['is_connected'] = (CityMapEntity['state']['__class__'] !== 'UnconnectedState' && CityMapEntity['state']['pausedAt'] === undefined && CityMapEntity['state']['pausedState'] === undefined);
+
+		if (CityEntity['requirements']) {
+			Ret['xsize'] = CityEntity['width'];
+			Ret['ysize'] = CityEntity['length'];
+
+			if (CityEntity['type'] !== 'street') {
+				Ret['streets_required'] = CityEntity['requirements']['street_connection_level'] | 0;
+			}
+			else {
+				Ret['streets_required'] = 0;
+			}
+		}
+		else {
+			let Size = CityEntity['components']['AllAge']['placement']['size'];
+
+			Ret['xsize'] = Size['x'];
+			Ret['ysize'] = Size['y'];
+			Ret['streets_required'] = CityEntity['components']['AllAge']['streetConnectionRequirement']['requiredLevel'] | 0;
+		}
+
+		Ret['building_area'] = Ret['xsize'] * Ret['ysize'];
+		Ret['street_area'] = (Ret['is_connected'] ? parseFloat(Math.min(Ret['xsize'], Ret['ysize'])) * Ret['streets_required'] / 2 : 0);
+		Ret['total_area'] = Ret['building_area'] + Ret['street_area'];
+
+		return Ret;
+	},
 };

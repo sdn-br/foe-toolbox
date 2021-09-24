@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -42,7 +42,7 @@ FoEproxy.addHandler('RewardService', 'collectReward', async (data, postData) => 
 	}
 	var [rewards, rewardIncidentSource] = r; // pair, 1st is reward list, second source of incident, e.g spoilsOfWar
     await IndexDB.getDB();
-
+	
 	for (let reward of rewards) {
 
 		if (rewardIncidentSource === 'default') {
@@ -52,8 +52,8 @@ FoEproxy.addHandler('RewardService', 'collectReward', async (data, postData) => 
 			}
 			//split league rewards and fragment assembly from incidents
 			if(postData[0].requestMethod === 'useItem'){
-			continue;
-		}
+				continue;
+			}
 			//split quest rewards from incidents
 			if(postData[0].requestMethod === 'advanceQuest'){
 				continue;
@@ -207,7 +207,7 @@ let Stats = {
 	/**
 	 * Show Box
 	 */
-	Show: () => {
+	Show: (event) => {
 		if ($('#stats').length === 0) {
 			let args = {
 				'id': 'stats',
@@ -222,6 +222,11 @@ let Stats = {
 			moment.locale(i18n('Local'));
 			HTML.AddCssFile('stats');
 			HTML.AddCssFile('unit');
+		}
+		else if (!event)
+		{
+			HTML.CloseOpenBox('stats');
+			return;
 		}
 
 		// If not selected any era, preselect 2 last eras of user
@@ -277,29 +282,29 @@ let Stats = {
 						Object.keys(Stats.ResMap).map(it => Stats.state.eras[it] = true);
 
 					} else if (isChangedToMyTreasure) {
-							// If changed to player's treasure select 2 last eras
-							Stats.state.eras = {};
-							Stats.state.eras = {
-								[Technologies.EraNames[CurrentEraID]]: true,
-							};
-							if (CurrentEraID > 2) {
-								Stats.state.eras[Technologies.EraNames[CurrentEraID - 1]] = true;
-							}
+						// If changed to player's treasure select 2 last eras
+						Stats.state.eras = {};
+						Stats.state.eras = {
+							[Technologies.EraNames[CurrentEraID]]: true,
+						};
+						if (CurrentEraID > 2) {
+							Stats.state.eras[Technologies.EraNames[CurrentEraID - 1]] = true;
+						}
 
 					} else if (isChangedToClanTreasure) {
-								// If changed to treasure select all playable eras
-								Stats.state.eras = {};
-								Stats.PlayableEras.forEach(era => Stats.state.eras[era] = true);
+						// If changed to treasure select all playable eras
+						Stats.state.eras = {};
+						Stats.PlayableEras.forEach(era => Stats.state.eras[era] = true);
 
 					} else if (isChangedToGBG) {
-									Stats.state.chartType = 'delta';
-									Stats.isGG = true;
+						Stats.state.chartType = 'delta';
+						Stats.isGG = true;
 
 					} else if (isChangedToReward) {
-										Stats.state.period = 'sinceTuesday';
-										Stats.state.rewardSource = 'guildExpedition';
+						Stats.state.period = 'sinceTuesday';
+						Stats.state.rewardSource = 'guildExpedition';
 
-									}
+					}
 
 					Stats.state.source = value || 'statsTreasurePlayerH';
 					break;
@@ -1176,8 +1181,8 @@ let Stats = {
 							url = `${MainParser.InnoCDN}assets/city/buildings/${rewardInfo.assembledReward.subType.replace(/^(\w)_/, '$1_SS_')}.png`;
 						}
 					}
-				} else if (rewardInfo.type == 'building' && rewardInfo.subType) {
-					url = `${MainParser.InnoCDN}assets/city/buildings/${rewardInfo.subType.replace(/^(\w)_/, '$1_SS_')}.png`;
+				}else if (rewardInfo.type == 'building' && rewardInfo.subType) {
+						url = `${MainParser.InnoCDN}assets/city/buildings/${rewardInfo.subType.replace(/^(\w)_/, '$1_SS_')}.png`;
 				}
 				if (url) {
 					pointImage = `<img src="${url}" style="width: 45px; height: 45px; margin-right: 4px;">`;

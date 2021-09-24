@@ -7,20 +7,6 @@
 		"sort": 0
 	},
 	{
-		"name": "SendGEXInfo",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Sending",
-		"sort": 1
-	},
-	{
-		"name": "SendGildMemberLGInfo",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Sending",
-		"sort": 2
-	},
-	{
 		"name": "AutomaticNegotiation",
 		"status": true,
 		"group": "Boxes",
@@ -106,25 +92,31 @@
 		"sort": 14
 	},
 	{
+		"name": "ShowPlayerLinks",
+		"status": true,
+		"group": "Boxes",
+		"sort": 15
+	},
+	{
 		"name": "ShowNeighborsLootables",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 15
+		"sort": 16
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 16
+		"sort": 17
 	},
 	{
 		"name": "ShowPossibleInvestments",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 17
+		"sort": 18
 	},
 	{
 		"name": "ChangeLanguage",
@@ -143,7 +135,7 @@
 		"callback": "MenuContent",
 		"group": "Extension",
 		"sort": 2
-	},	
+	},
 	{
 		"name": "MenuLength",
 		"callback": "MenuInputLength",
@@ -163,23 +155,29 @@
 		"sort": 5
 	},
 	{
-		"name": "ShowNotifications",
+		"name": "EnableSound",
 		"status": true,
 		"group": "Extension",
 		"sort": 6
+	},
+	{
+		"name": "ShowNotifications",
+		"status": true,
+		"group": "Extension",
+		"sort": 7
 	},
 	{
 		"name": "NotificationsPosition",
 		"callback": "NotificationView",
 		"group": "Extension",
 		"status": "bottom-right",
-		"sort": 7
+		"sort": 8
 	},
 	{
 		"name": "NotificationsStack",
 		"callback": "NotificationStack",
 		"group": "Extension",
-		"sort": 8
+		"sort": 9
 	},
 	{
 		"name": "About",

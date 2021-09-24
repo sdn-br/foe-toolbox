@@ -265,6 +265,18 @@ FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
 	Looting.UpdateBoxIfVisible();
 });
 
+FoEproxy.addHandler('PVPArenaService', 'updateOpponents', (data, postData) => {
+	Looting.lastPvPArenaOpponents = [];
+	let opponents = data['responseData'];
+	for (let i in opponents) {
+		if(!opponents.hasOwnProperty(i)) continue;
+		Looting.lastPvPArenaOpponents.push(opponents[i].opposingPlayer.player.player_id);
+	}
+	Looting.filterByPvPArena = true;
+	Looting.filterByPlayerId = null;
+	Looting.UpdateBoxIfVisible();
+});
+
 let Looting = {
 
 	// Filter and pagination.
@@ -482,6 +494,7 @@ let Looting = {
 
 			// Try get info about player from indexdb, if not possible than from PlayerDict
 			const playerInfo = player ? ({
+				playerId: player.PlayerID || 0,
 				playerName: player.PlayerName,
 				clanId: player.ClanId || 0,
 				clanName: player.ClanName || 'unknown',
@@ -489,8 +502,9 @@ let Looting = {
 				playerEra: player.Era || 'unknown',
 				playerDate: null,
 			}) : ({
+				playerId: 0,
 				playerName: 'unknown',
-				clanId: 'N/A',
+				clanId: 0,
 				clanName: 'unknown',
 				avatar: null,
 				playerEra: 'unknown',
@@ -519,7 +533,7 @@ let Looting = {
 					<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b> 
 						<span class="player-name">
 							${filterByPlayerId ? 
-								`${playerName} ${clanName ? `[${clanName}]` : ''}` : 
+								`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? `<br>[${clanName}]` : ''}` : 
 								filterByPvPArena ? 
 									`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
 									`${i18n('Boxes.Looting.AllPlayers')}`
@@ -661,7 +675,7 @@ let Looting = {
 					<div class="action-content">
 						${isSamePlayer ? '' : `
 						<div class="player-name select-player" data-value="${action.playerId}">
-							${playerName} <span class="clan">[${clanName}]</span>
+							${action.playerId ? MainParser.GetPlayerLink(action.playerId, playerName) : playerName}<br><span class="clan">[${clanName}]</span>
 						</div>
 						`}
 						<div class="content">${Looting.RenderActionContent(action)}</div>

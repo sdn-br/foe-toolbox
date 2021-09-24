@@ -5,7 +5,7 @@
  * terms of the AGPL license.
  *
  * See file LICENSE.md or go to
- * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
  * **************************************************************************************
@@ -40,7 +40,7 @@ let Quests = {
 			parts = JSON.parse(CounterStorage);
 
 			// current is older than stored date
-			if(!parts || !parts['date'] || moment(moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')).isAfter(parts['date'])){
+			if (!parts || !parts['date'] || moment(moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')).isAfter(parts['date'])){
 				Quests.Counter = 2000;
 			}
 			// is today
