@@ -1,7 +1,7 @@
 ## Changelog - Extension
 
 ##### 1.12.1.0
-**Update**
+**Bugfix**
 - Allgemein
     - Senden und Empfangen von Daten von und an foe-helper.com funktioniert jetzt wieder
 
