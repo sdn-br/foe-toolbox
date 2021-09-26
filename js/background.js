@@ -673,6 +673,32 @@ alertsDB.version(1).stores({
 				return APIsuccess(true);
 			}
 
+			case "send2Server": {
+				let data = request.data;
+				let playerId = request.playerId;
+				let guildId = request.guildId | '';
+				let world = request.world;
+
+				console.log({data: data});
+				return fetch(
+					request.url + request.endpoint + '/?player_id=' + playerId + '&guild_id=' + guildId + '&world=' + world,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({data})
+					}
+				).then(response => { 
+					return response.json().then(body => {
+						return APIsuccess({
+							status: response.status,
+							body: body
+						});
+					})
+				});
+			}
+
 		} // end of switch type
 
 		return APIerror(`unknown request type: ${type}`);

@@ -1,5 +1,14 @@
 ## Changelog - Extension
 
+##### 1.12.1.0
+**Update**
+- Allgemein
+    - Senden und Empfangen von Daten von und an foe-helper.com funktioniert jetzt wieder
+
+**Update**
+- Eigenanteilsrechner
+	- Plätze ohne FP können jetzt per Einstellung mit 1FP beachtet werden oder nicht
+
 ##### 1.12.0.0
 **Bugfix**
 - Plünderhilfe

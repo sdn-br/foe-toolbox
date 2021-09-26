@@ -64,6 +64,7 @@ let Parts = {
 
 	// Settings
 	CopyFormatPerGB: false,
+	OneFPForNonFPPlace: false,
 
 	FirstCycle: true,
 	LastPlayerID: null,
@@ -486,9 +487,12 @@ let Parts = {
 						if (FPCount > 0) {
 							FPRewards[Place] = MainParser.round(FPCount * arcs[Place]);
 						}
+						else if (Parts.OneFPForNonFPPlace) {
+							FPRewards[Place] = 1;
+						} 
 						else {
 							FPRewards[Place] = 0;
-                        }
+						}
 						if (FPRewards[Place] === undefined) FPRewards[Place] = 0;
 
 						// Medallien berechnen
@@ -1446,6 +1450,7 @@ let Parts = {
 		c.push(nV);
 
 		c.push('<input id="copyformatpergb" class="copyformatpergb game-cursor" ' + (Parts.CopyFormatPerGB ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.CopyFormatPerGB'));
+		c.push('<br><input id="onefpfornonfpplace" class="onefpfornonfpplace game-cursor" ' + (Parts.OneFPForNonFPPlace ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.OneFPForNonFPPlace'));
 
 		// save button
 		c.push(`<hr><p><button id="save-calculator-settings" class="btn btn-default" style="width:100%" onclick="Parts.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button></p>`);
@@ -1493,11 +1498,15 @@ let Parts = {
 		Parts.CopyFormatPerGB = $('.copyformatpergb').prop('checked');
 		localStorage.setItem(Parts.GetStorageKey('CopyFormatPerGB', null), Parts.CopyFormatPerGB);
 
+		let OldOneFPForNonFPPlace = Parts.OneFPForNonFPPlace;
+		Parts.OneFPForNonFPPlace = $('.onefpfornonfpplace').prop('checked');
+		localStorage.setItem(Parts.GetStorageKey('OneFPForNonFPPlace', null), Parts.OneFPForNonFPPlace);
+
 		$(`#OwnPartBoxSettingsBox`).fadeToggle('fast', function(){
 			$(this).remove();
 
 			// reload box
-			if (Parts.CopyFormatPerGB !== OldCopyFormatPerGB) Parts.FirstCycle = true;
+			if (Parts.CopyFormatPerGB !== OldCopyFormatPerGB || Parts.OneFPForNonFPPlace !== OldOneFPForNonFPPlace) Parts.FirstCycle = true;
 			Parts.CalcBody();
 		});
 	}

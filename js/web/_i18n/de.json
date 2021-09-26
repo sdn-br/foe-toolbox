@@ -630,6 +630,7 @@
     "Boxes.OwnpartCalculator.NoPlaceSafe": "Kein Platz sicher",
     "Boxes.OwnpartCalculator.Note": "Merken",
     "Boxes.OwnpartCalculator.OldLevel": "Altes Level",
+    "Boxes.OwnpartCalculator.OneFPForNonFPPlace": "1FP für Plätze ohne FP berechnen",
     "Boxes.OwnpartCalculator.OptionsDescending": "Absteigend",
     "Boxes.OwnpartCalculator.OptionsFP": "Forge Punkte",
     "Boxes.OwnpartCalculator.OptionsGB": "Name Bauwerk",
