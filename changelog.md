@@ -1,5 +1,18 @@
 ## Changelog - Extension
 
+##### 1.12.2.0
+**Update**
+- GvG
+    - BA Kosten können jetzt in der Gildenliste eingesehen werden
+    - Sektordetails auch für Felsen- und Wassergebiete
+
+**Bugfix**
+- Plünderhilfe
+    - Nach erfolgreicher Plünderung wurde die Plünderhilfe nicht richtig aktualisiert
+    - Wurde ein Angriff vor dem Stellen eines Stadtschilds durchgeführt, dann werden die Ernten jetzt korrekt als plünderbar angezeigt
+- PvP Angriffe
+    - Doppelbonus bei Plünderung wird jetzt beachtet und angezeigt
+
 ##### 1.12.1.0
 **Bugfix**
 - Allgemein

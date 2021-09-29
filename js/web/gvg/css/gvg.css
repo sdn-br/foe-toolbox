@@ -153,7 +153,7 @@
 #gvgOptions {
 	height: inherit;
 	overflow: auto;
-	min-width: 300px;
+	min-width: 400px;
 	flex-grow: 2;
 	position: relative;
 	border-left: 2px solid var(--text-dark);

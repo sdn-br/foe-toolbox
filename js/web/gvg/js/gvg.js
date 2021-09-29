@@ -348,12 +348,9 @@ let GvGMap = {
 				minimize: true,
 				resize: true
 			});
-
-			GvGMap.buildMap();
 		}
-		else {
-			GvGMap.buildMap();
-		}
+		
+		GvGMap.buildMap();
 	},
 
     /**
@@ -745,23 +742,35 @@ let GvGMap = {
 
 	showSector: (sector) => {
 		let html = '';
-		if (sector.owner.id != 0) {
-			html += '<div id="sectorInfo">';
-			html += '<span class="guildflag '+sector.owner.flag+'" style="background-color: '+GvGMap.colorToString(sector.owner.color)+';border-color: '+GvGMap.colorToString(sector.owner.color)+'"></span>';
-			html += '<b class="text-bright">'+ sector.owner.name +'</b><br>';
-			if (MapSector.underSiege(sector))
-				html += 'Under Siege by: '+ MapSector.underSiege(sector) +'<br>';
-			html += i18n('Boxes.GvGMap.Sector.Hitpoints') + ': ' + sector.hitpoints +'/80<br>';
-			html += i18n('Boxes.GvGMap.Sector.Coords') + ': ' + MapSector.coords(sector) +'<br>';
-			html += i18n('Boxes.GvGMap.Sector.Power') + ': ' + sector.power +'<br>';
-			if (sector.isProtected)
-				html += i18n('Boxes.GvGMap.Sector.Protected')+'<br>';
-			html += 'Terrain: '+ sector.terrain +'<br>';
-			html += '</div>';
-		}
+		let sectorColor = (sector.terrain != 'rocks' && sector.terrain != 'water' ? GvGMap.colorToString(sector.owner.color) : GvGMap.colorToString(MapSector.getColorByTerrain(sector)));
+		let sectorOwner = (sector.terrain != 'rocks' && sector.terrain != 'water' ? sector.owner.name : '---');
+		let sectorHitpoints = (sector.terrain != 'rocks' && sector.terrain != 'water' ? `${sector.hitpoints}'/80` : '---');
+		let sectorPower = (sector.terrain != 'rocks' && sector.terrain != 'water' ? sector.power : '---');
+		let sectorCoords = (sector.terrain != 'rocks' && sector.terrain != 'water' ?  MapSector.coords(sector) : '---');
 
+		html += '<div id="sectorInfo">';
+		html += '<span class="guildflag '+sector.owner.flag+'" style="background-color: '+sectorColor+';border-color: '+sectorColor+'"></span>';
+		html += '<b class="text-bright">'+ sectorOwner +'</b><br>';
+		if (MapSector.underSiege(sector))
+			html += 'Under Siege by: '+ MapSector.underSiege(sector) +'<br>';
+		html += i18n('Boxes.GvGMap.Sector.Hitpoints') + ': ' + sectorHitpoints +'<br>';
+		html += i18n('Boxes.GvGMap.Sector.Coords') + ': ' + sectorCoords +'<br>';
+		html += i18n('Boxes.GvGMap.Sector.Power') + ': ' + sectorPower +'<br>';
+		if (sector.isProtected)
+			html += i18n('Boxes.GvGMap.Sector.Protected')+'<br>';
+		html += 'Terrain: '+ i18n('Boxes.GvGMap.Sector.Terrain_'+sector.terrain) +'<br>';
+		html += '</div>';
+		
 		document.getElementById("GvGMapInfo").innerHTML = html;
     },
+
+	calculateSiegaArmyCost: (sectors, indvidual) => {
+		let cost = Math.round((3*(sectors)**1.5+0.045*(sectors)**3.1)/5+1)*5;
+		if (!indvidual || GvGMap.Map.Era == 'AllAge') {
+			cost *= 5;
+		}
+		return cost;
+	},
 
 	showGuilds: () => {
         let t = [];
@@ -779,12 +788,16 @@ let GvGMap = {
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Name')+'</th>');
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Sectors')+'</th>');
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Power')+'</th>');
+		t.push('<th>'+i18n('Boxes.GvGMap.Guild.SiegaArmyCostIndividual')+'</th>');
+		t.push('<th>'+i18n('Boxes.GvGMap.Guild.SiegeArmyCostTotal')+'</th>');
 		t.push('</tr></thead>');
 		GvGMap.Map.Guilds.forEach(function (guild) {
 			t.push('<tr id="id-'+guild.id+'">');
 			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>'+guild.name+'</td>');
 			t.push('<td class="text-center">'+guild.sectors+'</td>');
 			t.push('<td class="text-center">'+guild.power+'</td>');
+			t.push('<td class="text-center">'+GvGMap.calculateSiegaArmyCost(guild.sectors, true)+'</td>');
+			t.push('<td class="text-center">'+GvGMap.calculateSiegaArmyCost(guild.sectors, false)+'</td>')
 			t.push('</tr>');
 		});
 		t.push('</table>');
@@ -1036,7 +1049,7 @@ let MapSector = {
 				"x": info.position.x,
 				"y": info.position.y
 			},
-			power: parseInt(GvGMap.PowerValues[info.power]) || GvGMap.PowerValues[0],
+			power: parseInt(GvGMap.PowerValues[info.power]) || 0,
 			powerMultiplicator: parseInt(info.power)+1 || 1,
 			isProtected: info.is_protected,
 			terrain: info.terrain,

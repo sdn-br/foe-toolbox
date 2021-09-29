@@ -227,7 +227,7 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', async (data, postData) 
 	}
 
 	// In fact this is an array, but only one loot id will be for sure in this event, so ignore rest array
-	const doubleLootCityId = r.filter(it => it.type === 'citymap_icon_loot_and_pillage').map(it => it.id)[0];
+	const doubleLootCityId = r.filter(it => it.type === 'citymap_icon_plunder_and_pillage').map(it => it.id)[0];
 	if (!doubleLootCityId) { return }
 
 	const playerId = Looting.lastVisitedPlayer.other_player.player_id;
@@ -706,7 +706,7 @@ let Looting = {
 				return `<div class="loot-wrap">
 							<div class="name">
 								<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="Sabotage" title="${i18n('Boxes.Looting.actionLooted')}" />
-								${action.doubleLoot ? `<img class="doubleLoot" src="${extUrl}css/images/sabotage.png" alt="Double Loot Bonus" title="Double Loot Bonus"/>` : ''}
+								${action.doubleLoot ? `<img class="doubleLoot" src="${extUrl}css/images/doubleloot.png" alt="Double Loot Bonus" title="${i18n('Boxes.Looting.doubleLoot')}"/>` : ''}
 
 								${(MainParser.CityEntities[action.buildId] || {name: '-'}).name}
 							</div>

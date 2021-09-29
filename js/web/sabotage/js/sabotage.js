@@ -430,16 +430,16 @@ let Sabotage = {
 
 			for (let i in rd) {
 				if (rd.hasOwnProperty(i)) {
-					h.push(`<tr class="${!Sabotage.IsLootable || isShielded ? 'bg-red' : 'success'}">`);
-					h.push(`<td${!Sabotage.IsLootable || isShielded ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
-					h.push(`<td${!Sabotage.IsLootable || isShielded ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
+					h.push(`<tr class="${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? 'bg-red' : 'success'}">`);
+					h.push(`<td${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
+					h.push(`<td${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
 					h.push('<td><span class="show-entity" data-id="' + rd[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
 					h.push('</tr>');
 				}
 			}
 
 			if (rd.length == 0) {
-				h.push(`<tr class="${!Sabotage.IsLootable || isShielded ? 'bg-red' : ''}">`);
+				h.push(`<tr class="${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? 'bg-red' : ''}">`);
 				h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
 				h.push('</tr>');					
 			}
@@ -511,7 +511,7 @@ let Sabotage = {
 	},
 	
 	UpdatePlayer: (ud) => {
-		if (ud.player_id != Sabotage.OtherPlayer.player_id) {
+		if (ud.player_id == Sabotage.OtherPlayer.player_id) {
 		
 			Sabotage.OtherPlayer = ud;
 
