@@ -24,14 +24,17 @@ FoEproxy.addHandler('ClanBattleService', 'deployDefendingArmy', (data, postData)
 });
 
 FoEproxy.addHandler('ClanBattleService', 'getContinent', (data, postData) => {
+	GvG.IsContinent = true;
 	if (GvG.Actions === undefined) {
 		GvG.initActions();
 	}
 	GvG.setRecalc(data.responseData.continent.calculation_time.start_time, true);
+	GvG.HideFightOverlay();
 });
 
 FoEproxy.addHandler('ClanBattleService', 'getProvinceDetailed', (data, postData) => {	
 	GvGMap.initData(data['responseData']);
+	GvG.IsContinent = false;
 	if ($('#GvGMapWrap').length > 0) {
 		GvGMap.show();
 	}
@@ -39,6 +42,7 @@ FoEproxy.addHandler('ClanBattleService', 'getProvinceDetailed', (data, postData)
 
 FoEproxy.addHandler('AnnouncementsService', 'fetchAllAnnouncements', (data, postData) => {
 	GvG.HideGvgHud();
+	GvG.HideFightOverlay();
 });
 
 FoEproxy.addWsHandler('UpdateService', 'finishDailyCalculation', (data, postData) => {	
@@ -63,6 +67,7 @@ FoEproxy.addWsHandler('ClanBattleService', 'changeProvince', (data, postData) =>
 let GvG = {
 	Actions: undefined,
 	Init: false,
+	IsContinent: true,
 
 	initActions: () => {
 		let Actions = JSON.parse(localStorage.getItem('GvGActions'));
@@ -98,6 +103,7 @@ let GvG = {
 			$('body').append(div).promise().done(function() {
 				div.append('<div class="independences">'+GvG.Actions.Independences+'/4</div>')
 					.append('<button class="btn-default mapbutton" onclick="GvGMap.show()"></button>')
+					.append('<button class="btn-default fightbutton" onclick="GvG.FlipFightOverlay()"></button>')
 					.attr('title', i18n('GvG.Independences.Tooltip') + '<br><em>' + i18n('GvG.Independences.Tooltip.Warning') + '</em>')
 					.tooltip(
 						{
@@ -122,6 +128,46 @@ let GvG = {
 			$('#gvg-hud').fadeToggle(function() {
 				$(this).remove();
 			});
+		}
+	},
+
+	/**
+	 * Build HUD
+	 */
+	 FlipFightOverlay: () => {
+		if ($('#gvgfight-hud').length === 0) {
+			GvG.ShowFightOverlay();
+		} else {
+			GvG.HideFightOverlay();
+		}
+	},
+
+	/**
+	 * Build HUD
+	 */
+	ShowFightOverlay: () => {
+		if ($('#gvgfight-hud').length === 0 && !GvG.IsContinent) {
+			HTML.AddCssFile('gvg');
+			let div = $('<div />');
+
+			div.attr({
+				id: 'gvgfight-hud',
+				class: 'game-cursor'
+			});
+
+			$('body').append(div).promise().done(function() {
+				div.append('<div class="gvgfight-hud-auto">Auto</div>');
+				div.append('<div class="gvgfight-hud-ok">OK</div>');
+			});
+		}
+	},
+
+    /**
+	 * Hide HUD
+	 */
+	HideFightOverlay: () => {
+		if ($('#gvgfight-hud').length > 0) {
+			$('#gvgfight-hud').remove();
 		}
 	},
 

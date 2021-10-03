@@ -5,6 +5,7 @@
 - GvG
     - BA Kosten können jetzt in der Gildenliste eingesehen werden
     - Sektordetails auch für Felsen- und Wassergebiete
+    - Visualisierung der Angriffsknöpfe (Autokampf + OK)
 
 **Bugfix**
 - Plünderhilfe
