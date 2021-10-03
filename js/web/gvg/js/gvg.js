@@ -810,7 +810,7 @@ let GvGMap = {
 		document.getElementById("GvGMapInfo").innerHTML = html;
     },
 
-	calculateSiegaArmyCost: (sectors, indvidual) => {
+	calculateSiegeArmyCost: (sectors, indvidual) => {
 		let cost = Math.round((3*(sectors)**1.5+0.045*(sectors)**3.1)/5+1)*5;
 		if (!indvidual || GvGMap.Map.Era == 'AllAge') {
 			cost *= 5;
@@ -834,7 +834,7 @@ let GvGMap = {
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Name')+'</th>');
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Sectors')+'</th>');
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.Power')+'</th>');
-		t.push('<th>'+i18n('Boxes.GvGMap.Guild.SiegaArmyCostIndividual')+'</th>');
+		t.push('<th>'+i18n('Boxes.GvGMap.Guild.SiegeArmyCostIndividual')+'</th>');
 		t.push('<th>'+i18n('Boxes.GvGMap.Guild.SiegeArmyCostTotal')+'</th>');
 		t.push('</tr></thead>');
 		GvGMap.Map.Guilds.forEach(function (guild) {
@@ -842,8 +842,8 @@ let GvGMap = {
 			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>'+guild.name+'</td>');
 			t.push('<td class="text-center">'+guild.sectors+'</td>');
 			t.push('<td class="text-center">'+guild.power+'</td>');
-			t.push('<td class="text-center">'+GvGMap.calculateSiegaArmyCost(guild.sectors, true)+'</td>');
-			t.push('<td class="text-center">'+GvGMap.calculateSiegaArmyCost(guild.sectors, false)+'</td>')
+			t.push('<td class="text-center">'+GvGMap.calculateSiegeArmyCost(guild.sectors, true)+'</td>');
+			t.push('<td class="text-center">'+GvGMap.calculateSiegeArmyCost(guild.sectors, false)+'</td>')
 			t.push('</tr>');
 		});
 		t.push('</table>');
