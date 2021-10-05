@@ -119,6 +119,12 @@
 		"sort": 18
 	},
 	{
+		"name": "ShowGvGFightHud",
+		"status": false,
+		"group": "Boxes",
+		"sort": 19
+	},
+	{
 		"name": "ChangeLanguage",
 		"callback": "LanguageDropdown",
 		"group": "Extension",

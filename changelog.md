@@ -1,5 +1,21 @@
 ## Changelog - Extension
 
+##### 1.12.3.0
+**Update**
+- GvG
+    - Visualisierung der Angriffsknöpfe (BA + Bezahlund und Platzieren)
+    - Bei aktiven Angriffsknöpfen wird der Klick auf "Angreifen" verhindert
+    - Tastaturkürzel Strg+Alt+A um die Angriffsknöpfe an und abzuschalten 
+- PvP Angriffe
+    - Summe der erhaltenen Doppelbonus bei Plünderungen hinzugefügt
+    - Angriffe werden jetzt erst nach 1 Jahr aus der DB entfernt (Experimentell, da Performance noch unklar)
+- Einstellungen
+    - GvG Angriffsknöpfe können per Einstellung deaktiviert werden
+
+**Bugfix**
+- Plünderhilfe
+    - Konnte geöffnet werden, auch wenn noch kein anderer Spieler besucht wurde
+
 ##### 1.12.2.0
 **Update**
 - GvG

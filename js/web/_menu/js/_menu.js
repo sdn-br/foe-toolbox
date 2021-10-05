@@ -596,7 +596,9 @@ let _menu = {
 		let btn_Sabotage = $('<span />');
 
 		btn_Sabotage.on('click', function () {
-			Sabotage.showResult();
+			if (Sabotage.OtherPlayer !== undefined) {
+				Sabotage.showResult();
+			}
 		});
 
 		btn_SabotageBG.append(btn_Sabotage);

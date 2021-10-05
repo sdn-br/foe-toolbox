@@ -11,6 +11,12 @@
  * **************************************************************************************
  */
 
+$(document).keydown(function(event){
+	if( event.which === 65 && event.ctrlKey && event.altKey ){
+		GvG.FlipFightOverlay();
+	}  
+}); 
+
 FoEproxy.addHandler('ClanBattleService', 'grantIndependence', (data, postData) => {
 	GvG.AddCount(data.responseData.__class__, postData[0]['requestMethod']);
 });
@@ -35,6 +41,7 @@ FoEproxy.addHandler('ClanBattleService', 'getContinent', (data, postData) => {
 FoEproxy.addHandler('ClanBattleService', 'getProvinceDetailed', (data, postData) => {	
 	GvGMap.initData(data['responseData']);
 	GvG.IsContinent = false;
+	GvG.ReloadFightOverlay();
 	if ($('#GvGMapWrap').length > 0) {
 		GvGMap.show();
 	}
@@ -102,9 +109,13 @@ let GvG = {
 
 			$('body').append(div).promise().done(function() {
 				div.append('<div class="independences">'+GvG.Actions.Independences+'/4</div>')
-					.append('<button class="btn-default mapbutton" onclick="GvGMap.show()"></button>')
-					.append('<button class="btn-default fightbutton" onclick="GvG.FlipFightOverlay()"></button>')
-					.attr('title', i18n('GvG.Independences.Tooltip') + '<br><em>' + i18n('GvG.Independences.Tooltip.Warning') + '</em>')
+					.append('<button class="btn-default mapbutton" onclick="GvGMap.show()"></button>');
+				
+				if (Settings.GetSetting('ShowGvGFightHud')) {
+					div.append('<button class="btn-default fightbutton" onclick="GvG.FlipFightOverlay()"></button>')
+				}
+				
+				div.attr('title', i18n('GvG.Independences.Tooltip') + '<br><em>' + i18n('GvG.Independences.Tooltip.Warning') + '</em>')
 					.tooltip(
 						{
 							useFoEHelperSkin: true,
@@ -134,11 +145,21 @@ let GvG = {
 	/**
 	 * Build HUD
 	 */
-	 FlipFightOverlay: () => {
+	FlipFightOverlay: () => {
 		if ($('#gvgfight-hud').length === 0) {
 			GvG.ShowFightOverlay();
 		} else {
 			GvG.HideFightOverlay();
+		}
+	},
+
+	/**
+	 * Build HUD
+	 */
+	ReloadFightOverlay: () => {
+		if ($('#gvgfight-hud').length !== 0) {
+			GvG.HideFightOverlay();
+			GvG.ShowFightOverlay();
 		}
 	},
 
@@ -156,8 +177,12 @@ let GvG = {
 			});
 
 			$('body').append(div).promise().done(function() {
-				div.append('<div class="gvgfight-hud-auto">Auto</div>');
+				
+				div.append('<div class="gvgfight-hud-auto">Auto-Kampf</div>');
+				div.append('<div class="gvgfight-hud-manual">Angreifen</div>');
 				div.append('<div class="gvgfight-hud-ok">OK</div>');
+				div.append('<div class="gvgfight-hud-siegearmy">BA</div>');
+				div.append(`<div class="gvgfight-hud-placesiegearmy${GvGMap.Map.Era == 'AllAge' ? '-allage' : ''}">Bezahlen und Platzieren</div>`);
 			});
 		}
 	},

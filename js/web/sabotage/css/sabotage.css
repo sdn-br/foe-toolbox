@@ -13,27 +13,6 @@
  * **************************************************************************************
  */
 
-#userDetails {
-	left: calc(50vw - 250px);
-	top: calc(50vh - 220px);
-	min-width: 500px;
-	max-width: 600px;
-}
-
-#userDetails #userDetailsBody {
-	overflow-x: hidden;
-	overflow-y: auto;
-	max-height: 440px;
-	margin-top: 2px;
-}
-
-#userDetails #userDetailsBody p.header .player-name {
-	display: block;
-	white-space: nowrap;
-	color: var(--text-bright);
-	margin: 0 10px;
-}
-
 #sabotageInfo {
 	left: calc(50vw - 250px);
 	top: calc(50vh - 220px);
@@ -64,14 +43,6 @@
 #sabotageInfo #sabotageInfoBody .army, #sabotageInfo #sabotageInfoBody .army-boost, #sabotageInfo #sabotageInfoBody .production-headline {
 	color: var(--text-bright);
 }
-
-/*#sabotageInfo #sabotageInfoBody .army-boost {
-	color: var(--text-bright);
-}
-
-#sabotageInfo #sabotageInfoBody .production-headline {
-	color: var(--text-bright);
-}*/
 
 #sabotageInfo #sabotageInfoBody .foe-table td {
 	white-space: nowrap;

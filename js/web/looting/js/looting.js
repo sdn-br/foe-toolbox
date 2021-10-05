@@ -525,31 +525,30 @@ let Looting = {
 		}
 
 		$('#lootingBody').html(`
-			<div class="header">
-				<div class="strategy-points">
-					Calculating strategy points...
-				</div>
-				<div class="filter">
-					<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b> 
-						<span class="player-name">
-							${filterByPlayerId ? 
-								`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? `<br>[${clanName}]` : ''}` : 
-								filterByPvPArena ? 
-									`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
-									`${i18n('Boxes.Looting.AllPlayers')}`
-							}
-						</span>
+			<div class="dark-bg" style="padding:5px 0 3px; ">
+				<div class="header">
+					<div class="strategy-points">
+						Calculating strategy points...
 					</div>
-					<div class="filter-buttons">
-						<div><button${Looting.lastPvPArenaOpponents.length == 0  ? " disabled" : " "} class="btn btn-default select-pvp-arena-opponents${filterByPvPArena ? ' btn-active' : ' '}" data-value="" title="${Looting.lastPvPArenaOpponents.length == 0 ? HTML.i18nTooltip(i18n('Boxes.Looting.PvPArenaOpponentsInactive')) : ''}">${i18n('Boxes.Looting.showPvPArenaOpponents')}</button></div>
-						<div><button class="btn btn-default select-player${!filterByPvPArena && filterByPlayerId === null ? ' btn-active' : ''}" data-value="">${i18n('Boxes.Looting.showAllPlayers')}</button></div>
-						
+					<div class="filter">
+						<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b><br>
+							<span class="player-name">
+								${filterByPlayerId ? 
+									`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? ` [${clanName}]` : ''}` : 
+									filterByPvPArena ? 
+										`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
+										`${i18n('Boxes.Looting.AllPlayers')}`
+								}
+							</span>
+						</div>
+						<div class="filter-buttons">
+							<div><button${Looting.lastPvPArenaOpponents.length == 0  ? " disabled" : " "} class="btn btn-default select-pvp-arena-opponents${filterByPvPArena ? ' btn-active' : ' '}" data-value="" title="${Looting.lastPvPArenaOpponents.length == 0 ? HTML.i18nTooltip(i18n('Boxes.Looting.PvPArenaOpponentsInactive')) : ''}">${i18n('Boxes.Looting.showPvPArenaOpponents')}</button></div>
+							<div><button class="btn btn-default select-player${!filterByPvPArena && filterByPlayerId === null ? ' btn-active' : ''}" data-value="">${i18n('Boxes.Looting.showAllPlayers')}</button></div>
+						</div>
 					</div>
 				</div>
 			</div>
-			${actions.length === 0 ? `<div class="no-data"> - ${i18n('Boxes.Looting.noData')} - </div>` : ''}
-				${Looting.RenderActions(actions)
-			}
+			${Looting.RenderActions(actions)}
 			<div class="pagination">
 				${page > 1 && pages > 1 ? `<button class="btn btn-default load-1st-page">${i18n('Boxes.Looting.goto1stPage')}</button>` : ''}
 				${i18n('Boxes.Looting.Page')} ${page}/${pages}
@@ -572,31 +571,61 @@ let Looting = {
 		const dateToday = moment().startOf('day').toDate();
 
 		let todaySP = 0;
+		let todaySPNoDouble = 0;
 		let thisWeekSP = 0;
+		let thisWeekSPNoDouble = 0;
+		let totalSP = 0;
+		let totalSPNoDouble = 0;
 		let totalSPSelect = (filterByPlayerId ?
 			(IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId)) :
 			(filterByPvPArena ? 
 				(IndexDB.db.neighborhoodAttacks.where('playerId').anyOf(Looting.lastPvPArenaOpponents)) :
 				(IndexDB.db.neighborhoodAttacks.where('type').equals(Looting.ACTION_TYPE_LOOTED))));
 
-		let totalSP = 0;
-
 		await totalSPSelect.each((it) => {
 			const sp = (it.sp || 0);
+			const spNoDouble = (it.doubleLoot ? sp / 2 : sp);
 			totalSP += sp;
+			totalSPNoDouble += spNoDouble;
 			if (dateThisWeek < it.date) {
 				thisWeekSP += sp;
+				thisWeekSPNoDouble += spNoDouble;
 
 				if (dateToday < it.date) {
 					todaySP += sp;
+					todaySPNoDouble += spNoDouble;
 				}
 			}
 		});
 
 		$('#lootingBody .strategy-points').html(`
-			${i18n('Boxes.Looting.collectedToday')}: <strong class="${todaySP ? 'text-warning' : ''}">${todaySP}</strong> ${i18n('Boxes.Looting.FP')},
-			${i18n('Boxes.Looting.thisWeek')}: <strong class="${thisWeekSP ? 'text-warning' : ''}">${thisWeekSP}</strong> ${i18n('Boxes.Looting.FP')},
-			${i18n('Boxes.Looting.total')}:  <strong class="${totalSP ? 'text-warning' : ''}">${totalSP}</strong> ${i18n('Boxes.Looting.FP')}
+			<table style="width: 80%; text-align: center;">
+				<thead>
+					<tr>
+						<th colspan="2" style="text-align: center;"><strong>${i18n('Boxes.Looting.collectedToday')}</strong></th>
+						<th colspan="2" style="text-align: center;"><strong>${i18n('Boxes.Looting.thisWeek')}</strong></th>
+						<th colspan="2" style="text-align: center;"><strong>${i18n('Boxes.Looting.total')}</strong></th>
+					</tr>
+					<tr>
+						<th style="width: 16%; text-align: center;"><span class="doubleloot" title="${HTML.i18nTooltip(i18n('Boxes.Looting.DoubleLootPartFP'))}"></span></th>
+						<th style="width: 16%; text-align: center;"><span class="forgepoints" title="${HTML.i18nTooltip(i18n('Boxes.Looting.TotalFP'))}"></span></th>
+						<th style="width: 16%; text-align: center;"><span class="doubleloot" title="${HTML.i18nTooltip(i18n('Boxes.Looting.DoubleLootPartFP'))}"></span></th>
+						<th style="width: 16%; text-align: center;"><span class="forgepoints" title="${HTML.i18nTooltip(i18n('Boxes.Looting.TotalFP'))}"></span></th>
+						<th style="text-align: center;"><span class="doubleloot" title="${HTML.i18nTooltip(i18n('Boxes.Looting.DoubleLootPartFP'))}"></span></th>					
+						<th style="width: 16%; text-align: center;"><span class="forgepoints" title="${HTML.i18nTooltip(i18n('Boxes.Looting.TotalFP'))}"></span></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="text-align: center;"><strong>${todaySP - todaySPNoDouble}</strong></td>
+						<td style="text-align: center;"><strong>${todaySP}</strong></td>
+						<td style="text-align: center;"><strong>${thisWeekSP - thisWeekSPNoDouble}</strong></td>
+						<td style="text-align: center;"><strong>${thisWeekSP}</strong></td>
+						<td style="text-align: center;"><strong>${totalSP - totalSPNoDouble}</strong></td>
+						<td style="text-align: center;"><strong>${totalSP}</strong></td>
+					</tr>
+				</tbody>
+			</table>
 		`);
 	},
 
@@ -609,11 +638,17 @@ let Looting = {
 	 */
 	RenderActions: (actions) => {
 		let lastPlayerId = null;
-		return actions.map(action => {
-			const isSamePlayer = action.playerId === lastPlayerId;
-			lastPlayerId = action.playerId;
-			return Looting.RenderAction({action, isSamePlayer});
-		}).join('');
+		let html = '';
+		if (actions.length === 0) {
+			html = `<div class="no-data"> - ${i18n('Boxes.Looting.noData')} - </div>`;
+		} else {
+			html = actions.map(action => {
+				const isSamePlayer = action.playerId === lastPlayerId;
+				lastPlayerId = action.playerId;
+				return Looting.RenderAction({action, isSamePlayer});
+			}).join('');
+		}
+		return html;
 	},
 
 

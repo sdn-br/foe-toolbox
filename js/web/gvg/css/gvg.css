@@ -84,10 +84,10 @@
 
 #gvgfight-hud {
 	pointer-events: none;
-    cursor: none;
-	position: absolute;
+    user-select: none;
+    position: absolute;
 	z-index: 100;
-	top: calc(50vh + 253px);
+	top: calc(50vh - 120px);
     left: max(calc(50vw - 154px), 321px);
     height: 1000px;
 	width: 1000px;
@@ -97,20 +97,46 @@
 
 #gvgfight-hud .gvgfight-hud-auto {
 	pointer-events: none;
-    cursor: none;
-	background-color: var(--black-50);
+    user-select: none;
+    background-color: var(--black-50);
 	border: 1px solid #754e26;
 	border-radius: 4px;
-	height: 22px;
+	height: 23px;
 	box-sizing: border-box;
 	float: left;
 	z-index: 101;
+	position: absolute;
+	top: 372px;
 	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-	font-size: 0.75rem;
-	font-weight: 400;
+	font-size: 0.88rem;
+	font-weight: 420;
 	color: #f7dba4;
 	text-align: center;
-	padding: 3px 3px 3px 3px;
+	padding: 0px 1px 0px 0px;
+	background: var(--black-50);
+	width: 171px;
+	margin: 0 0 2px 2px;
+}
+
+#gvgfight-hud .gvgfight-hud-manual {
+	pointer-events: auto;
+	user-select: none;
+    background-color: var(--black-50);
+	border: 1px solid #754e26;
+	border-radius: 4px;
+	height: 23px;
+	box-sizing: border-box;
+	float: left;
+	z-index: 101;
+	position: absolute;
+	top: 372px;
+	left: 175px;
+	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+	font-size: 0.88rem;
+	font-weight: 420;
+	color: var(--text-muted);
+	text-align: center;
+	padding: 0px 1px 0px 0px;
 	background: var(--black-50);
 	width: 171px;
 	margin: 0 0 2px 2px;
@@ -118,23 +144,94 @@
 
 #gvgfight-hud .gvgfight-hud-ok {
 	pointer-events: none;
-    cursor: none;
-	position:absolute;
-	top: 24px;
+    user-select: none;
+    position:absolute;
+	top: 395px;
 	left:67px;
 	background-color: var(--black-50);
 	border: 1px solid #754e26;
 	border-radius: 4px;
-	height: 22px;
+	height: 23px;
 	box-sizing: border-box;
 	float: left;
 	z-index: 102;
 	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-	font-size: 0.75rem;
-	font-weight: 400;
+	font-size: 0.88rem;
+	font-weight: 420;
 	color: #f7dba4;
 	text-align: center;
-	padding: 3px 3px 3px 3px;
+	padding: 0px 1px 0px 0px;
+	background: var(--black-50);
+	width: 171px;
+	margin: 0 0 2px 2px;
+}
+
+#gvgfight-hud .gvgfight-hud-siegearmy {
+	pointer-events: none;
+    user-select: none;
+    position:absolute;
+	left:269px;
+	background-color: var(--black-50);
+	border: 1px solid #754e26;
+	border-radius: 4px;
+	height: 41px;
+	box-sizing: border-box;
+	float: left;
+	z-index: 102;
+	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+	font-size: 0.88rem;
+	font-weight: 420;
+	color: #f7dba4;
+	text-align: center;
+	padding: 11px 3px 3px 3px;
+	background: var(--black-50);
+	width: 41px;
+	margin: 0 0 2px 2px;
+}
+
+#gvgfight-hud .gvgfight-hud-placesiegearmy {
+	pointer-events: none;
+    user-select: none;
+    position:absolute;
+	top: 320px;
+	left:166px;
+	background-color: var(--black-50);
+	border: 1px solid #754e26;
+	border-radius: 4px;
+	height: 23px;
+	box-sizing: border-box;
+	float: left;
+	z-index: 102;
+	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+	font-size: 0.88rem;
+	font-weight: 475;
+	color: #f7dba4;
+	text-align: center;
+	padding: 0px 0px 0px 0px;
+	background: var(--black-50);
+	width: 171px;
+	margin: 0 0 2px 2px;
+}
+
+#gvgfight-hud .gvgfight-hud-placesiegearmy-allage {
+	pointer-events: none;
+    user-select: none;
+    position:absolute;
+	top: 236px;
+	left:166px;
+	background-color: var(--black-50);
+	border: 1px solid #754e26;
+	border-radius: 4px;
+	height: 23px;
+	box-sizing: border-box;
+	float: left;
+	z-index: 102;
+	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+	font-size: 0.88rem;
+	font-weight: 475;
+	color: #f7dba4;
+	text-align: center;
+	padding: 0px 0px 0px 0px;
 	background: var(--black-50);
 	width: 171px;
 	margin: 0 0 2px 2px;

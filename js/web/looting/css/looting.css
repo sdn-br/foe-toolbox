@@ -1,12 +1,47 @@
 #lootingBody {
     max-height: 600px;
     width: 590px;
-    padding: 8px 0;
-    overflow: scroll;
+    margin-top: 2px;
+    overflow: auto;
 }
 
 #looting .header {
-    padding: 0 0 10px 10px;
+    padding: 0 0 2px 2px;
+}
+
+#lootingBody .strategy-points {
+	margin-bottom: 10px;
+    justify-content: center;
+    display: flex;
+}
+
+#lootingBody .strategy-points table {
+	align-self: center;
+}
+
+#lootingBody .strategy-points tr th span {
+	display: inline-block;
+	width: 25px;
+	height: 25px;
+	vertical-align: bottom;
+}
+
+#lootingBody .strategy-points tr th {
+	color: var(--text-bright);
+}
+
+#lootingBody .strategy-points tr td {
+	color: var(--text-bright);
+}
+
+#lootingBody .strategy-points tr th span.forgepoints {
+	background: url(../../x_img/forgepoints.png) center no-repeat;
+	background-size: contain;
+}
+
+#lootingBody .strategy-points tr th span.doubleloot {
+	background: url(../../x_img/doubleloot.png) center no-repeat;
+	background-size: contain;
 }
 
 
@@ -57,13 +92,22 @@
 
 #looting div.filter {
     padding-right: 4px;
+    display: flow-root
 }
 
+#looting div.filterd-by {
+    float: left;
+    height: 40px;
+}  
+
 #looting div.filter-buttons {
+    float: right;
     display: flex;
     justify-content: flex-end;
+    align-items: flex-end;
     flex-direction: row;
     padding-right: 4px;
+    height: 40px;
 }    
 
 #looting .action-row-type-1, #looting .action-row-type-2 {

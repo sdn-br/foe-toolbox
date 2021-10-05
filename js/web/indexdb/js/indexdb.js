@@ -400,7 +400,7 @@ let IndexDB = {
     * @returns {Promise<void>}
     */
     GarbageCollector: async () => {
-        const neighborhoodAttackExpiryTime = moment().subtract(6, 'weeks').toDate();
+        const neighborhoodAttackExpiryTime = moment().subtract(1, 'years').toDate();
 		// Expiry time for db with 1 record per day
         const daylyExpiryTime = moment().subtract(1, 'years').toDate();
         // Expiry time for db with 1 record per hour
