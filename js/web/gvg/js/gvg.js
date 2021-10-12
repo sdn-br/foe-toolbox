@@ -14,7 +14,11 @@
 $(document).keydown(function(event){
 	if( event.which === 65 && event.ctrlKey && event.altKey ){
 		GvG.FlipFightOverlay();
-	}  
+	}
+
+	if( event.which === 83 && event.ctrlKey && event.altKey ){
+		GvG.FlipManualFightOverlay();
+	}
 }); 
 
 FoEproxy.addHandler('ClanBattleService', 'grantIndependence', (data, postData) => {
@@ -75,6 +79,7 @@ let GvG = {
 	Actions: undefined,
 	Init: false,
 	IsContinent: true,
+	manualFightOverlayEnabled: false,
 
 	initActions: () => {
 		let Actions = JSON.parse(localStorage.getItem('GvGActions'));
@@ -145,6 +150,15 @@ let GvG = {
 	/**
 	 * Build HUD
 	 */
+	 FlipManualFightOverlay: () => {
+		GvG.manualFightOverlayEnabled = !GvG.manualFightOverlayEnabled;
+		GvG.ReloadFightOverlay();
+	},
+	
+
+	/**
+	 * Build HUD
+	 */
 	FlipFightOverlay: () => {
 		if ($('#gvgfight-hud').length === 0) {
 			GvG.ShowFightOverlay();
@@ -179,7 +193,9 @@ let GvG = {
 			$('body').append(div).promise().done(function() {
 				
 				div.append('<div class="gvgfight-hud-auto">Auto-Kampf</div>');
-				div.append('<div class="gvgfight-hud-manual">Angreifen</div>');
+				if (GvG.manualFightOverlayEnabled) {
+					div.append('<div class="gvgfight-hud-manual">Angreifen</div>');
+				}
 				div.append('<div class="gvgfight-hud-ok">OK</div>');
 				div.append('<div class="gvgfight-hud-siegearmy">BA</div>');
 				div.append(`<div class="gvgfight-hud-placesiegearmy${GvGMap.Map.Era == 'AllAge' ? '-allage' : ''}">Bezahlen und Platzieren</div>`);

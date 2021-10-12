@@ -1,11 +1,18 @@
 ## Changelog - Extension
 
+##### 1.12.4.0
+**Update**
+- GvG
+    - Overlay für Angreifen Button kann via Tastaturkürzel (Strg+Alt+S) individuell abgeschaltet werden
+- Allgemein
+	- Spielerlinks zu foe.scoredb.io jetzt nur noch auf Link Icon und nicht mehr auf dem ganzen Namen
+
 ##### 1.12.3.0
 **Update**
 - GvG
-    - Visualisierung der Angriffsknöpfe (BA + Bezahlund und Platzieren)
+    - Visualisierung der Angriffsknöpfe (BA + Bezahlen und Platzieren + Angreifen)
     - Bei aktiven Angriffsknöpfen wird der Klick auf "Angreifen" verhindert
-    - Tastaturkürzel Strg+Alt+A um die Angriffsknöpfe an und abzuschalten 
+    - Tastaturkürzel Strg+Alt+A um die Angriffsknöpfe an- und abzuschalten 
 - PvP Angriffe
     - Summe der erhaltenen Doppelbonus bei Plünderungen hinzugefügt
     - Angriffe werden jetzt erst nach 1 Jahr aus der DB entfernt (Experimentell, da Performance noch unklar)
