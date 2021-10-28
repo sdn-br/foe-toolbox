@@ -239,7 +239,8 @@
 				'guildmemberstat',
 				'quests',
 				'gexstat',
-				'dbexport'
+				'dbexport',
+				'closebox'
 			];
 
 			// load scripts (one after the other)

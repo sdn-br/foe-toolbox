@@ -310,7 +310,8 @@ let CityMap = {
 		// Gebäudenamen via Tooltip
 		$('.entity').tooltip({
 			container: '#city-map-overlayBody',
-			html: true
+			html: true,
+			trigger: 'hover'
 		});
 
 		$('#grid-outer').draggable();

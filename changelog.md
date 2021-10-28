@@ -1,5 +1,14 @@
 ## Changelog - Extension
 
+##### 1.13.0.0
+**Bugfix**
+- Stadtkarte
+    - Namenstooltips verschwinden jetzt wieder, wenn man mit der Maus den Bereich verlässt
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.9.3 migriert
+
+
 ##### 1.12.4.0
 **Update**
 - GvG

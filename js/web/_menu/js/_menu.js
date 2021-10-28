@@ -85,6 +85,10 @@ let _menu = {
 		if(Settings.GetSetting('AutoOpenInfoBox')){
 			Infoboard.Show();
 		}
+
+		if (Settings.GetSetting('AutoOpenCloseBox')) {
+			CloseBox.BuildBox();
+		}
 	},
 
 
