@@ -181,7 +181,7 @@ let HTML = {
 			min.insertAfter(title);
 		}
 
-		if(args['dragdrop']) {
+		if(args['dragdrop'] && (args['fixdragdrop'] === undefined || args['fixdragdrop'] !== false)) {
 			let set = $('<span />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
 			set.insertAfter(title);
 			let draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
