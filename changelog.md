@@ -8,7 +8,6 @@
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.9.3 migriert
 
-
 ##### 1.12.4.0
 **Update**
 - GvG
@@ -63,7 +62,6 @@
 
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.9.2 migriert
-
 
 ##### 1.11.1.0
 **Update**
@@ -120,7 +118,6 @@
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.7.1 migriert
 
-
 ##### 1.9.4.0
 **Update**
 - Allgemein
@@ -137,12 +134,10 @@
 - Handleswarnung
     - Die Box war nicht ideal positioniert und es war weiterhin möglich den Button zu klicken
 
-
 ##### 1.9.3.0
 **Bugfix**
 - Plünderhilfe
     - Anzeige bei nicht vorhandener Plünderabwehr korrigiert
-
 
 ##### 1.9.2.0
 **Update**
@@ -154,7 +149,6 @@
 **Bugfix**
 - Alarme
     - Die Garbage Collection der Alarme funktioniert jetzt
-
 
 ##### 1.9.1.0
 **Neu**
@@ -171,17 +165,14 @@
 - Plünderhilfe
 	- Beim Start des Angriffs wurde das Informationsfenster immer geschlossen. Das Fenster bleibt jetzt geöffnet.
 
-
 ##### 1.9.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.3 migriert
-
 
 ##### 1.8.4.0
 **Bugfix**
 - Gebäude-Kits
     - Anzahl der Items wird jetzt korrekt angezeigt
-
 
 ##### 1.8.3.0
 **Bugfix**
@@ -190,18 +181,15 @@
 - Plünderhilfe
 	- Druidentempel wird jetzt nicht mehr als plünderbar angezeigt
 
-
 ##### 1.8.2.0
 **Bugfix**
 - Allgemein
     - FoE-Helfer Donation Link gefixed
 
-
 ##### 1.8.1.0
 **Bugfix**
 - Allgemein
     - Fehlendes Extension PopUp hinzugefügt
-
 
 ##### 1.8.0.0
 **Neu**
@@ -215,17 +203,14 @@
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.2 migriert
 
-
 ##### 1.7.1.0
 **Bugfix**
 - Menü
     - Reihenfolge wurde bei einigen Menüeinträgen nicht gespeichert
 
-
 ##### 1.7.0.0
 **Foe-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.6.0 migriert
-
 
 ##### 1.6.1.0
 **Bugfix**
@@ -233,7 +218,6 @@
     - Verhandlungsassistent für Gildengefechte ist jetzt standardmäßig abgeschaltet
 - Moppelassistent
     - Buttons (Nachbarn, Gildenmitglieder, Freunde) werden jetzt korrekt freigeschaltet, wenn man in der Socialbar die entsprechende Liste öffnet
-
 
 ##### 1.6.0.0
 **Update**
@@ -244,17 +228,14 @@
 **Foe-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.5.1 migriert
 
-
 ##### 1.5.4.2
 **Bugfix**
 - Forschungskosten
     - Das Zeitalter wird jetzt immer richtig ermittelt
 
-
 ##### 1.5.4.1
 **Bugfix**
 - Menü aus des FoE Helfer übernommen, weil die Ansicht durch das neue dynamische Menü zerstört wurde
-
 
 ##### 1.5.4.0
 Keine internen Änderungen
@@ -305,7 +286,6 @@ Folgende Änderungen und Bugfixes aus FoE Helfer 2.5.2.3  migriert
 **Update**
 - Motivieren/Polieren:
     - Übermittlung an foe-rechner.de überarbeitet
-
 
 ##### 1.5.2.0
 Interne Änderungen
@@ -618,7 +598,6 @@ Interner Release, keine weiteren Feature von FoE Helfer übernommen
 - Weitere kleine Bugfixes
 - Weitere interne Anpassungen
 
-
 ##### 1.1.1.0
 Interner Release, keine weiteren Feature von FoE Helfer übernommen
 
@@ -629,7 +608,6 @@ Interner Release, keine weiteren Feature von FoE Helfer übernommen
 **BugFixes**
 - Einige kleinere Migrationsprobleme gelöst
 - Einige interne kleine Anpassungen
-
 
 ##### 1.1.0.0
 Folgende Änderungen und Bugfixes aus FoE Helfer 2.5.0.0 migriert
@@ -672,8 +650,6 @@ Folgende Änderungen und Bugfixes aus FoE Helfer 2.5.0.0 migriert
 
 - Produtkionsübersicht:
     - [#1201](https://github.com/dsiekiera/foe-helfer-extension/issues/1201) Straße mit "Zufriedenheit" werden nicht mehr mit Straßenbindung berechnet
-
----
 
 ##### 1.0.0.0
 Initialer Fork des FoE Helfer 2.4.6.2
