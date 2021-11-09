@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.13.1.0
+**Bugfix**
+- Gebäude-Kits
+    - Menüpunkt kann jetzt wieder geöffnet werden
+    - Erntefeld-Auswahlkit wurde mehrfach dargestellt
+- Blaue Galaxie Helfer
+    - Fehlende Übersetzung ergänzt
+
 ##### 1.13.0.0
 **Bugfix**
 - Stadtkarte

@@ -31,7 +31,7 @@ let Kits = {
 
 		if(data === null || MainParser.checkNextUpdate('KnownKitsDate') === true)
 		{
-			MainParser.loadJSON(extURL + 'js/web/kits/data/sets.json', (data)=>{
+			MainParser.loadJSON(extUrl + 'js/web/kits/data/sets.json', (data)=>{
 
 				localStorage.setItem('KnownKitsData', data);
 				localStorage.setItem('KnownKitsDate', MainParser.getAddedDateTime(48));
@@ -237,20 +237,23 @@ let Kits = {
 			let kitRow = [];
 
 			if(kits[set]['kit']){
-				let k = inv.find(el => el['itemAssetName'] === kits[set]['kit']);
+				let selectionKits = Array.isArray(kits[set]['kit']) ? kits[set]['kit'] : [kits[set]['kit']];
+				for (let selectionKit in selectionKits) {
+					let k = inv.find(el => el['itemAssetName'] === selectionKits[selectionKit]);
 
-				// selection kit exist
-				if(k){
+					// selection kit exist
+					if(k){
 
-					if(!buildings && Kits.ShowMissing){
-						buildings = missings;
+						if(!buildings && Kits.ShowMissing){
+							buildings = missings;
+						}
+
+						kitRow.push({
+							type: 'kit',
+							item: k,
+							show: true
+						});
 					}
-
-					kitRow.push({
-						type: 'kit',
-						item: k,
-						show: true
-					});
 				}
 			}
 

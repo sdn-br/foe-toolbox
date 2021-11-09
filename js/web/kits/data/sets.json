@@ -500,19 +500,19 @@
 		"buildings": [
 			{
 				"first": "R_MultiAge_FallBonus20a",
-				"update": "selection_kit_harvest_farm"
+				"update": "upgrade_kit_harvest_barn"
 			},
 			{
 				"first": "R_MultiAge_FallBonus20b",
-				"update": "selection_kit_harvest_farm"
+				"update": "upgrade_kit_harvest_barn"
 			},
 			{
 				"first": "R_MultiAge_FallBonus20c",
-				"update": "selection_kit_harvest_farm"
+				"update": "upgrade_kit_harvest_barn"
 			},
 			{
 				"first": "R_MultiAge_FallBonus20d",
-				"update": "selection_kit_harvest_farm"
+				"update": "upgrade_kit_harvest_barn"
 			},
 
 			{
@@ -540,6 +540,6 @@
 				"update": ""
 			}
 		],
-		"kit": "selection_kit_harvest_fields"
+		"kit": ["selection_kit_harvest_fields", "selection_kit_harvest_farm"]
 	}
 ]
