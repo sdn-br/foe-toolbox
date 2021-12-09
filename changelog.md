@@ -2,6 +2,11 @@
 
 ##### 1.13.1.0
 **Bugfix**
+- Gildengefechte
+    - Funktioniert jetzt auch mit der neuen Karte
+
+##### 1.13.1.0
+**Bugfix**
 - Gebäude-Kits
     - Menüpunkt kann jetzt wieder geöffnet werden
     - Erntefeld-Auswahlkit wurde mehrfach dargestellt
