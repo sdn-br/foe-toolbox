@@ -1,6 +1,11 @@
 ## Changelog - Extension
 
-##### 1.13.1.0
+##### 1.13.3.0
+**Bugfix**
+- Plünderhilfe
+    - Alle plünderbare Items werden jetzt wieder angezeigt
+
+##### 1.13.2.0
 **Bugfix**
 - Gildengefechte
     - Funktioniert jetzt auch mit der neuen Karte
