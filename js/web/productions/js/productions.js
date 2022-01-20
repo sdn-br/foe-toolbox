@@ -312,8 +312,9 @@ let Productions = {
 						if (CurrentProduct['playerResources'] && CurrentProduct['playerResources']['resources']) {
 							let Resources = CurrentProduct['playerResources']['resources'];
 							for (let ResName in Resources) {
+								if (!Products[ResName]) Products[ResName] = 0;
+
 								if (!CurrentProduct['onlyWhenMotivated'] || d['state']['is_motivated']) {
-									if (!Products[ResName]) Products[ResName] = 0;
 									Products[ResName] += Resources[ResName];
 								}
 
@@ -641,7 +642,7 @@ let Productions = {
                 }
 				
 			}
-			else if(d['type'] === 'main_building') {
+			else if(d['id'] === 1) {
 				// Botschafter durchsteppen
 				if (MainParser.EmissaryService !== null) {
 
@@ -660,8 +661,10 @@ let Productions = {
 				if (MainParser.BonusService !== null) {
 					let FPBonus = MainParser.BonusService.find(o => (o['type'] === 'daily_strategypoint'));
 
-					if (!Products['strategy_points']) Products['strategy_points'] = 0;
-					Products['strategy_points'] += FPBonus['value'];
+					if (FPBonus) {
+						if (!Products['strategy_points']) Products['strategy_points'] = 0;
+						Products['strategy_points'] += FPBonus['value'];
+					}
 				}
             }
 
@@ -816,13 +819,13 @@ let Productions = {
 				sizetooltips = [];
       
 				// Gebäudegrößen für Effizienzberechnung laden
-				for (let i in MainParser.CityMapData) {
-					if (!MainParser.CityMapData.hasOwnProperty(i)) continue;
+				for (let i in Productions.CombinedCityMapData) {
+					if (!Productions.CombinedCityMapData.hasOwnProperty(i)) continue;
 
-					let BuildingSize = CityMap.GetBuildingSize(MainParser.CityMapData[i]);
+					let BuildingSize = CityMap.GetBuildingSize(Productions.CombinedCityMapData[i]);
 
-					sizes[MainParser.CityMapData[i]['cityentity_id']] = BuildingSize['total_area'];
-					sizetooltips[MainParser.CityMapData[i]['cityentity_id']] = (BuildingSize['street_area'] > 0 ? HTML.i18nReplacer(i18n('Boxes.Productions.SizeTT'), { 'streetnettosize': BuildingSize['street_area'] }) : '');
+					sizes[Productions.CombinedCityMapData[i]['cityentity_id']] = BuildingSize['total_area'];
+					sizetooltips[Productions.CombinedCityMapData[i]['cityentity_id']] = (BuildingSize['street_area'] > 0 ? HTML.i18nReplacer(i18n('Boxes.Productions.SizeTT'), { 'streetnettosize': BuildingSize['street_area'] }) : '');
 	            }
 
 			// einen Typ durchsteppen [money,supplies,strategy_points,...]

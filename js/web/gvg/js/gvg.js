@@ -16,6 +16,10 @@ $(document).keydown(function(event){
 		GvG.FlipFightOverlay();
 	}
 
+	if( event.which === 68 && event.ctrlKey && event.altKey ){
+		GvG.FlipIdealSpotOverlay();
+	}
+
 	if( event.which === 83 && event.ctrlKey && event.altKey ){
 		GvG.FlipManualFightOverlay();
 	}
@@ -80,6 +84,7 @@ let GvG = {
 	Init: false,
 	IsContinent: true,
 	manualFightOverlayEnabled: false,
+	showIdealSpotInsteadOfAutoAndOk: true,
 
 	initActions: () => {
 		let Actions = JSON.parse(localStorage.getItem('GvGActions'));
@@ -167,6 +172,11 @@ let GvG = {
 		}
 	},
 
+	FlipIdealSpotOverlay: () => {
+		GvG.showIdealSpotInsteadOfAutoAndOk = !GvG.showIdealSpotInsteadOfAutoAndOk;
+		GvG.ReloadFightOverlay();
+	},
+
 	/**
 	 * Build HUD
 	 */
@@ -192,11 +202,15 @@ let GvG = {
 
 			$('body').append(div).promise().done(function() {
 				
-				div.append('<div class="gvgfight-hud-auto">Auto-Kampf</div>');
 				if (GvG.manualFightOverlayEnabled) {
 					div.append('<div class="gvgfight-hud-manual">Angreifen</div>');
 				}
-				div.append('<div class="gvgfight-hud-ok">OK</div>');
+				if (GvG.showIdealSpotInsteadOfAutoAndOk) {
+					div.append('<div class="gvgfight-hud-idealspot"></div>');
+				} else {
+					div.append('<div class="gvgfight-hud-auto">Auto-Kampf</div>');
+					div.append('<div class="gvgfight-hud-ok">OK</div>');
+				}
 				div.append('<div class="gvgfight-hud-siegearmy">BA</div>');
 				div.append(`<div class="gvgfight-hud-placesiegearmy${GvGMap.Map.Era == 'AllAge' ? '-allage' : ''}">Bezahlen und Platzieren</div>`);
 			});

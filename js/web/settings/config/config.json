@@ -104,31 +104,36 @@
 		"sort": 16
 	},
 	{
-		"name": "ShowNeighborsLootables",
+		"name": "HideHelperDuringBattle",
+		"status": false,
+		"group": "Boxes",
+		"sort": 17
+	},
+	{	"name": "ShowNeighborsLootables",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 17
+		"sort": 18
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 18
+		"sort": 19
 	},
 	{
 		"name": "ShowPossibleInvestments",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 19
+		"sort": 20
 	},
 	{
 		"name": "ShowGvGFightHud",
 		"status": false,
 		"group": "Boxes",
-		"sort": 20
+		"sort": 21
 	},
 	{
 		"name": "ChangeLanguage",

@@ -240,7 +240,8 @@
 				'quests',
 				'gexstat',
 				'dbexport',
-				'closebox'
+				'closebox',
+				'castle'
 			];
 
 			// load scripts (one after the other)

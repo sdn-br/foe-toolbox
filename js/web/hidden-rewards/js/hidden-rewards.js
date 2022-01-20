@@ -12,9 +12,10 @@
  */
 
 FoEproxy.addHandler('HiddenRewardService', 'getOverview', (data, postData) => {
+    let fromHandler = true;
     HiddenRewards.Cache = HiddenRewards.prepareData(data.responseData.hiddenRewards);
     
-    HiddenRewards.RefreshGui();
+    HiddenRewards.RefreshGui(fromHandler);
     if (HiddenRewards.FirstCycle) { //Alle 60 Sekunden aktualisieren (Startbeginn des Ereignisses könnte erreicht worden sein)
         HiddenRewards.FirstCycle = false;
 
@@ -81,6 +82,9 @@ let HiddenRewards = {
             else {
                 SkipEvent = false;
             }
+			if (position === 'cityUnderwater') {
+				SkipEvent = true;
+			}
 
             if (SkipEvent) {
                 continue;
@@ -114,7 +118,7 @@ let HiddenRewards = {
      * Filtert den Cache erneut basierend auf aktueller Zeit + aktualisiert Counter/Liste falls nötig
      * 
      */
-    RefreshGui: () => {       
+    RefreshGui: (fromHandler = false) => {
         HiddenRewards.ActiveCache = [];
         HiddenRewards.FutureCache = [];
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
@@ -131,7 +135,16 @@ let HiddenRewards = {
         HiddenRewards.SetCounter();
 
         if ($('#HiddenRewardBox').length >= 1) {
-            HiddenRewards.BuildBox();
+            if(fromHandler && (HiddenRewards.ActiveCache.length === 0 || HiddenRewards.FutureCache.length === 0) && $('#HiddenRewardBox').length) 
+            {
+                $('#HiddenRewardBox').fadeOut('500', function() {
+                    $(this).remove();
+                });
+            }
+            else 
+            {
+                HiddenRewards.BuildBox();
+            }
         }  
     },
 
@@ -205,6 +218,5 @@ let HiddenRewards = {
 		} else {
 			$('#hidden-reward-count').hide();
 		}
-        
 	}
 };

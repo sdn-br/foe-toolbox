@@ -82,6 +82,8 @@
 	--black: #000;
 	--black-50: rgba(0, 0, 0, 0.5);
 	--black-65: rgba(0,0,0, 0.65);
+	--black-25: rgba(0,0,0, 0.25);
+	--red-50: rgba(167, 31, 31, 0.50);
 
 	--text-success: #29b206;
 	--text-info: #2196f3;

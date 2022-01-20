@@ -2,8 +2,8 @@
 	"name": "__MSG_appName__",
 	"description": "__MSG_appDesc__",
 	"default_locale": "de",
-	"version": "1.13.3.0",
-	"version_name": "1.13.3.0 (2.5.9.3)",
+	"version": "1.14.0.0",
+	"version_name": "1.14.0.0 (2.5.10.1)",
 	"manifest_version": 2,
 	"permissions": [
 		"alarms",

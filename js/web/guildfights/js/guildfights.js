@@ -1164,7 +1164,8 @@ let GildFights = {
 
 				GildFights.UpdateCounter(countDownDate, intervalID, prov[x]['id']);
 
-				if (GildFights.showGuildColumn) {
+				if (GildFights.showGuildColumn)
+				{
 					nextup.push(`<td>${prov[x]['owner']}</td>`);
 				}
 

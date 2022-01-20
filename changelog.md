@@ -1,5 +1,15 @@
 ## Changelog - Extension
 
+##### 1.14.0.0
+**Update**
+- GvG
+    - Anpassung der Angriffsknöpfe auf das neueste Update
+    - Visualisierung des Schnittpunkgs von Auto-Kampf und OK
+    - Per Tastenkürzel Strg+Alt+D kann zwischen der alten Darstellung der Knöpfe Auto-Kampf/OK und dem Schnittpunkt umgeschaltet werden
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.5.10.1 migriert
+
 ##### 1.13.3.0
 **Bugfix**
 - Plünderhilfe
