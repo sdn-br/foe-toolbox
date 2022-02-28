@@ -15,42 +15,11 @@
 
 // https://foede.innogamescdn.com/start/metadata?id=city_entities-xxxxxxx
 
-// nicht plünderbare Gebäude
-
-let BlackListBuildingsArray = [
-	'R_MultiAge_CulturalBuilding6b', // Königliches Badehaus lvl2
-	'R_MultiAge_CulturalBuilding6c', // Königliches Badehaus lvl3
-	'R_MultiAge_CulturalBuilding6d', // Königliches Badehaus lvl4
-	'R_MultiAge_CulturalBuilding6e', // Königliches Badehaus lvl5
-	'R_MultiAge_CulturalBuilding6f', // Königliches Badehaus lvl6
-];
-
-let BlackListBuildingsString = [
-	'R_MultiAge_SummerBonus19', //Großer Leuchtturm
-	'R_MultiAge_Battlegrounds1', //Ehrenstatue
-	'R_MultiAge_PatrickBonus21', //Druidentempel
-	'R_MultiAge_SummerBonus21', // Piratenversteck
-];
-
-let BoostInUnconnectedState = [
-	'A_MultiAge_CarnivalBonus19a', // Piazza Turm St. 1
-	'A_MultiAge_CarnivalBonus19b', // Piazza Turm St. 2
-];
-
-let DoubleChains = [
-	'hippodrome'
-];
-
 // grau darzustellende Produktionen
 let UnimportantProds = [
 	'supplies', // Vorräte
 	'money'     // Münzen
 ];
-
-/*FoEproxy.addHandler('ArmyUnitManagementService', 'getArmyInfo', (data, postData) => {
-	console.log(data);
-	$('#sabotageInfo').remove();
-});*/
 
 FoEproxy.addHandler('OtherPlayerService', 'updatePlayer', (data, postData) => {
 	Sabotage.UpdatePlayer(data.responseData[0]);	
@@ -118,8 +87,7 @@ let Sabotage = {
         Sabotage.CityEntities = d;      
 
 		let BoostDict = [];
-		let ChainDict = {};
-
+		
 		for (let i in d) {
 			if (d.hasOwnProperty(i)) {
 				let id = d[i]['cityentity_id'];
@@ -135,81 +103,40 @@ let Sabotage = {
 
 				let BuildingData = MainParser.CityEntities[id];
 
-				if (d[i]['state'] !== undefined && d[i]['state']['__class__'] !== 'ConstructionState' && (d[i]['state']['__class__'] !== 'UnconnectedState' || BoostInUnconnectedState.includes(id))) {
+				if (d[i]['state'] !== undefined && d[i]['state']['__class__'] !== 'ConstructionState' && (d[i]['state']['__class__'] !== 'UnconnectedState' || BuildingData.type == 'culture')) {
 					if (BuildingData['abilities'] !== undefined) {
-						let ChainId,
-						    Chain = BuildingData['abilities'].find(e => e['chainId'] !== undefined);
-
-						if (Chain !== undefined) {
-							ChainId = Chain['chainId'];
-							if (ChainDict[ChainId] === undefined) {
-								ChainDict[ChainId] = {
-									mainBuildings: [], 
-									boostDict: []
-								};
-							}
-						}
-
-						let isMainChainBuilding = (Chain !== undefined && Chain['__class__'] == 'ChainStartAbility');
-						let isFirstOccurance = false;
-						if (isMainChainBuilding) {
-							if (ChainDict[ChainId]['mainBuildings'].find(e => e.id === id) === undefined) {
-								ChainDict[ChainId]['mainBuildings'].push({id: id, boostDict: []});
-								isFirstOccurance = true;
-							}
-						}
 						for (let ability in BuildingData['abilities']) {
 							if (!BuildingData['abilities'].hasOwnProperty(ability))  continue;
 							let CurrentAbility = BuildingData['abilities'][ability];
-							let CurrentChainId = CurrentAbility['chainId'];
 							
 							if (CurrentAbility['boostHints'] !== undefined) {
 								for (let boostHint in CurrentAbility['boostHints']) {
 									if (!CurrentAbility['boostHints'].hasOwnProperty(boostHint)) continue;
 
 									let CurrentBoostHint = CurrentAbility['boostHints'][boostHint];
-									Sabotage.HandleBoostEraMap(BoostDict, CurrentBoostHint['boostHintEraMap'], d[i]);
-									if (isMainChainBuilding && isFirstOccurance) {
-										let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
-										Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBoostHint['boostHintEraMap'], d[i]);
-									}
+									Sabotage.HandleBoostEraMap(BoostDict, CurrentBoostHint['boostHintEraMap'], d[i], BuildingData.bonus_multiplier);
 								}
 							}
 
-							if (CurrentAbility['bonuses'] !== undefined) {
+							if (CurrentAbility['bonuses'] !== undefined && CurrentAbility['bonusGiven'] === undefined) {
 								for (let bonus in CurrentAbility['bonuses']) {
 									if (!CurrentAbility['bonuses'].hasOwnProperty(bonus)) continue;
-
 									let CurrentBonus = CurrentAbility['bonuses'][bonus];
-									Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i]);
-									if (isMainChainBuilding && isFirstOccurance) {
-										let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
-										Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBonus['boost'], d[i]);
-									}
+									
+									Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i], BuildingData.bonus_multiplier);
 								}
 							}
 
 							if (CurrentAbility['bonusGiven'] !== undefined) {
 								let CurrentBonus = CurrentAbility['bonusGiven'];
-								let Dict = BoostDict;
-								if (CurrentChainId !== undefined) {
-									Dict = ChainDict[CurrentChainId]['boostDict'];
-								}
-								Sabotage.HandleBoostEraMap(Dict, CurrentBonus['boost'], d[i]);
-								if (isMainChainBuilding && isFirstOccurance) {
-									let MainBuilding = ChainDict[ChainId]['mainBuildings'].find(e => e.id === id);
-									Sabotage.HandleBoostEraMap(MainBuilding['boostDict'], CurrentBonus['boost'], d[i]);
-								}
+								Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i], BuildingData.bonus_multiplier);
 							}
 						}
 					}
-									
-					if (BlackListBuildingsArray.includes(id) === false && BlackListBuildingsString.indexOf(id.substring(0, id.length-1)) === -1) {
+					
+					if (BuildingData.is_plunderable) {
 						if (d[i]['state'] !== undefined && d[i]['state']['current_product'] !== undefined) {
-							if (d[i]['type'] === 'goods') {
-								GoodsParser.readType(d[i]);
-							}
-							else if ((d[i]['type'] === 'residential' || d[i]['type'] === 'production' || d[i]['type'] === 'clan_power_production') && (d[i]['state']['is_motivated'] === undefined || d[i]['state']['is_motivated'] === false)) {
+							if (!BuildingData.is_motivatable || (d[i]['state']['is_motivated'] === undefined || d[i]['state']['is_motivated'] === false)) {
 								GoodsParser.readType(d[i]);
 							}
 						}
@@ -217,8 +144,6 @@ let Sabotage = {
 				}
 			}
 		}
-
-		Sabotage.ApplyChainDict(ChainDict, BoostDict);
 
 		Sabotage.ArmyBoosts = Unit.GetBoostSums(BoostDict);
 		Sabotage.PlunderRepel = (BoostDict['plunder_repel'] !== undefined ? BoostDict['plunder_repel'] : 0 );
@@ -239,7 +164,7 @@ let Sabotage = {
 	/**
 	 * Boosts aus einer Era Map suchen und das BoostDict aktualisieren
 	 * */
-	HandleBoostEraMap: (BoostDict, BoostEraMap, Building) => {
+	HandleBoostEraMap: (BoostDict, BoostEraMap, Building, Multiplier) => {
 		if (BoostEraMap === undefined) return;
 
 		for (let EraName in BoostEraMap) {
@@ -254,10 +179,8 @@ let Sabotage = {
 
 				if (BoostType !== undefined && BoostValue !== undefined) {
 					BoostDict[BoostType] |= 0;
-					BoostDict[BoostType] += BoostValue;
-					//if (BoostType === 'att_boost_attacker' || BoostType === 'military_boost' || BoostType === 'advanced_tactics') {
-					//		(MainParser.CityEntities[Building['cityentity_id']].name + ' ' + BoostType + '_ ' + BoostValue + '%');
-					//}
+					BoostDict[BoostType] += (BoostValue * Multiplier);
+
 				}
 			}
 		}

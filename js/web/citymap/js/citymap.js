@@ -489,7 +489,7 @@ let CityMap = {
 			$('#CityMapSubmit').fadeToggle(function(){
 				$(this).remove();
 			});
-		});
+		}, true);
 	},
 
 

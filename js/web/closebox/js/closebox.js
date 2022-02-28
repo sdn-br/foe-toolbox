@@ -54,6 +54,7 @@ let CloseBox = {
     Settings: {
         ButtonSize: 60,
         Excludes: [],
+        Ignore: ['menu_box'],
         BoxAlignment: 0,
         HideAllButton: true,
         CloseAllButton: true,
@@ -152,7 +153,7 @@ let CloseBox = {
         $.each(openBoxes, function () {
 
             let box = $(this);
-            if (box.attr('id') !== 'CloseBox')
+            if (box.attr('id') !== 'CloseBox' && !CloseBox.Settings.Ignore.includes(box.attr('id')))
             {
                 box.hide();
             }
@@ -174,7 +175,7 @@ let CloseBox = {
 
         $.each(openBoxes, function () {
             let box = $(this);
-            if (box.attr('id') !== 'CloseBox' && !CloseBox.Settings.Excludes.includes(box.attr('id')))
+            if (box.attr('id') !== 'CloseBox' && !CloseBox.Settings.Ignore.includes(box.attr('id')) && !CloseBox.Settings.Excludes.includes(box.attr('id')))
             {
                 box.remove();
             }

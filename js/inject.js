@@ -56,10 +56,10 @@
 	const v = chrome.runtime.getManifest().version;
 	let bv = chrome.runtime.getManifest().version_name;
 	if (bv != '') {
-		bv = bv.match(/\((\d\.\d\.\d\.\d)\)/);
+		bv = bv.match(/\((\d+\.\d+\.\d+\.\d+)\)/);
 		bv = bv != null ? bv = bv[1] : '';
 	}
-
+	
 	let   lng = chrome.i18n.getUILanguage();
 	const uLng = localStorage.getItem('user-language');
 

@@ -1,10 +1,18 @@
 ## Changelog - Extension
 
+##### 1.14.1.0
+- Stadtübersicht
+    - Übertragung der Stadt an FoE-Helfer funktioniert wieder
+- Closebox
+    - Box-Menü wird jetzt nicht mehr geschlossen oder versteckt
+- Plünderhilfe
+    - Großer Elefant wird nicht mehr als plünderbar angezeigt
+
 ##### 1.14.0.0
 **Update**
 - GvG
     - Anpassung der Angriffsknöpfe auf das neueste Update
-    - Visualisierung des Schnittpunkgs von Auto-Kampf und OK
+    - Visualisierung des Schnittpunkts von Auto-Kampf und OK
     - Per Tastenkürzel Strg+Alt+D kann zwischen der alten Darstellung der Knöpfe Auto-Kampf/OK und dem Schnittpunkt umgeschaltet werden
 
 **FoE-Helfer**

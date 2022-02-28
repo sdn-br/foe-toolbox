@@ -602,6 +602,45 @@ const FoEproxy = (function () {
 	FoEproxy.addMetaHandler('city_entities', (xhr, postData) => {
 		let EntityArray = JSON.parse(xhr.responseText);
 		MainParser.CityEntities = Object.assign({}, ...EntityArray.map((x) => ({ [x.id]: x })));
+		Object.values(MainParser.CityEntities).forEach(
+			e => {
+				e.is_motivatable = (e.abilities !== undefined && e.abilities.find(a => a.__class__ === 'MotivatableAbility' || e.__class__ == 'GenericCityEntity'));
+				e.is_polishable = (e.abilities !== undefined && e.abilities.find(a => a.__class__ === 'PolishableAbility'));
+				e.chainId = '';
+				e.is_chainBuilding = false;
+				e.is_chainStartBuilding = false;
+				e.bonus_multiplier = 1;
+				e.is_outpostBuilding = (e.abilities !== undefined && e.abilities.find(a => a.gridId !== undefined && a.gridId !== 'main') !== undefined);
+					
+				if (e.abilities !== undefined) {
+					let chaninAbility = e.abilities.find(a => a.chainId !== undefined);
+					if (chaninAbility) {
+						e.chainId = chaninAbility.chainId;
+						e.is_chainBuilding = e.chainId !== undefined;
+					}
+					e.is_chainStartBuilding = e.abilities.find(a => a.__class__ === 'ChainStartAbility') !== undefined;
+					e.abilities.forEach( a => {
+						if (a.chainId !== undefined && a.linkPositions !== undefined) {
+							e.bonus_multiplier = a.linkPositions.length;
+						}
+					});
+				}
+				
+				e.is_plunderable = (
+					!e.is_outpostBuilding && (
+						e.type =='production' || e.type == 'goods' || (
+							(e.type == 'residential' || e.type == 'clan_power_production' || (e.type === undefined && e.__class__ == 'GenericCityEntity')) && (
+								e.abilities === undefined || (
+									e.abilities.find(a => a.__class__ === 'AddResourcesToGuildTreasuryAbility') === undefined &&
+									e.abilities.find(a => a.__class__ === 'RandomChestRewardAbility') === undefined &&
+									e.abilities.find(a => a.__class__ === 'NotPlunderableAbility') === undefined
+								)
+							)
+						)
+					)					
+				);
+			}
+		);
 	});
 
 	// Updatestufen der Eventgebäude
@@ -803,6 +842,17 @@ const FoEproxy = (function () {
 	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 		LastMapPlayerID = data.responseData['other_player']['player_id'];
 		MainParser.OtherPlayerCityMapData = Object.assign({}, ...data.responseData['city_map']['entities'].map((x) => ({ [x.id]: x })));
+		
+		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
+			Sabotage.OtherPlayersBuildings(data.responseData);
+			$('#sabotage-Btn').removeClass('hud-btn-red');
+			$('#sabotage-Btn-closed').remove();
+		}
+		else {
+			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
+			$('#sabotageInfo').remove();
+		}		
+
 	});
 
 
@@ -1109,20 +1159,6 @@ const FoEproxy = (function () {
 	}
 
 	// --------------------------------------------------------------------------------------------------
-	// Ernten anderer Spieler
-
-	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
-		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
-			Sabotage.OtherPlayersBuildings(data.responseData);
-			$('#sabotage-Btn').removeClass('hud-btn-red');
-			$('#sabotage-Btn-closed').remove();
-		}
-		else {
-			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
-			$('#sabotageInfo').remove();
-		}
-	});
-
 	// Güter des Spielers ermitteln
 	FoEproxy.addHandler('ResourceService', 'getPlayerResources', (data, postData) => {
 		ResourceStock = data.responseData.resources; // Lagerbestand immer aktualisieren. Betrifft auch andere Module wie Technologies oder Negotiation
@@ -1550,9 +1586,10 @@ let MainParser = {
 	 * @param data
 	 * @param ep
 	 * @param successCallback
+	 * @param forceSend
 	 */
-	send2Server: (data, ep, successCallback)=> {
-		if (!Settings.GetSetting('GlobalSend')) {
+	send2Server: (data, ep, successCallback, forceSend = false)=> {
+		if (!Settings.GetSetting('GlobalSend') && !forceSend) {
 			return;
 		}
 		let req = MainParser.sendExtMessage({
