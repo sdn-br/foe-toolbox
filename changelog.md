@@ -6,7 +6,7 @@
 - Closebox
     - Box-Menü wird jetzt nicht mehr geschlossen oder versteckt
 - Plünderhilfe
-    - Großer Elefant wird nicht mehr als plünderbar angezeigt
+    - GG Gebäude werden nicht mehr als plünderbar angezeigt
 
 ##### 1.14.0.0
 **Update**
