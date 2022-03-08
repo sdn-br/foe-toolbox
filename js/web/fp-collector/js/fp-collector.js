@@ -122,7 +122,7 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', (data, postData) => {
 
 
 /**
- * @type {{maxDateFilter, CityMapDataNew: null, buildBody: (function(): Promise<void>), currentDateFilter, calculateTotalByType: (function(*=): number), ShowFPCollectorBox: (function(): Promise<void>), calculateTotal: (function(): number), TodayEntries: null, lockDates: [], ToggleHeader: FPCollector.ToggleHeader, intiateDatePicker: (function(): Promise<void>), getPossibleEventsByDate: (function(): []), DatePicker: null, HandleAdvanceQuest: FPCollector.HandleAdvanceQuest, minDateFilter: null}}
+ * @type {{maxDateFilter, CityMapDataNew: null, buildBody: (function(): Promise<void>), currentDateFilter, calculateTotalByType: (function(*=): number), ShowFPCollectorBox: (function(): Promise<void>), calculateTotal: (function(): number), TodayEntries: null, lockDates: [], ToggleHeader: FPCollector.ToggleHeader, initiateDatePicker: (function(): Promise<void>), getPossibleEventsByDate: (function(): []), DatePicker: null, HandleAdvanceQuest: FPCollector.HandleAdvanceQuest, minDateFilter: null}}
  */
 let FPCollector = {
 
@@ -251,19 +251,19 @@ let FPCollector = {
 				const sumTotal = await FPCollector.calculateTotalByType(event);
 				const entriesEvent = FPCollector.getEntriesByEvent(event);
 
-				tr.push(`<div class="foetoolbox-accordion ${event}">`);
+				tr.push(`<div class="foehelper-accordion ${event}">`);
 
-				tr.push(	`<div class="foetoolbox-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
+				tr.push(	`<div class="foehelper-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
 								<span class="image"></span>
-								<strong class="text-warning">${sumTotal}</strong>
+								<strong class="text-warning">${HTML.Format(sumTotal)}</strong>
 								<span>${i18n('Boxes.FPCollector.' + event)}</span>
 							</div>`);
 
-				tr.push(	`<div class="foetoolbox-accordion-body ${event}-body">`);
+				tr.push(	`<div class="foehelper-accordion-body ${event}-body">`);
 
 				 entriesEvent.forEach(e => {
 					 tr.push(`<div>
-								<span class="fps">${e.amount}</span>
+								<span class="fps">${HTML.Format(e.amount)}</span>
 								<span class="desc">${i18n('Boxes.FPCollector.' + e.event)}</span>
 								<span class="building">${e.notes ? e.notes : ''}</span>
 						</div>`);
@@ -276,7 +276,7 @@ let FPCollector = {
 
 
 		$('#fp-collectorBodyInner').html(tr.join('')).promise().done(function(){
-			FPCollector.intiateDatePicker();
+			FPCollector.initiateDatePicker();
 		});
 	},
 
@@ -337,7 +337,7 @@ let FPCollector = {
 			totalFP += e.amount
 		});
 
-		return totalFP;
+		return HTML.Format(totalFP);
 	},
 
 
@@ -360,7 +360,7 @@ let FPCollector = {
 	 *
 	 * @returns {Promise<void>}
 	 */
-	intiateDatePicker: async () => {
+	initiateDatePicker: async () => {
 
 		if(FPCollector.DatePicker !== null){
 			return ;
@@ -443,7 +443,7 @@ let FPCollector = {
 		let $this = $(`.${event}`),
 			isOpen = $this.hasClass('open');
 
-		$('#fp-collectorBodyInner .foetoolbox-accordion').removeClass('open');
+		$('#fp-collectorBodyInner .foehelper-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

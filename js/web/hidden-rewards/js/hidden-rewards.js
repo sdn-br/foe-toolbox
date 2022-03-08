@@ -31,7 +31,9 @@ let HiddenRewards = {
 
     Cache: null,
     ActiveCache : [],
+    ActiveCache2 : [],
     FutureCache : [],
+    FutureCache2 : [],
     FirstCycle: true,
     
 	/**
@@ -120,15 +122,21 @@ let HiddenRewards = {
      */
     RefreshGui: (fromHandler = false) => {
         HiddenRewards.ActiveCache = [];
+        HiddenRewards.ActiveCache2 = [];
         HiddenRewards.FutureCache = [];
+        HiddenRewards.FutureCache2 = [];
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
             let StartTime = moment.unix(HiddenRewards.Cache[i].starts),
                 EndTime = moment.unix(HiddenRewards.Cache[i].expires);
 
             if (StartTime < MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()) {
                 HiddenRewards.ActiveCache.push(HiddenRewards.Cache[i]);
+                if (HiddenRewards.Cache[i].position.context == "guildExpedition") continue;
+                HiddenRewards.ActiveCache2.push(HiddenRewards.Cache[i]);
             } else if (StartTime > MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()){
                 HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
+                if (HiddenRewards.Cache[i].position.context == "guildExpedition") continue;
+                HiddenRewards.FutureCache2.push(HiddenRewards.Cache[i]);
             }
         }
 
@@ -181,7 +189,11 @@ let HiddenRewards = {
 
             if (StartTime.isValid() && EndTime > MainParser.getCurrentDateTime()) {
                 h.push('<tr>');
-                h.push('<td class="incident" title="' + HTML.i18nTooltip(hiddenReward.type) + '"><img src="' + extUrl + 'js/web/hidden-rewards/images/' + hiddenReward.type + '.png" alt=""></td>');
+                let img =  hiddenReward.type;
+                if (hiddenReward.type.indexOf('outpost') > -1) {
+                    img = 'Shard_' + hiddenReward.type.substr(hiddenReward.type.length-2, 2);
+                }
+                h.push('<td class="incident" title="' + HTML.i18nTooltip(hiddenReward.type) + '"><img src="' + extUrl + 'js/web/hidden-rewards/images/' + img + '.png" alt=""></td>');
                 h.push('<td>' + hiddenReward.position + '</td>');
 
                 if (StartTime > MainParser.getCurrentDateTime()) {
@@ -208,13 +220,17 @@ let HiddenRewards = {
 
 
 	SetCounter: ()=> {
-		if(HiddenRewards.FutureCache.length > 0){
-			$('#hidden-future-reward-count').text(HiddenRewards.FutureCache.length).show();
+		let count = HiddenRewards.FutureCache?.length|0;
+		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.FutureCache2?.length|0;
+		if(count > 0){
+			$('#hidden-future-reward-count').text(count).show();
 		} else {
 			$('#hidden-future-reward-count').hide();
 		}
-        if(HiddenRewards.ActiveCache.length > 0){
-			$('#hidden-reward-count').text(HiddenRewards.ActiveCache.length).show();
+		count = HiddenRewards.ActiveCache?.length|0;
+		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.ActiveCache2?.length|0;
+		if(count > 0){
+			$('#hidden-reward-count').text(count).show();
 		} else {
 			$('#hidden-reward-count').hide();
 		}

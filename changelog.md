@@ -1,5 +1,9 @@
 ## Changelog - Extension
 
+##### 1.15.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.7.0.0 migriert
+
 ##### 1.14.1.0
 - Stadtübersicht
     - Übertragung der Stadt an FoE-Helfer funktioniert wieder

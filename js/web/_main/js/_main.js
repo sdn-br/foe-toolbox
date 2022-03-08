@@ -50,8 +50,11 @@ let ApiURL = 'https://api.foe-rechner.de/',
 	Fights = [],
 	OwnUnits = [],
 	EnemyUnits = [],
+	UnlockedFeatures = [],
 	possibleMaps = ['main', 'gex', 'gg', 'era_outpost', 'gvg'],
-	PlayerLinkFormat = 'https://foe.scoredb.io/__world__/Player/__playerid__';
+	PlayerLinkFormat = 'https://foe.scoredb.io/__world__/Player/__playerid__',
+	GuildLinkFormat = 'https://foe.scoredb.io/__world__/Guild/__guildid__',
+	BuildingsLinkFormat = 'https://forgeofempires.fandom.com/wiki/__buildingid__';
 
 // Übersetzungen laden
 let i18n_loaded = false;
@@ -909,6 +912,10 @@ const FoEproxy = (function () {
 
 	// Kampf beendet
 	FoEproxy.addHandler('BattlefieldService', 'startByBattleType', (data, postData) => {
+		// Kampf beendet
+		if (data.responseData["error_code"] == 901) {
+			return;
+		}
 		if (data.responseData["armyId"] == 1 || data.responseData["state"]["round"] == 1 || data.responseData["battleType"]["totalWaves"] == 1) {
 			let units = data.responseData.state.unitsOrder;
 			for (let i = 0; i < units.length; i++) {
@@ -1158,7 +1165,7 @@ const FoEproxy = (function () {
 
 	}
 
-	// --------------------------------------------------------------------------------------------------
+
 	// Güter des Spielers ermitteln
 	FoEproxy.addHandler('ResourceService', 'getPlayerResources', (data, postData) => {
 		ResourceStock = data.responseData.resources; // Lagerbestand immer aktualisieren. Betrifft auch andere Module wie Technologies oder Negotiation
@@ -1254,7 +1261,8 @@ let HelperBeta = {
 		location.reload();
 	},
 	menu: [
-		'unitsGex'
+		'unitsGex',
+		'marketoffers',
 	],
 	active: JSON.parse(localStorage.getItem('HelperBetaActive'))
 };
@@ -1553,6 +1561,38 @@ let MainParser = {
 		}
 		else {
 			return PlayerName;
+		}
+	},
+	
+	/**
+	 * @param GuildID
+	 * @param GuildName
+	 */
+	GetGuildLink: (GuildID, GuildName) => {
+		if (Settings.GetSetting('ShowPlayerLinks'))
+		{
+			let GuildLink = HTML.i18nReplacer(GuildLinkFormat, { 'world': ExtWorld.toUpperCase(), 'guildid': GuildID });
+
+			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foehelper-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+		}
+		else {
+			return GuildName;
+		}
+	},
+
+	/**
+	 * @param BuildingID
+	 * @param BuildingName
+	 */
+	GetBuildingLink: (BuildingID, BuildingName) => {
+		if (Settings.GetSetting('ShowPlayerLinks'))
+		{
+			let BuildingLink = HTML.i18nReplacer(BuildingsLinkFormat, {'buildingid': BuildingID });
+
+			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foehelper-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+		}
+		else {
+			return BuildingName;
 		}
 	},
 

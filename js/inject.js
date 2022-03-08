@@ -241,7 +241,11 @@
 				'gexstat',
 				'dbexport',
 				'closebox',
-				'castle'
+				'castle',
+				'stpatrickstats',
+				'scoutingtimes',
+				'discord',
+				'bettermusic'
 			];
 
 			// load scripts (one after the other)
