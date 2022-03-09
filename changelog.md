@@ -5,6 +5,7 @@
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.8.0.0 migriert
 
 ##### 1.14.1.0
+**Bugfix**
 - Stadtübersicht
     - Übertragung der Stadt an FoE-Helfer funktioniert wieder
 - Closebox
