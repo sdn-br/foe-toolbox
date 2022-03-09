@@ -3,20 +3,20 @@
 	"description": "__MSG_appDesc__",
 	"default_locale": "de",
 	"version": "1.15.0.0",
-	"version_name": "1.15.0.0 (2.7.0.0)",
+	"version_name": "1.15.0.0 (2.8.0.0)",
 	"manifest_version": 2,
 	"permissions": [
 		"alarms",
-		"activeTab",
 		"storage",
 		"tabs",
 	  	"notifications",
 		"clipboardWrite",
-	  	"management",
 		"https://*.forgeofempires.com/*",
 		"https://foe-helper.com/*",
 		"https://*.foe-helper.com/*",
-		"https://*.foe-rechner.de/*"
+		"https://*.foe-rechner.de/*",
+		"https://cdn.jsdelivr.net/gh/mainIine/foe-helfer-extension@beta/*",
+		"https://api.github.com/repos/mainIine/foe-helfer-extension/branches/beta"
 	],
 
 	"browser_action": {
@@ -38,7 +38,11 @@
 		"js/web/*.*",
 		"images/*.*",
 		"css/images/*.*",
-		"content/*.html"
+		"content/*.html",
+		"js/vendor.json",
+		"js/internal.json",
+		"https://cdn.jsdelivr.net/gh/mainIine/foe-helfer-extension@beta/*",
+		"https://api.github.com/repos/mainIine/foe-helfer-extension/branches/beta"
 	],
 	
 	"content_scripts": [

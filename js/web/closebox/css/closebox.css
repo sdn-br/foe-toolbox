@@ -77,6 +77,7 @@
 
 
 #CloseBox:hover>.window-head>span.window-settings {
+    position: absolute;
     right: 0;
 }
 

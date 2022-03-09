@@ -176,7 +176,7 @@ let IndexDB = {
             players: 'id,date',
             neighborhoodAttacks: '++id,playerId,date,type',
             greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-			forgeStats: '++id,type,amount,date', // FP Collector
+            forgeStats: '++id,type,amount,date', // FP Collector
             statsGBGPlayers: 'date', // battleground
             statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
             statsRewards: 'date', // Collected rewards by Himeji, etc
@@ -251,11 +251,11 @@ let IndexDB = {
 		if (await Dexie.exists(foeHelperDBName)) {
             foeHelperDB = new Dexie(foeHelperDBName);
             foeHelperDB.version(1).stores({
-                players: 'id,date',
+				players: 'id,date',
 				pvpActions: '++id,playerId,date,type',
 				greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
 				forgeStats: '++id,type,amount,date', // FP Collector
-                statsGBGPlayers: 'date', // battleground
+				statsGBGPlayers: 'date', // battleground
 				statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
 				statsRewards: 'date', // Collected rewards by Himeji, etc
 				statsRewardTypes: 'id', // Human readable cache info about rewards
@@ -279,7 +279,7 @@ let IndexDB = {
 				neighborhoodAttacks: 'neighborhoodAttacks',
 				greatbuildings: 'greatbuildings',
 				forgeStats: 'forgeStats', // FP Collector
-                statsGBGPlayers: 'statsGBGPlayers',
+				statsGBGPlayers: 'statsGBGPlayers',
 				statsGBGPlayerCache: 'statsGBGPlayerCache',
 				statsRewards: 'statsRewards',
 				statsRewardTypes: 'statsRewardTypes', 
@@ -293,11 +293,11 @@ let IndexDB = {
         } else if (foeHelperDB) {
 			log(`Found DB "${foeHelperDBName}"`)
             await cloneTables(foeHelperDB, {
-                players: 'players',
+				players: 'players',
 				pvpActions: 'neighborhoodAttacks',
 				greatbuildings: 'greatbuildings',
 				forgeStats: 'forgeStats', // FP Collector
-                statsGBGPlayers: 'statsGBGPlayers',
+				statsGBGPlayers: 'statsGBGPlayers',
 				statsGBGPlayerCache: 'statsGBGPlayerCache',
 				statsRewards: 'statsRewards',
 				statsRewardTypes: 'statsRewardTypes', 

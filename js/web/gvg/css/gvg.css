@@ -262,12 +262,12 @@
 	height: 500px;
 }
 
-#GvGMapBody {
-	height: inherit;
+#GvGMapBody.window-body {
 	display: flex;
 	align-items: stretch;
 	overflow: hidden;
 	justify-content: space-between;
+	height: calc(100% - 19px);
 }
 
 #GvGMapContent {
@@ -311,17 +311,17 @@
 
 #markerRed::before, #markerRedX::before {
 	color: rgb(211, 5, 5);
-	content: '?';
+	content: '▼';
 }
 
 #markerYellow::before, #markerYellowX::before {
 	color: rgb(211, 163, 5);
-	content: '?';
+	content: '▼';
 }
 
 #markerBlue::before, #markerBlueX::before {
 	color: rgb(5, 129, 211);
-	content: '?';
+	content: '▼';
 }
 
 #markerRedX::before, #markerYellowX::before, #markerBlueX::before {

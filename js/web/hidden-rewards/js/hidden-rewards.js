@@ -31,9 +31,9 @@ let HiddenRewards = {
 
     Cache: null,
     ActiveCache : [],
-    ActiveCache2 : [],
+    ActiveCountNonGE : [],
     FutureCache : [],
-    FutureCache2 : [],
+    FutureCountNonGE : [],
     FirstCycle: true,
     
 	/**
@@ -73,7 +73,7 @@ let HiddenRewards = {
             if (!Rewards.hasOwnProperty(idx)) continue;
 
             let position = Rewards[idx].position.context;
-
+            let isGE = false;
             let SkipEvent = true;
 
             // prüfen ob der Spieler in seiner Stadt eine zweispurige Straße hat
@@ -84,9 +84,11 @@ let HiddenRewards = {
             else {
                 SkipEvent = false;
             }
-			if (position === 'cityUnderwater') {
-				SkipEvent = true;
-			}
+            if (position === 'cityUnderwater') {
+                SkipEvent = true;
+            }
+
+            if (position === 'guildExpedition') isGE = true;
 
             if (SkipEvent) {
                 continue;
@@ -104,6 +106,7 @@ let HiddenRewards = {
                 position: position,
                 starts: Rewards[idx].startTime,
                 expires: Rewards[idx].expireTime,
+                isGE: isGE,
             });
         }
 
@@ -122,21 +125,19 @@ let HiddenRewards = {
      */
     RefreshGui: (fromHandler = false) => {
         HiddenRewards.ActiveCache = [];
-        HiddenRewards.ActiveCache2 = [];
+        HiddenRewards.ActiveCountNonGE = 0;
         HiddenRewards.FutureCache = [];
-        HiddenRewards.FutureCache2 = [];
+        HiddenRewards.FutureCountNonGE = 0;
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
-            let StartTime = moment.unix(HiddenRewards.Cache[i].starts),
-                EndTime = moment.unix(HiddenRewards.Cache[i].expires);
+            let StartTime = moment.unix(HiddenRewards.Cache[i].starts|0),
+                EndTime = moment.unix(HiddenRewards.Cache[i].expires|0);
 
             if (StartTime < MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()) {
                 HiddenRewards.ActiveCache.push(HiddenRewards.Cache[i]);
-                if (HiddenRewards.Cache[i].position.context == "guildExpedition") continue;
-                HiddenRewards.ActiveCache2.push(HiddenRewards.Cache[i]);
+                if (HiddenRewards.Cache[i].isGE) HiddenRewards.ActiveCountNonGE++;
             } else if (StartTime > MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()){
                 HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
-                if (HiddenRewards.Cache[i].position.context == "guildExpedition") continue;
-                HiddenRewards.FutureCache2.push(HiddenRewards.Cache[i]);
+                if (HiddenRewards.Cache[i].isGE) HiddenRewards.FutureCountNonGE++;
             }
         }
 
@@ -221,14 +222,14 @@ let HiddenRewards = {
 
 	SetCounter: ()=> {
 		let count = HiddenRewards.FutureCache?.length|0;
-		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.FutureCache2?.length|0;
+		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.FutureCountNonGE;
 		if(count > 0){
 			$('#hidden-future-reward-count').text(count).show();
 		} else {
 			$('#hidden-future-reward-count').hide();
 		}
 		count = HiddenRewards.ActiveCache?.length|0;
-		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.ActiveCache2?.length|0;
+		if (Settings.GetSetting('ExcludeRelics')) count = HiddenRewards.ActiveCountNonGE;
 		if(count > 0){
 			$('#hidden-reward-count').text(count).show();
 		} else {

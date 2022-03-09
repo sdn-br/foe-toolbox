@@ -12,7 +12,8 @@
  */
 
 /**
- * @type {{Help: (function(): string), NotificationView: (function(): string), GetSetting: (function(*=, *=): *), MenuSelected: (function(): string), BoxGroups: [string, string, string, string], BuildBox: Settings.BuildBox, About: (function(): string), StoreSettings: (function(*=, *=): undefined), InfoboxInputEntryCount: (function(): *|jQuery), VersionInfo: (function(): string), Init: Settings.Init, ExportView: (function(): string), MenuInputLength: (function(): *|jQuery), NotificationStack: (function(): *|jQuery), ImportSettings: Settings.ImportSettings, LoadConfig: Settings.LoadConfig, BuildBody: Settings.BuildBody, ResetBoxCoords: Settings.ResetBoxCoords, LanguageDropdown: (function(): string), Preferences: null, MenuContent: (function(): *), ExportSettings: Settings.ExportSettings}}
+ *
+ * @type {{Help: (function(): string), NotificationView: (function(): string), GetSetting: ((function(*, *=): *)|*), MenuSelected: (function(): string), BoxGroups: string[], BuildBox: Settings.BuildBox, About: (function(): string), StoreSettings: Settings.StoreSettings, InfoboxInputEntryCount: (function(): *|jQuery), VersionInfo: (function(): string), Init: Settings.Init, ExportView: (function(): string), MenuInputLength: (function(): *|jQuery), NotificationStack: (function(): *|jQuery), ImportSettings: Settings.ImportSettings, LoadConfig: Settings.LoadConfig, BuildBody: Settings.BuildBody, ResetBoxCoords: Settings.ResetBoxCoords, DrivePermissions: (function(): string), LanguageDropdown: (function(): string), Preferences: null, MenuContent: (function(): *), ExportSettings: Settings.ExportSettings}}
  */
 let Settings = {
 

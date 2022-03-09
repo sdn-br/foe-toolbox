@@ -675,7 +675,7 @@ const FoEproxy = (function () {
 
 		if (idx !== -1) {
 			MainParser.InnoCDN = requestData.url.substring(0, idx + 1);
-			MainParser.sendExtMessage({ type: 'setInnoCDN', url: MainParser.InnoCDN });
+			MainParser.sendExtMessage({type: 'setInnoCDN', url: MainParser.InnoCDN});
 			let portraits = {};
 
 			$(xhr.responseText).find('portrait').each(function () {
@@ -704,7 +704,7 @@ const FoEproxy = (function () {
 		UnitGex.checkForDB(ExtPlayerID);
 		GuildMemberStat.checkForDB(ExtPlayerID);
 		GexStat.checkForDB(ExtPlayerID);
-		GildFights.checkForDB(ExtPlayerID);
+		GuildFights.checkForDB(ExtPlayerID);
 
 		// which tab is active in StartUp Object?
 		let vals = {
@@ -1263,6 +1263,7 @@ let HelperBeta = {
 	menu: [
 		'unitsGex',
 		'marketoffers',
+		'discord',
 	],
 	active: JSON.parse(localStorage.getItem('HelperBetaActive'))
 };

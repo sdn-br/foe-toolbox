@@ -2,7 +2,7 @@
 
 ##### 1.15.0.0
 **FoE-Helfer**
-- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.7.0.0 migriert
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.8.0.0 migriert
 
 ##### 1.14.1.0
 - Stadtübersicht

@@ -39,9 +39,7 @@ FoEproxy.addHandler('ClanBattleService', 'deployDefendingArmy', (data, postData)
 
 FoEproxy.addHandler('ClanBattleService', 'getContinent', (data, postData) => {
 	GvG.IsContinent = true;
-	if (GvG.Actions === undefined) {
-		GvG.initActions();
-	}
+	GvG.initActions();
 	GvG.setRecalc(data.responseData.continent.calculation_time.start_time, true);
 	GvG.HideFightOverlay();
 });
@@ -61,7 +59,7 @@ FoEproxy.addHandler('AnnouncementsService', 'fetchAllAnnouncements', (data, post
 });
 
 FoEproxy.addWsHandler('UpdateService', 'finishDailyCalculation', (data, postData) => {	
-	if (data['responseData'] === true) {
+	if (data['responseData'] === true && GvG.Init === true) {
 		GvG.resetData();
 	}
 });
@@ -107,7 +105,7 @@ let GvG = {
     /**
 	 * Build HUD
 	 */
-	ShowGvgHud: () => {
+	showGvgHud: () => {
 		if ($('#gvg-hud').length === 0) {
 			HTML.AddCssFile('gvg');
 			let div = $('<div />');
@@ -245,7 +243,7 @@ let GvG = {
 		}
 
 		GvG.Actions.LastAction = time;
-		GvG.ShowGvgHud();
+		GvG.showGvgHud();
 		
 		localStorage.setItem('GvGActions', JSON.stringify(GvG.Actions));
 	},
@@ -265,7 +263,7 @@ let GvG = {
 		}
 
 		localStorage.setItem('GvGActions', JSON.stringify(GvG.Actions));
-		GvG.ShowGvgHud();
+		GvG.showGvgHud();
 	},
 
     /**
@@ -1089,7 +1087,7 @@ let GvGLog = {
 			t.push('<td><b class="text-bright">'+sectorCoords+'</b><br>'+moment.unix(entry.timestamp).format('HH:mm:ss')+'</td>');
 			t.push('<td>');
 				if (entry.sourceClan != entry.targetClan && entry.targetClan != undefined && entry.sourceClan != undefined)
-					t.push(GvGMap.showGuildFlagAndName(entry.sourceClan) +' ? '+ GvGMap.showGuildFlagAndName(entry.targetClan));
+					t.push(GvGMap.showGuildFlagAndName(entry.sourceClan) +' → '+ GvGMap.showGuildFlagAndName(entry.targetClan));
 				else if (entry.sourceClan != undefined)
 					t.push(GvGMap.showGuildFlagAndName(entry.sourceClan));
 				t.push('<br>'+i18n('Boxes.GvGMap.Log.'+entry.type));
@@ -1150,7 +1148,7 @@ let MapSector = {
 				"x": info.position.x,
 				"y": info.position.y
 			},
-			power: parseInt(GvGMap.PowerValues[info.power]) || 0,
+			power: parseInt(GvGMap.PowerValues[info.power]) || GvGMap.PowerValues[0],
 			powerMultiplicator: parseInt(info.power)+1 || 1,
 			isProtected: info.is_protected,
 			terrain: info.terrain,
