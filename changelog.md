@@ -1,5 +1,17 @@
 ## Changelog - Extension
 
+##### 1.15.1.0
+**Update**
+- St.Patricks Box
+    - Alle aktuellen Aufgaben werden angezeigt
+    - Alle zukünftigen Aufgaben werden angezeigt
+
+**Bugfix**
+- Kostenrechner
+    - Fördern mit Eingabefeld war zu schmal
+- Eigenanteilsrechner
+    - Ext und Arche Eingabefelder waren zu schmal
+
 ##### 1.15.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.8.0.0 migriert

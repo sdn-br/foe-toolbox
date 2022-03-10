@@ -244,17 +244,15 @@ let stPatrick = {
 		htmltext += `<td id="stPatmarket_1Time" class="align-left"></td></tr>`;
         htmltext += `</table>`;
         htmltext += `<table id="stPatTasksActive" class="foe-table" style="width:100%"><tr><th colspan="2" onclick="stPatrick.hide('#stPatTasksActive')">${i18n('Boxes.stPatrick.ActiveTasks')}<i></i></th></tr>`;
-		htmltext += `<tr><td id="stPatTask0"></td><td id="time0"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask1"></td><td id="time1"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask2"></td><td id="time2"></td></tr>`;
+		for (let i = 0; i < 3; i++) {
+			htmltext += `<tr><td id="stPatTask${i}"></td><td id="time${i}"></td></tr>`;
+		}
         htmltext += `</table>`;
 		htmltext += `<table id="stPatTasks" class="foe-table" style="width:100%"><tr><th onclick="stPatrick.hide('#stPatTasks')">${i18n('Boxes.stPatrick.UpcomingTasks')}<i></i></th></tr>`;
-		htmltext += `<tr><td id="stPatTask3"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask4"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask5"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask6"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask7"></td></tr>`;
-        htmltext += `<tr><td id="stPatTask8"></td></tr>`;
+		for (let i = 3; i < 38; i++) {
+			htmltext += `<tr><td id="stPatTask${i}"></td></tr>`;
+		}
+
         htmltext += `</table>`;
 		htmltext += `<span id="stPatTown" style="color:var(--text-bright); font-weight:bold"></span>`;
         
@@ -397,7 +395,7 @@ let stPatrick = {
 		$('#stPatFest').text(`${stPatrick.bigNum(fest)} ${stPatrick.stPatNums[festd]}`);
 		$('#stPatFest').attr('title', `${stPatrick.bigNum(fest)} ${stPatrick.stPatNumTitles[festd]}`);
 
-		let i = Math.min(stPatrick.Tasklist.length, 9);
+		let i = Math.min(stPatrick.Tasklist.length, 38);
 
 		for (let t = 0;t<3;t++) {
 			$('#stPatTask'+ t).text(``);
@@ -407,38 +405,44 @@ let stPatrick = {
 			if (t >= i) continue;
 
 			let Task = stPatrick.Tasks[stPatrick.Tasklist[t]];
-			if (Task.type !== "collect_idle_currency") continue;
-
 			$('#stPatTask'+ t).text(`${Task.description}`);
 			$('#stPatTask'+ t).removeClass('hide');
-			let target=Task.targets[0]
-			let targetProduction=stPatrick.stPat[target].production;
-			let targetDegree=stPatrick.stPat[target].degree;
-			if (target==='market_1') {
-				targetProduction = sum;
-				targetDegree = degree;
+				
+			let timeText = '';
+			if (Task.type !== "collect_idle_currency") {
+				timeText = `${stPatrick.Taskprogress[stPatrick.Tasklist[t]]?.value}/${Task.requiredProgress.value}`;
 			}
-			if (target==='transport_1' && targetProduction * Math.pow(1000,targetDegree-workd) > work) {
-				targetProduction = work;
-				targetDegree = workd;
-			}
-			if (Task.targets.length===5) {
-				targetProduction = work;
-				targetDegree = workd;
+			else {
+				let target=Task.targets[0]
+				let targetProduction=stPatrick.stPat[target].production;
+				let targetDegree=stPatrick.stPat[target].degree;
+				if (target==='market_1') {
+					targetProduction = sum;
+					targetDegree = degree;
+				}
+				if (target==='transport_1' && targetProduction * Math.pow(1000,targetDegree-workd) > work) {
+					targetProduction = work;
+					targetDegree = workd;
+				}
+				if (Task.targets.length===5) {
+					targetProduction = work;
+					targetDegree = workd;
+				}
+				timeText = `${stPatrick.time(Task.requiredProgress.value,
+											Task.requiredProgress.degree,
+											targetProduction,
+											targetDegree,
+											stPatrick.Taskprogress[stPatrick.Tasklist[t]]?.value || 0,
+											stPatrick.Taskprogress[stPatrick.Tasklist[t]]?.degree || 0)}`
 			}
 			
-			$('#time'+ t).text(`${stPatrick.time(Task.requiredProgress.value,
-												Task.requiredProgress.degree,
-												targetProduction,
-												targetDegree,
-												stPatrick.Taskprogress[stPatrick.Tasklist[t]]?.value || 0,
-												stPatrick.Taskprogress[stPatrick.Tasklist[t]]?.degree || 0)}`);
+			$('#time'+ t).text(`${timeText}`);
 			$('#time'+ t).removeClass('hide');
 			
 			
 			
 		}
-		for (let t = 3;t<9;t++) {
+		for (let t = 3;t < 38;t++) {
 			if (t < i) {
 				let Task = stPatrick.Tasks[stPatrick.Tasklist[t]];
 				$('#stPatTask'+ t).text(`${Task.description}`);
