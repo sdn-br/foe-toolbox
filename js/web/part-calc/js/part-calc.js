@@ -106,7 +106,7 @@ let Parts = {
 		if ($('#OwnPartBox').length === 0)
 		{
 			let spk = localStorage.getItem('PartsTone');
-
+			
 			if (spk === null)
 			{
 				localStorage.setItem('PartsTone', 'deactivated');
@@ -369,6 +369,9 @@ let Parts = {
 
 		// Restore Default settings
 		if (Parts.FirstCycle) {
+			let SavedOneFPForNonFPPlace = localStorage.getItem(Parts.GetStorageKey('OneFPForNonFPPlace', null));
+			if (SavedOneFPForNonFPPlace !== null) Parts.OneFPForNonFPPlace = (SavedOneFPForNonFPPlace === 'true');
+		
 			let SavedArcPercents = localStorage.getItem(Parts.GetStorageKey('ArcPercents', null));
 			if (SavedArcPercents !== null) Parts.ArcPercents = JSON.parse(SavedArcPercents);
 

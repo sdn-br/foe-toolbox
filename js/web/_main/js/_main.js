@@ -845,17 +845,6 @@ const FoEproxy = (function () {
 	FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 		LastMapPlayerID = data.responseData['other_player']['player_id'];
 		MainParser.OtherPlayerCityMapData = Object.assign({}, ...data.responseData['city_map']['entities'].map((x) => ({ [x.id]: x })));
-		
-		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
-			Sabotage.OtherPlayersBuildings(data.responseData);
-			$('#sabotage-Btn').removeClass('hud-btn-red');
-			$('#sabotage-Btn-closed').remove();
-		}
-		else {
-			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
-			$('#sabotageInfo').remove();
-		}		
-
 	});
 
 

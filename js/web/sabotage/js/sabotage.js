@@ -29,6 +29,20 @@ FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
 	Sabotage.RemovePlunderedEntity(data.responseData[0]);
 });
 
+FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', async (data, postData) => {
+	MainParser.UpdatePlayerDict(data.responseData, 'VisitPlayer').then(() => {
+		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
+			Sabotage.OtherPlayersBuildings(data.responseData);
+			$('#sabotage-Btn').removeClass('hud-btn-red');
+			$('#sabotage-Btn-closed').remove();
+		}
+		else {
+			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
+			$('#sabotageInfo').remove();
+		}
+	});
+});
+
 /**
  *
  * @type {{data: {}, CityEntities: [], ShowFunction: Sabotage.ShowFunction, OtherPlayersBuildings: Sabotage.OtherPlayersBuildings, player_name: string, showResult: Sabotage.showResult}}

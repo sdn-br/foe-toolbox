@@ -35,6 +35,7 @@ let HiddenRewards = {
     FutureCache : [],
     FutureCountNonGE : [],
     FirstCycle: true,
+    ExcludeRelics: false,
     
 	/**
 	 * Box in den DOM
@@ -45,12 +46,13 @@ let HiddenRewards = {
             HTML.AddCssFile('hidden-rewards');
 
             HTML.Box({
-                'id': 'HiddenRewardBox',
-                'title': i18n('Boxes.HiddenRewards.Title'),
-                'ask': i18n('Boxes.HiddenRewards.HelpLink'),
-                'auto_close': true,
-                'dragdrop': true,
-                'minimize': true
+                id: 'HiddenRewardBox',
+                title: i18n('Boxes.HiddenRewards.Title'),
+                ask: i18n('Boxes.HiddenRewards.HelpLink'),
+                auto_close: true,
+                dragdrop: true,
+                minimize: true,
+                //settings: 'HiddenRewards.ShowSettings()'
             });
 
             moment.locale(i18n('Local'));
@@ -131,14 +133,14 @@ let HiddenRewards = {
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
             let StartTime = moment.unix(HiddenRewards.Cache[i].starts|0),
                 EndTime = moment.unix(HiddenRewards.Cache[i].expires|0);
-
             if (StartTime < MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()) {
                 HiddenRewards.ActiveCache.push(HiddenRewards.Cache[i]);
-                if (HiddenRewards.Cache[i].isGE) HiddenRewards.ActiveCountNonGE++;
+                if (!HiddenRewards.Cache[i].isGE) HiddenRewards.ActiveCountNonGE++;
             } else if (StartTime > MainParser.getCurrentDateTime() && EndTime > MainParser.getCurrentDateTime()){
                 HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
-                if (HiddenRewards.Cache[i].isGE) HiddenRewards.FutureCountNonGE++;
+                if (!HiddenRewards.Cache[i].isGE) HiddenRewards.FutureCountNonGE++;
             }
+            
         }
 
         HiddenRewards.SetCounter();
@@ -185,10 +187,10 @@ let HiddenRewards = {
 
             let hiddenReward = HiddenRewards.Cache[idx];
 
-            let StartTime = moment.unix(hiddenReward.starts),
-                EndTime = moment.unix(hiddenReward.expires);
+            let StartTime = moment.unix(hiddenReward.starts|0),
+                EndTime = moment.unix(hiddenReward.expires|0);
 
-            if (StartTime.isValid() && EndTime > MainParser.getCurrentDateTime()) {
+            if (EndTime > MainParser.getCurrentDateTime() && (!hiddenReward.isGE || !Settings.GetSetting('ExcludeRelics'))) {
                 h.push('<tr>');
                 let img =  hiddenReward.type;
                 if (hiddenReward.type.indexOf('outpost') > -1) {
@@ -235,5 +237,10 @@ let HiddenRewards = {
 		} else {
 			$('#hidden-reward-count').hide();
 		}
-	}
+	},
+
+    ShowSettings: () => {
+        let c = [];
+        c.push('<input id="excluderelicssetting" class="excluderelicssetting game-cursor" ' + (Parts.OneFPForNonFPPlace ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.OneFPForNonFPPlace'));
+    }
 };

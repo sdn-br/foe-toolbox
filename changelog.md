@@ -1,5 +1,15 @@
 ## Changelog - Extension
 
+##### 1.15.2.0
+**Update**
+- UI Änderungen aus dem Helfer übernommen
+
+**Bugfix**
+- Versteckte Ereignisse
+    - Gildenexpedtionsereignisse wurden trotz abweichender Einstellung angezeigt
+- Plünderhilfe
+    - Angriffs-/Versteidigungswerte wurde beim ersten Besuch einer Stadt nicht immer angezeigt
+
 ##### 1.15.1.0
 **Update**
 - St.Patricks Box

@@ -1200,18 +1200,18 @@ let GuildFights = {
 
 		$('#LiveGildFighting').find('#LiveGildFightingBody').html(h.join('')).promise().done(function () {
 			$('.gbg-tabs').tabslet({ active: 1 });
-			$('.gbg-tabs').on('_after', (e) => {
+			$('.gbg-tabs').off('_after').on('_after', (e) => {
 				GuildFights.ToggleCopyButton();
 			});
-			$('#LiveGildFighting').on('click', '.deletealertbutton', function (e) {
+			$('#LiveGildFighting').off('click', '.deletealertbutton').on('click', '.deletealertbutton', function (e) {
 				GuildFights.DeleteAlert($(this).data('id'));
 				e.stopPropagation();
 			});
-			$('#LiveGildFighting').on('click', '.setalertbutton', function (e) {
+			$('#LiveGildFighting').off('click', '.setalertbutton').on('click', '.setalertbutton', function (e) {
 				GuildFights.SetAlert($(this).data('id'));
 				e.stopPropagation();
 			});
-			$('#LiveGildFighting').on('click', 'tr', function () {
+			$('#LiveGildFighting').off('click', 'tr').on('click', 'tr', function (e) {
 				if ($(this).hasClass('highlight-row'))
 				{
 					$(this).removeClass('highlight-row');
@@ -1221,6 +1221,7 @@ let GuildFights = {
 					$(this).addClass('highlight-row');
 					GuildFights.ToggleCopyButton();
 				}
+				e.stopPropagation();
 			});
 		});
 	},

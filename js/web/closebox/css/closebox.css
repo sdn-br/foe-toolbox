@@ -18,7 +18,7 @@
     left: inherit;
     bottom: 230px;
     right: 70px;
-    border-width: 27px 5px 4px 5px;
+    border-width: 4px 5px 4px 5px;
     border-image-source: none;
     border-radius: 10px;
     background: none;
@@ -67,7 +67,7 @@
 
 #CloseBox:hover {
     overflow: visible;
-    border-width: 27px 5px 4px 5px;
+    border-width: 4px 5px 4px 5px;
     border-image-source: url(../../../../css/images/hud/window-small.png);
 }
 

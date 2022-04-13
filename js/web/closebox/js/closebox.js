@@ -89,7 +89,8 @@ let CloseBox = {
                 title: i18n('Boxes.CloseBox.Title'),
                 auto_close: false,
                 dragdrop: true,
-                fixdragdrop:false,
+                fixdragdrop: false,
+                onlyTitle: true,
                 resize: false,
                 minimize: false,
                 settings: 'CloseBox.CloseBoxSettings()'

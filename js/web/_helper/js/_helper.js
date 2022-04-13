@@ -157,47 +157,49 @@ let HTML = {
 	 */
 	Box: (args) => {
 
-		let title = $('<span />').addClass('title').html(args['title']);
+		let title = $('<div />').addClass('title').html(args['title']);
 
 		if (args['onlyTitle'] !== true) {
-			title = $('<span />').addClass('title').html(args['title'] + ' <small><em> - ' + i18n('Global.BoxTitle') + '</em></small>');
+			title = $('<div />').addClass('title').html(args['title'] + ' <small><em> - ' + i18n('Global.BoxTitle') + '</em></small>');
 		}
-
-		let close = $('<span />').attr('id', args['id'] + 'close').addClass('window-close'),
-
-			head = $('<div />').attr('id', args['id'] + 'Header').attr('class', 'window-head').append(title),
+		
+		let head = $('<div />').attr('id', args['id'] + 'Header').attr('class', 'window-head').append(title),
 			body = $('<div />').attr('id', args['id'] + 'Body').attr('class', 'window-body'),
 			div = $('<div />').attr('id', args['id']).attr('class', 'window-box open').append(head).append(body).hide(),
-			cords = localStorage.getItem(args['id'] + 'Cords');
-
+			cords = localStorage.getItem(args['id'] + 'Cords'),
+			clear = false;
 
 		if (args['auto_close'] !== false) {
+			let close = $('<div />').attr('id', args['id'] + 'close').addClass('window-close');
 			head.append(close);
+			clear = true;
 		}
 
 		// Minimierenbutton
 		if (args['minimize']) {
-			let min = $('<span />').addClass('window-minimize');
-			min.insertAfter(title);
+			let min = $('<div />').addClass('window-minimize');
+			head.append(min);
+			clear = true;
 		}
 
 		if(args['dragdrop'] && (args['fixdragdrop'] === undefined || args['fixdragdrop'] !== false)) {
-			let set = $('<span />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
-			set.insertAfter(title);
+			let drag = $('<div />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
+			head.append(drag);
+			clear = true;
 			let draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
 			if (draggable == null) { draggable = true; }
 			if (!draggable) {
-				set.addClass('deactivated');
+				drag.addClass('deactivated');
 			}
-			set.bind('click', function(){
+			drag.bind('click', function(){
 				draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
 				if (draggable == null) { draggable = true; }
 				if(draggable === true)
 				{
-					set.addClass('deactivated');
+					drag.addClass('deactivated');
 				}
 				else {
-					set.removeClass('deactivated');
+					drag.removeClass('deactivated');
 				}
 				HTML.DragBox($(`#${args['id']}`).get(0), true, true);
 			});
@@ -206,8 +208,9 @@ let HTML = {
 		// insert a wrench icon
 		// set a click event on it
 		if (args['settings']) {
-			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-settings`);
-			set.insertAfter(title);
+			let set = $('<div />').addClass('window-settings').attr('id', `${args['id']}-settings`);
+			head.append(set);
+			clear = true;
 
 			if (typeof args['settings'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}Settings`] = args['settings'];
@@ -215,8 +218,9 @@ let HTML = {
 		}
 
 		if (args['popout']) {
-			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-popout`);
-			set.insertAfter(title);
+			let popout = $('<div />').addClass('window-settings').attr('id', `${args['id']}-popout`);
+			head.append(popout);
+			clear = true;
 
 			if (typeof args['popout'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}PopOut`] = args['popout'];
@@ -224,8 +228,9 @@ let HTML = {
 		}
 
 		if (args['map']) {
-			let set = $('<span />').addClass('window-map').attr('id', `${args['id']}-map`);
-			set.insertAfter(title);
+			let map = $('<div />').addClass('window-map').attr('id', `${args['id']}-map`);
+			head.append(map);
+			clear = true;
 
 			if (typeof args['map'] !== 'boolean') {
 				HTML.customFunctions[`${args['id']}Map`] = args['map'];
@@ -234,8 +239,9 @@ let HTML = {
 
 		// Lautsprecher für Töne
 		if (args['speaker']) {
-			let spk = $('<span />').addClass('window-speaker').attr('id', args['speaker']);
-			spk.insertAfter(title);
+			let spk = $('<div />').addClass('window-speaker').attr('id', args['speaker']);
+			head.append(spk);
+			clear = true;
 
 			$('#' + args['speaker']).addClass(localStorage.getItem(args['speaker']));
 		}
@@ -250,8 +256,10 @@ let HTML = {
 
 		// Ein Link zu einer Seite
 		if (args['ask']) {
-			div.find(title).after($('<span />').addClass('window-ask').attr('data-url', args['ask']));
+			head.append($('<div />').addClass('window-ask').attr('data-url', args['ask']));
 		}
+
+		head.append($('<div />').addClass('window-clear-both'));
 
 		// wenn Box im DOM, verfeinern
 		$('body').append(div).promise().done(function () {
@@ -562,12 +570,9 @@ let HTML = {
 			}
 		};
 
-		// keep aspect Ratio
+		// keep aspect ratio
 		if (keepRatio) {
-			let width = box.width(),
-				height = box.height();
-
-			options['aspectRatio'] = width / height;
+			options['aspectRatio'] = box.width() + ' / ' + box.height();
 
 			box.resizable(options);
 		}
@@ -943,9 +948,9 @@ let HTML = {
 				return;
 			}
 
-			let BOM = "\uFEFF";
-			let Blob1 = new Blob([BOM + FileContent], { type: "application/octet-binary;charset=ANSI" });
-			MainParser.ExportFile(Blob1, FileName + '.' + Format);
+			// with UTF-8 BOM
+			let BlobData = new Blob(["\uFEFF" + FileContent], { type: "application/octet-binary;charset=ANSI" });
+			MainParser.ExportFile(BlobData, FileName + '.' + Format);
 		});
 	},
 
