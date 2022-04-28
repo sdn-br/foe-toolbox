@@ -1,5 +1,15 @@
 ## Changelog - Extension
 
+##### 1.15.3.0
+**Update**
+- Verhandlungsassistent
+    - Neues Zeitalter Jupitermond wird jetzt korrekt unterstützt
+
+**Bugfix**
+- Allgemein
+    - Gildennamen wurden bei den Spielernamen nicht mehr angezeigt
+
+
 ##### 1.15.2.0
 **Update**
 - UI Änderungen aus dem Helfer übernommen

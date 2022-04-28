@@ -969,6 +969,13 @@ const FoEproxy = (function () {
 	FoEproxy.addHandler('OtherPlayerService', 'all', (data, postData) => {
 		if (data.requestMethod === 'getNeighborList' || data.requestMethod === 'getFriendsList' || data.requestMethod === 'getClanMemberList') {
 			MainParser.UpdatePlayerDict(data.responseData, 'PlayerList', data.requestMethod);
+		} else if (data.requestMethod === 'getSocialList') {
+			if (data.responseData.friends) 
+				MainParser.UpdatePlayerDict(data.responseData.friends, 'PlayerList', 'getFriendsList');
+			if (data.responseData.guildMembers) 
+				MainParser.UpdatePlayerDict(data.responseData.guildMembers, 'PlayerList', 'getClanMemberList');
+			if (data.responseData.neighbours) 
+				MainParser.UpdatePlayerDict(data.responseData.neighbours, 'PlayerList', 'getNeighborList');
 		} else if (data.requestMethod === 'getOtherPlayerVO') {
 			MainParser.UpdatePlayerDict(data.responseData, 'PlayerVO');
 		} else if (data.requestMethod === 'getEventsPaginated') {
