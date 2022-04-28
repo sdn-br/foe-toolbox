@@ -16,7 +16,7 @@ Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mi
 3. In der Erweiterungsübersicht andere FoE Helfer deaktivieren oder entfernen
 4. Entwicklermodus anschalten (Schalter in der oberen rechten Ecke)
 5. Den Knopf "Entpackte Erweitung laden" klicken
-6. Verzeichnis in das die Erweiterung entpackt wurde auswählen
+6. Verzeichnis, in das die Erweiterung entpackt wurde, auswählen
 7. Spiel neu laden
 
 fertig!
