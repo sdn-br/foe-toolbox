@@ -1,6 +1,7 @@
 ## Changelog - Extension
 
 ##### 1.15.4.0
+**Bugfix**
 - Kostenrechner
     - Klick auf das Menü schließt jetzt auch die Fenster wie bei anderen Menüpunkten
 - Statistiken
