@@ -1026,10 +1026,7 @@ const FoEproxy = (function () {
 		$('#calculator-Btn').removeClass('hud-btn-red');
 		$('#calculator-Btn-closed').remove();
 
-		// wenn schon offen, den Inhalt updaten
-		if ($('#LGInvestmentOverviewBox').is(':visible')) {
-			Calculator.ShowPossibleInvestments(false);
-		}
+		Calculator.Open();
 	});
 
 	// es wird ein LG eines Spielers geöffnet
@@ -1153,10 +1150,7 @@ const FoEproxy = (function () {
 			Calculator.CityMapEntity = CityMapEntity['responseData'][0];
 			Calculator.DetailViewIsNewer = true;
 
-			// wenn schon offen, den Inhalt updaten
-			if ($('#costCalculator').is(':visible') || ($('#LGInvestmentOverviewBox').is(':visible'))) {
-				Calculator.Show(Rankings, CityMapEntity.responseData[0]);
-			}
+			Calculator.Open(false);
 		}
 
 	}

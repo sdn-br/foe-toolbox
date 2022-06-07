@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.15.4.0
+- Kostenrechner
+    - Klick auf das Menü schließt jetzt auch die Fenster wie bei anderen Menüpunkten
+- Statistiken
+    - Jupitermond wird jetzt richtig angezeigt
+- Allgemein
+    - Menüpunkt für Gildenstatistik wurde immer als inaktiv angezeigt
+
 ##### 1.15.3.0
 **Update**
 - Verhandlungsassistent

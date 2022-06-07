@@ -41,16 +41,25 @@ let Calculator = {
 	 * Show calculator
 	*
 	*/
-	Open: () => {
+	Open: (autoClose = false) => {
 		
 		// Nur Übersicht verfügbar
 		if (Calculator.Overview !== undefined && Calculator.CityMapEntity === undefined) {
-			Calculator.ShowPossibleInvestments(false);
+			if ($('#LGInvestmentOverviewBox').is(':visible') && autoClose) {
+				HTML.CloseOpenBox('LGInvestmentOverviewBox');
+			} else {
+				Calculator.ShowPossibleInvestments(false);
+			}
+			
 		}
 
 		// Nur Detailansicht verfügbar
 		else if (Calculator.CityMapEntity !== undefined && Calculator.Overview === undefined) {
-			Calculator.Show();
+			if ($('#costCalculator').is(':visible') && autoClose) {
+				HTML.CloseOpenBox('costCalculator');
+			} else {
+				Calculator.Show();
+			}
 		}
 
 		// Beide verfügbar
@@ -61,17 +70,39 @@ let Calculator = {
 
 			// Beide gehören zum selben Spieler => beide anzeigen
 			if (BuildingInfo !== undefined) {
-				Calculator.Show();
-				Calculator.ShowPossibleInvestments();
+				if ($('#costCalculator').is(':visible') && $('#LGInvestmentOverviewBox').is(':visible') && autoClose) {
+					HTML.CloseOpenBox('costCalculator');
+					HTML.CloseOpenBox('LGInvestmentOverviewBox');
+				} else {
+					Calculator.Show();
+					Calculator.ShowPossibleInvestments();
+				}
 			}
 
 			// Unterschiedliche Spieler => Öffne die neuere Ansicht
 			else {
-				if (Calculator.DetailViewIsNewer) {
-					Calculator.Show();
-				}
-				else {
-					Calculator.ShowPossibleInvestments();
+				if ($('#costCalculator').is(':visible') && $('#LGInvestmentOverviewBox').is(':visible') && autoClose) {
+					HTML.CloseOpenBox('costCalculator');
+					HTML.CloseOpenBox('LGInvestmentOverviewBox');
+				} else {
+					if (Calculator.DetailViewIsNewer) {
+						if ($('#costCalculator').is(':visible') && autoClose) {
+							HTML.CloseOpenBox('costCalculator');
+							HTML.CloseOpenBox('LGInvestmentOverviewBox');
+						} else {
+							Calculator.Show();
+							HTML.CloseOpenBox('LGInvestmentOverviewBox');
+						}
+					}
+					else {
+						if ($('#LGInvestmentOverviewBox').is(':visible') && autoClose) {
+							HTML.CloseOpenBox('costCalculator');
+							HTML.CloseOpenBox('LGInvestmentOverviewBox');
+						} else {
+							Calculator.ShowPossibleInvestments();
+							HTML.CloseOpenBox('costCalculator');
+						}
+					}
 				}
 			}
 		}

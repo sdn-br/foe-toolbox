@@ -315,7 +315,7 @@ let _menu = {
 		);
 
 		let btn_Calc = $('<span />').bind('click', function () {
-			Calculator.Open();
+			Calculator.Open(true);
 		});
 
 		btn_CalcBG.append(btn_Calc);
@@ -838,12 +838,12 @@ let _menu = {
 		let btn = _menu.MakeButton(
 			'guildMemberstat',
 			i18n('Menu.GuildMemberStat.Title'),
-			'<em id="guildmemberstat-Btn-closed" class="tooltip-error">' + i18n('Menu.GuildMemberStat.Warning') + '<br></em>' + i18n('Menu.GuildMemberStat.Desc'),
+			'<em id="guildMemberstat-Btn-closed" class="tooltip-error">' + i18n('Menu.GuildMemberStat.Warning') + '<br></em>' + i18n('Menu.GuildMemberStat.Desc'),
 			true
 		);
 
 		let btn_sp = $('<span />').bind('click', function () {
-			if ($('#guildmemberstat-Btn').hasClass('hud-btn-red') === false) {
+			if ($('#guildMemberstat-Btn').hasClass('hud-btn-red') === false) {
 				GuildMemberStat.BuildBox(false);
 			}
 		});
