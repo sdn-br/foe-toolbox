@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -442,7 +442,7 @@ let Alerts = function(){
 			// [pref] option to create a new alert when plunder (to return in 24 hours) ?
 			aux: {
 				key: {
-					generate: (key) => { return 'foe-helper-alerts-' + key; }
+					generate: (key) => { return 'foe-toolbox-alerts-' + key; }
 				}
 			},
 

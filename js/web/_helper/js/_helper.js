@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -158,7 +158,7 @@ let HTML = {
 	Box: (args) => {
 
 		let title = $('<div />').addClass('title').html(args['title']);
-
+	
 		if (args['onlyTitle'] !== true) {
 			title = $('<div />').addClass('title').html(args['title'] + ' <small><em> - ' + i18n('Global.BoxTitle') + '</em></small>');
 		}
@@ -497,10 +497,19 @@ let HTML = {
 
 			// Schutz gegen "zu Hoch geschoben"
 			if (top < 0) {
-				top = 12;
-
-				document.onpointerup = null;
-				document.onpointermove = null;
+				top = 0;
+			}
+			// Schutz gegen "zu weit links geschoben"
+			if (left < Math.min(0,  120 - el.offsetWidth)) {
+				left = Math.min(0,  120 - el.offsetWidth);
+			}
+			// Schutz gegen "zu weit rechts geschoben"
+			if (left > Math.max(window.innerWidth - 80, window.innerWidth-el.offsetWidth) && noOverflow) {
+				left = Math.max(window.innerWidth - 80, window.innerWidth-el.offsetWidth);
+			}
+			// Schutz gegen "zu weit runter geschoben"
+			if (top > Math.max(window.innerHeight - 80, window.innerHeight-el.offsetHeight-20) && noOverflow) {
+				top = Math.max(window.innerHeight - 80, window.innerHeight-el.offsetHeight-20);
 			}
 
 			el.style.top = top + "px";
@@ -561,8 +570,8 @@ let HTML = {
 				sw: '.window-grippy',
 				nw: '.window-grippy'
 			},
-			minHeight: $(box).css("min-width") || 200,
-			minWidth: $(box).css("min-height") || 250,
+			minHeight: $(box).css("min-width") || 100,
+			minWidth: $(box).css("min-height") || 220,
 			stop: (e, $el) => {
 				let size = $el.element.width() + '|' + $el.element.height();
 

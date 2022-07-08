@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -10,98 +10,4 @@
  *
  * **************************************************************************************
  */
-
-#menu_box {
-    top: 30%;
-    right: 15%;
-    width: 120px;
-    height: 60px;	
-}
-
-#menu_boxHeader {
-	background: linear-gradient(#33435e, #243048);
-    box-shadow: inset 0 1px 1px #242235, inset 0 2px 0 #737793;
-}
-
-#menu_box.closed #menu_boxHeader {
-	top: -33px;
-}
-
-#menu_box .window-head span.title {
-	font-size: 95%;
-	color: #eee;
-	padding-top: 1px;
-}
-
-#menu_box .header {
-    margin-bottom: 2px;
-    padding: 1em 0;
-}
-
-#menu_box #menu_boxBody {
-	overflow: auto;
-	padding: 2px;
-	height: calc(100% - 42px);
-}
-
-.hud-btn {	
-	display: inline-block;
-	width: 45px;
-	height: 45px;
-	position: relative;
-	margin: 1px;
-	border-radius: 4px;
-	box-shadow: inset 0 0 3px 1px #00000087, 0 0 2px #00000087;
-	border: 2px solid transparent;
-    box-sizing: border-box;
-	background: linear-gradient(#553419, #553419) padding-box, linear-gradient(to bottom, #82ae4c, #4f7421) border-box;
-}
-
-.hud-btn-red {
-	background: linear-gradient(to bottom, #4f291b, #553419) padding-box, linear-gradient(to bottom, #a84a35, #88301e) border-box;
-}
-
-.hud-btn span:first-child {
-	background-position: center center;
-	background-repeat: no-repeat;
-	width: 65%;
-	height: 65%;
-	background-size: contain;
-	position: absolute;
-	top: 7px;
-	left: 7px;
-}
-
-.menu-placeholder {
-	display: inline-block;
-	width: 45px;
-	height: 45px;
-	background: var(--black-50);
-}
-
-.hud-btn span.hud-counter {
-	width: 12px !important;
-	height: 12px !important;
-	padding: 2px !important;
-	top: -4px !important;
-	bottom: unset !important;
-	right: -4px !important;
-	left: unset !important;
-	line-height: 10px !important;
-	pointer-events: none !important;
-	font-size: 0.7rem !important;
-}
-
-.hud-btn span.hud-future-counter {
-	width: 12px !important;
-	height: 12px !important;
-	padding: 2px !important;
-	top: -4px !important;
-	bottom: unset !important;
-	right: unset !important;
-	left: -4px !important;
-	line-height: 10px !important;
-	pointer-events: none !important;
-	font-size: 0.7rem !important;
-}
 

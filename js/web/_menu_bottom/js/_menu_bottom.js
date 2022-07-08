@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -23,7 +23,7 @@ let _menu_bottom = {
 
 	BuildOverlayMenu: () => {
 
-		let hud = $('<div />').attr('id', 'foe-toolbox-hud').addClass('game-cursor'),
+		let hud = $('<div />').attr({'id': 'foe-toolbox-hud','class': 'hud-bottom'}).addClass('game-cursor'),
 			hudWrapper = $('<div />').attr('id', 'foe-toolbox-hud-wrapper'),
 			hudInner = $('<div />').attr('id', 'foe-toolbox-hud-slider');
 
@@ -35,7 +35,12 @@ let _menu_bottom = {
 		hud.append(btnUp);
 		hud.append(hudWrapper)
 		hud.append(btnDown);
-
+		
+		// If the window size changes, recalculate
+		window.onresize = function(event) {
+			if (event.target == window) _menu_bottom.SetMenuWidth(true);
+		};
+		
 		$('body').append(hud).promise().done(function(){
 
 			// Insert buttons
@@ -47,11 +52,6 @@ let _menu_bottom = {
 
 			window.dispatchEvent(new CustomEvent('foe-toolbox#menu_loaded'));
 		});
-
-		// If the window size changes, recalculate
-		window.onresize = function (event) {
-			_menu_bottom.SetMenuWidth(true);
-		};
 	},
 
 
@@ -104,7 +104,13 @@ let _menu_bottom = {
 
 		_menu.HudCount = Math.floor((($(window).outerWidth() - 50) - $('#foe-toolbox-hud').offset().left) / _menu_bottom.btnSize);
 		_menu.HudCount = Math.min(_menu.HudCount, MenuItemCount);
-
+		if (_menu.HudCount <= 0) {
+			$('#foe-toolbox-hud').remove();
+			window.onresize = function(){};
+			_menu.CallSelectedMenu('Box');
+			return;
+		} 
+			
 		// hat der Spieler eine Länge vorgebeben?
 		let MenuLength = localStorage.getItem('MenuLength');
 
@@ -116,8 +122,8 @@ let _menu_bottom = {
 		_menu.HudWidth = (_menu.HudCount * _menu_bottom.btnSize);
 		_menu.SlideParts = Math.ceil(MenuItemCount / _menu.HudCount);
 
-		$('#foe-toolbox-hud').width(_menu.HudWidth + 3);
-		$('#foe-toolbox-hud-wrapper').width(_menu.HudWidth + 3);
+		$('#foe-toolbox-hud').width(_menu.HudWidth);
+		$('#foe-toolbox-hud-wrapper').width(_menu.HudWidth);
 		$('#foe-toolbox-hud-slider').width( ($("#foe-toolbox-hud-slider").children().length * _menu_bottom.btnSize));
 	},
 
@@ -132,17 +138,19 @@ let _menu_bottom = {
 			activeIdx = $(this).index('.hud-btn');
 		});
 
+		if (jQuery._data($('body').get(0), 'events' ).click.filter((elem) => elem.selector == ".hud-btn-right-active").length == 0) {
+			// Klick auf Pfeil nach rechts
+			$('body').on('click', '.hud-btn-right-active', function () {
+				_menu_bottom.ClickButtonRight();
+			});
+		};
 
-		// Klick auf Pfeil nach unten
-		$('body').on('click', '.hud-btn-right-active', function () {
-			_menu_bottom.ClickButtonRight();
-		});
-
-
-		// Klick auf Pfeil nach oben
-		$('body').on('click', '.hud-btn-left-active', function () {
-			_menu_bottom.ClickButtonLeft();
-		});
+		if (jQuery._data($('body').get(0), 'events' ).click.filter((elem) => elem.selector == ".hud-btn-left-active").length == 0) {
+			// Klick auf Pfeil nach links
+			$('body').on('click', '.hud-btn-left-active', function () {
+				_menu_bottom.ClickButtonLeft();
+			});
+		};
 
 
 		// Tooltipp top ermitteln und einblenden
@@ -230,7 +238,10 @@ let _menu_bottom = {
 		$('.hud-btn-right').removeClass('hasFocus');
 
 		_menu.ActiveSlide++;
+
 		_menu.MenuScrollLeft -= _menu.HudWidth;
+		if (_menu.ActiveSlide * _menu.HudWidth > $('#foe-toolbox-hud-slider').width())
+			_menu.MenuScrollLeft = - (($('#foe-toolbox-hud-slider').width()/_menu.HudWidth) - 1) *_menu.HudWidth;
 
 		$('#foe-toolbox-hud-slider').css({
 			left: _menu.MenuScrollLeft + 'px'
@@ -255,7 +266,11 @@ let _menu_bottom = {
 		$('.hud-btn-left').removeClass('hasFocus');
 
 		_menu.ActiveSlide--;
-		_menu.MenuScrollLeft += _menu.HudWidth;
+		
+		if (_menu.ActiveSlide == 1) 
+			_menu.MenuScrollLeft = 0;
+		else
+			_menu.MenuScrollLeft += _menu.HudWidth;
 
 		$('#foe-toolbox-hud-slider').css({
 			left: _menu.MenuScrollLeft + 'px'

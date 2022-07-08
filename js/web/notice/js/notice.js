@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -144,7 +144,7 @@ let Notice = {
 						const player = JSON.parse(itm['player_data']);
 
 						subdiv.push(`<div class="content-head-player">
-										<span class="avatar" style="background-image:url('${MainParser.InnoCDN + 'assets/shared/avatars/' + MainParser.PlayerPortraits[ player['Avatar'] ]}.jpg')"></span>
+										<span class="avatar" style="background-image:url('${MainParser.InnoCDN + 'assets/shared/avatars/' + (MainParser.PlayerPortraits[player['Avatar']] || 'portrait_433')}.jpg')"></span>
 										<div class="text">
 											<span class="name">${player['PlayerName']}</span>
 											<span class="clan-name"><em>#${player['PlayerID']}</em> ${player['ClanName'] ? '[' + player['ClanName'] + ']' : '&nbsp;'}</span>
@@ -186,7 +186,7 @@ let Notice = {
 			content = `<div class='tabs notices'>`;
 
 			if(tab.length > 0){
-				content += `<ul class='horizontal'>${tab.join('')}</ul>`;
+				content += `<ul class='horizontal dark-bg'>${tab.join('')}</ul>`;
 			}
 
 			content += 		`<span class="btn-default grp-btn" data-id="new">+ ${i18n('Boxes.Notice.NewGroup')}</span>`;
@@ -255,7 +255,7 @@ let Notice = {
 			Notice.ShowModal('itm', $(this).data('id'));
 		});
 
-		$('body').on('click', '.delete-btn', function(){
+		$('body').on('click', '.btn-delete', function(){
 			Notice.DeleteElement($(this).data('type'), $(this).data('id'));
 		});
 
@@ -353,7 +353,8 @@ let Notice = {
 			value: txt,
 			id: `${type}-input`,
 			placeholder: type === 'grp' ? i18n('Boxes.Notice.GroupName') : i18n('Boxes.Notice.SideName'),
-			class: `inp-${type}-name`
+			class: `inp-${type}-name`,
+			'data-id': id
 		});
 
 		btn.attr({
@@ -376,14 +377,11 @@ let Notice = {
 			delBtn
 				.attr({
 					role: 'button',
-					class: `btn-default delete-btn`,
+					class: `btn-default btn-delete`,
 					'data-id': id,
 					'data-type': type
 				})
 				.text(type === 'grp' ? i18n('Boxes.Notice.DeleteGroup') : i18n('Boxes.Notice.DeleteItem'))
-				.css({
-					'margin-top': 10
-				})
 			;
 
 			$('#notices-modalBody').append(delBtn);
@@ -438,22 +436,20 @@ let Notice = {
 	 */
 	SaveModal: (type, id)=> {
 		let nN = $(`.inp-${type}-name`).val(),
-			txt = nN.trim(),
+			txt = MainParser.ClearText(nN.trim()), // filter <script> Tags
 			data = {
 				id: id,
-				type: type
+				type: type,
+				name: txt
 			}
 
 		if( $('#player-grp option:selected').data('value') !== -1 ){
 			data['player_group'] = $('#player-grp option:selected').data('value');
 
-		} else if(txt === ''){
+		} else if(txt === '') {
 			return;
 
 		} else {
-			// filter <script> Tags
-			txt = MainParser.ClearText(txt);
-
 			data['name'] = txt;
 		}
 
@@ -539,7 +535,7 @@ let Notice = {
 			cont = $this.find('.content-text').html();
 
 		// send content changes to server und change local object
-		MainParser.send2Server({id:itmID,type:'cnt',head:head,cont:cont}, 'Notice/set', (resp)=>{
+		MainParser.send2Server({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,}, 'Notice/set', (resp)=>{
 
 			let grpIdx = Notice.notes.findIndex(g => g.id === grpID),
 				itmIdx = Notice.notes[grpIdx].items.findIndex(i => i.id === itmID);
@@ -596,7 +592,7 @@ let Notice = {
 			if(!players.hasOwnProperty(i)) { break; }
 
 			const p = players[i],
-				a = MainParser.InnoCDN + 'assets/shared/avatars/' + MainParser.PlayerPortraits[ p['Avatar'] ];
+				a = MainParser.InnoCDN + 'assets/shared/avatars/' + (MainParser.PlayerPortraits[p['Avatar']] || 'portrait_433');
 
 			content += `<span class="custom-option custom-option-noticePlayers" data-value="${p['PlayerID']}"><span class="avatar" style="background-image:url('${a}.jpg')"></span>${p['PlayerName']}</span>`;
 		}
@@ -691,7 +687,7 @@ let Notice = {
 				class: 'tab-edit',
 				'data-id': id
 			}).css({
-				left: ((left + width) - 31),
+				left: ((left + width) - 28),
 				top: 5
 			});
 

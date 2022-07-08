@@ -1,6 +1,6 @@
 ﻿/*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -74,7 +74,8 @@ let BlueGalaxy = {
                 auto_close: true,
                 dragdrop: true,
                 minimize: true,
-                resize: true
+                resize: true,
+                settings: 'BlueGalaxy.ShowSettings()'
             });
 
             HTML.AddCssFile('bluegalaxy');
@@ -267,5 +268,31 @@ let BlueGalaxy = {
         } else {
             $('#hidden-blue-galaxy-count').hide();
         }
-    }
+    },
+
+    
+
+    /**
+    *
+    */
+     ShowSettings: () => {
+		let autoOpen = Settings.GetSetting('ShowBlueGalaxyHelper');
+
+        let h = [];
+        h.push(`<p><input id="autoStartBGHelper" name="autoStartBGHelper" value="1" type="checkbox" ${(autoOpen === true) ? ' checked="checked"' : ''} /> <label for="autoStartBGHelper">${i18n('Boxes.Settings.Autostart')}</label></p>`);
+        h.push(`<p><button onclick="BlueGalaxy.SaveSettings()" id="save-bghelper-settings" class="btn btn-default" style="width:100%">${i18n('Boxes.Settings.Save')}</button></p>`);
+
+        $('#bluegalaxySettingsBox').html(h.join(''));
+    },
+
+    /**
+    *
+    */
+    SaveSettings: () => {
+        let value = false;
+		if ($("#autoStartBGHelper").is(':checked'))
+			value = true;
+		localStorage.setItem('ShowBlueGalaxyHelper', value);
+		$(`#bluegalaxySettingsBox`).remove();
+    },
 };

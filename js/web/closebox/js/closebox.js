@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -149,7 +149,7 @@ let CloseBox = {
     HideAllBoxes: () => {
 
         $("#cb-hide-all-windows").removeClass("btn-green").addClass("invisible btn-delete");
-        let openBoxes = $(".window-box, #foe-helper-hud");
+        let openBoxes = $(".window-box, #foe-toolbox-hud");
 
         $.each(openBoxes, function () {
 
@@ -166,7 +166,7 @@ let CloseBox = {
     ShowAllBoxes: () => {
 
         $("#cb-hide-all-windows").removeClass("invisible btn-delete").addClass("btn-green");
-        $(".window-box, #foe-helper-hud").show();
+        $(".window-box, #foe-toolbox-hud").show();
     },
 
 

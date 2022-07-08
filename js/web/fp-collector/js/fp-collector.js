@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -11,35 +11,135 @@
  * **************************************************************************************
  */
 
-// - GG reward after fight [2,5,10]FP or
-// - diplomaticGift or spoilsOfWar
+FoEproxy.addHandler('GrandPrizeService', 'getGrandPrizes', (data, postData) => {
+	FPCollector.curentEvent = data.responseData[0]['context'].replace(/_tournament/g,'');
+});
+
+FoEproxy.addHandler('TimedSpecialRewardService', 'getTimedSpecial', (data, postData) => {
+	FPCollector.curentEvent = data.responseData['context'].replace(/_tournament/g,'');
+});
+
+// - GG reward after fight [2,5,10]FP or PvP reward
+// - diplomaticGift or spoilsOfWar or shards
 // - hiddenreward from mainmap
+// - Event reward or Event leagueReward
+// - Daily reward box castle system
+// - personal rank gain chest Truhe PvP-Arena
 FoEproxy.addHandler('RewardService', 'collectReward', (data, postData) => {
-
 	const d = data.responseData[0][0];
+	let eventCheck = data.responseData[1],
+		event = data.responseData[1],
+		notes = null,
+		amount = d['amount'];
 
-	let event = data.responseData[1];
-
-	if(d['subType'] !== 'strategy_points'){
-		return;
+	if (FPCollector.curentEvent !== null ) {
+		if (eventCheck.toLowerCase().includes("event")) {
+			event = FPCollector.curentEvent;
+		}
+		if (eventCheck.includes("AutoCollect")) {
+			event = FPCollector.curentEvent;
+			notes = i18n('Boxes.FPCollector.auto_collect');
+		}
+		if (eventCheck.includes("task_reward")) {
+			event = FPCollector.curentEvent;
+			notes = i18n('Boxes.FPCollector.task_reward');
+		}
+		if (eventCheck.includes("card_duel")) {
+			event = FPCollector.curentEvent;
+			notes = i18n('Boxes.FPCollector.card_duel');
+		}
+		if (eventCheck.includes("reward_calendar")) {
+			event = FPCollector.curentEvent;
+			notes = i18n('Boxes.FPCollector.reward_calendar');
+		}
+		if (eventCheck.toLowerCase().includes("grandprize") || eventCheck.includes("grand_prize") || d['type'].includes("grand_prize") || eventCheck.includes("event_pass") ) {
+			event = FPCollector.curentEvent;
+			notes = i18n('Boxes.FPCollector.grand_prize');
+		}
 	}
 
-	// default is hiddenreward or leaguereward
-	else if(event === 'default')
-	{
+	if(d['subType'] !== 'strategy_points'){
+		if (data.responseData[1] === 'castle_system') { // Tägliche Belohnungskiste
+			event = 'castle_system_daily_reward_chest';
+			notes = d['name'];
+			amount = d.rewards[0]['amount'];
+		}
+		else if (data.responseData[1] === 'pvp_arena') { // persönlicher Rang gewinn Truhe
+			event = 'pvp_arena';
+			notes = d['name'];
+			amount = 0;
+			rewards = d['rewards'];
+			if (!Array.isArray(rewards)) {
+				return;
+			}
+			for (let reward of rewards) {
+				if (reward['subType'] === 'strategy_points') {
+					amount = reward['amount'];
+				}
+			}
+			if (amount === 0) {
+				return;
+			}
+		}
+		else {
+		return;
+	}
+	}
+	else if (event === 'default') {	// default is hiddenreward or leaguereward or flying island incidents
 		event = 'hiddenReward';
+
+		if (isCurrentlyInOutpost === 1) {
+			event = 'shards';
+		}
 		if(postData[0].requestMethod === 'useItem'){
-			event = 'leagueReward';
+			event = !FPCollector.curentEvent ? i18n('Boxes.FPCollector.league_reward') : FPCollector.curentEvent;
+			notes = !FPCollector.curentEvent ? moment(MainParser.getCurrentDate()).format('YYYY-MM-DD') : i18n('Boxes.FPCollector.league_reward');
+		}
+		if (postData[0].requestMethod === 'advanceQuest') {
+			return;
 			}
 	}
 
 	StrategyPoints.insertIntoDB({
 		event: event,
-		amount: d['amount'],
+		notes: notes ? notes : '',
+		amount: amount,
 		date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 	});
 });
 
+// - reward calendar completion
+FoEproxy.addHandler('InventoryService', 'getItem', (data, postData) => {
+	let eventCheck = data.responseData.itemAssetName;
+
+	if (eventCheck.includes("calendar_completion")) {
+		let event = !FPCollector.curentEvent ? 'event' : FPCollector.curentEvent,
+			notes = i18n('Boxes.FPCollector.reward_calendar_completion'),
+			amount = 0,
+			rewards = data.responseData.item.reward['rewards'];
+		if (!Array.isArray(rewards)) {
+			return;
+		}
+		for (let reward of rewards) {
+			if (reward['subType'] === 'strategy_points') {
+				amount += reward['amount'];
+			}
+		}
+		if (amount === 0) {
+			return;
+		}
+	}
+	else {
+		return;
+	}
+
+	StrategyPoints.insertIntoDB({
+		event: event,
+		notes: notes,
+		amount: amount,
+		date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
+	});
+});
 
 // GEX FP from chest
 FoEproxy.addHandler('GuildExpeditionService', 'openChest', (data, postData) => {
@@ -57,7 +157,7 @@ FoEproxy.addHandler('GuildExpeditionService', 'openChest', (data, postData) => {
 });
 
 
-// Visit other players (motivation)
+// Visit other players (satDown)
 FoEproxy.addHandler('FriendsTavernService', 'getOtherTavern', (data, postData) => {
 	const d = data['responseData'];
 
@@ -69,7 +169,7 @@ FoEproxy.addHandler('FriendsTavernService', 'getOtherTavern', (data, postData) =
 
 	StrategyPoints.insertIntoDB({
 		event: 'satDown',
-		notes: player ? `<img src="${MainParser.InnoCDN + 'assets/shared/avatars/' + MainParser.PlayerPortraits[player['Avatar']]}.jpg"><span>${player['PlayerName']}</span>` : undefined,
+		notes: player ? `<img src="${MainParser.InnoCDN + 'assets/shared/avatars/' + MainParser.PlayerPortraits[player['Avatar']]}.jpg"><span>${MainParser.GetPlayerLink(player['PlayerID'], player['PlayerName'])}</span>` : '',
 		amount: d['rewardResources']['resources']['strategy_points'],
 		date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 	});
@@ -77,20 +177,37 @@ FoEproxy.addHandler('FriendsTavernService', 'getOtherTavern', (data, postData) =
 
 
 // Plunder reward
+FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
+	const playerId = data.responseData.other_player.player_id;
+	FPCollector.lastVisitedPlayer = playerId;
+});
+
+FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
+	for (let i = 0; i < data.responseData.length; i++) {
+		const entityId = data.responseData[i].cityentity_id;
+		FPCollector.lastPlunderedEntity = entityId;	
+	}
+});
+
 FoEproxy.addHandler('OtherPlayerService', 'rewardPlunder', (data, postData) => {
+	setTimeout(function() {
 	for (let i = 0; i < data.responseData.length; i++) {
 		let PlunderReward = data.responseData[i];
 
 		if (PlunderReward['product'] && PlunderReward['product']['resources'] && PlunderReward['product']['resources']['strategy_points']) {
 			let PlunderedFP = PlunderReward['product']['resources']['strategy_points'];
+				const player = PlayerDict[FPCollector.lastVisitedPlayer];	
+				const entity = MainParser.CityEntities[FPCollector.lastPlunderedEntity];
 
 			StrategyPoints.insertIntoDB({
 				event: 'plunderReward',
+					notes: player ? `<img src="${MainParser.InnoCDN + 'assets/shared/avatars/' + (MainParser.PlayerPortraits[player['Avatar']] || 'portrait_433')}.jpg"><span>${MainParser.GetPlayerLink(player['PlayerID'], player['PlayerName'])}${entity ? ' - ' + entity['name'] : ''}</span>` : '',
 				amount: PlunderedFP,
 				date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 			});
 		}
 	}
+	}, 1000);
 });
 
 
@@ -106,9 +223,11 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', (data, postData) => {
 			CityEntity = MainParser.CityEntities[Building['cityentity_id']];
 
 		let Production = Productions.readType(Building);
+
 		if (!Production['products']) continue;
 
 		let FP = Production['products']['strategy_points'];
+
 		if (!FP) continue;
 
 		StrategyPoints.insertIntoDB({
@@ -125,6 +244,10 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', (data, postData) => {
  * @type {{maxDateFilter, CityMapDataNew: null, buildBody: (function(): Promise<void>), currentDateFilter, calculateTotalByType: (function(*=): number), ShowFPCollectorBox: (function(): Promise<void>), calculateTotal: (function(): number), TodayEntries: null, lockDates: [], ToggleHeader: FPCollector.ToggleHeader, initiateDatePicker: (function(): Promise<void>), getPossibleEventsByDate: (function(): []), DatePicker: null, HandleAdvanceQuest: FPCollector.HandleAdvanceQuest, minDateFilter: null}}
  */
 let FPCollector = {
+
+	curentEvent: null,
+	lastVisitedPlayer: null,
+	lastPlunderedEntity: null,
 
 	minDateFilter: null,
 	maxDateFilter: moment(MainParser.getCurrentDate()).toDate(),
@@ -209,8 +332,8 @@ let FPCollector = {
 
 			$('#fp-collectorBody').append(
 				`<div class="dark-bg head">
-					<div class="text-warning"><strong>${i18n('Boxes.FPCollector.TotalFP')} <span id="fp-collector-total-fp"></span></strong></div>
-					<div class="text-right"><button class="btn btn-default" id="FPCollectorPicker">${FPCollector.formatRange()}</button></div>
+					<div class="text-warning"><strong>${i18n('Boxes.FPCollector.Total')} <span id="fp-collector-total-fp"></span>${i18n('Boxes.FPCollector.FP')}</strong></div>
+					<div class="text-right"><button class="btn btn-default btn-tight" id="FPCollectorPicker">${FPCollector.formatRange()}</button></div>
 				</div>`,
 				`<div id="fp-collectorBodyInner"></div>`
 			);
@@ -251,19 +374,19 @@ let FPCollector = {
 				const sumTotal = await FPCollector.calculateTotalByType(event);
 				const entriesEvent = FPCollector.getEntriesByEvent(event);
 
-				tr.push(`<div class="foehelper-accordion ${event}">`);
+				tr.push(`<div class="foetoolbox-accordion ${event}">`);
 
-				tr.push(	`<div class="foehelper-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
+				tr.push(	`<div class="foetoolbox-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
 								<span class="image"></span>
-								<strong class="text-warning">${HTML.Format(sumTotal)}</strong>
+								<strong class="text-warning">${sumTotal}${i18n('Boxes.FPCollector.FP')}</strong>
 								<span>${i18n('Boxes.FPCollector.' + event)}</span>
 							</div>`);
 
-				tr.push(	`<div class="foehelper-accordion-body ${event}-body">`);
+				tr.push(	`<div class="foetoolbox-accordion-body ${event}-body">`);
 
 				 entriesEvent.forEach(e => {
 					 tr.push(`<div>
-								<span class="fps">${HTML.Format(e.amount)}</span>
+								<span class="fps">${e.amount.toLocaleString(i18n('Local'))}${i18n('Boxes.FPCollector.FP')}</span>
 								<span class="desc">${i18n('Boxes.FPCollector.' + e.event)}</span>
 								<span class="building">${e.notes ? e.notes : ''}</span>
 						</div>`);
@@ -292,28 +415,36 @@ let FPCollector = {
 			for (let Quest of MainParser.Quests) {
 				if (Quest['id'] !== QuestID || Quest['state'] !== 'collectReward') continue;
 
-				// normale Quest-Belohnung
 				if (Quest['genericRewards']) {
+
 					for (let Reward of Quest['genericRewards']) {
-						if (Reward['subType'] === 'strategy_points') {
+						if (Reward['type'] === 'outpost_complete_item') { // Kulturelle Siedlung Abschlussbelohnung
+
+							let outpostData = Outposts.OutpostData;
+							let playthrough = outpostData.completedPlaythroughs < outpostData.playthroughs.length ? outpostData.playthroughs[outpostData.completedPlaythroughs] : outpostData.playthroughs[outpostData.playthroughs.length-1];
+							let amount = (playthrough.rewards[0].subType === "strategy_points" ? playthrough.rewards[0].amount : 0) + (playthrough.additionalRewardFromBoost ? playthrough.additionalRewardFromBoost.amount : 0 );
+
+							if (amount === 0 ) return;
 							StrategyPoints.insertIntoDB({
-								place: 'Quest',
 								event: 'collectReward',
-								amount: Reward['amount'],
+								notes: Quest.questGiver['name'] + ' - ' + Quest['windowTitle'],
+								amount: amount,
 								date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 							});
 						}
-					}
-				}
-
-				// Belohnung einer Schleifenquest
-				if (Quest['genericRewards']) {
-					for (let Reward of Quest['genericRewards']) {
-						if (Reward['type'] === 'forgepoint_package') {
+						else if (Reward['type'] === 'forgepoint_package') { // Belohnung einer Schleifenquest
 							StrategyPoints.insertIntoDB({
-								place: 'Quest',
 								event: 'collectReward',
+								notes: Quest.questGiver['name'] + ' - ' + Quest['windowTitle'],
 								amount: Number(Reward['subType']),
+								date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
+							});
+					}
+						else if (Reward['subType'] === 'strategy_points') { // normale Quest-Belohnung
+							StrategyPoints.insertIntoDB({
+								event: 'collectReward',
+								notes: Quest.questGiver['name'] + ' - ' + Quest['windowTitle'],
+								amount: Reward['amount'],
 								date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 							});
 						}
@@ -337,7 +468,7 @@ let FPCollector = {
 			totalFP += e.amount
 		});
 
-		return HTML.Format(totalFP);
+		return totalFP.toLocaleString(i18n('Local'));
 	},
 
 
@@ -351,7 +482,7 @@ let FPCollector = {
 			}
 		});
 
-		return totalFPByType;
+		return totalFPByType.toLocaleString(i18n('Local'));
 	},
 
 
@@ -368,7 +499,7 @@ let FPCollector = {
 
 		FPCollector.DatePicker = new Litepicker({
 			element: document.getElementById('FPCollectorPicker'),
-			format: 'YYYY-MM-DD',
+			format: i18n('Date'),
 			lang: MainParser.Language,
 			singleMode: false,
 			splitView: false,
@@ -443,7 +574,7 @@ let FPCollector = {
 		let $this = $(`.${event}`),
 			isOpen = $this.hasClass('open');
 
-		$('#fp-collectorBodyInner .foehelper-accordion').removeClass('open');
+		$('#fp-collectorBodyInner .foetoolbox-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

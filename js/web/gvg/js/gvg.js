@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -857,7 +857,7 @@ let GvGMap = {
 		html += i18n('Boxes.GvGMap.Sector.Power') + ': ' + sectorPower +'<br>';
 		if (sector.isProtected)
 			html += i18n('Boxes.GvGMap.Sector.Protected')+'<br>';
-		html += 'Terrain: '+ i18n('Boxes.GvGMap.Sector.Terrain_'+sector.terrain) +'<br>';
+		html += i18n('Boxes.GvGMap.Sector.Terrain')+ ': '+ i18n('Boxes.GvGMap.Sector.Terrain_'+sector.terrain) +'<br>';
 		html += '</div>';
 		
 		document.getElementById("GvGMapInfo").innerHTML = html;

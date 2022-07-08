@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -54,7 +54,8 @@ let ApiURL = 'https://api.foe-rechner.de/',
 	possibleMaps = ['main', 'gex', 'gg', 'era_outpost', 'gvg'],
 	PlayerLinkFormat = 'https://foe.scoredb.io/__world__/Player/__playerid__',
 	GuildLinkFormat = 'https://foe.scoredb.io/__world__/Guild/__guildid__',
-	BuildingsLinkFormat = 'https://forgeofempires.fandom.com/wiki/__buildingid__';
+	BuildingsLinkFormat = 'https://forgeofempires.fandom.com/wiki/__buildingid__',
+	LinkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg>';
 
 // Übersetzungen laden
 let i18n_loaded = false;
@@ -130,474 +131,6 @@ GetFights = () =>{
 	a.click();
 }
 
-const FoEproxy = (function () {
-	const requestInfoHolder = new WeakMap();
-	function getRequestData(xhr) {
-		let data = requestInfoHolder.get(xhr);
-		if (data != null) return data;
-
-		data = { url: null, method: null, postData: null };
-		requestInfoHolder.set(xhr, data);
-		return data;
-	}
-
-	let proxyEnabled = true;
-
-	// XHR-handler
-	/** @type {Record<string, undefined|Record<string, undefined|((data: FoE_NETWORK_TYPE, postData: any) => void)[]>>} */
-	const proxyMap = {};
-
-	/** @type {Record<string, undefined|((data: any, requestData: any) => void)[]>} */
-	const proxyMetaMap = {};
-
-	/** @type {((data: any, requestData: any) => void)[]} */
-	let proxyRaw = [];
-
-	// Websocket-Handler
-	const wsHandlerMap = {};
-	let wsRawHandler = [];
-
-	// startup Queues
-	let xhrQueue = [];
-	let wsQueue = [];
-
-	const proxy = {
-		/**
-		 * Fügt einen datenhandler für Antworten von game/json hinzu.
-		 * @param {string} service Der Servicewert, der in der Antwort gesetzt sein soll oder 'all'
-		 * @param {string} method Der Methodenwert, der in der Antwort gesetzt sein soll oder 'all'
-		 * TODO: Genaueren Typ für den Callback definieren
-		 * @param {(data: FoE_NETWORK_TYPE, postData: any) => void} callback Der Handler, welcher mit der Antwort aufgerufen werden soll.
-		 */
-		addHandler: function (service, method, callback) {
-			// default service and method to 'all'
-			if (method === undefined) {
-				// @ts-ignore
-				callback = service;
-				service = method = 'all';
-			} else if (callback === undefined) {
-				// @ts-ignore
-				callback = method;
-				method = 'all';
-			}
-
-			let map = proxyMap[service];
-			if (!map) {
-				proxyMap[service] = map = {};
-			}
-			let list = map[method];
-			if (!list) {
-				map[method] = list = [];
-			}
-			if (list.indexOf(callback) !== -1) {
-				// already registered
-				return;
-			}
-			list.push(callback);
-		},
-
-		removeHandler: function (service, method, callback) {
-			// default service and method to 'all'
-			if (method === undefined) {
-				callback = service;
-				service = method = 'all';
-			} else if (callback === undefined) {
-				callback = method;
-				method = 'all';
-			}
-
-			let map = proxyMap[service];
-			if (!map) {
-				return;
-			}
-			let list = map[method];
-			if (!list) {
-				return;
-			}
-			map[method] = list.filter(c => c !== callback);
-		},
-
-		// for metadata requests: metadata?id=<meta>-<hash>
-		addMetaHandler: function (meta, callback) {
-			let list = proxyMetaMap[meta];
-			if (!list) {
-				proxyMetaMap[meta] = list = [];
-			}
-			if (list.indexOf(callback) !== -1) {
-				// already registered
-				return;
-			}
-
-			list.push(callback);
-		},
-
-		removeMetaHandler: function (meta, callback) {
-			let list = proxyMetaMap[meta];
-			if (!list) {
-				return;
-			}
-			proxyMetaMap[meta] = list.filter(c => c !== callback);
-		},
-
-		// for raw requests access
-		addRawHandler: function (callback) {
-			if (proxyRaw.indexOf(callback) !== -1) {
-				// already registered
-				return;
-			}
-
-			proxyRaw.push(callback);
-		},
-
-		removeRawHandler: function (callback) {
-			proxyRaw = proxyRaw.filter(c => c !== callback);
-		},
-
-		/**
-		 * Fügt einen Datenhandler für Nachrichten des WebSockets hinzu.
-		 * @param {string} service Der Servicewert, der in der Nachricht gesetzt sein soll oder 'all'
-		 * @param {string} method Der Methodenwert, der in der Nachricht gesetzt sein soll oder 'all'
-		 * TODO: Genaueren Typ für den Callback definieren
-		 * @param {(data: FoE_NETWORK_TYPE) => void} callback Der Handler, welcher mit der Nachricht aufgerufen werden soll.
-		 */
-		addWsHandler: function (service, method, callback) {
-			// default service and method to 'all'
-			if (method === undefined) {
-				// @ts-ignore
-				callback = service;
-				service = method = 'all';
-			} else if (callback === undefined) {
-				// @ts-ignore
-				callback = method;
-				method = 'all';
-			}
-
-			let map = wsHandlerMap[service];
-			if (!map) {
-				wsHandlerMap[service] = map = {};
-			}
-			let list = map[method];
-			if (!list) {
-				map[method] = list = [];
-			}
-			if (list.indexOf(callback) !== -1) {
-				// already registered
-				return;
-			}
-			list.push(callback);
-		},
-
-		removeWsHandler: function (service, method, callback) {
-			// default service and method to 'all'
-			if (method === undefined) {
-				callback = service;
-				service = method = 'all';
-			} else if (callback === undefined) {
-				callback = method;
-				method = 'all';
-			}
-
-			let map = wsHandlerMap[service];
-			if (!map) {
-				return;
-			}
-			let list = map[method];
-			if (!list) {
-				return;
-			}
-			map[method] = list.filter(c => c !== callback);
-		},
-
-		addFoeHelperHandler: function (method, callback) {
-			this.addWsHandler('FoeHelperService', method, callback);
-		},
-
-		removeFoeHelperHandler: function (method, callback) {
-			this.removeWsHandler('FoeHelperService', method, callback);
-		},
-
-		// for raw requests access
-		addRawWsHandler: function (callback) {
-			if (wsRawHandler.indexOf(callback) !== -1) {
-				// already registered
-				return;
-			}
-
-			wsRawHandler.push(callback);
-		},
-
-		removeRawWsHandler: function (callback) {
-			wsRawHandler = wsRawHandler.filter(c => c !== callback);
-		},
-
-		pushFoeHelperMessage: function (method, data = null) {
-			_proxyWsAction('FoeHelperService', method, data);
-			_proxyWsAction('FoeHelperService', method, data);
-		}
-	};
-
-	window.addEventListener('foe-toolbox#loaded', () => {
-		const xhrQ = xhrQueue;
-		xhrQueue = null;
-		const wsQ = wsQueue;
-		wsQueue = null;
-
-		xhrQ.forEach(xhrRequest => xhrOnLoadHandler.call(xhrRequest));
-		wsQ.forEach(wsMessage => wsMessageHandler(wsMessage));
-	}, { capture: false, once: true, passive: true });
-
-	window.addEventListener('foe-toolbox#error-loading', () => {
-		xhrQueue = null;
-		wsQueue = null;
-		proxyEnabled = false;
-	}, { capture: false, once: true, passive: true });
-
-	// ###########################################
-	// ############## Websocket-Proxy ############
-	// ###########################################
-	/**
-	 * This function gets the callbacks from wsHandlerMap[service][method] and executes them.
-	 * @param {string} service
-	 * @param {string} method
-	 * @param {FoE_NETWORK_TYPE} data
-	 */
-	function _proxyWsAction(service, method, data) {
-		const map = wsHandlerMap[service];
-		if (!map) {
-			return;
-		}
-		const list = map[method];
-		if (!list) {
-			return;
-		}
-		for (let callback of list) {
-			try {
-				callback(data);
-			} catch (e) {
-				console.error(e);
-			}
-		}
-	}
-
-	/**
-	 * This function gets the callbacks from wsHandlerMap[service][method],wsHandlerMap[service]['all'],wsHandlerMap['all'][method] and wsHandlerMap['all']['all'] and executes them.
-	 * @param {string} service
-	 * @param {string} method
-	 * @param {FoE_NETWORK_TYPE} data
-	 */
-	function proxyWsAction(service, method, data) {
-		_proxyWsAction(service, method, data);
-		_proxyWsAction('all', method, data);
-		_proxyWsAction(service, 'all', data);
-		_proxyWsAction('all', 'all', data);
-	}
-
-	/**
-	 * @this {WebSocket}
-	 * @param {MessageEvent} evt
-	 */
-	function wsMessageHandler(evt) {
-		if (wsQueue) {
-			wsQueue.push(evt);
-			return;
-		}
-		try {
-			if (evt.data === 'PONG') return;
-			/** @type {FoE_NETWORK_TYPE[]|FoE_NETWORK_TYPE} */
-			const data = JSON.parse(evt.data);
-
-			// do raw-ws-handlers
-			for (let callback of wsRawHandler) {
-				try {
-					callback(data);
-				} catch (e) {
-					console.error(e);
-				}
-			}
-
-			// do ws-handlers
-			if (data instanceof Array) {
-				for (let entry of data) {
-					proxyWsAction(entry.requestClass, entry.requestMethod, entry);
-				}
-			} else if (data.__class__ === "ServerResponse") {
-				proxyWsAction(data.requestClass, data.requestMethod, data);
-			}
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	// Achtung! Die WebSocket.prototype.send funktion wird nicht zurück ersetzt, falls anderer code den prototypen auch austauscht.
-	const observedWebsockets = new WeakSet();
-	const oldWSSend = WebSocket.prototype.send;
-	WebSocket.prototype.send = function (data) {
-		oldWSSend.call(this, data);
-		if (proxyEnabled && !observedWebsockets.has(this)) {
-			observedWebsockets.add(this);
-			this.addEventListener('message', wsMessageHandler, { capture: false, passive: true });
-		}
-	};
-
-	// ###########################################
-	// ################# XHR-Proxy ###############
-	// ###########################################
-
-	/**
-	 * This function gets the callbacks from proxyMap[service][method] and executes them.
-	 */
-	function _proxyAction(service, method, data, postData, responseData) {
-		const map = proxyMap[service];
-		if (!map) {
-			return;
-		}
-		const list = map[method];
-		if (!list) {
-			return;
-		}
-		for (let callback of list) {
-			try {
-				callback(data, postData, responseData);
-			} catch (e) {
-				console.error(e);
-			}
-		}
-	}
-
-	/**
-	 * This function gets the callbacks from proxyMap[service][method],proxyMap[service]['all'] and proxyMap['all']['all'] and executes them.
-	 */
-	function proxyAction(service, method, data, postData, responseData) {
-		let filteredPostData = postData.filter(r => r && r.requestId && data && data.requestId && r.requestId === data.requestId); //Nur postData mit zugehöriger requestId weitergeben
-
-		_proxyAction(service, method, data, filteredPostData, responseData);
-		_proxyAction('all', method, data, filteredPostData, responseData);
-		_proxyAction(service, 'all', data, filteredPostData, responseData);
-		_proxyAction('all', 'all', data, filteredPostData, responseData);
-	}
-
-	// Achtung! Die XMLHttpRequest.prototype.open und XMLHttpRequest.prototype.send funktionen werden nicht zurück ersetzt,
-	//          falls anderer code den prototypen auch austauscht.
-	const XHR = XMLHttpRequest.prototype,
-		open = XHR.open,
-		send = XHR.send;
-
-	/**
-	 * @param {string} method
-	 * @param {string} url
-	 */
-	XHR.open = function (method, url) {
-		if (proxyEnabled) {
-			const data = getRequestData(this);
-			data.method = method;
-			data.url = url;
-		}
-		// @ts-ignore
-		return open.apply(this, arguments);
-	};
-
-	/**
-	 * @this {XHR}
-	 */
-	function xhrOnLoadHandler() {
-		if (!proxyEnabled) return;
-
-		if (xhrQueue) {
-			xhrQueue.push(this);
-			return;
-		}
-
-		const requestData = getRequestData(this);
-		const url = requestData.url;
-		const postData = requestData.postData;
-
-		// handle raw request handlers
-		for (let callback of proxyRaw) {
-			try {
-				callback(this, requestData);
-			} catch (e) {
-				console.error(e);
-			}
-		}
-
-		// handle metadata request handlers
-		const metadataIndex = url.indexOf("metadata?id=");
-
-		if (metadataIndex > -1) {
-			const metaURLend = metadataIndex + "metadata?id=".length,
-				metaArray = url.substring(metaURLend).split('-', 2),
-				meta = metaArray[0];
-
-			switch (meta) {
-				case 'city_entities':
-					MainParser.CityEntitiesMetaId = metaArray[1];
-					break;
-
-				case 'building_sets':
-					MainParser.CitySetsMetaId = metaArray[1];
-					break;
-
-				case 'building_upgrades':
-					MainParser.CityBuildingsUpgradesMetaId = metaArray[1];
-					break;
-			}
-
-			const metaHandler = proxyMetaMap[meta];
-
-			if (metaHandler) {
-				for (let callback of metaHandler) {
-					try {
-						callback(this, postData);
-					} catch (e) {
-						console.error(e);
-					}
-				}
-			}
-		}
-
-		// nur die jSON mit den Daten abfangen
-		if (url.indexOf("game/json?h=") > -1) {
-
-			let responseData = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
-
-			let requestData = postData;
-
-			try {
-				requestData = JSON.parse(new TextDecoder().decode(postData));
-				// StartUp Service zuerst behandeln
-				for (let entry of responseData) {
-					if (entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
-					}
-				}
-
-				for (let entry of responseData) {
-					if (!(entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData')) {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
-					}
-				}
-
-			} catch (e) {
-				console.log('Can\'t parse postData: ', postData);
-			}
-
-		}
-	}
-
-	XHR.send = function (postData) {
-		if (proxyEnabled) {
-			const data = getRequestData(this);
-			data.postData = postData;
-			this.addEventListener('load', xhrOnLoadHandler, { capture: false, passive: true });
-		}
-
-		// @ts-ignore
-		return send.apply(this, arguments);
-	};
-
-	return proxy;
-})();
-
 (function () {
 
 	// globale Handler
@@ -605,6 +138,12 @@ const FoEproxy = (function () {
 	FoEproxy.addMetaHandler('city_entities', (xhr, postData) => {
 		let EntityArray = JSON.parse(xhr.responseText);
 		MainParser.CityEntities = Object.assign({}, ...EntityArray.map((x) => ({ [x.id]: x })));
+		for (let i in MainParser.CityEntities) {
+			if (!MainParser.CityEntities.hasOwnProperty(i)) continue;
+
+			let CityEntity = MainParser.CityEntities[i];
+			if (!CityEntity.type) CityEntity.type = CityEntity?.components?.AllAge?.tags?.tags?.find(value => value.hasOwnProperty('buildingType')).buildingType;
+		}
 		Object.values(MainParser.CityEntities).forEach(
 			e => {
 				e.is_motivatable = (e.abilities !== undefined && e.abilities.find(a => a.__class__ === 'MotivatableAbility' || e.__class__ == 'GenericCityEntity'));
@@ -967,7 +506,7 @@ const FoEproxy = (function () {
 
 	// Nachbarn/Gildenmitglieder/Freunde Tab geöffnet
 	FoEproxy.addHandler('OtherPlayerService', 'all', (data, postData) => {
-		if (data.requestMethod === 'getNeighborList' || data.requestMethod === 'getFriendsList' || data.requestMethod === 'getClanMemberList') {
+		if (data.requestMethod === 'getNeighborList' || data.requestMethod === 'getFriendsList' || data.requestMethod === 'getClanMemberList' || data.requestMethod === 'getAwaitingFriendRequestCount') {
 			MainParser.UpdatePlayerDict(data.responseData, 'PlayerList', data.requestMethod);
 		} else if (data.requestMethod === 'getSocialList') {
 			if (data.responseData.friends) 
@@ -1067,10 +606,6 @@ const FoEproxy = (function () {
 				lgUpdateData.Rankings = Rankings;
 				lgUpdateData.Bonus = Bonus;
 				lgUpdateData.Era = Era;
-
-				if(lgUpdateData.Rankings && lgUpdateData.CityMapEntity){
-					if(!IsLevelScroll) MainParser.SendLGData(lgUpdateData);
-				}
 
 				lgUpdate();
 			}
@@ -1252,14 +787,15 @@ let HelperBeta = {
 	},
 	menu: [
 		'unitsGex',
-		'marketoffers',
+		'marketOffers',
 		'discord',
+		'recurringQuests',
 	],
 	active: JSON.parse(localStorage.getItem('HelperBetaActive'))
 };
 
 /**
- * @type {{BuildingSelectionKits: null, StartUpType: null, SetArkBonus: MainParser.SetArkBonus, CityBuildingsUpgradesMetaId: null, setGoodsData: MainParser.setGoodsData, SaveBuildings: MainParser.SaveBuildings, Conversations: *[], UpdateCityMap: MainParser.UpdateCityMap, BuildingChains: null, UpdateInventory: MainParser.UpdateInventory, SelectedMenu: string, foeHelperBgApiHandler: ((function(({type: string}&Object)): Promise<{ok: true, data: *}|{ok: false, error: string}>)|null), CityEntities: null, GetPlayerLink: ((function(*=, *): (string|*))|*), ArkBonus: number, InnoCDN: string, Boosts: {}, obj2FormData: obj2FormData, UpdatePlayerDict: MainParser.UpdatePlayerDict, PlayerPortraits: null, Quests: null, i18n: null, ResizeFunctions: MainParser.ResizeFunctions, getAddedDateTime: (function(*=, *=): number), loadJSON: MainParser.loadJSON, ExportFile: MainParser.ExportFile, getCurrentDate: (function(): Date), activateDownload: boolean, Inventory: {}, compareTime: ((function(number, number): (string|boolean))|*), EmissaryService: null, setLanguage: MainParser.setLanguage, BoostMapper: Record<string, string>, SelfPlayer: MainParser.SelfPlayer, UnlockedAreas: null, CityEntitiesMetaId: null, CollectBoosts: MainParser.CollectBoosts, sendExtMessage: ((function(*): Promise<*|undefined>)|*), BoostSums: {supply_production: number, def_boost_attacker: number, coin_production: number, def_boost_defender: number, att_boost_attacker: number, att_boost_defender: number, happiness_amount: number}, ClearText: (function(*): *), VersionSpecificStartupCode: MainParser.VersionSpecificStartupCode, checkNextUpdate: (function(*=): string|boolean), CitySetsMetaId: null, Language: string, SendLGData: ((function(*): boolean)|*), UpdatePlayerDictCore: MainParser.UpdatePlayerDictCore, BonusService: null, setConversations: MainParser.setConversations, StartUp: MainParser.StartUp, CityMapData: {}, DebugMode: boolean, OtherPlayerCityMapData: {}, CityMapEraOutpostData: null, getCurrentDateTime: (function(): number), round: ((function(number): number)|*), savedFight: null, BuildingSets: null, CastleSystemLevels: null, loadFile: MainParser.loadFile, send2Server: MainParser.send2Server}}
+ * @type {{BuildingSelectionKits: null, StartUpType: null, SetArkBonus: MainParser.SetArkBonus, MetaIds: {}, setGoodsData: MainParser.setGoodsData, SaveBuildings: MainParser.SaveBuildings, Conversations: *[], UpdateCityMap: MainParser.UpdateCityMap, BuildingChains: null, UpdateInventory: MainParser.UpdateInventory, SelectedMenu: string, foeHelperBgApiHandler: ((function(({type: string}&Object)): Promise<{ok: true, data: *}|{ok: false, error: string}>)|null), CityEntities: null, GetPlayerLink: ((function(*=, *): (string|*))|*), ArkBonus: number, InnoCDN: string, Boosts: {}, obj2FormData: obj2FormData, UpdatePlayerDict: MainParser.UpdatePlayerDict, PlayerPortraits: null, Quests: null, i18n: null, ResizeFunctions: MainParser.ResizeFunctions, getAddedDateTime: (function(*=, *=): number), loadJSON: MainParser.loadJSON, ExportFile: MainParser.ExportFile, getCurrentDate: (function(): Date), activateDownload: boolean, Inventory: {}, compareTime: ((function(number, number): (string|boolean))|*), EmissaryService: null, setLanguage: MainParser.setLanguage, BoostMapper: Record<string, string>, SelfPlayer: MainParser.SelfPlayer, UnlockedAreas: null, CollectBoosts: MainParser.CollectBoosts, sendExtMessage: ((function(*): Promise<*|undefined>)|*), BoostSums: {supply_production: number, def_boost_attacker: number, coin_production: number, def_boost_defender: number, att_boost_attacker: number, att_boost_defender: number, happiness_amount: number}, ClearText: (function(*): *), VersionSpecificStartupCode: MainParser.VersionSpecificStartupCode, checkNextUpdate: (function(*=): string|boolean), Language: string, SendLGData: ((function(*): boolean)|*), UpdatePlayerDictCore: MainParser.UpdatePlayerDictCore, BonusService: null, setConversations: MainParser.setConversations, StartUp: MainParser.StartUp, CityMapData: {}, DebugMode: boolean, OtherPlayerCityMapData: {}, CityMapEraOutpostData: null, getCurrentDateTime: (function(): number), round: ((function(number): number)|*), savedFight: null, BuildingSets: null, CastleSystemLevels: null, loadFile: MainParser.loadFile, send2Server: MainParser.send2Server}}
  */
 let MainParser = {
 
@@ -1274,11 +810,9 @@ let MainParser = {
 	BonusService: null,
 	Boosts: {},
 	EmissaryService: null,
-	PlayerPortraits: null,
+	PlayerPortraits: [],
 	Conversations: [],
-	CityEntitiesMetaId: null,
-	CitySetsMetaId: null,
-	CityBuildingsUpgradesMetaId: null,
+	MetaIds: {},
 	CityEntities: null,
 	CastleSystemLevels: null,
 	StartUpType: null,
@@ -1318,11 +852,12 @@ let MainParser = {
 
 		if (!LastStartedVersion) {
 			MainParser.StartUpType = 'DeletedSettings';
-			/* Fresh install of deleted settings */
+			/* Fresh install or deleted settings */
 			/* Attention: If you do stuff here it might be executed every start when surfing in incognito mode */
 		}
 		else if (LastStartedVersion !== extVersion) {
 			MainParser.StartUpType = 'UpdatedVersion';
+			if (!(!isRelease)) {localStorage.removeItem("LoadBeta")}
 			/* We have a new version installed and started the first time */
 		}
 		else if (LastAgreedVersion !== extVersion) {
@@ -1339,7 +874,6 @@ let MainParser = {
 	},
 
 
-	/** @type {Record<string,string>} */
 	BoostMapper: {
 		'supplies_boost': ['supply_production'],
 		'happiness': ['happiness_amount'],
@@ -1349,7 +883,6 @@ let MainParser = {
 		'att_def_boost_defender': ['att_boost_defender', 'def_boost_defender'],
 		'advanced_tactics': ['att_boost_attacker', 'def_boost_attacker', 'att_boost_defender', 'def_boost_defender'],
 		'money_boost': ['coin_production'],
-		
 	},
 
 
@@ -1395,7 +928,7 @@ let MainParser = {
 
 		const response = await new Promise((resolve, reject) => {
 			responsePromise.then(resolve, reject);
-			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 1000)
+			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 5000)
 		});
 
 		if (typeof response !== 'object' || typeof response.ok !== 'boolean') {
@@ -1564,7 +1097,7 @@ let MainParser = {
 		{
 			let GuildLink = HTML.i18nReplacer(GuildLinkFormat, { 'world': ExtWorld.toUpperCase(), 'guildid': GuildID });
 
-			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foehelper-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
 		}
 		else {
 			return GuildName;
@@ -1580,7 +1113,7 @@ let MainParser = {
 		{
 			let BuildingLink = HTML.i18nReplacer(BuildingsLinkFormat, {'buildingid': BuildingID });
 
-			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foehelper-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
 		}
 		else {
 			return BuildingName;
@@ -1640,31 +1173,6 @@ let MainParser = {
 					}
 				});
 		}
-	},
-
-
-	/**
-	 * Collect some stats
-	 *
-	 * @param d
-	 * @returns {boolean}
-	 * @constructor
-	 */
-	SendLGData: (d)=> {
-
-		const dataEntity = d['CityMapEntity']['responseData'][0],
-			realData = {
-				entity: dataEntity,
-				ranking: d['Rankings'],
-				bonus: d['Bonus'],
-				era: d['Era'],
-			}
-
-		MainParser.sendExtMessage({
-			type: 'send2Api',
-			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extBaseVersion}`,
-			data: JSON.stringify(realData)
-		});
 	},
 
 
@@ -1795,15 +1303,6 @@ let MainParser = {
 					}
 				}
 			}
-		}
-
-		if (lgs.length > 0) {
-			// ab zum Server
-			MainParser.sendExtMessage({
-				type: 'send2Api',
-				url: ApiURL + 'SelfPlayerLGs/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-				data: JSON.stringify(lgs)
-			});
 		}
 	},
 
@@ -1973,7 +1472,7 @@ let MainParser = {
 	 */
 	UpdatePlayerDictCore: (Player) => {
 
-		let promise = new Promise((resolve, reject)=>{});
+		let promise;
 		let PlayerID = Player['player_id'];
 
 		if (PlayerID !== undefined) {
@@ -1984,7 +1483,6 @@ let MainParser = {
 			if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
 			if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
 			if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
-			if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
 			if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
 			if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];
 			if (Player['is_friend'] !== undefined) PlayerDict[PlayerID]['IsFriend'] = Player['is_friend'];
@@ -1993,6 +1491,7 @@ let MainParser = {
 			if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
 			if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
 			if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
+			if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
 			
 			promise = IndexDB.loadPlayer(PlayerID).then((PlayerFromDB) => {
 				if (PlayerFromDB) {
@@ -2009,7 +1508,7 @@ let MainParser = {
 				return IndexDB.addUserFromPlayerDictIfNotExists(PlayerID, true);
 			});
 		} else {
-			promise.resolve();
+			promise = Promise.resolve();;
 		}
 		return promise;
 	},
@@ -2075,11 +1574,12 @@ let MainParser = {
 	 * Collect titles of the chats
 	 *
 	 * @param d
+	 * @param refresh
 	 */
-	setConversations: (d) => {
+	setConversations: (d, refresh = false) => {
 
 		// If the cache is empty, read out the memory.
-		if (MainParser.Conversations.length === 0)
+		if (MainParser.Conversations.length === 0 && !refresh)
 		{
 			let StorageHeader = localStorage.getItem('ConversationsHeaders');
 			if (StorageHeader !== null) {

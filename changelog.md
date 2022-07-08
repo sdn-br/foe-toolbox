@@ -1,5 +1,9 @@
 ## Changelog - Extension
 
+##### 1.16.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.9.2.0 migriert
+
 ##### 1.15.4.0
 **Bugfix**
 - Kostenrechner

@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -55,4 +55,9 @@ td[title="incident_sculptor"], td[title="incident_beehive"], td[title="incident_
 
 td[title="incident_rhino"], td[title="incident_castaway"], td[title="incident_fisherman"], td[title="incident_floating_chest"], td[title="incident_flotsam"] {
 	background-color: #20423f;
+}
+
+#HiddenRewardBox tr.unavailable {
+    opacity: 0.5;
+    font-style: italic;
 }

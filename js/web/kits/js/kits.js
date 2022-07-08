@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -52,9 +52,9 @@ let Kits = {
 				resize: true
 			});
 
-			$('#kitsBody').append( $('<div />').attr('id', 'kitsBodyTopbar'), $('<div />').attr('id', 'kitsBodyInner') );
+			$('#kitsBody').append( $('<div />').attr('id','kitsBodyInner'), $('<div />').attr('id','kitsBodyBottombar') );
 
-			$('#kitsBodyTopbar').append(
+			$('#kitsBodyBottombar').append(
 				$('<span />').attr({
 					id: 'kits-triplestate-button',
 					class: 'btn-default btn-tight',
@@ -312,8 +312,31 @@ let Kits = {
 			}
 
 			if (show) {
+				let Name = kits[set]['name'],
+					GroupName = kits[set]['groupname'];
 
-				t += `<tr><th colspan="4" class="head">${kits[set]['name'] ? MainParser.GetBuildingLink(kits[set]['link'] ? kits[set]['link'] : kits[set]['name'], i18n('Kits.Sets.' + kits[set]['name'])) : kits[set]['groupname'] ? i18n('Kits.Sets.' + kits[set]['groupname']) : i18n('Boxes.Kits.Udate') + kits[set]['udate']}</th></tr>`;
+				if (Name) { //Name is set
+					let i18nKey = 'Kits.Sets.' + Name,
+						i18nTranslation = i18n(i18nKey);
+
+					if (i18nKey === i18nTranslation) i18nTranslation = Name.replace(/_/g, ' '); //No translation => Fallback to Name
+
+					let Link = kits[set]['link'] ? kits[set]['link'] : Name;
+					KitText = MainParser.GetBuildingLink(Link, i18nTranslation);
+				}
+				else if (GroupName) { //Group is set
+					let i18nKey = 'Kits.Sets.' + GroupName,
+						i18nTranslation = i18n(i18nKey);
+
+					if (i18nKey === i18nTranslation) i18nTranslation = GroupName.replace(/_/g, ' '); //No translation => Fallback to GroupName
+
+					KitText = i18nTranslation;
+				}
+				else { //No name and group set => Show udate
+					KitText = i18n('Boxes.Kits.Udate') + kits[set]['udate'];
+				}
+
+				t += '<tr><th colspan="4" class="head">' + KitText + '</th></tr>';
 
 				if(buildings) {
 
@@ -444,6 +467,9 @@ let Kits = {
 					else if (aName == "building_iridescent_garden") {
 						aName = "D_MultiAge_Battlegrounds4";
 					}
+					else if (aName == "building_shrine_of_inspiration") {
+						aName = "R_MultiAge_EasterBonus16";
+					}
 					else if (aName == "building_shrine_of_knowledge") {
 						aName = "R_MultiAge_EasterBonus5";
 					}
@@ -528,6 +554,9 @@ let Kits = {
 				}
 				else if (aName == "building_iridescent_garden") {
 					aName = "D_MultiAge_Battlegrounds4";
+				}
+				else if (aName == "building_shrine_of_inspiration") {
+					aName = "R_MultiAge_EasterBonus16";
 				}
 				else if (aName == "building_shrine_of_knowledge") {
 					aName = "R_MultiAge_EasterBonus5";

@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -291,9 +291,9 @@ alertsDB.version(1).stores({
 			const alert = await getAlert(alertId);
 			if (alert) {
 				if (alert.delete) {
-					db.alert.delete(alertId);
+					db.alerts.delete(alertId);
 				} else {
-					db.alert.update(alertId, {handled: true});
+					db.alerts.update(alertId, {handled: true});
 				}
 			}
 		});

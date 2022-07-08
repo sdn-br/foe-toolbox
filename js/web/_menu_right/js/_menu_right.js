@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -17,7 +17,7 @@ let _menu_right = {
 	 *
 	 */
 	BuildOverlayMenu: () => {
-		let hud = $('<div />').attr('id', 'foe-toolbox-hud').addClass('game-cursor'),
+		let hud = $('<div />').attr({'id': 'foe-toolbox-hud','class': 'hud-right'}).addClass('game-cursor'),
 			hudWrapper = $('<div />').attr('id', 'foe-toolbox-hud-wrapper'),
 			hudInner = $('<div />').attr('id', 'foe-toolbox-hud-slider');
 
@@ -31,6 +31,11 @@ let _menu_right = {
 		hud.append(hudWrapper)
 		hud.append(btnDown);
 
+		// Wenn sie die Fenstergröße verändert, neu berechnen
+		window.onresize = function (event) {
+			if (event.target == window) _menu_right.SetMenuHeight(true);
+		};
+
 		$('body').append(hud).ready(function () {
 
 			// Buttons einfügen
@@ -43,11 +48,6 @@ let _menu_right = {
 			window.dispatchEvent(new CustomEvent('foe-toolbox#menu_loaded'));
 		});
 
-
-		// Wenn sie die Fenstergröße verändert, neu berechnen
-		window.onresize = function (event) {
-			_menu_right.SetMenuHeight(true);
-		};
 	},
 
 
@@ -101,6 +101,11 @@ let _menu_right = {
 		_menu.HudCount = Math.floor((($(window).outerHeight() - 50) - $('#foe-toolbox-hud').offset().top) / 55);
 		_menu.HudCount = Math.min(_menu.HudCount, MenuItemCount);
 
+		if (_menu.HudCount <= 0) {
+			$('#foe-toolbox-hud').remove();
+			_menu.CallSelectedMenu('Box')
+		}
+			
 		// hat der Spieler eine Länge vorgebeben?
 		let MenuLength = localStorage.getItem('MenuLength');
 
@@ -129,16 +134,21 @@ let _menu_right = {
 		});
 
 
-		// Klick auf Pfeil nach unten
-		$('body').on('click', '.hud-btn-down-active', function () {
-			_menu_right.ClickButtonDown();
-		});
+		if (jQuery._data($('body').get(0), 'events' ).click.filter((elem) => elem.selector == ".hud-btn-down-active").length == 0) {
+			// Klick auf Pfeil nach unten
+			$('body').on('click', '.hud-btn-down-active', function () {
+				_menu_right.ClickButtonDown();
+			});
+		};
+
+		if (jQuery._data($('body').get(0), 'events' ).click.filter((elem) => elem.selector == ".hud-btn-up-active").length == 0) {
+			// Klick auf Pfeil nach oben
+			$('body').on('click', '.hud-btn-up-active', function () {
+				_menu_right.ClickButtonUp();
+			});
+		};
 
 
-		// Klick auf Pfeil nach oben
-		$('body').on('click', '.hud-btn-up-active', function () {
-			_menu_right.ClickButtonUp();
-		});
 
 
 		// Tooltipp top ermitteln und einblenden
@@ -225,6 +235,8 @@ let _menu_right = {
 
 		_menu.ActiveSlide++;
 		_menu.MenuScrollTop -= _menu.HudHeight;
+		if (_menu.ActiveSlide * _menu.HudHeight > $('#foe-toolbox-hud-slider').height())
+			_menu.MenuScrollTop = - (($('#foe-toolbox-hud-slider').height()/_menu.HudHeight) - 1) *_menu.HudHeight;
 
 		$('#foe-toolbox-hud-slider').css({
 			'top': _menu.MenuScrollTop + 'px'
@@ -250,6 +262,10 @@ let _menu_right = {
 		$('.hud-btn-up').removeClass('hasFocus');
 
 		_menu.ActiveSlide--;
+		
+		if (_menu.ActiveSlide == 1) 
+			_menu.MenuScrollTop = 0;
+		else
 		_menu.MenuScrollTop += _menu.HudHeight;
 
 		$('#foe-toolbox-hud-slider').css({
