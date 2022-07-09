@@ -327,7 +327,7 @@ const FoEproxy = (function () {
 	/**
 	 * This function gets the callbacks from proxyMap[service][method] and executes them.
 	 */
-	function _proxyAction(service, method, data, postData) {
+	function _proxyAction(service, method, data, postData, responseData) {
 		const map = proxyMap[service];
 		if (!map) {
 			return;
@@ -338,7 +338,7 @@ const FoEproxy = (function () {
 		}
 		for (let callback of list) {
 			try {
-				callback(data, postData);
+				callback(data, postData, responseData);
 			} catch (e) {
 				console.error(e);
 			}
@@ -348,13 +348,13 @@ const FoEproxy = (function () {
 	/**
 	 * This function gets the callbacks from proxyMap[service][method],proxyMap[service]['all'] and proxyMap['all']['all'] and executes them.
 	 */
-	function proxyAction(service, method, data, postData) {
+	function proxyAction(service, method, data, postData, responseData) {
 		let filteredPostData = postData.filter(r => r && r.requestId && data && data.requestId && r.requestId === data.requestId); //Nur postData mit zugehöriger requestId weitergeben
 
-		_proxyAction(service, method, data, filteredPostData);
-		_proxyAction('all', method, data, filteredPostData);
-		_proxyAction(service, 'all', data, filteredPostData);
-		_proxyAction('all', 'all', data, filteredPostData);
+		_proxyAction(service, method, data, filteredPostData, responseData);
+		_proxyAction('all', method, data, filteredPostData, responseData);
+		_proxyAction(service, 'all', data, filteredPostData, responseData);
+		_proxyAction('all', 'all', data, filteredPostData, responseData);
 	}
 
 	// Achtung! Die XMLHttpRequest.prototype.open und XMLHttpRequest.prototype.send funktionen werden nicht zurück ersetzt,
@@ -427,22 +427,22 @@ const FoEproxy = (function () {
 		// nur die jSON mit den Daten abfangen
 		if (url.indexOf("game/json?h=") > -1) {
 
-			let d = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
+			let responseData = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
 
 			let requestData = postData;
 
 			try {
 				requestData = JSON.parse(new TextDecoder().decode(postData));
 				// StartUp Service zuerst behandeln
-				for (let entry of d) {
+				for (let entry of responseData) {
 					if (entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
 					}
 				}
 
-				for (let entry of d) {
+				for (let entry of responseData) {
 					if (!(entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData')) {
-						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+						proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
 					}
 				}
 

@@ -1,5 +1,16 @@
 ## Changelog - Extension
 
+##### 1.16.1.0
+**Update**
+- Ereignisse
+    - Bilder für neue Ereignisse hinzugefügt
+
+**Bugfix**
+- Allgemein
+    - Fehler in der FoE Integration hat zu einigen Fehlern geführt
+- PvP Angriffe
+    - Kämpfe wurden nicht mehr registriert
+
 ##### 1.16.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.9.2.0 migriert
