@@ -8,6 +8,7 @@
 **Bugfix**
 - Allgemein
     - Fehler in der FoE Integration hat zu einigen Fehlern geführt
+    - Fehlende Einstellungen führten zu Fehlern
 - PvP Angriffe
     - Kämpfe wurden nicht mehr registriert
 

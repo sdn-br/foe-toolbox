@@ -243,15 +243,18 @@ let Settings = {
 
 		if (s !== null) {
 			return is_string ? s : JSON.parse(s);
-
 		} else {
-
 			if (Settings.Preferences === null) {
 				console.error('Error getting default value of setting "' + name + '". config.json not loaded');
 				return null;
-
 			} else {
-				return Settings.Preferences.find(itm => itm['name'] === name)['status'];
+				let p = Settings.Preferences.find(itm => itm['name'] === name);
+				if (p === undefined) {
+					console.error('Error getting default value of setting "'+name+'". setting not found');
+					return null;
+				} else {
+					return p['status'];
+				}
 			}
 		}
 	},
