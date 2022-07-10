@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.16.3.0
+**Bugfix**
+- Stadtübersicht
+    - Gebäude am linken Rand wurden durch die letzte Vergrößerung der Stadtfläche nicht immer angezeigt
+
 ##### 1.16.2.0
 **Bugfix**
 - Ereignisse
