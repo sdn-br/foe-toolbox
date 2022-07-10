@@ -211,7 +211,7 @@ let HiddenRewards = {
             let StartTime = moment.unix(hiddenReward.starts|0),
                 EndTime = moment.unix(hiddenReward.expires|0);
 
-            if (EndTime > MainParser.getCurrentDateTime() && (!hiddenReward.isGE || !Settings.GetSetting('ExcludeRelics'))) {
+            if (EndTime > MainParser.getCurrentDateTime()) {
                 h.push(`<tr ${!hiddenReward.isVis ? 'class="unavailable"':''}>`);
                 let img =  hiddenReward.type;
                 if (hiddenReward.type.indexOf('outpost') > -1) {

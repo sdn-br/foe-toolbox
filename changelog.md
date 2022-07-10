@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.16.2.0
+**Bugfix**
+- Ereignisse
+    - Unter bestimmten Bedingungen wurden Ereignisse aus der Gildenexpedition nicht angezeigt
+
 ##### 1.16.1.0
 **Update**
 - Ereignisse
