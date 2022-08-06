@@ -47,6 +47,7 @@
 		/**
 		 * Loads a JavaScript in the website. The returned promise will be resolved once the code has been loaded.
 		 * @param {string} src the URL to load
+	 	* @param base
 		 * @returns {Promise<void>}
 		 */
 		 function promisedLoadCode(src, base="base") {
@@ -214,9 +215,11 @@
 			
 				// load foe-Proxy
 				await promisedLoadCode(chrome.extension.getURL('')+`js/foeproxy.js`,"proxy");
+				scriptLoaded("primed", "proxy");
 				await proxyLoaded;
 				// load the main
 				await promisedLoadCode(`${extUrl}js/web/_main/js/_main.js`,"main");
+				scriptLoaded("primed", "main");
 				await mainLoaded;
 
 				// wait for ant and i18n to be loaded

@@ -421,7 +421,7 @@ let Parts = {
 			}
 			else {
 				Parts.CopyOwnPlayerName = ExtPlayerName;
-            }
+			}
 
 			Parts.CopyFormatPerGB = (localStorage.getItem(Parts.GetStorageKey('CopyFormatPerGB', null)) === 'true');
 			if (!Parts.CopyFormatPerGB) {
@@ -448,6 +448,9 @@ let Parts = {
 
 				let SavedCopyIncludeOwnPart = localStorage.getItem(Parts.GetStorageKey('CopyIncludeOwnPart', null));
 				if (SavedCopyIncludeOwnPart !== null) Parts.CopyIncludeOwnPart = (SavedCopyIncludeOwnPart === 'true');
+
+				let SavedCopyPreP = localStorage.getItem(Parts.GetStorageKey('CopyPreP', null));
+				if (SavedCopyPreP !== null) Parts.CopyPreP = (SavedCopyPreP === 'true');
 
 				let SavedCopyDescending = localStorage.getItem(Parts.GetStorageKey('CopyDescending', null));
 				if (SavedCopyDescending !== null) Parts.CopyDescending = (SavedCopyDescending === 'true');
@@ -543,7 +546,7 @@ let Parts = {
 						}
 						else if (Parts.OneFPForNonFPPlace) {
 							FPRewards[Place] = 1;
-						} 
+						}
 						else {
 							FPRewards[Place] = 0;
 						}

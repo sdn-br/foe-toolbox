@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.18.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.10.0.0 migriert
+
+##### 1.17.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.9.3.0 migriert
+
 ##### 1.16.3.0
 **Bugfix**
 - Stadtübersicht
