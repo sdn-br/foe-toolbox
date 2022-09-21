@@ -24,7 +24,7 @@ let Kits = {
 	 * Get all sets from the server
 	 */
 	init: ()=> {
-		MainParser.loadJSON(extUrl + 'js/web/kits/data/sets.json', (data)=>{
+		MainParser.loadJSON(extUrl + 'js/web/kits/data/sets.json', (data)=> {
 			Kits.KitsjSON = JSON.parse(data);
 			Kits.BuildBox();
 		});
@@ -68,7 +68,7 @@ let Kits = {
 
 		Kits.ReadSets();
 	},
-
+	
 	/**
 	 * Refresh the Box
 	 */
@@ -131,7 +131,7 @@ let Kits = {
 				if (building['update']) {
 					itemUgr = inv.find(el => el['itemAssetName'] === building['update']);
 				}
-
+				
 				if (itemUgr && itemUgr['inStock'] < 1) {
 					itemUgr = '';
 				}
@@ -225,7 +225,7 @@ let Kits = {
 			}
 
 			// Building has asset buildings?
-			if (kits[set]['assets']) {	
+			if (kits[set]['assets']) {
 				for (let a in kits[set]['assets']) {
 					if(!kits[set]['assets'].hasOwnProperty(a)) {
 						break;
@@ -332,7 +332,7 @@ let Kits = {
 						let idx = itemName.indexOf(' - ', 0);
 						
 						if (idx === -1) {
-							idx = itemName.indexOf(' – ', 0); // looks the same but it isn't ¯\_(?)_/¯
+							idx = itemName.indexOf('Â â€“ ', 0); // looks the same but it isn't Â¯\_(ãƒ„)_/Â¯
 						}
 
 						if (idx === -1) {
@@ -364,7 +364,7 @@ let Kits = {
 				t += '<tr><th colspan="4" class="head">' + ChainSetIco +' '+ KitText + '</th></tr>';
 
 				if(buildings) {
-					buildings.forEach((e) => {
+					buildings.forEach((e)=> {
 						let rowTd = '';
 
 						if (e[0]['type'] === 'first') {
@@ -402,7 +402,7 @@ let Kits = {
 					t += `<tr><td colspan="4" class="assets-header">${i18n('Boxes.Kits.Extensions')}</td></tr>`;
 					let rowTd = '<td colspan="4"><div class="assets-row">';
 
-					assetRow.forEach((e) => {
+					assetRow.forEach((e)=> {
 						rowTd += Kits.ItemAssetDiv(e);
 					});
 
@@ -416,7 +416,7 @@ let Kits = {
 					t += `<tr><td colspan="4" class="assets-header">${i18n('Boxes.Kits.SelectionKit')}</td></tr>`;
 					let rowTd = '<td colspan="4"><div class="kits-row">';
 
-					kitRow.forEach((e) => {
+					kitRow.forEach((e)=> {
 						rowTd += Kits.ItemKitDiv(e);
 					});
 
@@ -604,7 +604,7 @@ let Kits = {
 			}
 			url = MainParser.InnoCDN + 'assets/city/buildings/' + [aName.slice(0, 1), '_SS', aName.slice(1)].join('') + '.png';
 		}
-
+		
 		let title = '';
 		if (!el['missing']) {
 			title = item['name'];
@@ -632,7 +632,7 @@ let Kits = {
 	 * @returns {[]}
 	 * @constructor
 	 */
-	GetInvententoryArray: () => {
+	GetInvententoryArray: ()=> {
 		let Ret = [];
 		for (let i in MainParser.Inventory) {
 			if (!MainParser.Inventory.hasOwnProperty(i)) continue;

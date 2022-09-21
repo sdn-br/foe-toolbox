@@ -23,8 +23,8 @@
 }
 
 #fp-collectorBody .head {
-	display: flex;
-	justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: 2px 5px;
     position: sticky;

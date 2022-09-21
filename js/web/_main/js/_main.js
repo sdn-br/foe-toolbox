@@ -450,27 +450,28 @@ GetFights = () =>{
 		if (data.responseData["error_code"] == 901) {
 			return;
 		}
-		if (data.responseData["armyId"] == 1 || data.responseData["state"]["round"] == 1 || data.responseData["battleType"]["totalWaves"] == 1) {
+		if (data.responseData["armyId"] === 1 || data.responseData["state"]["round"] === 1 || data.responseData["battleType"]["totalWaves"] === 1) {
 			let units = data.responseData.state.unitsOrder;
 			for (let i = 0; i < units.length; i++) {
 				const unit = units[i];
-				if (unit.teamFlag == 1 && data.responseData["battleType"]["totalWaves"] == 1) {
+				if (unit.teamFlag === 1 && data.responseData["battleType"]["totalWaves"] === 1) {
 					OwnUnits.push({ "unitTypeId": unit.unitTypeId, "startHitpoints": unit.startHitpoints, "bonuses": unit.bonuses, "abilities": unit.abilities });
-				} else if (unit.teamFlag == 2) {
+				} else if (unit.teamFlag === 2) {
 					EnemyUnits.push({ "unitTypeId": unit.unitTypeId, "startHitpoints": unit.startHitpoints, "bonuses": unit.bonuses, "abilities": unit.abilities });
 				}
 			}
-			Fights.push({enemy:EnemyUnits, own:OwnUnits, won:(data.responseData["state"]["winnerBit"] == 1 ? true:false)});
+
+			Fights.push({enemy:EnemyUnits, own:OwnUnits, won:(data.responseData["state"]["winnerBit"] === 1)});
 			EnemyUnits = [];
 			OwnUnits = [];
 		}
-		else if(data.responseData["battleType"]["totalWaves"] == 2 && data.responseData["battleType"]["currentWaveId"] == null){
+		else if(data.responseData["battleType"]["totalWaves"] === 2 && data.responseData["battleType"]["currentWaveId"] == null){
 			let units = data.responseData.state.unitsOrder;
 			for (let i = 0; i < units.length; i++) {
 				const unit = units[i];
-				if (unit.teamFlag == 1) {
+				if (unit.teamFlag === 1) {
 					OwnUnits.push({ "unitTypeId": unit.unitTypeId, "startHitpoints": unit.startHitpoints, "bonuses": unit.bonuses, "abilities": unit.abilities });
-				} else if (unit.teamFlag == 2) {
+				} else if (unit.teamFlag === 2) {
 					EnemyUnits.push({ "unitTypeId": unit.unitTypeId, "startHitpoints": unit.startHitpoints, "bonuses": unit.bonuses, "abilities": unit.abilities });
 				}
 			}
@@ -1101,11 +1102,11 @@ let MainParser = {
 	 * @param PlayerName
 	 */
 	GetPlayerLink: (PlayerID, PlayerName) => {
-		if (Settings.GetSetting('ShowPlayerLinks'))
+		if (Settings.GetSetting('ShowLinks'))
 		{
 			let PlayerLink = HTML.i18nReplacer(PlayerLinkFormat, { 'world': ExtWorld.toUpperCase(), 'playerid': PlayerID });
 
-			return `${PlayerName} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+			return `${PlayerName} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return PlayerName;
@@ -1116,12 +1117,12 @@ let MainParser = {
 	 * @param GuildID
 	 * @param GuildName
 	 */
-	GetGuildLink: (GuildID, GuildName) => {
-		if (Settings.GetSetting('ShowPlayerLinks'))
+	GetGuildLink: (GuildID, GuildName, WorldId) => {
+		if (Settings.GetSetting('ShowLinks'))
 		{
-			let GuildLink = HTML.i18nReplacer(GuildLinkFormat, { 'world': ExtWorld.toUpperCase(), 'guildid': GuildID });
+			let GuildLink = HTML.i18nReplacer(GuildLinkFormat, { 'world': WorldId.toUpperCase(), 'guildid': GuildID });
 
-			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return GuildName;
@@ -1133,11 +1134,11 @@ let MainParser = {
 	 * @param BuildingName
 	 */
 	GetBuildingLink: (BuildingID, BuildingName) => {
-		if (Settings.GetSetting('ShowPlayerLinks'))
+		if (Settings.GetSetting('ShowLinks'))
 		{
 			let BuildingLink = HTML.i18nReplacer(BuildingsLinkFormat, {'buildingid': BuildingID });
 
-			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg></a>`;
+			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return BuildingName;
@@ -1386,7 +1387,7 @@ let MainParser = {
 	 * @constructor
 	 */
 	UpdatePlayerDict: (d, Source, ListType = undefined) => {
-		let promise = new Promise((resolve, reject)=>{});
+		let promise = Promise.resolve();
 		if (Source === 'Conversation') {
 			for (let i in d['messages']) {
 				if (!d['messages'].hasOwnProperty(i))
@@ -1458,9 +1459,6 @@ let MainParser = {
 			}
 		}
 
-		else {
-			promise.resolve();
-		}
 		return promise;
 	},
 
@@ -1496,7 +1494,7 @@ let MainParser = {
 	 */
 	UpdatePlayerDictCore: (Player) => {
 
-		let promise;
+		let promise = Promise.resolve();
 		let PlayerID = Player['player_id'];
 
 		if (PlayerID !== undefined) {
@@ -1531,8 +1529,6 @@ let MainParser = {
 				}
 				return IndexDB.addUserFromPlayerDictIfNotExists(PlayerID, true);
 			});
-		} else {
-			promise = Promise.resolve();;
 		}
 		return promise;
 	},

@@ -11,13 +11,13 @@
  * **************************************************************************************
  */
 
-#mapTradeWarningDialog {
-    top: calc(50vh + 165px);
-    left: calc(50vw - 180px);
+#doubleFPprevention {
+    top: calc(50vh - 110px);
+    left: calc(50vw + 120px);
 }
 
-#mapTradeWarningDialogBody {
-    width: 180px;
+#doubleFPpreventionBody {
+    width: auto;
     height: 25px;
     display: flex;
     justify-content: center;

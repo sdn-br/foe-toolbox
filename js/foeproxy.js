@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -27,6 +27,7 @@ const FoEproxy = (function () {
 	// XHR-handler
 	/** @type {Record<string, undefined|Record<string, undefined|((data: FoE_NETWORK_TYPE, postData: any) => void)[]>>} */
 	const proxyMap = {};
+	const proxyRequestsMap = {};
 
 	/** @type {Record<string, undefined|((data: any, requestData: any) => void)[]>} */
 	const proxyMetaMap = {};
@@ -214,6 +215,54 @@ const FoEproxy = (function () {
 		pushFoeHelperMessage: function (method, data = null) {
 			_proxyWsAction('FoeHelperService', method, data);
 			_proxyWsAction('FoeHelperService', method, data);
+		},
+	
+		addRequestHandler: function (service, method, callback) {
+			// default service and method to 'all'
+			if (method === undefined) {
+				// @ts-ignore
+				callback = service;
+				service = method = 'all';
+			} else if (callback === undefined) {
+				// @ts-ignore
+				callback = method;
+				method = 'all';
+			}
+
+			let map = proxyRequestsMap[service];
+			if (!map) {
+				proxyRequestsMap[service] = map = {};
+			}
+			let list = map[method];
+			if (!list) {
+				map[method] = list = [];
+			}
+			if (list.indexOf(callback) !== -1) {
+				// already registered
+				return;
+			}
+			list.push(callback);
+		},
+
+		removeRequestHandler: function (service, method, callback) {
+			// default service and method to 'all'
+			if (method === undefined) {
+				callback = service;
+				service = method = 'all';
+			} else if (callback === undefined) {
+				callback = method;
+				method = 'all';
+			}
+
+			let map = proxyRequestsMap[service];
+			if (!map) {
+				return;
+			}
+			let list = map[method];
+			if (!list) {
+				return;
+			}
+			map[method] = list.filter(c => c !== callback);
 		}
 	};
 
@@ -357,6 +406,37 @@ const FoEproxy = (function () {
 		_proxyAction('all', 'all', data, filteredPostData, responseData);
 	}
 
+	/**
+	 * This function gets the callbacks from proxyRequestsMap[service][method] and executes them.
+	 */
+	 function _proxyRequestAction(service, method, postData) {
+		const map = proxyRequestsMap[service];
+		if (!map) {
+			return;
+		}
+		const list = map[method];
+		if (!list) {
+			return;
+		}
+		for (let callback of list) {
+			try {
+				callback(postData);
+			} catch (e) {
+				console.error(e);
+			}
+		}
+	}
+
+	/**
+	 * This function gets the callbacks from proxyRequestsMap[service][method],proxyRequestsMap[service]['all'] and proxyRequestsMap['all']['all'] and executes them.
+	 */
+	function proxyRequestAction(service, method, postData) {
+		_proxyRequestAction(service, method, postData);
+		_proxyRequestAction('all', method, postData);
+		_proxyRequestAction(service, 'all', postData);
+		_proxyRequestAction('all', 'all', postData);
+	}
+
 	// Achtung! Die XMLHttpRequest.prototype.open und XMLHttpRequest.prototype.send funktionen werden nicht zurück ersetzt,
 	//          falls anderer code den prototypen auch austauscht.
 	const XHR = XMLHttpRequest.prototype,
@@ -453,10 +533,31 @@ const FoEproxy = (function () {
 		}
 	}
 
+	function xhrOnSend(data) {
+		if (!proxyEnabled ) return;
+		if (!data) return;
+		try {
+			
+			let post;
+
+			if (typeof data === 'object' && data instanceof ArrayBuffer)
+				post = JSON.parse(new TextDecoder().decode(data))[0];
+			else 
+				post = JSON.parse(data)[0];
+
+			//console.log(post);
+			if (!post || !post.requestClass || !post.requestMethod || !post.requestData) return;
+			proxyRequestAction(post.requestClass, post.requestMethod, post);
+		} catch (e) {
+			console.log('Can\'t parse postData: ', data);
+		}
+	}
+
 	XHR.send = function (postData) {
 		if (proxyEnabled) {
 			const data = getRequestData(this);
 			data.postData = postData;
+			xhrOnSend(postData);
 			this.addEventListener('load', xhrOnLoadHandler, { capture: false, passive: true });
 		}
 

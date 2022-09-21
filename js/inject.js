@@ -14,8 +14,8 @@
 // separate code from global scope
 {
 	let scripts = {
-		main: ["once"],
-		proxy: ["once"],
+		main: ["once", "primed"],
+		proxy: ["once", "primed"],
 		vendor: ["once", "primed"],
 		internal: ["once", "primed"]
 	};

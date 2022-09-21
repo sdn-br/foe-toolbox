@@ -495,6 +495,8 @@ let HTML = {
 			top = (el.offsetTop - pos2);
 			left = (el.offsetLeft - pos1);
 
+			let noOverflow = $('.overflowHidden').length > 0;
+
 			// Schutz gegen "zu Hoch geschoben"
 			if (top < 0) {
 				top = 0;
@@ -559,6 +561,11 @@ let HTML = {
 			else {
 				box.width(s[0]).height(s[1]);
 			}
+		}
+		else {
+			setTimeout(()=>{
+				box.width(box.width()).height(box.height());
+			}, 800);
 		}
 
 		box.append(grip);

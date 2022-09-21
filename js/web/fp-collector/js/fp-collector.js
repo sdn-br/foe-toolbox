@@ -17,7 +17,7 @@ FoEproxy.addHandler('GrandPrizeService', 'getGrandPrizes', (data, postData) => {
 
 FoEproxy.addHandler('TimedSpecialRewardService', 'getTimedSpecial', (data, postData) => {
 	if (!FPCollector.curentEvent) {
-	FPCollector.curentEvent = data.responseData['context'].replace(/_tournament/g,'');
+		FPCollector.curentEvent = data.responseData['context'].replace(/_tournament/g,'');
 	}
 });
 
@@ -60,13 +60,13 @@ FoEproxy.addHandler('RewardService', 'collectReward', (data, postData) => {
 		}
 	}
 
-	if(d['subType'] !== 'strategy_points'){
-		if (data.responseData[1] === 'castle_system') { // Tägliche Belohnungskiste
+	if (d['subType'] !== 'strategy_points') {
+		if (data.responseData[1] === 'castle_system') { // TÃ¤gliche Belohnungskiste
 			event = 'castle_system_daily_reward_chest';
 			notes = d['name'];
 			amount = d.rewards[0]['amount'];
 		}
-		else if (data.responseData[1] === 'pvp_arena') { // persönlicher Rang gewinn Truhe
+		else if (data.responseData[1] === 'pvp_arena') { // persÃ¶nlicher Rang gewinn Truhe
 			event = 'pvp_arena';
 			notes = d['name'];
 			amount = 0;
@@ -83,15 +83,15 @@ FoEproxy.addHandler('RewardService', 'collectReward', (data, postData) => {
 				return;
 			}
 		}
-		/*else if (data.responseData[0][2] && data.responseData[0][2]['subType'] === 'strategy_points') { // Event-Überraschungskiste
-			console.log('??Event-Überraschungskiste', data, postData);
+		/*else if (data.responseData[0][2] && data.responseData[0][2]['subType'] === 'strategy_points') { // Event-Ãœberraschungskiste
+			console.log('âœ”ï¸Event-Ãœberraschungskiste', data, postData);
 			event = 'event';
 			notes = i18n('Boxes.FPCollector.event_mystery_item');
 			amount = data.responseData[0][2]['amount'];
 		}*/
 		else {
-		return;
-	}
+			return;
+		}
 	}
 	else if (event === 'default') {	// default is hiddenreward or leaguereward or flying island incidents
 		event = 'hiddenReward';
@@ -99,13 +99,13 @@ FoEproxy.addHandler('RewardService', 'collectReward', (data, postData) => {
 		if (isCurrentlyInOutpost === 1) {
 			event = 'shards';
 		}
-		if(postData[0].requestMethod === 'useItem'){
+		if (postData[0].requestMethod === 'useItem') {
 			event = !FPCollector.curentEvent ? 'event' : FPCollector.curentEvent;
 			notes = i18n('Boxes.FPCollector.league_reward');
 		}
 		if (postData[0].requestMethod === 'advanceQuest') {
 			return;
-			}
+		}
 	}
 
 	StrategyPoints.insertIntoDB({
@@ -153,7 +153,7 @@ FoEproxy.addHandler('InventoryService', 'getItem', (data, postData) => {
 FoEproxy.addHandler('GuildExpeditionService', 'openChest', (data, postData) => {
 	const d = data['responseData'];
 
-	if(d['subType'] !== 'strategy_points'){
+	if (d['subType'] !== 'strategy_points') {
 		return;
 	}
 
@@ -169,7 +169,7 @@ FoEproxy.addHandler('GuildExpeditionService', 'openChest', (data, postData) => {
 FoEproxy.addHandler('FriendsTavernService', 'getOtherTavern', (data, postData) => {
 	const d = data['responseData'];
 
-	if(!d['rewardResources'] || !d['rewardResources']['resources'] || !d['rewardResources']['resources']['strategy_points'] || !postData[0] || !postData[0]['requestData'] || !postData[0]['requestData'][0]){
+	if (!d['rewardResources'] || !d['rewardResources']['resources'] || !d['rewardResources']['resources']['strategy_points'] || !postData[0] || !postData[0]['requestData'] || !postData[0]['requestData'][0]) {
 		return;
 	}
 
@@ -199,30 +199,30 @@ FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
 
 FoEproxy.addHandler('OtherPlayerService', 'rewardPlunder', (data, postData) => {
 	setTimeout(function() {
-	for (let i = 0; i < data.responseData.length; i++) {
-		let PlunderReward = data.responseData[i];
+		for (let i = 0; i < data.responseData.length; i++) {
+			let PlunderReward = data.responseData[i];
 
-		if (PlunderReward['product'] && PlunderReward['product']['resources'] && PlunderReward['product']['resources']['strategy_points']) {
-			let PlunderedFP = PlunderReward['product']['resources']['strategy_points'];
-				const player = PlayerDict[FPCollector.lastVisitedPlayer];	
+			if (PlunderReward['product'] && PlunderReward['product']['resources'] && PlunderReward['product']['resources']['strategy_points']) {
+				let PlunderedFP = PlunderReward['product']['resources']['strategy_points'];
+				const player = PlayerDict[FPCollector.lastVisitedPlayer];
 				const entity = MainParser.CityEntities[FPCollector.lastPlunderedEntity];
 
-			StrategyPoints.insertIntoDB({
-				event: 'plunderReward',
+				StrategyPoints.insertIntoDB({
+					event: 'plunderReward',
 					notes: player ? `<img src="${MainParser.InnoCDN + 'assets/shared/avatars/' + (MainParser.PlayerPortraits[player['Avatar']] || 'portrait_433')}.jpg"><span>${MainParser.GetPlayerLink(player['PlayerID'], player['PlayerName'])}${entity ? ' - ' + entity['name'] : ''}</span>` : '',
-				amount: PlunderedFP,
-				date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
-			});
+					amount: PlunderedFP,
+					date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
+				});
+			}
 		}
-	}
 	}, 1000);
 });
 
 
 // double Collection by Blue Galaxy contains [id, type] -  old, should not get triggered anymore
 FoEproxy.addHandler('CityMapService', 'showEntityIcons', (data, postData) => {
-	for(let i in data['responseData']) {
-		if(!data['responseData'].hasOwnProperty(i)) continue;
+	for (let i in data['responseData']) {
+		if (!data['responseData'].hasOwnProperty(i)) continue;
 
 		if (data['responseData'][i]['type'] !== 'citymap_icon_double_collection') continue;
 
@@ -257,8 +257,8 @@ FoEproxy.addHandler('CityMapService', 'showAppliedBonus', (data, postData) => {
 		if (BonusId !== data['responseData']['bonus'][j]) continue;
 
 		let CityMapID = data['responseData']['entityId'],
-			Building = MainParser.CityMapData[CityMapID],
-			CityEntity = MainParser.CityEntities[Building['cityentity_id']];
+		Building = MainParser.CityMapData[CityMapID],
+		CityEntity = MainParser.CityEntities[Building['cityentity_id']];
 
 		let Production = Productions.readType(Building);
 		let FP = Production?.products?.strategy_points;
@@ -266,10 +266,10 @@ FoEproxy.addHandler('CityMapService', 'showAppliedBonus', (data, postData) => {
 		if (!FP) continue;
 
 		StrategyPoints.insertIntoDB({
-			event: 'double_collection',
-			notes: CityEntity['name'],
-			amount: FP,
-			date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
+		event: 'double_collection',
+		notes: CityEntity['name'],
+		amount: FP,
+		date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 		});
 	}
 });
@@ -306,7 +306,7 @@ let FPCollector = {
 	ShowFPCollectorBox: async ()=> {
 		moment.locale(i18n('Local'));
 
-		if( $('#fp-collector').length < 1 )
+		if ( $('#fp-collector').length < 1 )
 		{
 			FPCollector.DatePicker = null;
 
@@ -345,7 +345,7 @@ let FPCollector = {
 
 			// get all days without entries and block them in the Litepicker
 			let hidePicker = false;
-			if(startMoment && endMoment)
+			if (startMoment && endMoment)
 			{
 				while (startMoment.isBefore(endMoment, 'day'))
 				{
@@ -396,7 +396,7 @@ let FPCollector = {
 
 		$('#fp-collector-total-fp').text(await FPCollector.calculateTotal());
 
-		if(FPCollector.TodayEntries.length === 0)
+		if (FPCollector.TodayEntries.length === 0)
 		{
 			tr.push(`<div class="text-center" style="padding:15px"><em>${i18n('Boxes.FPCollector.NoEntriesFound')}</em></div>`);
 		}
@@ -473,7 +473,7 @@ let FPCollector = {
 								amount: Number(Reward['subType']),
 								date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
 							});
-					}
+						}
 						else if (Reward['subType'] === 'strategy_points') { // normale Quest-Belohnung
 							StrategyPoints.insertIntoDB({
 								event: 'collectReward',

@@ -80,66 +80,72 @@
 		"sort": 12
 	},
 	{
-		"name": "ShowMapTradeWarning",
-		"status": true,
+		"name": "doubleFPtimeout",
+		"callback": "doubleFPtimeout",
 		"group": "Boxes",
 		"sort": 13
 	},
 	{
-		"name": "ShowScoutingTimes",
+		"name": "ShowMapTradeWarning",
 		"status": true,
 		"group": "Boxes",
 		"sort": 14
 	},
 	{
-		"name": "Show2kQuestMark",
-		"status": false,
+		"name": "ShowScoutingTimes",
+		"status": true,
 		"group": "Boxes",
 		"sort": 15
 	},
 	{
-		"name": "ShowPlayerLinks",
-		"status": true,
+		"name": "Show2kQuestMark",
+		"status": false,
 		"group": "Boxes",
 		"sort": 16
+	},
+	{
+		"name": "ShowLinks",
+		"status": true,
+		"group": "Boxes",
+		"sort": 17
 	},
 	{
 		"name": "HideHelperDuringBattle",
 		"status": false,
 		"group": "Boxes",
-		"sort": 17
+		"sort": 18
 	},
 	{
 		"name": "ShowAztecHelper",
 		"status": true,
 		"group": "Boxes",
-		"sort": 18
+		"sort": 19
 	},
 	{	"name": "ShowNeighborsLootables",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 19
+		"sort": 20
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 20
+		"sort": 21
 	},
 	{
 		"name": "ShowPossibleInvestments",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 21
+		"sort": 22
 	},
 	{
 		"name": "ShowGvGFightHud",
 		"status": false,
 		"group": "Boxes",
-		"sort": 22
+		"sort": 23
 	},
 	{
 		"name": "ChangeLanguage",

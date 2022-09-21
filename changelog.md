@@ -1,5 +1,9 @@
 ## Changelog - Extension
 
+##### 1.19.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.11.0.0 migriert
+
 ##### 1.18.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.10.0.0 migriert
