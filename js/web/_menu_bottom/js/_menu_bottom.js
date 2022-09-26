@@ -23,9 +23,9 @@ let _menu_bottom = {
 
 	BuildOverlayMenu: () => {
 
-		let hud = $('<div />').attr({'id': 'foe-toolbox-hud','class': 'hud-bottom'}).addClass('game-cursor'),
-			hudWrapper = $('<div />').attr('id', 'foe-toolbox-hud-wrapper'),
-			hudInner = $('<div />').attr('id', 'foe-toolbox-hud-slider');
+		let hud = $('<div />').attr({'id': 'foe-helper-hud','class': 'hud-bottom'}).addClass('game-cursor'),
+			hudWrapper = $('<div />').attr('id', 'foe-helper-hud-wrapper'),
+			hudInner = $('<div />').attr('id', 'foe-helper-hud-slider');
 
 		hudWrapper.append(hudInner);
 
@@ -50,7 +50,7 @@ let _menu_bottom = {
 			// Determine the correct place for the menu
 			_menu_bottom.SetMenuWidth();
 
-			window.dispatchEvent(new CustomEvent('foe-toolbox#menu_loaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#menu_loaded'));
 		});
 	},
 
@@ -61,7 +61,7 @@ let _menu_bottom = {
 	* @param MenuItem
 	*/
 	InsertMenuItem: (MenuItem) => {
-		$('#foe-toolbox-hud-slider').append(MenuItem);
+		$('#foe-helper-hud-slider').append(MenuItem);
 	},
 
 
@@ -76,7 +76,7 @@ let _menu_bottom = {
 
 		if (reset) {
 			// Slider nach links resetten
-			$('#foe-toolbox-hud-slider').css({ 
+			$('#foe-helper-hud-slider').css({ 
 				left: 0
 			});
 
@@ -100,12 +100,12 @@ let _menu_bottom = {
 	 *
 	 */
 	Prepare: () => {
-		let MenuItemCount = $("#foe-toolbox-hud-slider").children().length;
+		let MenuItemCount = $("#foe-helper-hud-slider").children().length;
 
-		_menu.HudCount = Math.floor((($(window).outerWidth() - 50) - $('#foe-toolbox-hud').offset().left) / _menu_bottom.btnSize);
+		_menu.HudCount = Math.floor((($(window).outerWidth() - 50) - $('#foe-helper-hud').offset().left) / _menu_bottom.btnSize);
 		_menu.HudCount = Math.min(_menu.HudCount, MenuItemCount);
 		if (_menu.HudCount <= 0) {
-			$('#foe-toolbox-hud').remove();
+			$('#foe-helper-hud').remove();
 			window.onresize = function(){};
 			_menu.CallSelectedMenu('Box');
 			return;
@@ -122,9 +122,9 @@ let _menu_bottom = {
 		_menu.HudWidth = (_menu.HudCount * _menu_bottom.btnSize);
 		_menu.SlideParts = Math.ceil(MenuItemCount / _menu.HudCount);
 
-		$('#foe-toolbox-hud').width(_menu.HudWidth);
-		$('#foe-toolbox-hud-wrapper').width(_menu.HudWidth);
-		$('#foe-toolbox-hud-slider').width( ($("#foe-toolbox-hud-slider").children().length * _menu_bottom.btnSize));
+		$('#foe-helper-hud').width(_menu.HudWidth);
+		$('#foe-helper-hud-wrapper').width(_menu.HudWidth);
+		$('#foe-helper-hud-slider').width( ($("#foe-helper-hud-slider").children().length * _menu_bottom.btnSize));
 	},
 
 
@@ -168,12 +168,12 @@ let _menu_bottom = {
 		});
 
 		// Sortierfunktion der Menü-items
-		$('#foe-toolbox-hud-slider').sortable({
+		$('#foe-helper-hud-slider').sortable({
 			placeholder: 'menu-placeholder',
 			axis: 'x',
 			distance: 15,
 			start: function () {
-				$('#foe-toolbox-hud').addClass('is--sorting');
+				$('#foe-helper-hud').addClass('is--sorting');
 			},
 			sort: function () {
 
@@ -214,7 +214,7 @@ let _menu_bottom = {
 
 				localStorage.setItem('MenuSort', JSON.stringify(_menu.Items));
 
-				$('#foe-toolbox-hud').removeClass('is--sorting');
+				$('#foe-helper-hud').removeClass('is--sorting');
 				if (_menu.equalTo(storedItems)) return;
 
 				HTML.ShowToastMsg({
@@ -240,10 +240,10 @@ let _menu_bottom = {
 		_menu.ActiveSlide++;
 
 		_menu.MenuScrollLeft -= _menu.HudWidth;
-		if (_menu.ActiveSlide * _menu.HudWidth > $('#foe-toolbox-hud-slider').width())
-			_menu.MenuScrollLeft = - (($('#foe-toolbox-hud-slider').width()/_menu.HudWidth) - 1) *_menu.HudWidth;
+		if (_menu.ActiveSlide * _menu.HudWidth > $('#foe-helper-hud-slider').width())
+			_menu.MenuScrollLeft = - (($('#foe-helper-hud-slider').width()/_menu.HudWidth) - 1) *_menu.HudWidth;
 
-		$('#foe-toolbox-hud-slider').css({
+		$('#foe-helper-hud-slider').css({
 			left: _menu.MenuScrollLeft + 'px'
 		});
 
@@ -272,7 +272,7 @@ let _menu_bottom = {
 		else
 			_menu.MenuScrollLeft += _menu.HudWidth;
 
-		$('#foe-toolbox-hud-slider').css({
+		$('#foe-helper-hud-slider').css({
 			left: _menu.MenuScrollLeft + 'px'
 		});
 

@@ -698,12 +698,12 @@ Tabs */
 /*----------------------------------------------------------------------------------------------------------------------
 Accordion */
 
-.foetoolbox-accordion strong,
-.foetoolbox-accordion span {
+.foehelper-accordion strong,
+.foehelper-accordion span {
 	display: inline-block;
 }
 
-.foetoolbox-accordion-head {
+.foehelper-accordion-head {
 	display: flex;
 	flex-direction: row;
 	margin-bottom: 2px;
@@ -713,7 +713,7 @@ Accordion */
 	position: relative;
 }
 
-.foetoolbox-accordion-head::after {
+.foehelper-accordion-head::after {
 	content: ' ';
 	background-image: url('../images/hud/chevron-left.svg');
 	background-size: contain;
@@ -724,21 +724,21 @@ Accordion */
 	top: 4px;
 }
 
-.foetoolbox-accordion.open .foetoolbox-accordion-head::after {
+.foehelper-accordion.open .foehelper-accordion-head::after {
 	background-image: url('../images/hud/chevron-down.svg');
 }
 
-.foetoolbox-accordion-body {
+.foehelper-accordion-body {
 	display: none;
 	background-color: rgba(0,0,0,0.25);
 }
 
-.foetoolbox-accordion-body div {
+.foehelper-accordion-body div {
 	font-size: 90%;
 	padding: 2px 0;
 }
 
-.foetoolbox-accordion.open .foetoolbox-accordion-body {
+.foehelper-accordion.open .foehelper-accordion-body {
 	display: block;
 }
 
@@ -842,7 +842,7 @@ FP-Bar */
 .window-map,
 .window-close,
 .window-head:not(span),
-.foe-toolbox-overlay,
+.foe-helper-overlay,
 .button-own,
 .window-box,
 .cursor-default,
@@ -1449,7 +1449,7 @@ FP-Bar */
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-.foe-toolbox-overlay {
+.foe-helper-overlay {
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -1611,7 +1611,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* menu right and bottom */
 
-#foe-toolbox-hud {
+#foe-helper-hud {
 	position: absolute;
 	z-index: 150;
 	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
@@ -1622,7 +1622,7 @@ input[type="range"]::-webkit-slider-thumb {
 	box-shadow: 0 0 1px 1px var(--black-50);
 }
 
-#foe-toolbox-hud-wrapper {
+#foe-helper-hud-wrapper {
 	position: absolute;
 	overflow: hidden;
 }

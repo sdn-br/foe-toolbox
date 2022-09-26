@@ -396,6 +396,9 @@ let Looting = {
 
 		Looting.Render();
 
+		let unitScale = parseInt(Unit.Settings.pictogramScaling) + 1 + '/5';
+		document.querySelector('#looting').style.setProperty('--unit_scale', unitScale);
+
 		$('#looting').on('click', '#lootingBody .load-1st-page', function () {
 			if (Looting.loading) {
 				return;
@@ -816,9 +819,11 @@ let Looting = {
 		const healtPerc = MainParser.round((1 - ((startHP - endHP) / startHP)) * 100);
 		const attBoost = unit.attBoost || 0;
 		const defBoost = unit.defBoost || 0;
+		const type = Unit.Types.find(obj => (obj['unitTypeId'] === unit.unitTypeId))
+		const era = Technologies.Eras[type.minEra];
 
-		return `<div class="unit" title="unit: ${unit.unitTypeId}, HP: ${endHP}/${startHP}, attack boost: ${attBoost}, defend boost: ${defBoost}">
-					<div class="units-icon ${unit.unitTypeId}"></div>
+		return `<div class="unit" title="${i18n('Boxes.Looting.Unit')}: ${type.name} (${i18n('Eras.' + era)}), HP: ${endHP}/${startHP}, ${i18n('Boxes.Looting.Attack')}: ${attBoost}, ${i18n('Boxes.Looting.Defense')}: ${defBoost}">
+					<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}" style="background-image:url('${MainParser.InnoCDN}assets/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png')"></div>
 						<div class="health">
 						<span style="width: ${healtPerc}%"></span>
 					</div>

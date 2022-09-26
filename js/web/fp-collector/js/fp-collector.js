@@ -409,15 +409,15 @@ let FPCollector = {
 				const sumTotal = await FPCollector.calculateTotalByType(event);
 				const entriesEvent = FPCollector.getEntriesByEvent(event);
 
-				tr.push(`<div class="foetoolbox-accordion ${event}">`);
+				tr.push(`<div class="foehelper-accordion ${event}">`);
 
-				tr.push(	`<div class="foetoolbox-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
+				tr.push(	`<div class="foehelper-accordion-head game-cursor ${event}-head" onclick="FPCollector.ToggleHeader('${event}')">
 								<span class="image"></span>
 								<strong class="text-warning">${sumTotal}${i18n('Boxes.FPCollector.FP')}</strong>
 								<span>${i18n('Boxes.FPCollector.' + event)}</span>
 							</div>`);
 
-				tr.push(	`<div class="foetoolbox-accordion-body ${event}-body">`);
+				tr.push(	`<div class="foehelper-accordion-body ${event}-body">`);
 
 				 entriesEvent.forEach(e => {
 					 tr.push(`<div>
@@ -608,7 +608,7 @@ let FPCollector = {
 		let $this = $(`.${event}`),
 			isOpen = $this.hasClass('open');
 
-		$('#fp-collectorBodyInner .foetoolbox-accordion').removeClass('open');
+		$('#fp-collectorBodyInner .foehelper-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

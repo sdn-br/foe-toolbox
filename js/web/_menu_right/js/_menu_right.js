@@ -17,9 +17,9 @@ let _menu_right = {
 	 *
 	 */
 	BuildOverlayMenu: () => {
-		let hud = $('<div />').attr({'id': 'foe-toolbox-hud','class': 'hud-right'}).addClass('game-cursor'),
-			hudWrapper = $('<div />').attr('id', 'foe-toolbox-hud-wrapper'),
-			hudInner = $('<div />').attr('id', 'foe-toolbox-hud-slider');
+		let hud = $('<div />').attr({'id': 'foe-helper-hud','class': 'hud-right'}).addClass('game-cursor'),
+			hudWrapper = $('<div />').attr('id', 'foe-helper-hud-wrapper'),
+			hudInner = $('<div />').attr('id', 'foe-helper-hud-slider');
 
 		hudWrapper.append(hudInner);
 
@@ -45,7 +45,7 @@ let _menu_right = {
 			// korrekten Platz für das Menu ermitteln
 			_menu_right.SetMenuHeight();
 
-			window.dispatchEvent(new CustomEvent('foe-toolbox#menu_loaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#menu_loaded'));
 		});
 
 	},
@@ -57,7 +57,7 @@ let _menu_right = {
 	* @param MenuItem
 	*/
 	InsertMenuItem: (MenuItem) => {
-		$('#foe-toolbox-hud-slider').append(MenuItem);
+		$('#foe-helper-hud-slider').append(MenuItem);
     },
 
 
@@ -72,7 +72,7 @@ let _menu_right = {
 
 		if (reset) {
 			// Slider nach oben resetten
-			$('#foe-toolbox-hud-slider').css({
+			$('#foe-helper-hud-slider').css({
 				'top': '0'
 			});
 
@@ -96,13 +96,13 @@ let _menu_right = {
 	 *
 	 */
 	Prepare: () => {
-		let MenuItemCount = $("#foe-toolbox-hud-slider").children().length;
+		let MenuItemCount = $("#foe-helper-hud-slider").children().length;
 
-		_menu.HudCount = Math.floor((($(window).outerHeight() - 50) - $('#foe-toolbox-hud').offset().top) / 55);
+		_menu.HudCount = Math.floor((($(window).outerHeight() - 50) - $('#foe-helper-hud').offset().top) / 55);
 		_menu.HudCount = Math.min(_menu.HudCount, MenuItemCount);
 
 		if (_menu.HudCount <= 0) {
-			$('#foe-toolbox-hud').remove();
+			$('#foe-helper-hud').remove();
 			_menu.CallSelectedMenu('Box')
 		}
 			
@@ -116,8 +116,8 @@ let _menu_right = {
 		_menu.HudHeight = (_menu.HudCount * 55);
 		_menu.SlideParts = Math.ceil(MenuItemCount / _menu.HudCount);
 
-		$('#foe-toolbox-hud').height(_menu.HudHeight + 2);
-		$('#foe-toolbox-hud-wrapper').height(_menu.HudHeight);
+		$('#foe-helper-hud').height(_menu.HudHeight + 2);
+		$('#foe-helper-hud-wrapper').height(_menu.HudHeight);
 	},
 
 
@@ -166,12 +166,12 @@ let _menu_right = {
 		});
 
 		// Sortierfunktion der Menü-items
-		$('#foe-toolbox-hud-slider').sortable({
+		$('#foe-helper-hud-slider').sortable({
 			placeholder: 'menu-placeholder',
 			axis: 'y',
 			distance: 15,
 			start: function () {
-				$('#foe-toolbox-hud').addClass('is--sorting');
+				$('#foe-helper-hud').addClass('is--sorting');
 			},
 			sort: function () {
 
@@ -210,7 +210,7 @@ let _menu_right = {
 
 				localStorage.setItem('MenuSort', JSON.stringify(_menu.Items));
 
-				$('#foe-toolbox-hud').removeClass('is--sorting');
+				$('#foe-helper-hud').removeClass('is--sorting');
 
 				HTML.ShowToastMsg({
 					show: 'force',
@@ -235,10 +235,10 @@ let _menu_right = {
 
 		_menu.ActiveSlide++;
 		_menu.MenuScrollTop -= _menu.HudHeight;
-		if (_menu.ActiveSlide * _menu.HudHeight > $('#foe-toolbox-hud-slider').height())
-			_menu.MenuScrollTop = - (($('#foe-toolbox-hud-slider').height()/_menu.HudHeight) - 1) *_menu.HudHeight;
+		if (_menu.ActiveSlide * _menu.HudHeight > $('#foe-helper-hud-slider').height())
+			_menu.MenuScrollTop = - (($('#foe-helper-hud-slider').height()/_menu.HudHeight) - 1) *_menu.HudHeight;
 
-		$('#foe-toolbox-hud-slider').css({
+		$('#foe-helper-hud-slider').css({
 			'top': _menu.MenuScrollTop + 'px'
 		});
 
@@ -268,7 +268,7 @@ let _menu_right = {
 		else
 		_menu.MenuScrollTop += _menu.HudHeight;
 
-		$('#foe-toolbox-hud-slider').css({
+		$('#foe-helper-hud-slider').css({
 			'top': _menu.MenuScrollTop + 'px'
 		});
 

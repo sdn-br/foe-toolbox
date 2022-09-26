@@ -12,7 +12,7 @@
  */
 
 
-#foe-toolbox-hud.hud-right {
+#foe-helper-hud.hud-right {
 	right: 0;
 	top: 515px;
 	width: 63px;
@@ -45,14 +45,14 @@
 }
 
 
-.hud-right #foe-toolbox-hud-wrapper {
+.hud-right #foe-helper-hud-wrapper {
 	width: inherit;
 	height: 218px;
 	right: 0;
 	top: 22px;
 }
 
-.hud-right #foe-toolbox-hud-slider {
+.hud-right #foe-helper-hud-slider {
 	position: absolute;
 	top: 0;
 	right: 3px;

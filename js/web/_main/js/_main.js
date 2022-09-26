@@ -17,7 +17,7 @@
 	function checkForJQuery() {
 		if (typeof jQuery !== 'undefined') {
 			clearInterval(intval);
-			window.dispatchEvent(new CustomEvent('foe-toolbox#jQuery-loaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#jQuery-loaded'));
 		}
 	}
 	intval = setInterval(checkForJQuery, 1);
@@ -55,14 +55,14 @@ let ApiURL = 'https://api.foe-rechner.de/',
 	PlayerLinkFormat = 'https://foe.scoredb.io/__world__/Player/__playerid__',
 	GuildLinkFormat = 'https://foe.scoredb.io/__world__/Guild/__guildid__',
 	BuildingsLinkFormat = 'https://forgeofempires.fandom.com/wiki/__buildingid__',
-	LinkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foetoolbox-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg>';
+	LinkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="22pt" height="22pt" viewBox="0 0 22 22"><g><path id="foehelper-external-link-icon" d="M 13 0 L 13 2 L 18.5625 2 L 6.28125 14.28125 L 7.722656 15.722656 L 20 3.4375 L 20 9 L 22 9 L 22 0 Z M 0 4 L 0 22 L 18 22 L 18 9 L 16 11 L 16 20 L 2 20 L 2 6 L 11 6 L 13 4 Z M 0 4 "/></g></svg>';
 
 // Übersetzungen laden
 let i18n_loaded = false;
 const i18n_loadPromise = (async () => {
 	const sleep = delay => new Promise(resolve => setTimeout(resolve, delay));
 	const vendorsLoadedPromise = new Promise(resolve =>
-		window.addEventListener('foe-toolbox#vendors-loaded', resolve, { passive: true, once: true })
+		window.addEventListener('foe-helper#vendors-loaded', resolve, { passive: true, once: true })
 	);
 
 	try {
@@ -447,11 +447,12 @@ GetFights = () =>{
 	// Kampf beendet
 	FoEproxy.addHandler('BattlefieldService', 'startByBattleType', (data, postData) => {
 		// Kampf beendet
-		if (data.responseData["error_code"] == 901) {
+		if (data.responseData["error_code"] === 901) {
 			return;
 		}
 		if (data.responseData["armyId"] === 1 || data.responseData["state"]["round"] === 1 || data.responseData["battleType"]["totalWaves"] === 1) {
 			let units = data.responseData.state.unitsOrder;
+
 			for (let i = 0; i < units.length; i++) {
 				const unit = units[i];
 				if (unit.teamFlag === 1 && data.responseData["battleType"]["totalWaves"] === 1) {

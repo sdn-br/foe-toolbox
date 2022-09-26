@@ -24,19 +24,19 @@
 		scripts[base].splice(scripts[base].indexOf(src),1);
 		if (scripts.internal.length == 1) {
 			scripts.internal.splice(scripts.internal.indexOf("once"),1);
-			window.dispatchEvent(new CustomEvent('foe-toolbox#loaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#loaded'));
 		}
 		if (scripts.main.length == 1) {
 			scripts.main.splice(scripts.main.indexOf("once"),1);
-			window.dispatchEvent(new CustomEvent('foe-toolbox#mainloaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#mainloaded'));
 		}
 		if (scripts.proxy.length == 1) {
 			scripts.proxy.splice(scripts.proxy.indexOf("once"),1);
-			window.dispatchEvent(new CustomEvent('foe-toolbox#proxyloaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#proxyloaded'));
 		}
 		if (scripts.vendor.length == 1) {
 			scripts.vendor.splice(scripts.vendor.indexOf("once"),1);
-			window.dispatchEvent(new CustomEvent('foe-toolbox#vendors-loaded'));
+			window.dispatchEvent(new CustomEvent('foe-helper#vendors-loaded'));
 		}
 	};
 
@@ -86,17 +86,17 @@
 		// check whether jQuery has been loaded in the DOM
 		// => Catch jQuery Loaded event
 		const jQueryLoading = new Promise(resolve => {
-			window.addEventListener('foe-toolbox#jQuery-loaded', evt => {
+			window.addEventListener('foe-helper#jQuery-loaded', evt => {
 				resolve();
 			}, {capture: false, once: true, passive: true});
 		});
 		const mainLoaded = new Promise(resolve => {
-			window.addEventListener('foe-toolbox#mainloaded', evt => {
+			window.addEventListener('foe-helper#mainloaded', evt => {
 				resolve();
 			}, {capture: false, once: true, passive: true});
 		});
 		const proxyLoaded = new Promise(resolve => {
-			window.addEventListener('foe-toolbox#proxyloaded', evt => {
+			window.addEventListener('foe-helper#proxyloaded', evt => {
 				resolve();
 			}, {capture: false, once: true, passive: true});
 		});
@@ -245,7 +245,7 @@
 
 			} catch (err) {
 				// make sure that the packet buffer in the FoEproxy does not fill up in the event of an incomplete loading.
-				window.dispatchEvent(new CustomEvent('foe-toolbox#error-loading'));
+				window.dispatchEvent(new CustomEvent('foe-helper#error-loading'));
 			}
 		}
 

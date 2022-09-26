@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.19.1.0
+**Bugfix**
+- PvP Angriffe
+    - Bilder der Armeen werden wieder angezeigt
+
 ##### 1.19.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.11.0.0 migriert

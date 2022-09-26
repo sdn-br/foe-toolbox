@@ -266,7 +266,7 @@ const FoEproxy = (function () {
 		}
 	};
 
-	window.addEventListener('foe-toolbox#loaded', () => {
+	window.addEventListener('foe-helper#loaded', () => {
 		const xhrQ = xhrQueue;
 		xhrQueue = null;
 		const wsQ = wsQueue;
@@ -276,7 +276,7 @@ const FoEproxy = (function () {
 		wsQ.forEach(wsMessage => wsMessageHandler(wsMessage));
 	}, { capture: false, once: true, passive: true });
 
-	window.addEventListener('foe-toolbox#error-loading', () => {
+	window.addEventListener('foe-helper#error-loading', () => {
 		xhrQueue = null;
 		wsQueue = null;
 		proxyEnabled = false;

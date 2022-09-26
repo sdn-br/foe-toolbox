@@ -442,7 +442,7 @@ let Alerts = function(){
 			// [pref] option to create a new alert when plunder (to return in 24 hours) ?
 			aux: {
 				key: {
-					generate: (key) => { return 'foe-toolbox-alerts-' + key; }
+					generate: (key) => { return 'foe-helper-alerts-' + key; }
 				}
 			},
 

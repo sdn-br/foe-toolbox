@@ -123,9 +123,9 @@ let _menu = {
 	 * @constructor
 	 */
 	HideButton: (buttonId) => {
-		if ($('#foe-toolbox-hud-slider').has(`div#${buttonId}`).length > 0)
+		if ($('#foe-helper-hud-slider').has(`div#${buttonId}`).length > 0)
 		{
-			$($('#foe-toolbox-hud-slider').children(`div#${buttonId}`)[0]).hide();
+			$($('#foe-helper-hud-slider').children(`div#${buttonId}`)[0]).hide();
 		}
 	},
 
@@ -134,9 +134,9 @@ let _menu = {
 	 * Shows a hidden button again
 	 */
 	ShowButton: (buttonId) => {
-		if ($('#foe-toolbox-hud-slider').has(`div#${buttonId}`))
+		if ($('#foe-helper-hud-slider').has(`div#${buttonId}`))
 		{
-			$($('#foe-toolbox-hud-slider').children(`div#${buttonId}`)[0]).show();
+			$($('#foe-helper-hud-slider').children(`div#${buttonId}`)[0]).show();
 		}
 	},
 
@@ -283,7 +283,7 @@ let _menu = {
 
 		// refresh the Menü after setting-toggle
 		setTimeout(()=> {
-			$('#foe-toolbox-hud, #menu_box').remove();
+			$('#foe-helper-hud, #menu_box').remove();
 			_menu.CallSelectedMenu(MainParser.SelectedMenu);
 		}, 100);
 

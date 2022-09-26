@@ -149,7 +149,7 @@ let CloseBox = {
     HideAllBoxes: () => {
 
         $("#cb-hide-all-windows").removeClass("btn-green").addClass("invisible btn-delete");
-        let openBoxes = $(".window-box, #foe-toolbox-hud");
+        let openBoxes = $(".window-box, #foe-helper-hud");
 
         $.each(openBoxes, function () {
 
@@ -166,7 +166,7 @@ let CloseBox = {
     ShowAllBoxes: () => {
 
         $("#cb-hide-all-windows").removeClass("invisible btn-delete").addClass("btn-green");
-        $(".window-box, #foe-toolbox-hud").show();
+        $(".window-box, #foe-helper-hud").show();
     },
 
 

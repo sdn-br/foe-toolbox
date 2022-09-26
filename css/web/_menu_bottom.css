@@ -11,7 +11,7 @@
  * **************************************************************************************
  */
 
-#foe-toolbox-hud.hud-bottom {
+#foe-helper-hud.hud-bottom {
 	left: 1035px;
 	bottom: 0;
 	width: 270px;
@@ -22,14 +22,14 @@
 	background-color: #553419;
 }
 
-.hud-bottom #foe-toolbox-hud-wrapper {
+.hud-bottom #foe-helper-hud-wrapper {
 	width: 220px;
 	height: inherit;
 	bottom: 0;
 	left: 0;
 }
 
-.hud-bottom #foe-toolbox-hud-slider {
+.hud-bottom #foe-helper-hud-slider {
 	position: absolute;
 	left: 0;
 	top: 2px;

@@ -18,36 +18,36 @@
 	left: calc(50vw - 235px);
 }
 
-#unitsGexBody .foetoolbox-accordion-body {
+#unitsGexBody .foehelper-accordion-body {
 	padding: 0 10px;
 }
 
-#unitsGexBody .open .foetoolbox-accordion-head {
+#unitsGexBody .open .foehelper-accordion-head {
 	margin-bottom: unset;
 }
 
-#unitsGexBody .open .foetoolbox-accordion-body {
+#unitsGexBody .open .foehelper-accordion-body {
 	margin: 0 0 2px 0;
 }
 
-#unitsGexBody .open .foetoolbox-accordion-body {
+#unitsGexBody .open .foehelper-accordion-body {
 	border-top: 1px solid var(--border-table-top);
 	border-bottom: 1px solid var(--border-table-bottom-darker);
 }
 
-#unitsGexBody .foetoolbox-accordion:nth-child(4n) .foetoolbox-accordion-head .text-warning {
+#unitsGexBody .foehelper-accordion:nth-child(4n) .foehelper-accordion-head .text-warning {
 	font-weight: bold;
 }
 
-#unitsGexBody .foetoolbox-accordion:nth-child(4n) .foetoolbox-accordion-head {
+#unitsGexBody .foehelper-accordion:nth-child(4n) .foehelper-accordion-head {
 	background-color: rgba(208, 126, 3, 0.15);
 }
 
-#unitsGexBody .foetoolbox-accordion:nth-child(16n) .foetoolbox-accordion-head {
+#unitsGexBody .foehelper-accordion:nth-child(16n) .foehelper-accordion-head {
 	background-color: rgba(208, 126, 3, 0.3);
 }
 
-#unitsGexBody .foetoolbox-accordion:hover .foetoolbox-accordion-head {
+#unitsGexBody .foehelper-accordion:hover .foehelper-accordion-head {
 	box-shadow: inset 0px 0px 0px 2000px var(--background-table-hover);
 }
 
