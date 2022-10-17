@@ -69,6 +69,7 @@ let Parts = {
 	],
 
 	// Settings
+	ArcBonusForEachGB: false,
 	CopyFormatPerGB: false,
 	OneFPForNonFPPlace: false,
 
@@ -83,6 +84,7 @@ let Parts = {
 	TrustExistingPlaces: false,
 
 	ArcPercents: [90, 90, 90, 90, 90],
+	DefaultArchPercents: [90, 90, 90, 90, 90],
 	Exts: [0, 0, 0, 0, 0],
 
 	//Settings Copybox
@@ -190,7 +192,7 @@ let Parts = {
 				});
 
 				Parts.ArcPercents = ArcPercents;
-				localStorage.setItem(Parts.GetStorageKey('ArcPercents', null), JSON.stringify(ArcPercents));
+				localStorage.setItem(Parts.GetStorageKey('ArcPercents', (Parts.ArcBonusForEachGB ? Parts.CityMapEntity['cityentity_id'] : null)), JSON.stringify(ArcPercents));
 
 				Parts.CalcBody(Parts.Level);
 			});
@@ -214,7 +216,7 @@ let Parts = {
 					$('.arc-percent-input').eq(i).val(ArkBonus);
 				}
 
-				localStorage.setItem(Parts.GetStorageKey('ArcPercents', null), JSON.stringify(Parts.ArcPercents));
+				localStorage.setItem(Parts.GetStorageKey('ArcPercents', (Parts.ArcBonusForEachGB ? Parts.CityMapEntity['cityentity_id'] : null)), JSON.stringify(Parts.ArcPercents));
 
 				Parts.CalcBody(Parts.Level);
 			});
@@ -411,10 +413,16 @@ let Parts = {
 		if (Parts.FirstCycle) {
 			let SavedOneFPForNonFPPlace = localStorage.getItem(Parts.GetStorageKey('OneFPForNonFPPlace', null));
 			if (SavedOneFPForNonFPPlace !== null) Parts.OneFPForNonFPPlace = (SavedOneFPForNonFPPlace === 'true');
-		
-			let SavedArcPercents = localStorage.getItem(Parts.GetStorageKey('ArcPercents', null));
+
+			let SavedArcBonusForEachGB = localStorage.getItem(Parts.GetStorageKey('ArcBonusForEachGB', null));
+			if (SavedArcBonusForEachGB !== null) Parts.ArcBonusForEachGB = (SavedArcBonusForEachGB === 'true');
+
+			Parts.ArcPercents = Parts.DefaultArchPercents;
+
+			let SavedArcPercents = localStorage.getItem(Parts.GetStorageKey('ArcPercents', (Parts.ArcBonusForEachGB ? Parts.CityMapEntity['cityentity_id'] : null)));
 			if (SavedArcPercents !== null) Parts.ArcPercents = JSON.parse(SavedArcPercents);
 
+		
 			let SavedCopyOwnPlayerName = localStorage.getItem(Parts.GetStorageKey('CopyOwnPlayerName', null));
 			if (SavedCopyOwnPlayerName !== null) {
 				Parts.CopyOwnPlayerName = SavedCopyOwnPlayerName
@@ -1555,6 +1563,7 @@ let Parts = {
 		c.push('<p><input id="copyformatpergb" class="copyformatpergb game-cursor" ' + (Parts.CopyFormatPerGB ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.CopyFormatPerGB'));
 		c.push('<br><input type="checkbox" id="openonaliengb" class="openonaliengb game-cursor" ' + ((allGB == 'true') ? 'checked' : '') + '> ' + i18n('Settings.ShowOwnPartOnAllGBs.Desc'));
 		c.push('<br><input id="onefpfornonfpplace" class="onefpfornonfpplace game-cursor" ' + (Parts.OneFPForNonFPPlace ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.OneFPForNonFPPlace')) + '</p>';
+		c.push('<br><input id="arcbonusforeachgb" class="arcbonusforeachgb game-cursor" ' + (Parts.ArcBonusForEachGB ? 'checked' : '') + ' type="checkbox"> ' + i18n('Boxes.OwnpartCalculator.ArcBonusForEachGB')) + '</p>';
 
 		// save button
 		c.push(`<p><button id="save-calculator-settings" class="btn btn-default" style="width:100%" onclick="Parts.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button></p>`);
@@ -1610,6 +1619,11 @@ let Parts = {
 		let OldOneFPForNonFPPlace = Parts.OneFPForNonFPPlace;
 		Parts.OneFPForNonFPPlace = $('.onefpfornonfpplace').prop('checked');
 		localStorage.setItem(Parts.GetStorageKey('OneFPForNonFPPlace', null), Parts.OneFPForNonFPPlace);
+
+		let OldArcBonusForEachGB = Parts.ArcBonusForEachGB;
+		Parts.ArcBonusForEachGB = $('.arcbonusforeachgb').prop('checked');
+		localStorage.setItem(Parts.GetStorageKey('ArcBonusForEachGB', null), Parts.ArcBonusForEachGB);
+
 
 		$(`#OwnPartBoxSettingsBox`).fadeToggle('fast', function(){
 			$(this).remove();

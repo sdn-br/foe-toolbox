@@ -764,6 +764,7 @@
     "Boxes.Outpost.tileNotPlanned": "aus",
     "Boxes.OwnpartCalculator.All": "Alle",
     "Boxes.OwnpartCalculator.Arc": "Arche",
+    "Boxes.OwnpartCalculator.ArcBonusForEachGB": "Bonuseinstellung pro LG speichern",
     "Boxes.OwnpartCalculator.Auto": "Auto",
     "Boxes.OwnpartCalculator.AutoWithUnsafe": "Auto + Nicht sichere",
     "Boxes.OwnpartCalculator.BPs": "BPs",

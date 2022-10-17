@@ -396,8 +396,7 @@ let Looting = {
 
 		Looting.Render();
 
-		let unitScale = parseInt(Unit.Settings.pictogramScaling) + 1 + '/5';
-		document.querySelector('#looting').style.setProperty('--unit_scale', unitScale);
+		document.querySelector('#looting').style.setProperty('--unit_scale', '5/5');
 
 		$('#looting').on('click', '#lootingBody .load-1st-page', function () {
 			if (Looting.loading) {

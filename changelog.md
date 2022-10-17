@@ -1,5 +1,12 @@
 ## Changelog - Extension
 
+##### 1.19.2.0
+**Update**
+- PvP Angriffe
+    - Skalierung der Bilder der Armeen von den Einstellung des Armeenmoduls entkoppelt
+- Eigenanteilsrechner
+    - Option für individuelle Bonuseinstellung pro LG hinzugefügt
+
 ##### 1.19.1.0
 **Bugfix**
 - PvP Angriffe

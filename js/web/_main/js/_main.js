@@ -682,6 +682,12 @@ GetFights = () =>{
 				LGCurrentLevelMedals = Medals;
 			}
 
+			if (Parts.CityMapEntity === undefined ||
+				Parts.CityMapEntity['cityentity_id'] != CityMapEntity.responseData[0]['cityentity_id'] ||
+			    Parts.CityMapEntity['player_id'] != CityMapEntity.responseData[0]['player_id']) {
+				Parts.FirstCycle = true;
+			}
+
 			Parts.CityMapEntity = CityMapEntity.responseData[0];
 			Parts.Rankings = Rankings;
 			Parts.IsPreviousLevel = IsPreviousLevel;
