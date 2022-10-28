@@ -157,35 +157,79 @@ let HTML = {
 	 */
 	Box: (args) => {
 
-		let title = $('<div />').addClass('title').html(args['title']);
-	
-		if (args['onlyTitle'] !== true) {
-			title = $('<div />').addClass('title').html(args['title'] + ' <small><em> - ' + i18n('Global.BoxTitle') + '</em></small>');
-		}
+		let title = $('<span />').addClass('title').html(args['title']);
 		
-		let head = $('<div />').attr('id', args['id'] + 'Header').attr('class', 'window-head').append(title),
+		if (args['onlyTitle'] !== true) {
+			title = $('<span />').addClass('title').html((extVersion.indexOf("beta") > -1 ? '(Beta) ': '') + args['title'] + ' <small><em> - FoE Helper</em></small>');
+		}
+		title = title.attr('title', title[0].textContent);
+		let	buttons = $('<div />').attr('id', args['id'] + 'Buttons').addClass('box-buttons'),
+			head = $('<div />').attr('id', args['id'] + 'Header').attr('class', 'window-head').append(title),
 			body = $('<div />').attr('id', args['id'] + 'Body').attr('class', 'window-body'),
 			div = $('<div />').attr('id', args['id']).attr('class', 'window-box open').append(head).append(body).hide(),
-			cords = localStorage.getItem(args['id'] + 'Cords'),
-			clear = false;
+			cords = localStorage.getItem(args['id'] + 'Cords');
+		
+		//close button
+		let close = $('<span />').attr('id', args['id'] + 'close').addClass('window-close');
 
 		if (args['auto_close'] !== false) {
-			let close = $('<div />').attr('id', args['id'] + 'close').addClass('window-close');
-			head.append(close);
-			clear = true;
+			buttons.append(close);
 		}
 
 		// Minimierenbutton
 		if (args['minimize']) {
-			let min = $('<div />').addClass('window-minimize');
-			head.append(min);
-			clear = true;
+			let min = $('<span />').addClass('window-minimize');
+			buttons.prepend(min);
+		}
+
+		// insert a wrench icon
+		// set a click event on it
+		if (args['settings']) {
+			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-settings`);
+			buttons.prepend(set);
+
+			if (typeof args['settings'] !== 'boolean') {
+				HTML.customFunctions[`${args['id']}Settings`] = args['settings'];
+			}
+		}
+
+		if (args['popout']) {
+			let set = $('<span />').addClass('window-settings').attr('id', `${args['id']}-popout`);
+			buttons.prepend(set);
+
+			if (typeof args['popout'] !== 'boolean') {
+				HTML.customFunctions[`${args['id']}PopOut`] = args['popout'];
+			}
+		}
+
+		if (args['map']) {
+			let set = $('<span />').addClass('window-map').attr('id', `${args['id']}-map`);
+			buttons.prepend(set);
+
+			if (typeof args['map'] !== 'boolean') {
+				HTML.customFunctions[`${args['id']}Map`] = args['map'];
+			}
+		}
+
+		// Lautsprecher für Töne
+		if (args['speaker']) {
+			let spk = $('<span />').addClass('window-speaker').attr('id', args['speaker']);
+			buttons.prepend(spk);
+
+			$('#' + args['speaker']).addClass(localStorage.getItem(args['speaker']));
+		}
+
+		// es gibt gespeicherte Koordinaten
+		if (cords) {
+			let c = cords.split('|');
+
+			// Verhindere, dass Fenster außerhalb plaziert werden
+			div.offset({ top: Math.min(parseInt(c[0]), window.innerHeight - 50), left: Math.min(parseInt(c[1]), window.innerWidth - 100) });
 		}
 
 		if(args['dragdrop'] && (args['fixdragdrop'] === undefined || args['fixdragdrop'] !== false)) {
-			let drag = $('<div />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
-			head.append(drag);
-			clear = true;
+			let drag = $('<span />').addClass('window-dragtoggle').attr('id', `${args['id']}-dragtoggle`);
+			buttons.prepend(drag);
 			let draggable = JSON.parse(localStorage.getItem(args['id'] + 'Draggable'));
 			if (draggable == null) { draggable = true; }
 			if (!draggable) {
@@ -205,61 +249,13 @@ let HTML = {
 			});
 		}
 
-		// insert a wrench icon
-		// set a click event on it
-		if (args['settings']) {
-			let set = $('<div />').addClass('window-settings').attr('id', `${args['id']}-settings`);
-			head.append(set);
-			clear = true;
-
-			if (typeof args['settings'] !== 'boolean') {
-				HTML.customFunctions[`${args['id']}Settings`] = args['settings'];
-			}
-		}
-
-		if (args['popout']) {
-			let popout = $('<div />').addClass('window-settings').attr('id', `${args['id']}-popout`);
-			head.append(popout);
-			clear = true;
-
-			if (typeof args['popout'] !== 'boolean') {
-				HTML.customFunctions[`${args['id']}PopOut`] = args['popout'];
-			}
-		}
-
-		if (args['map']) {
-			let map = $('<div />').addClass('window-map').attr('id', `${args['id']}-map`);
-			head.append(map);
-			clear = true;
-
-			if (typeof args['map'] !== 'boolean') {
-				HTML.customFunctions[`${args['id']}Map`] = args['map'];
-			}
-		}
-
-		// Lautsprecher für Töne
-		if (args['speaker']) {
-			let spk = $('<div />').addClass('window-speaker').attr('id', args['speaker']);
-			head.append(spk);
-			clear = true;
-
-			$('#' + args['speaker']).addClass(localStorage.getItem(args['speaker']));
-		}
-
-		// es gibt gespeicherte Koordinaten
-		if (cords) {
-			let c = cords.split('|');
-
-			// Verhindere, dass Fenster außerhalb plaziert werden
-			div.offset({ top: Math.min(parseInt(c[0]), window.innerHeight - 50), left: Math.min(parseInt(c[1]), window.innerWidth - 100) });
-		}
-
 		// Ein Link zu einer Seite
 		if (args['ask']) {
-			head.append($('<div />').addClass('window-ask').attr('data-url', args['ask']));
+			let ask = $('<span />').addClass('window-ask').attr('data-url', args['ask']);
+			buttons.prepend(ask);
 		}
 
-		head.append($('<div />').addClass('window-clear-both'));
+		head.append(buttons);
 
 		// wenn Box im DOM, verfeinern
 		$('body').append(div).promise().done(function () {

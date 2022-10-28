@@ -1,14 +1,16 @@
 /*
- * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
- * You may use, distribute and modify this code under the
- * terms of the AGPL license.
  *
- * See file LICENSE.md or go to
- * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
- * for full license details.
+ *  * **************************************************************************************
+ *  * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ *  * You may use, distribute and modify this code under the
+ *  * terms of the AGPL license.
+ *  *
+ *  * See file LICENSE.md or go to
+ *  * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
+ *  * for full license details.
+ *  *
+ *  * **************************************************************************************
  *
- * **************************************************************************************
  */
 
 body {
@@ -572,6 +574,9 @@ p {
 [id$=minigame_aztecs-Btn] span {
 	background-image: url('../images/menu/aztecsHelper.png');
 }
+[id$=compare_friends_threads-Btn] span {
+	background-image: url('../images/menu/comparefriendsthreads.png');
+}
 
 /***********************************************************************************/
 
@@ -906,6 +911,8 @@ FP-Bar */
 }
 
 .window-head {
+	display: flex;
+	justify-content: space-between;
 	align-items: center;
 	background: linear-gradient(0deg, #44150a, #48170c, #4c190e, #501b10, #541d12, #581f13, #5d2115, #612316);
 	box-shadow: inset 0 1px 0 #652518, inset 0 2px 0 #853427;
@@ -919,29 +926,25 @@ FP-Bar */
 	border-bottom-width: 0;
 }
 
-.window-head div.title {
+.window-head span.title {
 	font-weight: 700;
-	display: inline-block;
+	display: block;
 	font-size: 1rem;
 	overflow: hidden;
 	white-space: pre;
 	text-overflow: ellipsis;
 }
 
-.window-head div.title small em {
+.window-head span.title small em {
 	font-weight: lighter;
 }
 
-.window-head div:nth-child(2) {
+.window-head span:nth-child(2) {
 	margin-left: auto;
 }
 
-.window-clear-both {
-	clear: both;
-}
-
 .window-ask {
-	float: right;
+	display: inline-block;
 	background-position: -28px -1px, -2px -26px;
 	margin-right: 2px;
 	width: 22px;
@@ -954,7 +957,7 @@ FP-Bar */
 
 .window-speaker {
 	height: 22px;
-	float: right;
+	display: inline-block;
 	position: relative;
 	background-position: -105px -2px, -2px -26px;
 	width: 22px;
@@ -977,7 +980,7 @@ FP-Bar */
 	margin-right: 2px;
 	width: 22px;
 	height: 22px;
-	float: right;
+	display: inline-block;
 	position: relative;
 }
 .open .window-minimize:hover {
@@ -995,7 +998,7 @@ FP-Bar */
 	margin-right: 2px;
 	width: 22px;
 	height: 22px;
-	float: right;
+	display: inline-block;
 	position: relative;
 }
 
@@ -1013,7 +1016,7 @@ FP-Bar */
 
 .window-settings {
 	background-position: -192px -2px, -2px -26px;
-	float: right;
+	display: inline-block;
 	width: 22px;
 	height: 22px;
 	position: relative;
@@ -1026,8 +1029,8 @@ FP-Bar */
 
 .window-map {
     background-image: url('../images/hud/map.png'), url('../images/hud/box-sprite.png');
-    float: right;
-    width: 22px;
+    display: inline-block;
+	width: 22px;
     height: 22px;
     position: relative;
     margin-right: 2px;
@@ -1041,7 +1044,7 @@ FP-Bar */
 
 .window-close {
 	background-position: -2px -2px, -2px -26px;
-	float: right;
+	display: inline-block;
 	width: 22px;
 	height: 22px;
 	position: relative;
@@ -1875,4 +1878,8 @@ input[type="range"]::-webkit-slider-thumb {
 	display: inline-block;
 	width: 45px;
 	height: 45px;
+}
+.box-buttons {
+	display: flex;
+    justify-content: center;
 }

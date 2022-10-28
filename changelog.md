@@ -1,9 +1,13 @@
 ## Changelog - Extension
 
+##### 1.20.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.12.0.0 migriert
+
 ##### 1.19.2.0
 **Update**
 - PvP Angriffe
-    - Skalierung der Bilder der Armeen von den Einstellung des Armeenmoduls entkoppelt
+    - Skalierung der Bilder der Armeen von den Einstellung des Armeemoduls entkoppelt
 - Eigenanteilsrechner
     - Option für individuelle Bonuseinstellung pro LG hinzugefügt
 

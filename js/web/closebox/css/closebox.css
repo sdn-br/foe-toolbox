@@ -55,7 +55,7 @@
 
 #CloseBoxHeader {
     display: none;
-
+    justify-content: center;
 }
 
 #CloseBoxHeader .title em {

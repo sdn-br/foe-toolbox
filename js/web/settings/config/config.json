@@ -92,60 +92,66 @@
 		"sort": 14
 	},
 	{
+		"name": "Auctions",
+		"status": false,
+		"group": "Boxes",
+		"sort": 15
+	},
+	{
 		"name": "ShowScoutingTimes",
 		"status": true,
 		"group": "Boxes",
-		"sort": 15
+		"sort": 16
 	},
 	{
 		"name": "Show2kQuestMark",
 		"status": false,
 		"group": "Boxes",
-		"sort": 16
+		"sort": 17
 	},
 	{
 		"name": "ShowLinks",
 		"status": true,
 		"group": "Boxes",
-		"sort": 17
+		"sort": 18
 	},
 	{
 		"name": "HideHelperDuringBattle",
 		"status": false,
 		"group": "Boxes",
-		"sort": 18
+		"sort": 19
 	},
 	{
 		"name": "ShowAztecHelper",
 		"status": true,
 		"group": "Boxes",
-		"sort": 19
+		"sort": 20
 	},
 	{	"name": "ShowNeighborsLootables",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 20
+		"sort": 21
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
 		"status": true,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 21
+		"sort": 22
 	},
 	{
 		"name": "ShowPossibleInvestments",
 		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
-		"sort": 22
+		"sort": 23
 	},
 	{
 		"name": "ShowGvGFightHud",
 		"status": false,
 		"group": "Boxes",
-		"sort": 23
+		"sort": 24
 	},
 	{
 		"name": "ChangeLanguage",
