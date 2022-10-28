@@ -834,7 +834,7 @@ let GvGMap = {
 	updateGuildData: (guild) => {
 		let tableRow = document.getElementById("id-"+guild.id);
 		if (tableRow != null) {
-			let html = '<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + encodeURI(guild.name) +'</td>';
+			let html = '<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + guild.name +'</td>';
 			html += '<td class="text-center">'+guild.sectors+'</td>';
 			html += '<td class="text-center">'+guild.power+'</td>';
 			tableRow.innerHTML = html;
@@ -851,7 +851,7 @@ let GvGMap = {
 
 		html += '<div id="sectorInfo">';
 		html += '<span class="guildflag '+sector.owner.flag+'" style="background-color: '+sectorColor+';border-color: '+sectorColor+'"></span>';
-		html += '<b class="text-bright">'+ encodeURI(sectorOwner) +'</b><br>';
+		html += '<b class="text-bright">'+ sectorOwner +'</b><br>';
 		if (MapSector.underSiege(sector))
 			html += 'Under Siege by: '+ MapSector.underSiege(sector) +'<br>';
 		html += i18n('Boxes.GvGMap.Sector.Hitpoints') + ': ' + sectorHitpoints +'<br>';
@@ -894,7 +894,7 @@ let GvGMap = {
 		t.push('</tr></thead>');
 		GvGMap.Map.Guilds.forEach(function (guild) {
 			t.push('<tr id="id-'+guild.id+'">');
-			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + encodeURI(guild.name) + '</td>');
+			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + guild.name + '</td>');
 			t.push('<td class="text-center">'+guild.sectors+'</td>');
 			t.push('<td class="text-center">'+guild.power+'</td>');
 			t.push('<td class="text-center">'+GvGMap.calculateSiegeArmyCost(guild.sectors, true)+'</td>');
@@ -962,7 +962,7 @@ let GvGMap = {
 			return i18n('Boxes.GvGMap.Log.NPC');
 		}
 		else if (guild != undefined) {
-			return '<span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span> '+ encodeURI(guild.name);
+			return '<span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span> '+ guild.name;
 		}
 		return i18n('Boxes.GvGMap.Log.UnknownGuild');
 	},
