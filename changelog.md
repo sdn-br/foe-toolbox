@@ -1,5 +1,10 @@
 ## Changelog - Extension
 
+##### 1.21.1.0
+**Bugfix**
+- Kostenrechner
+    - Der Kostenrechner öffnet sich wieder
+
 ##### 1.21.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.12.1.1 migriert

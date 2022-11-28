@@ -173,7 +173,7 @@ let Calculator = {
 			Calculator.PlayerName = PlayerDict[Calculator.PlayerID]['PlayerName'];
 		}
 		if (PlayerDict[Calculator.PlayerID] !== undefined && PlayerDict[Calculator.PlayerID]['ClanName'] !== undefined) {
-			Calculator.ClanId = PlayerDict[PlayerID]['ClanId'];
+			Calculator.ClanId = PlayerDict[Calculator.PlayerID]['ClanId'];
 			Calculator.ClanName = PlayerDict[Calculator.PlayerID]['ClanName'];
 		}
 
