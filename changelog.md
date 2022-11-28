@@ -1,9 +1,13 @@
 ## Changelog - Extension
 
+##### 1.21.0.0
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 2.12.1.1 migriert
+
 ##### 1.20.1.0
 **Bugfix**
 - GvG
-  - Gildennamen wurden falsch dargestellt
+    - Gildennamen wurden falsch dargestellt
 
 ##### 1.20.0.0
 **FoE-Helfer**

@@ -831,10 +831,14 @@ let GvGMap = {
 		GvGMap.updateGuildData(newGuild);
 	},
 
+	encodeGuildName: (guildname) => {
+		return guildname.replace('<', '&lt;');
+	},
+
 	updateGuildData: (guild) => {
 		let tableRow = document.getElementById("id-"+guild.id);
 		if (tableRow != null) {
-			let html = '<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + guild.name +'</td>';
+			let html = '<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + GvGMap.encodeGuildName(guild.name) +'</td>';
 			html += '<td class="text-center">'+guild.sectors+'</td>';
 			html += '<td class="text-center">'+guild.power+'</td>';
 			tableRow.innerHTML = html;
@@ -844,7 +848,7 @@ let GvGMap = {
 	showSector: (sector) => {
 		let html = '';
 		let sectorColor = (sector.terrain != 'rocks' && sector.terrain != 'water' ? GvGMap.colorToString(sector.owner.color) : GvGMap.colorToString(MapSector.getColorByTerrain(sector)));
-		let sectorOwner = (sector.terrain != 'rocks' && sector.terrain != 'water' ? sector.owner.name : '---');
+		let sectorOwner = (sector.terrain != 'rocks' && sector.terrain != 'water' ? GvGMap.encodeGuildName(sector.owner.name) : '---');
 		let sectorHitpoints = (sector.terrain != 'rocks' && sector.terrain != 'water' ? `${sector.hitpoints}'/80` : '---');
 		let sectorPower = (sector.terrain != 'rocks' && sector.terrain != 'water' ? sector.power : '---');
 		let sectorCoords = (sector.terrain != 'rocks' && sector.terrain != 'water' ?  MapSector.coords(sector) : '---');
@@ -894,7 +898,7 @@ let GvGMap = {
 		t.push('</tr></thead>');
 		GvGMap.Map.Guilds.forEach(function (guild) {
 			t.push('<tr id="id-'+guild.id+'">');
-			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + guild.name + '</td>');
+			t.push('<td><span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span>' + GvGMap.encodeGuildName(guild.name) + '</td>');
 			t.push('<td class="text-center">'+guild.sectors+'</td>');
 			t.push('<td class="text-center">'+guild.power+'</td>');
 			t.push('<td class="text-center">'+GvGMap.calculateSiegeArmyCost(guild.sectors, true)+'</td>');
@@ -962,7 +966,7 @@ let GvGMap = {
 			return i18n('Boxes.GvGMap.Log.NPC');
 		}
 		else if (guild != undefined) {
-			return '<span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span> '+ guild.name;
+			return '<span class="guildflag '+guild.flag+'" style="background-color: '+GvGMap.colorToString(guild.color)+'"></span> '+ GvGMap.encodeGuildName(guild.name);
 		}
 		return i18n('Boxes.GvGMap.Log.UnknownGuild');
 	},

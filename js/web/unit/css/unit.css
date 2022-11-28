@@ -105,11 +105,11 @@
 }
 
 #UnitOverviewSettingsBox input:invalid+button+span:after {
-	content: '?';
+	content: '❌';
 }
 
 #UnitOverviewSettingsBox input:valid+button+span:after {
-	content: '??';
+	content: '✔️';
 }
 
 .unit_icon {

@@ -64,8 +64,8 @@ let _menu = {
 		'minigame_aztecs',
 		'recurringQuests',
 		'compare_friends_threads',
+		'discord'
 		// 'marketOffers',
-		// 'discord'
 	],
 
 	HiddenItems: [],

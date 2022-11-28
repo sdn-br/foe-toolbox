@@ -426,7 +426,7 @@ GetFights = () =>{
 	FoEproxy.addHandler('FriendService', 'deleteFriend', (data, postData) => {
 		let FriendID = data.responseData;
 		if (PlayerDict[FriendID]) {
-			PlayerDict[FriendID]['isFriend'] = false;
+			PlayerDict[FriendID]['IsFriend'] = false;
 		}
 
 		if ($('#moppelhelper').length === 0) {
@@ -823,7 +823,6 @@ let HelperBeta = {
 	menu: [
 		'unitsGex',
 		'marketOffers',
-		'discord',
 	],
 	active: JSON.parse(localStorage.getItem('HelperBetaActive'))
 };
@@ -1113,26 +1112,29 @@ let MainParser = {
 		{
 			let PlayerLink = HTML.i18nReplacer(PlayerLinkFormat, { 'world': ExtWorld.toUpperCase(), 'playerid': PlayerID });
 
-			return `${PlayerName} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`;
+			return `${HTML.escapeHtml(PlayerName)} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
-			return PlayerName;
+			return HTML.escapeHtml(PlayerName);
 		}
 	},
 	
 	/**
 	 * @param GuildID
 	 * @param GuildName
+	 * @param WorldId
 	 */
 	GetGuildLink: (GuildID, GuildName, WorldId) => {
+		if(!WorldId) WorldId = ExtWorld;
+
 		if (Settings.GetSetting('ShowLinks'))
 		{
 			let GuildLink = HTML.i18nReplacer(GuildLinkFormat, { 'world': WorldId.toUpperCase(), 'guildid': GuildID });
 
-			return `${GuildName} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`;
+			return `${HTML.escapeHtml(GuildName)} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
-			return GuildName;
+			return HTML.escapeHtml(GuildName);
 		}
 	},
 

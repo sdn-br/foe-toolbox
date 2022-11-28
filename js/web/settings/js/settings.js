@@ -503,7 +503,7 @@ let Settings = {
 	 *
 	 * @returns {null|undefined|jQuery}
 	 */
-	 doubleFPtimeout: () => {
+	doubleFPtimeout: () => {
 		let ip = $('<input />').addClass('setting-input').attr({
 			type: 'number',
 			id: 'doubleFPtimeoutinput',

@@ -62,6 +62,7 @@ a[target="_blank"] svg {
 	font-size: 1rem;
 	width: 9rem;
 	border: 1px solid var(--text-dark);
+	border-radius: 4px;
 	text-shadow: none;
 }
 
@@ -74,6 +75,7 @@ a[target="_blank"] svg {
 	display: inline-block;
 	width: 100%;
 	background-color: var(--background-light);
+	border-radius: 4px;
 
 	color: var(--text-medium);
 	padding: .2rem;
@@ -577,6 +579,9 @@ p {
 [id$=compare_friends_threads-Btn] span {
 	background-image: url('../images/menu/comparefriendsthreads.png');
 }
+[id$=discord-Btn] span {
+	background-image: url('../images/menu/discord.png');
+}
 
 /***********************************************************************************/
 
@@ -1030,7 +1035,7 @@ FP-Bar */
 .window-map {
     background-image: url('../images/hud/map.png'), url('../images/hud/box-sprite.png');
     display: inline-block;
-	width: 22px;
+    width: 22px;
     height: 22px;
     position: relative;
     margin-right: 2px;
