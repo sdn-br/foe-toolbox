@@ -30,7 +30,7 @@ FoEproxy.addHandler('GuildBattlegroundService', 'getPlayerLeaderboard', (data, p
 });
 
 // Gildengefechte
-FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData) => {
+/*FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData) => {
 	if (data.responseData['stateId'] !== 'participating')
 	{
 		GuildFights.CurrentGBGRound = parseInt(data.responseData['startsAt']) - 259200;
@@ -43,6 +43,12 @@ FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData
 
 		GuildFights.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']);
 	}
+});*/
+// Gildengefechte
+FoEproxy.addHandler('ClanService', 'getClanData', (data, postData) => {
+	//if (data.responseData['stateId'] !== 'participating') {
+	GuildFights.HandlePlayerLeaderboard(data.responseData.members, data.responseData.id);
+	//}
 });
 
 // Gildengefechte - Map, Gilden
@@ -165,56 +171,70 @@ let GuildFights = {
 	 * @param d
 	 * @returns {Promise<void>}
 	 */
-	HandlePlayerLeaderboard: async (d) => {
+			
+							
+	
+	HandlePlayerLeaderboard: (d, id) => {
 		// immer zwei vorhalten, für Referenz Daten (LiveUpdate)
-		if (localStorage.getItem('GuildFights.NewAction') !== null)
-		{
-			GuildFights.PrevAction = JSON.parse(localStorage.getItem('GuildFights.NewAction'));
-			GuildFights.PrevActionTimestamp = parseInt(localStorage.getItem('GuildFights.NewActionTimestamp'));
+
+		lsName = 'GuildFights.NewAction1' + id;									
+		if (localStorage.getItem(lsName) !== null) {
+   
+			GuildFights.PrevAction = JSON.parse(localStorage.getItem(lsName));
+			GuildFights.PrevActionTimestamp = parseInt(localStorage.getItem(lsName + 'Timestamp'));
+   
+										  
+   
+												  
+																	
 		}
-		else if (GuildFights.NewAction !== null)
-		{
-			GuildFights.PrevAction = GuildFights.NewAction;
-			GuildFights.PrevActionTimestamp = GuildFights.NewActionTimestamp;
-		}
+		/*else if (GuildFights.NewAction1 !== null) {
+			GuildFights.PrevAction = GuildFights.NewAction1;
+												  
+			GuildFights.PrevActionTimestamp = GuildFights.NewAction1Timestamp;
+		}*///qui
 
 		let players = [];
-		let sumNegotiations = 0;
-		let sumBattles = 0;
+						  
+					 
 
-		for (let i in d)
-		{
+		for (let i in d) {
+   
 
-			if (!d.hasOwnProperty(i))
-			{
+			if (!d.hasOwnProperty(i)) {
+	
 				break;
 			}
-			sumNegotiations += d[i]['negotiationsWon'] || 0;
-			sumBattles += d[i]['battlesWon'] || 0;
+												   
+										 
 
-			players.push({
-				gbground: GuildFights.CurrentGBGRound,
-				rank: i * 1 + 1,
-				player_id: d[i]['player']['player_id'],
-				name: d[i]['player']['name'],
-				avatar: d[i]['player']['avatar'],
-				battlesWon: d[i]['battlesWon'] || 0,
+			players.push({// daqui
+										  
+					
+				player_id: d[i]['player_id'],
+				name: d[i]['name'],
+				avatar: d[i]['avatar'],
+				battlesWon: d[i]['won_battles'] || 0,
 				negotiationsWon: d[i]['negotiationsWon'] || 0
 			});
 		}
 
-		await GuildFights.UpdateDB('history', { participation: players, sumNegotiations: sumNegotiations, sumBattles: sumBattles });
+																															  
 
-		GuildFights.GBGHistoryView = false;
-		GuildFights.NewAction = players;
-		localStorage.setItem('GuildFights.NewAction', JSON.stringify(GuildFights.NewAction));
+		GuildFights.NewAction1 = players;
+								  
+		localStorage.setItem(lsName, JSON.stringify(GuildFights.NewAction1));
 
-		GuildFights.NewActionTimestamp = moment().unix();
-		localStorage.setItem('GuildFights.NewActionTimestamp', GuildFights.NewActionTimestamp);
+									 
+								  
+																					   
 
+		GuildFights.NewAction1Timestamp = moment().unix();
+		localStorage.setItem(lsName + 'Timestamp', GuildFights.NewAction1Timestamp);
+// a qui
 		if ($('#GildPlayers').length > 0)
 		{
-			GuildFights.BuildPlayerContent(GuildFights.CurrentGBGRound);
+			GuildFights.BuildPlayerContent();
 		}
 		else
 		{
@@ -629,14 +649,15 @@ let GuildFights = {
 			GuildFights.GBGRound = GuildFights.NewAction;
 		}
 
-		for (let i in GuildFights.GBGRound)
-		{
-			if (!GuildFights.GBGRound.hasOwnProperty(i))
-			{
+	for (let i in GuildFights.NewAction1) {
+   
+			if (!GuildFights.NewAction1.hasOwnProperty(i)) {
+	
 				break;
 			}
 
-			let playerNew = GuildFights.GBGRound[i];
+			let playerNew = GuildFights.NewAction1[i];// fin qui
+
 
 			let fightAddOn = '',
 				negotaionAddOn = '',
@@ -646,7 +667,7 @@ let GuildFights = {
 				change = false;
 
 			// gibt es einen älteren Snapshot?
-			if (GuildFights.PrevAction !== null && histView === false)
+			if (GuildFights.PrevAction !== null )
 			{
 
 				let playerOld = GuildFights.PrevAction.find(p => (p['player_id'] === playerNew['player_id']));
@@ -682,7 +703,7 @@ let GuildFights = {
 			tN += playerNew['negotiationsWon'];
 			tF += playerNew['battlesWon'];
 
-			b.push('<tr data-player="' + playerNew['player_id'] + '" data-gbground="' + gbground + '" class="' + newProgressClass + (!histView ? 'showdetailview ' : '') + (playerNew['player_id'] === ExtPlayerID ? 'mark-player ' : '') + (change === true ? 'bg-green' : '') + '">');
+			//b.push('<tr data-player="' + playerNew['player_id'] + '" data-gbground="' + gbground + '" class="' + newProgressClass + (!histView ? 'showdetailview ' : '') + (playerNew['player_id'] === ExtPlayerID ? 'mark-player ' : '') + (change === true ? 'bg-green' : '') + '">');
 			b.push('<td class="tdmin">' + (parseInt(i) + 1) + '.</td>');
 
 			b.push('<td class="tdmin"><img src="' + srcLinks.GetPortrait(playerNew['avatar']) + '" alt=""></td>');
