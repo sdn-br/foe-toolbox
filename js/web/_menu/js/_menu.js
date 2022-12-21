@@ -1,16 +1,15 @@
 /*
+ * *************************************************************************************
  *
- *  * **************************************************************************************
- *  * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
- *  * You may use, distribute and modify this code under the
- *  * terms of the AGPL license.
- *  *
- *  * See file LICENSE.md or go to
- *  * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
- *  * for full license details.
- *  *
- *  * **************************************************************************************
+ * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
  *
+ * See file LICENSE.md or go to
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
+ *
+ * *************************************************************************************
  */
 
 let _menu = {
@@ -94,7 +93,7 @@ let _menu = {
 		else if (selMenu === 'Box') {
 			_menu.selectedMenu = 'Box';
 			_menu_box.BuildBoxMenu();
-		}
+        }
 
 		if(Settings.GetSetting('AutoOpenInfoBox')){
 			Infoboard.Show();
@@ -143,7 +142,7 @@ let _menu = {
 		}
 	},
 
-
+	
 	/**
 	 * Tooltip Box
 	 *
@@ -556,7 +555,7 @@ let _menu = {
 				let Player = PlayerDict[LastMapPlayerID];
 				let PlayerName = (Player ? Player['PlayerName'] : '???');
 				CityMap.init(false, MainParser.OtherPlayerCityMapData, PlayerName);
-			}
+            }
 		});
 
 		return btn_CityBG.append(btn_City);

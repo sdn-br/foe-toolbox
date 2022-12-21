@@ -57,6 +57,7 @@ let Sabotage = {
 	PlayerId: undefined,
 	PlayerName: undefined,
 	ClanName: undefined,
+	ClanId: undefined,
 	PlayerEra: undefined,
 	IsFriend: false,
 	IsGuildMember: false,
@@ -92,6 +93,7 @@ let Sabotage = {
 
 		Sabotage.PlayerName = PlayerDict[PlayerId]['PlayerName'];
 		Sabotage.ClanName = PlayerDict[PlayerId]['ClanName'];
+		Sabotage.ClanId = PlayerDict[PlayerId]['ClanId'];
 		Sabotage.PlayerEra = PlayerDict[PlayerId]['Era'];
 
 		$('#sabotageInfo').remove();
@@ -234,7 +236,7 @@ let Sabotage = {
         h.push('<span class="player-name">' + MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName));
 
 		if (Sabotage.ClanName) {
-			h.push(`<br>[${Sabotage.ClanName}]`);
+			h.push(`<br>[${MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName)}]`);
 		}
 
 		h.push('</span>');
@@ -259,7 +261,7 @@ let Sabotage = {
 					buttonI18nId,
 					alertButtonDisabled;
 					
-				nextAttackTime = moment.unix(MainParser.LastResponseTimestamp).add(Sabotage.OtherPlayer.next_interaction_in, 'seconds');
+				nextAttackTime = moment.unix(MainParser.getCurrentDateTime()).add(Sabotage.OtherPlayer.next_interaction_in, 'seconds');
 				alertAvailable = (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
 				alertButtonDisabled = (alertAvailable ? ' disabled' : ''); 
 				buttonI18nId = (!alertAvailable ? 'Boxes.Sabotage.SetAlarm' : 'Boxes.Sabotage.AlreadySetAlarm'); 

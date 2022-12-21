@@ -33,7 +33,7 @@
 // TODO - Alerts set up for collection (on GB or other buildings) should reset on collection (i.e. alert categories)
 
 // @ts-ignore
-Dexie.delete('foe_toolbox_alerts_database');
+Dexie.delete('foe_helper_alerts_database');
 // persistent alerts will be stored only once and the expires time will be updated before garbage collection so that
 // all expired alerts can be removed without having to use compound indexes or "compound where = collection filtering)
 // e.g. where('expires').above(_current_timestamp_) and where('persistent').equals('1') as that is not supported by Dixie.
@@ -810,12 +810,12 @@ let Alerts = function(){
 							// for numeric values
 							else if ( Number.isInteger( entry.value ) ){
 								html += `<p class="text-center">
-							<input class="setting-input text-center" type="number" name="alert-${key}" data-key="${key}" value="${entry.value}">
+							<input class="setting-input text-center" type="number" name="alert-${key}" data-key="${key}" value="${entry.value}">                                        
 						</p>`;
 							}
 							else {
 								html += `<p class="text-center">
-							<input class="setting-input text-center" type="text" name="alert-${key}" data-key="${key}" value="${entry.value}">
+							<input class="setting-input text-center" type="text" name="alert-${key}" data-key="${key}" value="${entry.value}">                                        
 						</p>`;
 							}
 
@@ -1741,3 +1741,12 @@ let TimeManager = function(){
 	return pub;
 
 }();
+
+// class Timer {
+//     constructor(){}
+//     update(t){ console.log(t); }
+// }
+// let timer = new Timer();
+// TimeManager.subscribe(timer);
+TimeManager.start();
+Alerts.init();

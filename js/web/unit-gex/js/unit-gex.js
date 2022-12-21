@@ -158,12 +158,12 @@ let UnitGex = {
 		{
 			const entries = Units.filter(e => e.id === i);
 
-			tr.push(`<div class="foetoolbox-accordion id-${i}">`);
+			tr.push(`<div class="foehelper-accordion id-${i}">`);
 
 
 			if(entries.length === 0)
 			{
-				tr.push(`<div class="foetoolbox-accordion-head ${i}-head">
+				tr.push(`<div class="foehelper-accordion-head ${i}-head">
 							<span class="text-warning">${i}.</span> <em class="text-muted">kein Eintrag gefunden</em>
 						</div>`);
 			}
@@ -171,11 +171,11 @@ let UnitGex = {
 			else {
 				const E = entries[0];
 
-				tr.push(`<div class="foetoolbox-accordion-head ${i}-head" onclick="UnitGex.ToggleHeader('${i}')">
+				tr.push(`<div class="foehelper-accordion-head ${i}-head" onclick="UnitGex.ToggleHeader('${i}')">
 							<span class="text-warning" style="margin: 0 10px;">${i}. ${i18n('Boxes.UnitsGex.Stage')}</span> <strong class="text-${E['Data']['winner'] === 1 ? 'success' : 'danger'}" style="position: absolute; left: 110px;">${E['Data']['winner'] === 1 ? i18n('Boxes.UnitsGex.Won') : i18n('Boxes.UnitsGex.Lost')}</strong>
 						</div>`);
 
-				tr.push(`<div class="foetoolbox-accordion-body ${i}-body">`);
+				tr.push(`<div class="foehelper-accordion-body ${i}-body">`);
 
 				tr.push(	`<div class="unitgex-stats-wrapper">`);
 				tr.push(		`<div class="unitgex-stats">Welle 1</div>`);
@@ -251,7 +251,7 @@ let UnitGex = {
 		let $this = $(`.id-${id}`),
 			isOpen = $this.hasClass('open');
 
-		$('#unitsGexBodyInner .foetoolbox-accordion').removeClass('open');
+		$('#unitsGexBodyInner .foehelper-accordion').removeClass('open');
 
 		if(!isOpen){
 			$this.addClass('open');

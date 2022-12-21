@@ -57,7 +57,7 @@ let Outposts = {
 			const window = /** @type {HTMLElement} */(document.getElementById('outpostConsumables'));
 			window.addEventListener('change', (event) => {
 				const target = /** @type {HTMLInputElement} */(event.target);
-				const namePrefix = 'foe_toolbox_';
+				const namePrefix = 'foe_helper_';
 
 				if (target.tagName === 'INPUT' && target.type === 'radio' && target.checked && target.name.startsWith(namePrefix) && Outposts.OutpostData)
 				{
@@ -268,7 +268,7 @@ let Outposts = {
 				for (let resourceID of resourceIDs) {
 					if (resourceID === 'diplomacy' && displayAllTiles) {
 						t.push('<td class="text-center">'
-							+ '<label><input type="radio" value="#off" name="foe_toolbox_'+tileID+'" '
+							+ '<label><input type="radio" value="#off" name="foe_helper_'+tileID+'" '
 							+ (plannedTiles[tileID] == null ? ' checked' : '')
 							+ '/><span class="outpost_tile_off">'+i18n('Boxes.Outpost.tileNotPlanned')+'</span></label>'
 							+ '</td>'
@@ -281,7 +281,7 @@ let Outposts = {
 							if (displayAllTiles) {
 								t.push(
 									'<td class="text-center'+(canPurchase?' text-success':'')+'">'
-									+ '<label><input type="radio" value="'+resourceID+'" name="foe_toolbox_'+tileID+'"'
+									+ '<label><input type="radio" value="'+resourceID+'" name="foe_helper_'+tileID+'"'
 									+ (isPlanned?' checked':'')
 									+ '/><span>'
 									+ cost
@@ -335,10 +335,10 @@ let Outposts = {
 					Entity = MainParser.CityEntities[EntityID];
 
 				t.push('<td>' + Entity['name'] + '</td>');
-			}
+            }
 			else{
 				t.push('<td>' + advancement.name + '</td>');
-			}
+			}			
 
 			// X oder Haken
 			t.push('<td class="text-center">' + (unlocked ? '&#10004;' : '&#10060;') + '</td>');

@@ -11,6 +11,16 @@
  * **************************************************************************************
  */
 
+let ExtbaseData = JSON.parse(localStorage.getItem("HelperBaseData")||"{}");
+const extID = ExtbaseData.extID,
+	extUrl = ExtbaseData.extUrl,
+	GuiLng = ExtbaseData.GuiLng,
+	extVersion = ExtbaseData.extVersion,
+	extBaseVersion = ExtbaseData.extBaseVersion,
+	isRelease = ExtbaseData.isRelease,
+	devMode = ExtbaseData.devMode,
+	loadBeta = ExtbaseData.loadBeta;
+
 {
 	// jQuery detection
 	let intval = -1;
@@ -220,7 +230,6 @@ GetFights = () =>{
 
 		if (idx !== -1) {
 			MainParser.InnoCDN = requestData.url.substring(0, idx + 1);
-			MainParser.sendExtMessage({type: 'setInnoCDN', url: MainParser.InnoCDN});
 			let portraits = {};
 
 			$(xhr.responseText).find('portrait').each(function () {
@@ -756,7 +765,6 @@ GetFights = () =>{
 			Quests.init();
 		}
 		GameTimeOffset = data.responseData.time * 1000 - new Date().getTime();
-		MainParser.LastResponseTimestamp = data.responseData.time;
 	});
 
 
@@ -833,7 +841,7 @@ let HelperBeta = {
 let MainParser = {
 
 	foeHelperBgApiHandler: /** @type {null|((request: {type: string}&object) => Promise<{ok:true, data: any}|{ok:false, error:string}>)}*/ (null),
-	LastResponseTimestamp: null,
+
 	activateDownload: false,
 	savedFight: null,
 	DebugMode: false,
@@ -924,7 +932,7 @@ let MainParser = {
 		'def_boost_attacker': 0,
 		'att_boost_defender': 0,
 		'def_boost_defender': 0,
-		'happiness_amount': 0,
+		'happiness_amount': 0,			
 		'coin_production': 0,
 		'supply_production': 0,
 		'forge_points_production':0,
@@ -963,6 +971,7 @@ let MainParser = {
 		});
 
 		if (typeof response !== 'object' || typeof response.ok !== 'boolean') {
+			console.log({data: data, response: response});
 			throw new Error('invalid response from Extension-API call');
 		}
 
@@ -1261,21 +1270,7 @@ let MainParser = {
 
 		ExtPlayerAvatar = d.portrait_id;
 
-		MainParser.sendExtMessage({
-			type: 'setPlayerData',
-			data: {
-				world: ExtWorld,
-				player_id: ExtPlayerID,
-				name: d.user_name,
-				portrait: d.portrait_id,
-				guild_id: d.clan_id,
-				guild_name: d.clan_name
-			}
-		});
-
 		Infoboard.Init();
-		TimeManager.start();
-		Alerts.init();
 	},
 
 

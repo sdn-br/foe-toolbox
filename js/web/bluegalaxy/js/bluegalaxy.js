@@ -1,5 +1,6 @@
 ﻿/*
- * **************************************************************************************
+ * *************************************************************************************
+ *
  * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
@@ -8,7 +9,7 @@
  * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
- * **************************************************************************************
+ * *************************************************************************************
  */
 
 FoEproxy.addHandler('CityProductionService', 'pickupProduction', (data, postData) => {
@@ -136,7 +137,7 @@ let BlueGalaxy = {
                 if (!FP) FP = 0;
                 if (!Diamonds) Diamonds = 0;
                 let GoodsSum = 0;
-                for (j = 0; j < GoodsList.length; j++) {
+                for (let j = 0; j < GoodsList.length; j++) {
                     let GoodID = GoodsList[j]['id'];
                     if (Production['products'][GoodID]) {
                         GoodsSum += Production['products'][GoodID];
@@ -270,12 +271,11 @@ let BlueGalaxy = {
         }
     },
 
-    
 
     /**
     *
     */
-     ShowSettings: () => {
+	ShowSettings: () => {
 		let autoOpen = Settings.GetSetting('ShowBlueGalaxyHelper');
 
         let h = [];
@@ -284,6 +284,7 @@ let BlueGalaxy = {
 
         $('#bluegalaxySettingsBox').html(h.join(''));
     },
+
 
     /**
     *

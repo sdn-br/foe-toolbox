@@ -691,6 +691,7 @@ let GvGMap = {
 				if (sector.hitpoints != undefined) { 
 					let newSector = {};
 					let realX = (sector.position.x - GvGMap.ProvinceData.bounds.x_min) * GvGMap.Map.HexWidth;
+					if (sector.position.y === undefined) sector.position.y = 0;
 					let realY = (sector.position.y - GvGMap.ProvinceData.bounds.y_min) * GvGMap.Map.HexHeight;
 
 					if (sector.position.y % 2 === 0) 
@@ -1085,13 +1086,18 @@ let GvGLog = {
 	buildEntry: (entry) => {
 		let t = [];
 		let sector = MapSector.getById(entry.sectorId);
+
 		let hostileAction = (entry.targetClan === GvGMap.OwnGuild.Id && (entry.type === 'defender_damaged' || entry.type === 'defender_defeated')) ? 'alert' : 'noAlert';
+
 		let friendlyAction = (entry.targetClan === GvGMap.OwnGuild.Id && (entry.type === 'defender_deployed' || entry.type === 'defender_replaced')) ? 'friendly' : 'actionUnknown';
+
 		let tr = document.createElement('tr');
+
 		if (sector != null) { // if sector is on map
 			let sectorCoords = MapSector.coords(sector);
 			t.push('<td><b class="text-bright">'+sectorCoords+'</b><br>'+moment.unix(entry.timestamp).format('HH:mm:ss')+'</td>');
 			t.push('<td>');
+
 				if (entry.sourceClan != entry.targetClan && entry.targetClan != undefined && entry.sourceClan != undefined)
 					t.push(GvGMap.showGuildFlagAndName(entry.sourceClan) +' → '+ GvGMap.showGuildFlagAndName(entry.targetClan));
 				else if (entry.sourceClan != undefined)

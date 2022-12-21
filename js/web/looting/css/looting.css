@@ -202,6 +202,10 @@
     font-size: 10px;
 }
 
+#looting .unit_icon {
+    zoom: 100%
+}
+
 #looting .stats-same-for-all {
     font-size: 0.75rem;
 	margin: 3px 0;

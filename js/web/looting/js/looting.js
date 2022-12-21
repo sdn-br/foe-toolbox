@@ -520,10 +520,12 @@ let Looting = {
 
 		let playerName = '';
 		let clanName = ''
+		let clanId = 0;
 
 		if (filterByPlayerId) {
 			playerName = PlayerDict[filterByPlayerId] !== undefined ? PlayerDict[filterByPlayerId].PlayerName : i18n('Boxes.Looting.Unknown');
 			clanName =  PlayerDict[filterByPlayerId] !== undefined ? PlayerDict[filterByPlayerId].ClanName : i18n('Boxes.Looting.Unknown');
+			clanId = PlayerDict[filterByPlayerId] !== undefined ? PlayerDict[filterByPlayerId].ClanId : 0;
 		}
 
 		$('#lootingBody').html(`
@@ -536,7 +538,7 @@ let Looting = {
 						<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b><br>
 							<span class="player-name">
 								${filterByPlayerId ? 
-									`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? ` [${clanName}]` : ''}` : 
+									`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? ` [${MainParser.GetGuildLink(clanId, clanName)}]` : ''}` : 
 									filterByPvPArena ? 
 										`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
 										`${i18n('Boxes.Looting.AllPlayers')}`
@@ -671,13 +673,14 @@ let Looting = {
 			[Looting.ACTION_TYPE_REPELLED]: i18n('Boxes.Looting.actionRepelled'),
 		}[action.type] || 'unknown';
 
-		const avatar = action.avatar && `${MainParser.InnoCDN}assets/shared/avatars/${MainParser.PlayerPortraits[action.avatar]}.jpg`;
+		const avatar = action.avatar && `${srcLinks.GetPortrait(action.avatar)}`;
 		const date = moment(action.date).format(i18n('DateTime'));
 		const dateFromNow = moment(action.date).fromNow();
 
 		let era = '';
 		const playerName = action.playerName !== 'unknown' ? action.playerName : i18n('Boxes.Looting.Unknown');
 		const clanName = action.clanName !== 'unknown' ? action.clanName : i18n('Boxes.Looting.Unknown');
+		const clanId = action.clanId;
 		const pvpArena = action.pvpArena ? `</br><span class="pvparena">${i18n('Boxes.Looting.PvPArenaAction')}</span>` : '';
 
 		if(action.playerEra && action.playerEra !== 'unknown'){
@@ -712,7 +715,7 @@ let Looting = {
 					<div class="action-content">
 						${isSamePlayer ? '' : `
 						<div class="player-name select-player" data-value="${action.playerId}">
-							${action.playerId ? MainParser.GetPlayerLink(action.playerId, playerName) : playerName}<br><span class="clan">[${clanName}]</span>
+							${action.playerId ? MainParser.GetPlayerLink(action.playerId, playerName) : playerName}<br><span class="clan">[${action.clanId ? MainParser.GetGuildLink(action.clanId, action.clanName) : clanName}]</span>
 						</div>
 						`}
 						<div class="content">${Looting.RenderActionContent(action)}</div>
@@ -822,7 +825,7 @@ let Looting = {
 		const era = Technologies.Eras[type.minEra];
 
 		return `<div class="unit" title="${i18n('Boxes.Looting.Unit')}: ${type.name} (${i18n('Eras.' + era)}), HP: ${endHP}/${startHP}, ${i18n('Boxes.Looting.Attack')}: ${attBoost}, ${i18n('Boxes.Looting.Defense')}: ${defBoost}">
-					<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}" style="background-image:url('${MainParser.InnoCDN}assets/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png')"></div>
+					<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></div>
 						<div class="health">
 						<span style="width: ${healtPerc}%"></span>
 					</div>

@@ -154,7 +154,9 @@ let Settings = {
 
 				cd.html(i18n(`Settings.${d['name']}.Desc`));
 				ct.text(i18n(`Settings.${d['name']}.Title`));
+
 				cs.find('input.setting-check').attr('data-id', d['name']);
+
 				if (status) {
 					cs.find('input.setting-check').attr('checked', '');
 				}
@@ -243,10 +245,13 @@ let Settings = {
 
 		if (s !== null) {
 			return is_string ? s : JSON.parse(s);
+
 		} else {
+
 			if (Settings.Preferences === null) {
 				console.error('Error getting default value of setting "' + name + '". config.json not loaded');
 				return null;
+
 			} else {
 				let p = Settings.Preferences.find(itm => itm['name'] === name);
 				if (p === undefined) {
@@ -469,7 +474,7 @@ let Settings = {
 	 *
 	 * @returns {null|undefined|jQuery}
 	 */
-	MenuInputLength: () => {
+	 MenuInputLength: () => {
 		let ip = $('<input />').addClass('setting-input').attr({
 			type: 'number',
 			id: 'menu-input-length',
@@ -497,7 +502,7 @@ let Settings = {
 
 		return ip;
 	},
-
+	
 	/**
 	 *	Erzeugt in Input Feld
 	 *

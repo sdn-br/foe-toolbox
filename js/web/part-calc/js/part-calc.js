@@ -422,7 +422,6 @@ let Parts = {
 			let SavedArcPercents = localStorage.getItem(Parts.GetStorageKey('ArcPercents', (Parts.ArcBonusForEachGB ? Parts.CityMapEntity['cityentity_id'] : null)));
 			if (SavedArcPercents !== null) Parts.ArcPercents = JSON.parse(SavedArcPercents);
 
-		
 			let SavedCopyOwnPlayerName = localStorage.getItem(Parts.GetStorageKey('CopyOwnPlayerName', null));
 			if (SavedCopyOwnPlayerName !== null) {
 				Parts.CopyOwnPlayerName = SavedCopyOwnPlayerName

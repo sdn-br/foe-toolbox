@@ -460,7 +460,7 @@ const FoEproxy = (function () {
 	/**
 	 * @this {XHR}
 	 */
-	function xhrOnLoadHandler() {
+	 function xhrOnLoadHandler() {
 		if (!proxyEnabled) return;
 
 		if (xhrQueue) {

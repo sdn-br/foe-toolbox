@@ -126,7 +126,7 @@ let _menu_bottom = {
 		$('#foe-helper-hud-wrapper').width(_menu.HudWidth);
 		$('#foe-helper-hud-slider').width( ($("#foe-helper-hud-slider").children().length * _menu_bottom.btnSize));
 	},
-
+	
 
 	/**
 	 * Panel scrollbar machen
@@ -242,6 +242,7 @@ let _menu_bottom = {
 		_menu.MenuScrollLeft -= _menu.HudWidth;
 		if (_menu.ActiveSlide * _menu.HudWidth > $('#foe-helper-hud-slider').width())
 			_menu.MenuScrollLeft = - (($('#foe-helper-hud-slider').width()/_menu.HudWidth) - 1) *_menu.HudWidth;
+
 
 		$('#foe-helper-hud-slider').css({
 			left: _menu.MenuScrollLeft + 'px'
