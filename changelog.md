@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.23.0.0
+** Update **
+- Allgemein
+    - Nach Installation der Extension wird jetzt in allen FoE-Fensterns abgefragt, ob diese neu geladen werden sollen.
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 3.1.0.0 migriert
+
 ##### 1.22.0.0
 **FoE-Helfer**
 - Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 3.0.0.1 migriert

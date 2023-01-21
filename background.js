@@ -352,44 +352,25 @@ alertsDB.version(1).stores({
 		};
 	})();
 
+	function InstallConfirm() {
+		if (window.confirm('Die FoE-Toolbox wurde aktualisiert.\n\nSoll das Spiel jetzt neu geladen werden, damit die neuen Features sofort verfügbar sind?')) {
+			window.location.reload();
+		};
+	}
 
 	browser.runtime.onInstalled.addListener(() => {
 		"use strict";
 		const version = browser.runtime.getManifest().version;
-		let lng = browser.i18n.getUILanguage();
-		const ask = {
-				de: 'Es wurde gerade ein Update f%FCr den FoE Toolbox installiert.%0A%0ADarf das Spiel jetzt neu geladen werden oder m%F6chtest Du es sp%E4ter selber machen%3F',
-				en: 'An update for the FoE Toolbox has just been installed.%0A%0ACan the game be reloaded now or do you want to do it yourself later%3F'
-			};
+		console.log(browser);
+		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs)=> {
+			for (const tab of tabs) {
+				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm}).then(() => console.log('reload executed'));
+			}
+		});
 
-		// is a "-" in there? ==> en-en, en-us, en-gb etc ...
-		if(lng.indexOf('-') > -1){
-			lng = lng.split('-')[0];
-		}
-
-		// Fallback to "de"
-		if(lng !== 'de' && lng !== 'en'){
-			lng = 'de';
-		}
-
-		/** @type {string} */
-		// @ts-ignore
-		const askText = ask[lng];
-		// No developer and player ask if the game can be reloaded
-		if(confirm(unescape(askText)) === true){
-			browser.tabs.query({active: true, currentWindow: true}).then((tabs)=> {
-				// are we in FoE?
-				if(tabs[0].url && tabs[0].url.indexOf('forgeofempires.com/game/index') > -1){
-
-					// Yes? then reload
-					browser.tabs.reload(tabs[0].id);
-				}
-			});
-
-			browser.tabs.create({
-				url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
-			});
-		}
+		browser.tabs.create({
+			url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
+		});
 	});
 
 
@@ -647,6 +628,7 @@ alertsDB.version(1).stores({
 					},
 					body: request.data
 				});
+				return APIsuccess(true);
 			}
 
 			case 'showNotification': { // type
@@ -666,6 +648,7 @@ alertsDB.version(1).stores({
 				}
 				catch( error ){
 					console.error('NotificationManager.notify: ', error );
+					console.log(request);
 					return APIsuccess(false);
 				}
 				return APIsuccess(true);
