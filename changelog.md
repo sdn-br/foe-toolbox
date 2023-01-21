@@ -1,7 +1,7 @@
 ## Changelog - Extension
 
 ##### 1.23.0.0
-** Update **
+**Update**
 - Allgemein
     - Nach Installation der Extension wird jetzt in allen FoE-Fensterns abgefragt, ob diese neu geladen werden sollen.
 
