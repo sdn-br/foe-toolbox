@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 1.24.0.0
+**Bugfix**
+- Allgemein
+    - Abfrage ob Fenster neu geladen werden soll, hat nicht immer zuverlässig funktioniert.
+
+**FoE-Helfer**
+- Alle relevanten Änderungen und Bugfixes bis einschließlich FoE Helfer 3.1.0.1 migriert
+
 ##### 1.23.0.0
 **Update**
 - Allgemein

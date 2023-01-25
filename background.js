@@ -1,7 +1,7 @@
 /*
  * *************************************************************************************
  *
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2023 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -16,10 +16,11 @@
 
 importScripts(
 	'vendor/browser-polyfill/browser-polyfill.min.js','vendor/dexie/dexie.min.js'
-);
+)
 
 // @ts-ignore
 let alertsDB = new Dexie("Alerts");
+
 // Define Database Schema
 alertsDB.version(1).stores({
 	alerts: "++id,[server+playerId],data.expires"
@@ -167,7 +168,7 @@ alertsDB.version(1).stores({
 		 * @param {!number} playerId the associated playerId
 		 * @returns {Promise<number>} the id number of the new alert
 		 */
-		function createAlert(data, server, playerId) {
+		async function createAlert(data, server, playerId) {
 			/** @type {FoEAlert} */
 			const alert = createAlertData(data, server, playerId);
 			return db.alerts
@@ -224,7 +225,7 @@ alertsDB.version(1).stores({
 		}
 
 		/**
-		 * deletes all Alerts marked for deletion which don't have a notification displayed.
+		 * deletes all Alerts marked for deletion which don't have a notification displayed. // does not seem to work properly as future alerts are beeing deleted as well
 		 */
 		async function cleanupAlerts() {
 			const alerts = await getAllAlerts();
@@ -322,8 +323,8 @@ alertsDB.version(1).stores({
 		});
 
 		// upon start cleanup alerts which didn't get removed properly.
-		cleanupAlerts();
-
+		//cleanupAlerts(); // deactivated - is triggered too often and deletes correct/active alarms (it seems the background.js is unloaded/reloaded regularly and this is triggered then unintentionally)
+				
 		return {
 			getValidData: getValidateAlertData,
 			/**
@@ -353,17 +354,17 @@ alertsDB.version(1).stores({
 	})();
 
 	function InstallConfirm() {
-		if (window.confirm('Die FoE-Toolbox wurde aktualisiert.\n\nSoll das Spiel jetzt neu geladen werden, damit die neuen Features sofort verfügbar sind?')) {
+		if (confirm('Die FoE-Toolbox wurde aktualisiert.\n\nSoll das Spiel jetzt neu geladen werden, damit die neuen Features sofort verfügbar sind?'))
 			window.location.reload();
-		};
 	}
-
+	
 	browser.runtime.onInstalled.addListener(() => {
 		"use strict";
 		const version = browser.runtime.getManifest().version;
 		console.log(browser);
 		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs)=> {
 			for (const tab of tabs) {
+				browser.tabs.update(tab.id, {active: true});
 				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm}).then(() => console.log('reload executed'));
 			}
 		});
@@ -387,13 +388,6 @@ alertsDB.version(1).stores({
 
 	const defaultInnoCDN = 'https://foede.innogamescdn.com/';
 
-	// // automatic update of local data
-	// window.addEventListener('storage', evt => {
-	// 	if (!evt.isTrusted) return;
-	// 	if (evt.key === 'PlayerData') {
-	// 		ChatData.player = JSON.parse(evt.newValue);
-	// 	}
-	// });
 
 	/**
 	 * creates the return value for a successfull api-call
