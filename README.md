@@ -1,5 +1,5 @@
 # ACHTUNG
-**Da ich Forge of Empires den Rücken gekehrt habe, werden keine weiteren Updates mehr folgen. Wenn jemand die Toolbox "offiziell" weiterführen möchte, kann er gerne unter Issues einen entsprechenden Thread öffnen und so einen Kommentar hinterlassen, dann werde ich den Link zum neuen Repository entsprechend hier in der Readme hinterlegen.**
+**Da ich Forge of Empires den Rücken gekehrt habe, werden keine weiteren Updates mehr folgen. Wenn jemand die Toolbox "offiziell" weiterführen möchte, kann er gerne unter Issues einen entsprechenden Thread öffnen und so einen Kommentar hinterlassen, dann werde ich den Link zum neuen Repository hier in der Readme hinterlegen.**
 
 ## FoE Toolbox
 **Fork der Chrome Erweiterung FoE Helfer.**
