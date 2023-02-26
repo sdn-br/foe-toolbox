@@ -1,5 +1,8 @@
+# ACHTUNG
+**Da ich Forge of Empires den Rücken gekehrt habe, werden keine weiteren Updates mehr folgen. Wenn jemand die Toolbox "offiziell" weiterführen möchte, kann er gerne unter Issues einen entsprechenden Thread öffnen und so einen Kommentar hinterlassen, dann werde ich den Link zum neuen Repository entsprechend hier in der Readme hinterlegen.**
+
 ## FoE Toolbox
-**Fork der Chrome Erweiterung FoE Helfer. Ich werde hier bis auf Weiteres immer wieder neue Versionen anbieten und interessante Änderungen aus dem Original migrieren.**
+**Fork der Chrome Erweiterung FoE Helfer.**
 
 Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mit einigen Features, die es nicht in den FoE Helfer schaffen werden bzw. dort nicht mehr vorhanden sind. Die FoE Toolbox Entwicklung findet unabhängig vom FoE Helfer statt, ist nicht mit dem FoE Helfer Team abgestimmt und steht auch sonst in keiner Beziehung zum FoE Helfer. Ich behalte mir aber vor, weiterhin den frei verfügbaren Quellcode des FoE Helfers als Basis für die FoE Toolbox zu verwenden.
 
