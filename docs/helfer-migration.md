@@ -9,7 +9,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 17 Branding, nur Deutsch, Update-/Reload-Logik, DB-Migration
 - [x] 16 Datenmodell-Unterbau
 - [x] 16a Bekannte Spieler: Name, Gilde und Avatar werden aktualisiert (Entscheidung Nutzer)
-- [ ] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
+- [x] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
 - [ ] 2 PvP Angriffe (`looting`)
 - [ ] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
 - [ ] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
@@ -56,6 +56,17 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Entscheidung Nutzer: für Spieler, die schon in `players` stehen, werden jetzt auch `name`, `clanId`, `clanName` und `avatar` aktualisiert (alt und in 16 nur beim ersten Anlegen geschrieben). Regel bleibt: unbekannte Werte (`undefined`) überschreiben keine bekannten.
 - Gildenaustritt: `clan_id` = 0 ohne `clan` gilt als bekannter Wert "keine Gilde". Dann wird `ClanName` im PlayerDict entfernt und `clanName` in der DB gelöscht, sonst bliebe der alte Gildenname stehen.
 - Neue Spieler ohne bekannte Gilde bekommen weiter `clanId` 0 (wie alt).
+
+**Notizen 1**
+- Neues Modul `js/web/sabotage` (in `js/internal.json` registriert), Menüknopf `sabotage` (rot bis zum ersten Besuch, Warnung wie alt), Icon `css/images/menu/sabotage.png` aus der Toolbox, i18n nur in `de.json`.
+- Settings wie alt: `ShowNeighborsLootables` (Ernte, default aus), `ShowPlayersAttDeffValues` (Angriff/Verteidigung, default **an**), beide mit `doubleoptin: true`. Achtung: 4.8.3 kennt `doubleoptin` noch nicht, die Bestätigung kommt erst mit 15.
+- Anpassung: Boni und Produktionen kommen jetzt aus dem 4.8.3-Gebäudemodell (`CityBuildings.createBuilding`, ohne Verbündete, da die des besuchten Spielers unbekannt sind) statt aus eigenem Parsen der `abilities`. Werte: Summe `att/def_boost_attacker/defender` mit Feature `all` (über `Productions.getRatingValueForType`), Plünderabwehr = Boosts `plunder_repel` mit Feature `all`. `Unit.GetBoostSums` und `GoodsParser` entfallen. Damit zählen auch generische Gebäude (Komponenten) und die LG-Boni der Rework-LGs.
+- Upstream zeigt im eigenen Profil-Fenster (`Profile.showOtherPlayer`) bei fremden Spielern absichtlich Zufallswerte für die Verteidigung; die Toolbox rechnet weiter echt.
+- Plünderbar: `is_plunderable` aus 16, nicht motiviert (`state.isPolivated`), Zustand `collectable`. Gezählt werden Produktionen vom Typ `resources`/`special_goods` und Gildenmacht (`clan_power`). Generische Gebäude liefern ihre Produktion aus `productionOption` (neu, alt nur `current_product`). FP-Erkennung über `strategy_points` statt über den englischen Namen "Forge Point".
+- "Stadt anzeigen"/Auge: öffnet die 4.8.3-Stadtkarte (`CityMap.init(true)`, nutzt `ActiveMap === 'OtherPlayer'`) und hebt das Gebäude per `highlighted` + `CityMap.FocusEntities` hervor. Nur sichtbar, solange man noch in dieser Stadt ist (die Karte kennt nur die aktuelle fremde Stadt).
+- Bugfix: nächster Angriffszeitpunkt rechnete `moment.unix()` auf Millisekunden (`getCurrentDateTime`), jetzt `moment(ms)`.
+- "Angriffe anzeigen" und der Stadtschild (Tabelle `neighborhoodAttacks`, Typ 5) hängen an `Looting` (Feature 2). Der Knopf erscheint nur, wenn das Modul geladen ist.
+- Offen: Abwehr-"max" (+60 %) und Angriff-"max" (+50 %) sind die alten festen Aufschläge (Taverne/Gildenbonus), nicht geprüft. Kettenboni zählen ohne Prüfung der Verknüpfung (wie Upstream `getRatingValueForType`).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
