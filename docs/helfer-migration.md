@@ -21,7 +21,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 11 Blaue Galaxie: Diamanten
 - [x] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
 - [x] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
-- [ ] 14 Spielerlinks nur auf dem Icon
+- [x] 14 Spielerlinks nur auf dem Icon
 - [ ] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
 - [ ] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
 
@@ -139,6 +139,10 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Tooltips: `trigger: 'hover'` an beiden Bootstrap-Tooltip-Aufrufen in `citymap.js` (Außenposten/QI und Hauptstadt). Die Gebäude der Hauptstadt nutzen in 4.8.3 meist den eigenen Tooltip (`fh-tooltip`, nur Hover), dort war nichts zu tun.
 - Double-Opt-In wie alt: `window.confirm(Boxes.CityMap.SendDoubleOptIn)` vor dem Senden der Stadt (`CityMap.SubmitData`) und eines Außenpostens (`Outposts.SubmitData`). Anders als alt erst nach der Prüfung auf den API-Token (den verlangt 4.8.3 neu), damit ohne Token nicht erst gefragt und dann abgebrochen wird. Text wie alt (Ziel `api.foe-rechner.de`, Anzeige auf foe-helper.com), Tippfehler korrigiert.
 - Versand unabhängig von `GlobalSend` (alt `forceSend = true`): kommt mit 15.
+
+**Notizen 14**
+- Wie alt: `MainParser.GetPlayerLink`, `GetGuildLink` und `GetBuildingLink` setzen den Link nur auf das Icon, der Name steht davor als Text. Gilt auch für die neue Upstream-Linkquelle ForgeDB (`linkSite = siteForgedb`), die Ziel-URLs sind unverändert.
+- Nicht geprüft: ob eine Upstream-Box den Namen über das `<a>` ausliest oder stylt (z. B. Farbe des Namens über `.external-link`). Im Code keine Stelle gefunden, die den Linktext liest.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
