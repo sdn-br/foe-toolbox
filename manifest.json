@@ -85,9 +85,6 @@
 	"externally_connectable": {
 		"matches": [
 			"https://*.forgeofempires.com/*"
-		],
-		"ids": [
-			"*"
 		]
 	},
 	"background": {
