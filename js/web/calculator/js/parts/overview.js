@@ -21,6 +21,8 @@ FoEproxy.addHandler('GreatBuildingsService', 'getOtherPlayerOverview', (data, po
 	if (Overview[0]?.player?.player_id === ExtPlayerID || !Settings.GetSetting('ShowPossibleInvestments')) return;
 
 	Calculator.Overview = Overview;
+	$('#possibleInvestments-Btn').removeClass('hud-btn-red');
+	$('#possibleInvestments-Btn-closed').remove();
 	Calculator.ShowPossibleInvestments(false);
 });
 
