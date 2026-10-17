@@ -368,6 +368,14 @@ Upstream-Fehler (seit Helfer 4.4.0.0, in 4.8.3 nicht behoben): Ein fremdes LG, d
 - `getConstruction` enthält keinen Fortschritt, das Spiel zeigt ihn ebenfalls aus den Besuchsdaten. Nach einer Einzahlung antwortet das Spiel mit `CityMapService.reset` (früher `updateEntity`). `updateVisitedCity` übernimmt die Entity aus beiden in `mapData`, wenn sie dort schon steht, und ersetzt auch die gemerkte Entity (`gbCityMapEntity`, `gbUpdateData`), weil ein erneutes Öffnen desselben LGs `mapData` nicht noch einmal liest.
 - Forge Hammer löst es anders (eigener LG-Speicher `FH.GBCalc.getGB`), nicht übernommen.
 
+## Erweiterungspunkte in Upstream-Dateien
+
+Ziel: Upstream-Dateien bleiben so nah am Original, dass `git merge` wenig Konflikte bringt. Upstream-Funktionen werden nie ersetzt, nur umhüllt (Original aufrufen, davor oder danach ergänzen) oder über einen kleinen Hook im Kern erweitert. Jede verbleibende Änderung in einer Upstream-Datei trägt einen Marker: `// TOOLBOX:` bei einzelnen Zeilen, `// TOOLBOX-BEGIN` und `// TOOLBOX-END` um Blöcke. JSON kennt keine Kommentare, deshalb bleiben `internal.json`, `de.json` und `config.json` unverändert auf Upstream.
+
+- Skripte: `js/toolbox.json` listet die eigenen Module, gleiches Format wie `js/internal.json`. `inject.js` hängt die Liste hinten an die Upstream-Liste an (2 Zeilen), gleiche Ladeart, die Reihenfolge bleibt. Fehlt die Datei (Beta-Loader), lädt nur Upstream. `parts` laden nur mit ihrer Hauptdatei, deshalb sind die früheren Teile `calculator/parts/overview.js` und `notice/parts/store.js` jetzt eigene Module (`calculator-overview`, `notice-store`).
+- Texte: `js/web/_i18n/toolbox.de.json` enthält alle neuen Toolbox-Texte und die Toolbox-Fassung geänderter Upstream-Texte (Branding, `GlobalSend` u. a.). `_main.js` lädt die Datei nach der Upstream-Sprachdatei (1 Zeile). Der Übersetzer behält den zuletzt geladenen Wert, die Toolbox gewinnt. Den nicht mehr genutzten Upstream-Text `Boxes.Notice.GlobalSendRequired` lassen wir stehen.
+- Einstellungen: `js/web/settings/config/config.toolbox.json` mit `entries` und `remove`. `Settings.LoadConfig` mischt sie in die Upstream-`config.json` (Block mit Marker): ein Eintrag mit vorhandenem `name` überschreibt dessen Felder an Ort und Stelle, neue Einträge kommen ans Ende (innerhalb ihrer Gruppe also hinter die Upstream-Einträge), Namen aus `remove` fallen weg. Entfernen statt `hidden`, weil `BuildBody` bei `hidden` die Gruppe abbricht (`break` statt `continue`, Upstream-Fehler).
+
 ## Entscheidungen
 
 - Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
