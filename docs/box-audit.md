@@ -76,6 +76,7 @@ Abweichungen:
 - Settings als Box-Settings-Overlay über `innerHTML` (wie Upstream üblich).
 - Mischung Leerzeichen/Tabs und 4er-Einrückung (Upstream-Mix).
 Aufwand: **S**.
+**Stand (umgesetzt):** Speichern-Knopf der Settings ohne `onclick`, ein delegierter Handler auf der Box (`.settingsbox-wrapper .saveSettings`), einmal beim Anlegen gebunden, funktioniert damit auch im Pop-out. Fachfarben (Heatmap, Gebäude- und Aktionstypen) als Variablen `--gbgal-*` an `#GBGActionLog` am Anfang von `gbg-actionlog.css`, `#fff` als `--white`. `FH.*` bleibt. Offen: Inline-`display:none` der Filter-Popups (Z. ~478), war nicht im Umfang.
 
 ### 2.5 Notizen (`js/web/notice/js/notice.js`, `js/web/notice/js/parts/store.js` 360 Z., `css/notice.css` +13 Z.)
 `store.js` ist reine Datenschicht (Dexie, ersetzt die API), eigene UI nur der Import-Button und das Bestätigungs-Modal. Das Modal nutzt dieselbe Mechanik wie der Upstream-Editiermodus (`HTML.Box` `notices-modal` + `foe-helper-overlay`), also gleicher Stil. Der Button ist jQuery-Elementbau (`$('<span />').attr({role:'button', class:'btn ...'})`), passt zum übrigen `notice.js`, das Upstream ebenfalls so baut. CSS: 2 Regeln, nur Layout, keine Farben. `notice.js` selbst ist Upstream-Stil und bewusst nah an Upstream gehalten (Merge-Fähigkeit), inklusive `apiToken:Notice.ApiToken` in den Payloads (tot, harmlos). Popout wurde ergänzt.
