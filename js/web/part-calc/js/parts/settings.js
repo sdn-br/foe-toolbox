@@ -59,7 +59,9 @@ Object.assign(Parts, {
 				<input type="checkbox" id="showprints" class="showprints game-cursor" ${((showPrints == 'true') ? 'checked' : '')}> <label for="showprints">${i18n('Settings.ShowOwnPartBP.Desc')}</label><br>
 				<input type="checkbox" id="minview" class="minview game-cursor" ${((minView == 'true') ? 'checked' : '')}> <label for="minview">${i18n('Settings.ShowOwnPartMinView.Desc')}</label><br>
 				<input id="copyformatpergb" class="copyformatpergb game-cursor" ${(Parts.CopyFormatPerGB ? 'checked' : '')} type="checkbox"> <label for="copyformatpergb">${i18n('Boxes.OwnpartCalculator.CopyFormatPerGB')}</label><br>
-				<input type="checkbox" id="includeStart" class="includeStart game-cursor" ${((includeStart == 'true') ? 'checked' : '')}> <label for="includeStart">${i18n('Settings.ShowOwnPartIncludeStart.Desc')}</label>
+				<input type="checkbox" id="includeStart" class="includeStart game-cursor" ${((includeStart == 'true') ? 'checked' : '')}> <label for="includeStart">${i18n('Settings.ShowOwnPartIncludeStart.Desc')}</label><br>
+				<input type="checkbox" id="onefpfornonfpplace" class="onefpfornonfpplace game-cursor" ${(Parts.OneFPForNonFPPlace ? 'checked' : '')}> <label for="onefpfornonfpplace">${i18n('Boxes.OwnpartCalculator.OneFPForNonFPPlace')}</label><br>
+				<input type="checkbox" id="arcbonusforeachgb" class="arcbonusforeachgb game-cursor" ${(Parts.ArcBonusForEachGB ? 'checked' : '')}> <label for="arcbonusforeachgb">${i18n('Boxes.OwnpartCalculator.ArcBonusForEachGB')}</label>
 			</p>
 			<p class="text-center p2">
 				<button id="save-calculator-settings" class="btn btn-green" onclick="Parts.SettingsSaveValues()">${i18n('Boxes.Calculator.Settings.Save')}</button>
@@ -215,10 +217,18 @@ Object.assign(Parts, {
 			includeStart = false;
 		localStorage.setItem('OwnPartIncludeStart',includeStart);
 
+		// Toolbox: 1 FP for places without FP, arc bonus per GB
+		let OldOneFPForNonFPPlace = Parts.OneFPForNonFPPlace,
+			OldArcBonusForEachGB = Parts.ArcBonusForEachGB;
+		Parts.OneFPForNonFPPlace = $settings.find('.onefpfornonfpplace').prop('checked');
+		localStorage.setItem(Parts.GetStorageKey('OneFPForNonFPPlace', null), Parts.OneFPForNonFPPlace);
+		Parts.ArcBonusForEachGB = $settings.find('.arcbonusforeachgb').prop('checked');
+		localStorage.setItem(Parts.GetStorageKey('ArcBonusForEachGB', null), Parts.ArcBonusForEachGB);
+
 		$settings.fadeToggle('fast', function(){
 			$(this).remove();
 
-			if (Parts.CopyFormatPerGB !== OldCopyFormatPerGB) Parts.FirstCycle = true;
+			if (Parts.CopyFormatPerGB !== OldCopyFormatPerGB || Parts.OneFPForNonFPPlace !== OldOneFPForNonFPPlace || Parts.ArcBonusForEachGB !== OldArcBonusForEachGB) Parts.FirstCycle = true;
 			Parts.CalcBody();
 		});
 	},

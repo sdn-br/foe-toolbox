@@ -16,8 +16,8 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 5 Kostenrechner schreibt LGs in IndexedDB
 - [x] 7 Verhandlungsassistent in Gildengefechten (GbG)
 - [x] 8 Fenster fixieren
-- [ ] 9 Alarme `requireInteraction`
-- [ ] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
+- [x] 9 Alarme `requireInteraction`
+- [x] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
 - [ ] 11 Blaue Galaxie: Diamanten
 - [ ] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
 - [ ] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
@@ -113,6 +113,14 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Icon: das alte Sprite-Feld (`box-sprite.png` bei -220px) belegt in 4.8.3 das Pop-out-Icon, das Sprite wird deshalb nicht ersetzt. Das Icon (Verschiebe-Pfeile, gelb = fixiert) kommt als SVG per `::after` wie Upstreams `window-split`. Neuer Tooltip `Boxes.General.DragToggle`. Das ungenutzte alte `_menu_box.ToggleDraggable` und `Boxes.Menu.ToggleDrag` entfallen.
 - `CloseBox` wie alt: `Ignore: ['menu_box']` (Alle ausblenden/schließen lässt das Box-Menü stehen; in 4.8.3 hätte "Alle schließen" das Menü entfernt), Titel ohne Suffix (`onlyTitle`). `Ignore` liegt anders als alt nicht in `CloseBox.Settings`, damit es nicht in `CloseBoxSettings` gespeichert wird.
 - Die Resize-Nebenänderung (`minWidth`/`minHeight` aus CSS) gehört zum Bugfix-Punkt, s. dort.
+
+**Notizen 9**
+- Geprüft, nichts zu tun: `background.js` setzt in `triggerAlert` `requireInteraction: alert.data.persistent||false` (außer Firefox, dort gibt es die Option nicht; die Toolbox hat kein Firefox-Manifest mehr) und bei `showNotification` `requireInteraction: options.persistent`. Beides entspricht der alten Toolbox.
+
+**Notizen 10**
+- Zwei Optionen im Einstellungsdialog des Eigenanteilsrechners (`parts/settings.js`, neu in 4.8.3 ausgelagert): "1 FP für Plätze ohne FP berechnen" (`OneFPForNonFPPlace`) und "Bonuseinstellung pro LG speichern" (`ArcBonusForEachGB`), gespeichert wie alt unter `OwnPart_<Name>_<Spieler-ID>`.
+- `OneFPForNonFPPlace` default aus wie alt: ein Platz mit Belohnung, aber ohne FP zählt dann 0 statt 1 FP. Achtung: das ändert das Upstream-Verhalten (Upstream rechnet immer 1 FP), s. offene Fragen.
+- `ArcBonusForEachGB`: Arche-Prozente unter `OwnPart_ArcPercents_<cityentity_id>_<Spieler-ID>` (`Parts.ArcPercentsStorageKey`). Anpassung: alt wurden die Prozente nur beim ersten Rendern der Sitzung geladen (beim Wechsel auf ein anderes LG galten die alten Werte weiter, gespeichert wurde aber unter dem neuen LG), jetzt bei jedem LG-Wechsel. Ohne gespeicherte Werte für das LG gelten die globalen Prozente, erst dann die Standardwerte 90 % (alt direkt 90 %, und das Standard-Array wurde durch die Knöpfe verändert).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
