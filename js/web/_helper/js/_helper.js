@@ -205,7 +205,7 @@ let HTML = {
 	Box: (args) => {
 		const titleHtml = args.onlyTitle === true
 			? args.title
-			: (extVersion.indexOf('beta') > -1 ? '(Beta) ' : '') + args.title + ' <small><em> - FoE Helper</em></small>';
+			: (extVersion.indexOf('beta') > -1 ? '(Beta) ' : '') + args.title + ' <small><em> - FoE Toolbox</em></small>';
 
 		const title = $('<span />').addClass('title').html(titleHtml);
 		title.attr('title', title[0].textContent);
