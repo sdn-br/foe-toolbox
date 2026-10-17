@@ -86,9 +86,9 @@ let Popup = {
 			height = (size && size.h) || options.height || Math.max(box.offsetHeight, 220);
 
 		const boxTitle = box.querySelector('.window-head .title');
-		let title = options.title || (boxTitle ? boxTitle.textContent.trim() : 'FoE Helper');
-		if (title.indexOf('FoE Helper') === -1) {
-			title += ' - FoE Helper';
+		let title = options.title || (boxTitle ? boxTitle.textContent.trim() : 'FoE Toolbox');
+		if (title.indexOf('FoE Toolbox') === -1) {
+			title += ' - FoE Toolbox';
 		}
 
 		// Apply all extension style sheets from the main page + pop-up CSS
@@ -156,7 +156,7 @@ let Popup = {
 			URL.revokeObjectURL(winUrl);
 			delete Popup._pending[id];
 			HTML.ShowToastMsg({
-				head: 'FoE Helper',
+				head: 'FoE Toolbox',
 				text: i18n('PopUp.Blocked'),
 				type: 'error',
 				hideAfter: 6000
