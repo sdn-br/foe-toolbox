@@ -1,51 +1,48 @@
+/* fixed width, room for 8 units per army; min and max also beat a saved width, the grip only changes the height */
 #looting {
-	width: 670px;
+	width: 690px;
+	min-width: 690px;
+	max-width: 690px;
 	height: 600px;
-	min-width: 480px;
 }
 
+/* head and paging stay in place, only the list scrolls */
 #lootingBody {
     margin-top: 2px;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#lootingBody > .toolbox-head,
+#lootingBody > .pagination {
+    flex: none;
+}
+
+#lootingBody > .action-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 #looting .header {
     padding: 0 0 2px 2px;
 }
 
-#lootingBody .strategy-points {
-	margin-bottom: 10px;
-    justify-content: center;
-    display: flex;
+#lootingBody .toolbox-cards {
+	margin-bottom: 8px;
 }
 
-#lootingBody .strategy-points table {
-	align-self: center;
-}
-
-#lootingBody .strategy-points tr th span {
-	display: inline-block;
-	width: 25px;
-	height: 25px;
-	vertical-align: bottom;
-}
-
-#lootingBody .strategy-points tr th {
-	color: var(--beige);
-}
-
-#lootingBody .strategy-points tr td {
-	color: var(--beige);
-}
-
-#lootingBody .strategy-points tr th span.forgepoints {
+#lootingBody .toolbox-card-icon.forgepoints,
+#lootingBody .toolbox-card-icon.doubleloot {
+	width: 20px;
+	height: 20px;
 	background: url(../../x_img/forgepoints.png) center no-repeat;
 	background-size: contain;
 }
 
-#lootingBody .strategy-points tr th span.doubleloot {
-	background: url(../../x_img/doubleloot.png) center no-repeat;
-	background-size: contain;
+#lootingBody .toolbox-card-icon.doubleloot {
+	background-image: url(../../x_img/doubleloot.png);
 }
 
 
@@ -208,8 +205,54 @@
     font-size: 10px;
 }
 
-#looting .unit_icon {
-    zoom: 100%
+/* single portrait per unit type, the class symbol small in the corner */
+#looting .unit-portrait {
+	position: relative;
+	width: 44px;
+	height: 44px;
+	margin: 0 auto;
+	--unit_scale: 3/5;
+}
+
+#looting .unit-portrait img {
+	width: 44px;
+	height: 44px;
+	display: block;
+}
+
+#looting .unit-portrait .unit_skill {
+	position: absolute;
+	right: -3px;
+	bottom: -3px;
+	--unit_scale: 4/5;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--black-65);
+	box-shadow: 0 0 0 1px var(--text-medium);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#looting .unit-era {
+	font-size: 10px;
+	line-height: 12px;
+	font-weight: bold;
+	margin-top: 1px;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-medium);
+}
+
+#looting .unit-era.same {
+	color: var(--beige);
+}
+
+#looting .unit-era.newer {
+	color: var(--danger-red);
 }
 
 #looting .stats-same-for-all {
@@ -250,17 +293,6 @@
 
 #looting .pvparena {
     font-weight: bold;
-}
-
-#lootingBody .strategy-points table {
-	width: 80%;
-	text-align: center;
-}
-
-#lootingBody .strategy-points table th,
-#lootingBody .strategy-points table td {
-	text-align: center;
-	width: 16%;
 }
 
 #looting .shield-explain img {
