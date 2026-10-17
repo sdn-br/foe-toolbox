@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -11,39 +11,19 @@
  * **************************************************************************************
  */
 
-#costCalculator {
-	top: 30%;
-	left: 30px;
-	min-width: 350px;
+/* own box in split view */
+#CalculatorBox {
+	top: 100px;
+	min-width: 280px;
 }
 
-#costCalculator #costCalculatorBody {
+#CalculatorBoxBody {
 	position: relative;
-	min-width: 320px;
 }
 
-#costCalculator #costCalculatorBody .lg-not-possible {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0,0,0, 0.7);
-}
-
-#costCalculator #costCalculatorBody .lg-not-possible::after {
-	content: attr(data-text);
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	text-align: center;
-	width: 240px;
-}
-
-#costCalculator #costCalculatorBody input {
+#gbCalc input {
 	display: inline-block;
-	width: 45px;
+	width: 35px;
 	text-align: center;
 	padding: 1px 5px;
 	line-height: 1.5;
@@ -51,219 +31,153 @@
 	color: var(--text-medium);
 	background-clip: padding-box;
 	border: 1px solid var(--text-dark);
+	border-radius: 0 4px 4px 0;
 	transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
-#costCalculator #costCalculatorBody strong {
-	color: var(--text-bright);
+#gbCalc strong {
+	color: var(--sunflower);
 }
 
-#costCalculator #costCalculatorBody .header {
+#gbCalc .header {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	margin: 3px 0;
+	font-size: 90%;
 }
 
-#costCalculator #costCalculatorBody .header span {
-	color: var(--text-normal);
+#gbCalc .header span {
+	color: var(--beige);
 }
 
-#costCalculator #costCalculatorBody .header .building-name {
-	font-size: 115%;
+#gbCalc .header .building-name {
+	font-size: 125%;
 }
 
-#costCalculator #costCalculatorBody .header .player-name {
+#gbCalc .header .player-name {
 	display: block;
 	white-space: nowrap;
-	color: var(--text-bright);
-	margin: 0 10px;
 }
 
-#costCalculator #costCalculatorBody table.foe-table {
-	margin-top: 3px;
+#gbCalc .rq {
+	font-size: 90%;
 }
 
-#costCalculator tr th {
+#gbCalc table.foe-table {
+	margin-top: 2px;
+}
+
+#gbCalc tr th {
 	text-align: center;
 }
 
-#costCalculator tr th span {
+#gbCalc tr th span {
 	display: inline-block;
 	width: 25px;
 	height: 25px;
 	vertical-align: bottom;
 }
 
-#costCalculator tr th span.blueprint {
+#gbCalc tr th span.blueprint {
 	background: url(../../x_img/blueprint.png) center no-repeat;
 	background-size: contain;
 }
 
-#costCalculator tr th span.medal {
+#gbCalc tr th span.medal {
 	background: url(../../x_img/medal.png) center no-repeat;
 	background-size: contain;
 }
 
-#costCalculator tr th span.forgepoints {
+#gbCalc tr th span.forgepoints {
 	background: url(../../x_img/forgepoints.png) center no-repeat;
 	background-size: contain;
 }
 
-#costCalculator #costCalculatorBody .foe-table td {
+#gbCalc tr th span.contribution-boost {
+	background: url(../../x_img/arc_bonus.png) center no-repeat;
+	background-size: contain;
+}
+
+#gbCalc .foe-table td {
 	white-space: nowrap;
 }
 
-#costCalculator #costCalculatorBody td.error,
-#costCalculator #costCalculatorBody td .error {
-	color: #ec4d4d;
+#gbCalc td.error,
+#gbCalc td .error {
+	color: var(--danger-red);
 }
 
-#costCalculator #costCalculatorBody strong.success {
-	color: var(--text-success);
+#gbCalc strong.success {
+	color: var(--success);
 }
 
-#costCalculator #costCalculatorBody strong.error {
-	color: #ec4d4d;
+#gbCalc .text-grey,
+#gbCalc .text-grey strong {
+	color: var(--text-tab);
+	opacity: 0.9;
 }
 
-#costCalculator #costCalculatorBody .text-grey,
-#costCalculator #costCalculatorBody .text-grey strong {
-	color: #b1b1b1;
-	opacity: 0.75;
+#gbCalc strong.info {
+	color: var(--info-blue);
 }
 
-#costCalculator #costCalculatorBody strong.info {
-	color: var(--text-info);
+#gbCalc tr.info-row {
+	background-color: var(--table-bg-info);
+	border-top-color: var(--table-bt-info);
+	border-bottom-color: var(--table-bb-info);
 }
 
-#costCalculator #costCalculatorBody tr.info-row {
-	background-color: var(--background-table-info);
+#gbCalc tr.bg-green {
+	background-color: var(--table-bg-success);
+	border-top-color: var(--table-bt-success);
+	border-bottom-color: var(--table-bb-success);
 }
 
-#costCalculator #costCalculatorBody tr.bg-green {
-	background-color: var(--background-table-success);
+#gbCalc tr.bg-red {
+	background-color: var(--table-bg-error);
+	border-top-color: var(--table-bt-error);
+	border-bottom-color: var(--table-bb-error);
 }
 
-#costCalculator #costCalculatorBody tr.bg-red {
-	background-color: var(--background-table-error);
+#gbCalc tr.bg-yellow {
+	background-color: var(--table-bg-bright);
+	border-top-color: var(--table-bt-bright);
+	border-bottom-color: var(--table-bb-bright);
 }
 
-#costCalculator #costCalculatorBody tr.bg-yellow {
-	background-color: var(--background-table-bright);
-}
-
-#costCalculatorBody .costFactorWrapper {
-	padding: 5px 5px;
-	align-items: center;
-	justify-content: space-between;
-}
-
-#costCalculatorBody .costFactorWrapper > div:first-child {
+#gbCalc .costFactorWrapper {
+	padding-top: 5px;
 	text-align: center;
-	width: 36%;
-	white-space: nowrap;
 }
 
-#costCalculatorBody .costFactorWrapper > div:first-child span {
-	white-space: nowrap;
-	display: block;
-	margin-top: 6px;
+#gbCalc .costFactorWrapper span {
+	display: inline-flex;
+	align-items: stretch;
 }
 
-#costCalculatorBody .costFactorWrapper > div:last-child {
+#gbCalc .costFactorWrapper .btn-group {
 	text-align: center;
-	width: 39%;
-	margin-top: 10px;
+	white-space: nowrap;
 }
 
-#costCalculatorBody .costFactorWrapper .btn-default {
-	padding: 0.2rem 0.4rem;
-}
-
-#costCalculatorBody .costFactorWrapper > span {
-	display: inline-block;
-	margin-right: 15px;
-}
-
-#costCalculatorBody .costFactorWrapper .btn-default:not(:first-child) {
-	display: inline-block;
-	margin-left: 3px;
-}
-
-#costCalculatorBody #costTable {
+#gbCalc #costTable {
 	user-select: text;
 }
 
-
-
-#LGInvestmentOverviewBox {
-	top: 30%;
-	right: 15%;
-	width: 500px;
+.btn.arkBonus {
+	font-weight: bold;
+}
+#gbCalc .lb-tier-icon {
+	height: 18px;
+	vertical-align: text-bottom;
 }
 
-#LGInvestmentOverviewBox .head-bar {
-	display: flex;
-	justify-content: space-between;
-	padding: 0 5px;
-}
-
-#LGInvestmentOverviewBox .head-bar .color-description {
-	display: inline-block;
-	margin-left: auto;
-}
-
-#LGInvestmentOverviewBox .head-bar .color-description span {
-	display: block;
-}
-
-#LGInvestmentOverviewBox strong,
-#LGInvestmentOverviewBox .head-bar strong {
-	color: #FFB539;
-}
-
-#LGInvestmentOverviewBox strong.warning {
-	color: #FF6000;
-}
-
-#LGInvestmentOverviewBox strong.success {
-	color: #29b206;
-}
-
-#LGInvestmentOverviewBox strong.error {
-	color: #ec4d4d;
-}
-
-#LGInvestmentOverviewBox #LGInvestmentOverviewBoxBody .no-investments-possible {
-	line-height: 20	px;
-}
-
-#LGInvestmentOverviewBox #LGInvestmentOverviewBoxBody .color-description {
-	font-weight: 700;
-	display: inline-block;
-	margin-left: 6px;
-	background: #2196f3;
-	padding: 0 4px;
-	border-radius: 50%;
-	width: 10px;
-	line-height: 1.3em;
-	z-index: 1;
-}
-
-#LGInvestmentOverviewBox #LGInvestmentOverviewBoxBody .color-description > span {
-	position: absolute;
+#gbCalc .bp-tier-amount {
 	white-space: nowrap;
-	text-align: left;
-	background: rgba(0,0,0, 0.8);
-	padding: 10px;
-	right: 33px;
-	top: 14px;
-	z-index: 1;
-	display: none;
-	transition: all 0.2s linear;
 }
 
-#LGInvestmentOverviewBox #LGInvestmentOverviewBoxBody .color-description:hover > span {
-	display: block;
+#gbCalc .bp-tier-icon {
+	height: 16px;
+	vertical-align: text-bottom;
+	margin-left: 1px;
 }

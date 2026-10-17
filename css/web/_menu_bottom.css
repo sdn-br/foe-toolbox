@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -15,11 +15,10 @@
 	left: 1035px;
 	bottom: 0;
 	width: 270px;
-	height: 48px;
+	height: 43px;
 	border-radius: 2px 2px 0 0;
 	transition: all 0.1s ease;
 	border-bottom-width: 0;
-	background-color: #553419;
 }
 
 .hud-bottom #foe-helper-hud-wrapper {
@@ -32,7 +31,7 @@
 .hud-bottom #foe-helper-hud-slider {
 	position: absolute;
 	left: 0;
-	top: 2px;
+	top: 0;
 	transition: left 0.7s ease-in-out;
 	height: inherit;
 }
@@ -43,31 +42,16 @@
 
 .hud-bottom .hud-btn span:first-child {
 	display: inline-flex;
-	width: 76%;
-	height: 76%;
-	margin-top: 12%;
+	width: 80%;
+	height: 80%;
+	margin-top: 10%;
 }
 
 .hud-bottom .hud-btn span.hud-counter {
-	width: 15px;
-	height: 15px;
-	padding: 2px;
-	top: unset;
-	bottom: -2px;
-	right: unset;
-	left: -2px;
-	line-height: 13px;
-	pointer-events: none;
-}
-
-.hud-bottom .hud-btn span.hud-future-counter {
-	width: 15px;
-	height: 15px;
-	padding: 2px;
-	top: unset;
-	bottom: -2px;
-	right: -2px;
-	left: unset;
-	line-height: 13px;
-	pointer-events: none;
+	width: 12px;
+	height: 12px;
+	left: 2px;
+	bottom: 2px;
+	line-height: 10px;
+	font-size: 0.7rem;
 }

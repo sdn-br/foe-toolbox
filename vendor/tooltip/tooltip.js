@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -113,7 +113,7 @@
 				, e = $.Event('show')
 
 			if (this.hasContent() && this.enabled) {
-				this.$element.trigger(e)
+				this.$element.triggerHandler(e)
 				if (e.isDefaultPrevented()) return
 				$tip = this.tip()
 				this.setContent()
@@ -142,7 +142,16 @@
 					.detach()
 					.css({ top: 0, left: 0, display: 'block' })
 
-				this.options.container ? $tip.appendTo(this.options.container) : $tip.insertAfter(this.$element)
+				// resolve string containers (e.g. 'body') against the element's own
+				// document, so tooltips also work inside popup windows (Popup module)
+				if (this.options.container) {
+					var container = typeof this.options.container == 'string' ?
+						$(this.options.container, this.$element[0].ownerDocument) :
+						$(this.options.container)
+					$tip.appendTo(container)
+				} else {
+					$tip.insertAfter(this.$element)
+				}
 
 				pos = this.getPosition()
 
@@ -165,7 +174,7 @@
 				}
 
 				this.applyPlacement(tp, placement)
-				this.$element.trigger('shown')
+				this.$element.triggerHandler('shown')
 			}
 		}
 
@@ -233,7 +242,7 @@
 				, $tip = this.tip()
 				, e = $.Event('hide')
 
-			this.$element.trigger(e)
+			this.$element.triggerHandler(e)
 			if (e.isDefaultPrevented()) return
 
 			$tip.removeClass('in')
@@ -253,7 +262,7 @@
 				removeWithAnimation() :
 				$tip.detach()
 
-			this.$element.trigger('hidden')
+			this.$element.triggerHandler('hidden')
 
 			return this
 		}

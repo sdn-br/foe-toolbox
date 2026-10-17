@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -25,28 +25,13 @@
 	overflow-y: auto;
 }
 
-#greatbuildings #greatbuildingsBody strong.success {
-	color: var(--text-success);
-}
-
-.text-bright {
-	color: var(--text-bright);
-}
-
-#greatbuildings .title {
-	font-size: 115%;
-}
-
 #greatbuildings .header {
 	margin-bottom: 2px;
 	padding: 1em 0;
 }
 
 #greatbuildings #greatbuildingsBody table th {
-	position: sticky;
-	top: 0;
 	cursor: pointer;
-	z-index: 1;
 	font-size: 85%;
 }
 
@@ -55,25 +40,45 @@
 	font-size: 85%;
 }
 
-#greatbuildings #greatbuildingsBody strong.player-name {
-	display: block;
+/* Investment view */
+#greatbuildings .header .invest-row {
+	margin: 4px 0;
+}
+
+#greatbuildings .header .invest-hide {
+	margin-left: 12px;
+}
+
+#greatbuildings .header .harvest-info {
+	color: var(--sunflower);
+	cursor: help;
+}
+
+#greatbuildings #gbInvestTable th.sortable {
+	cursor: pointer;
 	white-space: nowrap;
-	color: var(--text-bright);
-	margin: 0 10px;
 }
 
-#greatbuildings #greatbuildingsBody .gbmainrow td {
-	padding: 0.3rem 5px;
+#greatbuildings #gbInvestTable th.sortable.ascending::after {
+	content: " ▲";
 }
 
-#greatbuildings #greatbuildingsBody .gbmainrow td:last-child {
-	background-image: url('../../../../css/images/hud/chevron-left.svg');
-	background-size: 20px 20px;
-	background-position: center right;
-	background-repeat: no-repeat;
-	min-width: 4px;
+#greatbuildings #gbInvestTable th.sortable.descending::after {
+	content: " ▼";
 }
 
-#greatbuildings #greatbuildingsBody .gbmainrow.active td:last-child {
-	background-image: url('../../../../css/images/hud/chevron-down.svg');
+#greatbuildings #gbInvestTable .gbb-bonus-icon {
+	width: 18px;
+	height: 18px;
+	margin-right: 4px;
+	vertical-align: text-bottom;
+}
+
+#greatbuildings #gbInvestTable td:first-child {
+	white-space: nowrap;
+}
+
+#greatbuildings #gbInvestTable tr.gb-pending td,
+#greatbuildings #gbInvestTable tr.gb-maxed td {
+	opacity: 0.55;
 }

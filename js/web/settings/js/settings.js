@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -11,10 +11,6 @@
  * **************************************************************************************
  */
 
-/**
- *
- * @type {{Help: (function(): string), NotificationView: (function(): string), GetSetting: ((function(*, *=): *)|*), MenuSelected: (function(): string), BoxGroups: string[], BuildBox: Settings.BuildBox, About: (function(): string), StoreSettings: Settings.StoreSettings, InfoboxInputEntryCount: (function(): *|jQuery), VersionInfo: (function(): string), Init: Settings.Init, ExportView: (function(): string), MenuInputLength: (function(): *|jQuery), NotificationStack: (function(): *|jQuery), ImportSettings: Settings.ImportSettings, LoadConfig: Settings.LoadConfig, BuildBody: Settings.BuildBody, ResetBoxCoords: Settings.ResetBoxCoords, LanguageDropdown: (function(): string), Preferences: null, MenuContent: (function(): *), ExportSettings: Settings.ExportSettings}}
- */
 let Settings = {
 
 	/**
@@ -27,15 +23,13 @@ let Settings = {
 	 */
 	BoxGroups: [
 		'About',
-		'Sending',
-		'Boxes',
-		'Extension'
+		'Extension',
+		'Auto',
+		'Boxes'
 	],
 
 	/**
 	 * load the settings from the json
-	 *
-	 * @constructor
 	 */
 	Init: () => {
 		Settings.LoadConfig((response) => {
@@ -46,9 +40,6 @@ let Settings = {
 
 	/**
 	 * Load config from config file
-	 *
-	 * @param callback
-	 * @constructor
 	 */
 	LoadConfig: (callback) => {
 		fetch(
@@ -67,7 +58,6 @@ let Settings = {
 	BuildBox: () => {
 		if ($('#SettingsBox').length < 1) {
 
-			// CSS in den DOM prügeln
 			HTML.AddCssFile('settings');
 
 			HTML.Box({
@@ -90,7 +80,6 @@ let Settings = {
 	 *
 	 */
 	BuildBody: () => {
-
 		let parentLis = [],
 			div = [],
 			content;
@@ -106,64 +95,54 @@ let Settings = {
 			parentLis.push(`<li><a href="#tab-${i}"><span>${i18n('Settings.Tab.' + g)}</span></a></li>`);
 
 			for (let x in grps) {
-				if (!grps.hasOwnProperty(x)) {
+				if (!grps.hasOwnProperty(x) || grps[x].hidden) {
 					break;
 				}
 
 				let d = grps[x],
 					status = d['status'],
 					button = d['button'],
-					doubleoptin = !!d['doubleoptin'],
 					c = $('<div />').addClass('item'),
 					cr = $('<div />').addClass('item-row'),
 					ct = $('<h2 />'),
 					cd = $('<div />').addClass('desc'),
-					cs = $('<div />').addClass('setting').append(
-						$('<span />').addClass('check').append(
-							$('<span />').addClass('toogle-word')
-						).append(
-							$('<input class="setting-check game-cursor" type="checkbox" />')
-						)
-					);
+					cs = $('<div />').addClass('setting');
 
-				if ("SelectedMenu" !== d['name'] && 'NotificationsPosition' !== d['name']) {
+				if ("SelectedMenu" !== d['name'] && 'NotificationsPosition' !== d['name'] && 'ApiToken' !== d['name']) {
 
 					let s = localStorage.getItem(d['name']);
 
-					if(s !== null){
-						try
-						{
-							status = JSON.parse(s);
-						} catch (e) {
-							localStorage.removeItem(key);
-						}
+					if (s !== null) {
+						status = JSON.parse(s);
 					}
 				}
 
-				if (d['callback'] !== undefined) {
-					cs.html(Settings[d['callback']]());
-
+				// no value && no callback function, make it empty
+				if(d['callback'] === undefined && status === undefined && d['button'] === undefined) {
+					cs.html('');
 				}
-				else if (status === undefined) {
-					let b = $('<span />').addClass('button-wrapper').append(
-						$(`<button class="btn-default" id="${button}" onclick="Settings.${button}()">${i18n('Settings.' + d['name'] + '.Button')}</button>`)
+				else if (d['callback'] !== undefined) {
+					cs.html(Settings[d['callback']]());
+				}
+				if (button) {
+					let b = $('<div />').addClass('button-wrapper').append(
+						$(`<button class="btn" id="${x}Button" onclick="${button}">${i18n('Settings.' + d['name'] + '.Button')}</button>`)
 					);
 
-					cs.html(b);
+					cs.append(b);
+				}
+				if (status !== undefined) {
+					cs.append(
+						$('<span />').addClass('check '+(status ? '' : 'unchecked')).append(
+							$('<span />').addClass('toogle-word').text(status ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive'))
+						).append(
+							$('<input class="setting-check game-cursor" type="checkbox" data-id="'+d['name']+'" '+(status ? 'checked' : '')+'/>')
+						)
+					)
 				}
 
 				cd.html(i18n(`Settings.${d['name']}.Desc`));
 				ct.text(i18n(`Settings.${d['name']}.Title`));
-
-				cs.find('input.setting-check').attr('data-id', d['name']);
-
-				if (status) {
-					cs.find('input.setting-check').attr('checked', '');
-				}
-
-				cs.find('input.setting-check').addClass(doubleoptin ? 'doubleoptin' : '');
-				cs.find('.check').addClass(status ? '' : 'unchecked');
-				cs.find('.toogle-word').text(status ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive'));
 
 				childLis.push(`<li><a href="#subtab-${cnt}" title="${i18n('Settings.Entry.' + d['name'])}">${i18n('Settings.Entry.' + d['name'])}</a></li>`);
 
@@ -197,6 +176,10 @@ let Settings = {
 		$('#SettingsBoxBody').on('click', 'input.setting-check', function () {
 			Settings.StoreSettings($(this));
 		});
+		$('.setting [data-original-title]').tooltip({
+			container: 'body',
+			html: true,
+		});
 	},
 
 
@@ -209,13 +192,6 @@ let Settings = {
 	StoreSettings: (el, changeText = true) => {
 		let id = $(el).data('id'),
 			v = $(el).prop('checked');
-
-		if ($(el).hasClass('doubleoptin') && v === true) {
-			if (!window.confirm(i18n(`Settings.${id}.DoubleOptIn`))) {
-				$(el).prop('checked', false);
-				return;
-			}
-		}
 
 		localStorage.setItem(id, v);
 
@@ -253,33 +229,27 @@ let Settings = {
 				return null;
 
 			} else {
-				let p = Settings.Preferences.find(itm => itm['name'] === name);
-				if (p === undefined) {
-					console.error('Error getting default value of setting "'+name+'". setting not found');
-					return null;
-				} else {
-					return p['status'];
-				}
+				return Settings.Preferences.find(itm => itm['name'] === name)?.status;
 			}
 		}
 	},
 
 
 	/**
-	 * Version number and Player Info 
+	 * Version number and Player Info
 	 *
 	 * @returns {string}
 	 */
 	VersionInfo: () => {
-
-		return `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion.replaceAll('.', ''))}</p>
-				<dl class="info-box">
+		let v = extVersion.includes('beta') ? `` : `<p>${i18n('Settings.Version.Link').replace('__version__', '')}</p>`;
+		v +=	`<dl class="info-box">
 					<dt>${i18n('Settings.Version.Title')}</dt><dd>${extVersion}</dd>
-					<dt>${i18n('Settings.Version.Base')}</dt><dd>FoE Helfer ${extBaseVersion}</dd>
 					<dt>${i18n('Settings.Version.PlayerId')}</dt><dd>${ExtPlayerID}</dd>
 					<dt>${i18n('Settings.Version.GuildId')}</dt><dd>${(ExtGuildID ? ExtGuildID : 'N/A')}</dd>
 					<dt>${i18n('Settings.Version.World')}</dt><dd>${ExtWorld}</dd>
 				</dl>`;
+		return v;
+
 	},
 
 
@@ -290,7 +260,7 @@ let Settings = {
 	 * @constructor
 	 */
 	ExportView: () => {
-		return `<p><button class="btn-default" onclick="DBExport.BuildBox()">${i18n('Settings.ExportSettings.OpenImportExportTool')}</button></p>`;
+		return `<p><button class="btn" onclick="DBExport.BuildBox()">${i18n('Settings.ExportSettings.OpenImportExportTool')}</button></p>`;
 	},
 
 
@@ -326,7 +296,7 @@ let Settings = {
 
 	/**
 	 * Relocation for Menu
-	 * 
+	 *
 	 * @returns {string}
 	 */
 	MenuSelected: () => {
@@ -388,14 +358,14 @@ let Settings = {
 
 
 	/**
-	 * General Information	 
+	 * General Information
 	 *
 	 * @returns {string}
 	 */
 	About: () => {
 		return '<hr>' +
 			'<h2>' + i18n('Settings.About.TranslateTitle') + '</h2>' +
-			'<p>' + i18n('Settings.About.TranslateDesc') + '</p>' +
+			'<p>' + i18n('Settings.About.TranslateDesc') + ' <a href="http://i18n.foe-helper.com/projects/foe-helper/extension/" target="_blank">Weblate</a></p>' +
 			'<hr>' +
 			'<h2>' + i18n('Settings.About.RatingTitle') + '</h2>' +
 			'<p>' + i18n('Settings.About.RatingDesc') + '</p>';
@@ -410,10 +380,52 @@ let Settings = {
 	Help: () => {
 		return '<ul class="helplist">' +
 			'<li><a href="https://foe-helper.com" target="_blank"><span class="website">&nbsp;</span>' + i18n('Settings.Help.Website') + '</a></li>' +
-			'<li><a href="https://discuss.foe-helper.com/" target="_blank"><span class="forums">&nbsp;</span>' + i18n('Settings.Help.Forums') + '</a></li>' +
-			'<li><a href="https://discord.gg/z97KZq4" target="_blank"><span class="discord">&nbsp;</span>' + i18n('Settings.Help.Discord') + '</a></li>' +
+			'<li><a href="https://docs.foe-helper.com" target="_blank"><span class="website">&nbsp;</span>' + i18n('Settings.Help.Documentation') + '</a></li>' +
+			'<li><a href="https://discord.gg/uQY7rqDJ7z" target="_blank"><span class="discord">&nbsp;</span>' + i18n('Settings.Help.Discord') + '</a></li>' +
 			'<li><a href="https://github.com/mainIine/foe-helfer-extension/issues" target="_blank"><span class="github">&nbsp;</span>' + i18n('Settings.Help.Github') + '</a></li>' +
 			'</ul>';
+	},
+
+
+	ShowEventHelpers: () => {
+		// one group per event; the merge game task warning brings its own sub-settings
+		// (fall back to the values formerly stored in the merger game box settings)
+		let mergerSettings = JSON.parse(localStorage.getItem('MergerGameSettings') || '{}');
+		let eventHelperGroups = [
+			[
+				{setting: 'EventHelperMerge', default: true},
+				{setting: 'EventHelperMergeBlocker', default: true},
+				{setting: 'EventHelperMergeBlockerOptical', default: mergerSettings.opticalTaskWarning === true, label: 'Boxes.MergerGame.opticalTaskWarning', sub: true},
+				{setting: 'EventHelperMergeBlockerAudible', default: mergerSettings.audibleTaskWarning !== false, label: 'Boxes.MergerGame.audibleTaskWarning', sub: true}
+			],
+			[{setting: 'EventHelperPresent', default: true}],
+			[{setting: 'EventHelperIdle', default: true}],
+			[{setting: 'EventHelperPop', default: true}]
+		];
+		let dp = [];
+
+		dp.push('<div class="p5">');
+		dp.push('<b>'+i18n('Settings.EventHelper.Advanced')+'</b>')
+		for (let group of eventHelperGroups) {
+			dp.push('<div class="event-helper-group">');
+			for (let entry of group) {
+				let value = entry.default;
+				let savedSetting = localStorage.getItem(entry.setting);
+				if (savedSetting !== null) {
+					value = JSON.parse(savedSetting);
+				}
+				dp.push('<div'+(entry.sub ? ' class="event-helper-sub"' : '')+'>');
+				dp.push( '<span class="check ' + (value ? '' : 'unchecked') + '">' +
+					'<span class="toogle-word">' + (value ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive')) + '</span>' +
+					'<input name="'+entry.setting+'" data-id="'+entry.setting+'" class="setting-check game-cursor" type="checkbox" ' + (value ? 'checked' : '') + ' />' +
+				'</span>');
+				dp.push(i18n(entry.label || 'Settings.'+entry.setting)+'</div>');
+			}
+			dp.push('</div>');
+		}
+		dp.push('</div>');
+		dp.push('<b>'+i18n('Settings.EventHelper.All')+'</b><br/>');
+		return dp.join('');
 	},
 
 
@@ -434,6 +446,21 @@ let Settings = {
 			type: 'success',
 			hideAfter: 4000
 		});
+	},
+
+
+	SelectWebsite: () => {
+		let dp = [];
+		let currentSite = localStorage.getItem('linkSite') || "siteScoredb";
+		dp.push('<p>Choose your preferred website:<br />');
+		dp.push('<label for="scoredb"><input type="radio" value="siteScoredb" id="scoredb" name="website" '+(currentSite === "siteScoredb" ? 'checked' : "")+' /> foe.scoredb.io</label><br />');
+		dp.push('<label for="forgedb"><input type="radio" value="siteForgedb" id="forgedb" name="website" '+(currentSite === "siteForgedb" ? 'checked' : "")+' /> foestats.com</label></p>');
+
+		$('#SettingsBoxBody').on('change', 'input[name="website"]', function () {
+			let site = $(this).val();
+			localStorage.setItem('linkSite', site);
+		});
+		return dp.join('');
 	},
 
 
@@ -482,6 +509,7 @@ let Settings = {
 			min: 2
 		}),
 		value = localStorage.getItem('MenuLength');
+
 		ip[0].defaultValue = ip[0].value = value;
 
 		if (null !== value) {
@@ -502,7 +530,35 @@ let Settings = {
 
 		return ip;
 	},
-	
+
+
+	GexStockWarning: () => {
+		let ip = $('<input />').addClass('setting-input').attr({
+			type: 'number',
+			id: 'GexStockWarningInput',
+			step: 1,
+			min: 0,
+			max: 100
+		}),
+		value = JSON.parse(localStorage.getItem('GexStockWarningMin')||"100");
+
+		ip[0].defaultValue = ip[0].value = value;
+		ip.val(value);
+
+		$('#SettingsBox').on('keyup', '#GexStockWarningInput', function () {
+			let value = $(this).val();
+
+			if (value >= 0 && value <= 100) {
+				localStorage.setItem('GexStockWarningMin', value);
+			} else {
+				localStorage.setItem('GexStockWarningMin', 100);
+				$(this).val(100)
+			}
+		});
+
+		return ip;
+	},
+
 	/**
 	 *	Erzeugt in Input Feld
 	 *
@@ -523,7 +579,7 @@ let Settings = {
 		}
 
 		$('#SettingsBox').on('keyup', '#doubleFPtimeoutinput', function () {
-			let value = $(this).val();
+			let value = Number($(this).val());
 			if (value > 0) {
 				localStorage.setItem('doubleFPtimeout', value);
 			} else {
@@ -551,29 +607,22 @@ let Settings = {
 			menuItems.push(...hiddenArray);
 		}
 
-		for (let i in menuItems)
-		{
-			if (!menuItems.hasOwnProperty(i)) {
-				break;
-			}
+		for (let i in menuItems) {
+			if (!menuItems.hasOwnProperty(i)) break;
 
 			const name = menuItems[i];
-
-			// exclude settings
-			if(name === 'settings'){
-				continue;
-			}
+			if(name === 'settings') continue;
 
 			// is there a function?
-			if (_menu[name + '_Btn'])
-			{
+			if (_menu[name + '_Btn']) {
 				let btnBG = $('<div />')
 					.attr({ id: `setting-${name}-Btn` })
 					.addClass('hud-btn')
 					.addClass(hiddenArray.includes(name) ? 'hud-btn-red' : '');
+				let btnData = _menu.ItemsData.find(x => x.id === name);
 
-				let btn = $(`<span onclick="_menu.ToggleItemVisibility('${name}')"></span>`);
-		
+				let btn = $(`<span onclick="_menu.ToggleItemVisibility('${name}')" data-original-title='<b>${btnData?.title||""}</b><br>${btnData?.description||""}'></span>`);
+
 				btnBG.append(btn);
 				bl.append(btnBG);
 			}
@@ -656,7 +705,7 @@ let Settings = {
 				icon: 'success',
 				hideAfter: 6000,
 				position: pos,
-				extraClass: localStorage.getItem('SelectedMenu') || 'bottombar',
+				extraClass: localStorage.getItem('SelectedMenu') || 'RightBar',
 				afterHidden: function () {
 					$('.jq-toast-wrap').remove();
 				}
@@ -676,9 +725,8 @@ let Settings = {
 			}),
 			value = localStorage.getItem('NotificationStack');
 
-		ip[0].defaultValue = ip[0].value = value;
-
 		if (null !== value) {
+			ip[0].defaultValue = ip[0].value = value;
 			ip.val(value);
 		}
 
@@ -687,6 +735,7 @@ let Settings = {
 
 			if (value > 0) {
 				localStorage.setItem('NotificationStack', value);
+
 			} else {
 				localStorage.removeItem('NotificationStack');
 			}
@@ -694,6 +743,47 @@ let Settings = {
 
 		return ip;
 	},
+
+
+	ApiTokenInput: ()=> {
+		let ip = $('<input />').addClass('setting-input').attr({
+				type: 'text',
+				id: 'api-token',
+				style: 'width:20em',
+				spellcheck: 'false',
+			}),
+			token = localStorage.getItem('ApiToken');
+
+		if (token !== null) {
+			ip[0].defaultValue = ip[0].value = token;
+			ip.val(token);
+		}
+
+		$('#SettingsBox').on('keyup blur', '#api-token', function () {
+			let value = $(this).val();
+
+			if (value !== '') {
+				if(value.length !== 36) {
+					HTML.ShowToastMsg({
+						head: i18n('Boxes.Settings.ApiTokenLengthWrongHeader'),
+						text: [
+							i18n('Boxes.Settings.ApiTokenLengthWrongBody')
+						],
+						type: 'error',
+						hideAfter: 10000,
+					});
+				}
+				else {
+					localStorage.setItem('ApiToken', value);
+				}
+
+			} else {
+				localStorage.removeItem('ApiToken');
+			}
+		});
+
+		return ip;
+	},
 };
 
-Settings.Init(); // Darf hier aufgerufen werden, da keine anderen Module benötigt werden. config.json soll bis zum StartUp geladen sein
+Settings.Init(); // May be called here, as no other modules are required. config.json should be loaded by StartUp

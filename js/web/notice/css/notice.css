@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -66,7 +66,7 @@
 
 #noticesBody .tab-edit:hover,
 #noticesBody .sub-tab-edit:hover {
-	border-color: var(--text-bright);
+	border-color: var(--sunflower);
 }
 
 #noticesBody .tabs ul.horizontal {
@@ -84,13 +84,13 @@
 #noticesBody .content-head {
 	font-size: 110%;
 	font-weight: 700;
-	color: var(--text-bright);
+	color: var(--sunflower);
 	margin-bottom: 5px;
 }
 
 #noticesBody .content-head-player {
 	display: flex;
-	color: var(--text-bright);
+	color: var(--sunflower);
 	margin-bottom: 15px;
 }
 
@@ -118,6 +118,17 @@
 	overflow-y: auto;
 }
 
+#noticesBody .content-text:focus, #noticesBody .content-head:focus {
+	outline: 2px solid var(--text-dark);
+}
+
+#noticesBody .content-text * {
+	font-family: inherit !important;
+	color: inherit !important;
+    background-color: transparent !important;
+	border-color: var(--text-dark) !important;
+}
+
 /*******************************************************************************/
 #notices-modal,
 #notices-modal-players {
@@ -140,7 +151,7 @@
 	margin-bottom: 5px;
 }
 
-#notices-modalBody .btn-default {
+#notices-modalBody .btn {
 	margin: 0 1px;
 	flex-grow: 2;
 }
@@ -151,8 +162,12 @@
 
 #notices-modal-playersBody .custom-option {
 	display: flex;
-	border-bottom: 1px solid var(--text-normal);
+	border-bottom: 1px solid var(--beige);
 	align-items: center;
+}
+
+#notices-modal-playersBody .custom-select__trigger {
+	width: 260px;
 }
 
 #notices-modal-playersBody .custom-option .avatar {
