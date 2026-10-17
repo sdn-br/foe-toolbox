@@ -135,7 +135,7 @@ Object.assign(Calculator, {
 		h.push('<table id="OverviewTable" class="foe-table sortable-table">');
 		h.push('<thead>' +
 			'<tr class="sorter-header">' +
-				'<th data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Building') + '</th>' +
+				'<th class="is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Building') + '</th>' +
 				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Level') + '</th>' +
 				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.PaidTotal') + '</th>' +
 				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Profit') + '</th>' +
@@ -158,6 +158,11 @@ Object.assign(Calculator, {
 		const cell = (Content, StrongClass, Sort, Align = ' class="text-center"') =>
 			`<td${Align}${Sort}><strong${StrongClass}>${Content}</strong></td>`;
 		const numberSort = (Value) => (Value === undefined || isNaN(Value) ? '' : ` data-number="${Value}"`);
+		// tableSorter's string sort maps any text that is not purely letters (e.g. a space) to one fixed value,
+		// so names sort as numbers: the negative alphabetical rank, because numbers sort descending first
+		const NameRank = new Map([...new Set(Calculator.Overview.map(Row => Row['name']))]
+			.sort((a, b) => String(a).localeCompare(String(b)))
+			.map((Name, Rank) => [Name, Rank]));
 
 		for (let i = 0; i < Calculator.Overview.length; i++) {
 			const Row = Calculator.Overview[i],
@@ -222,7 +227,7 @@ Object.assign(Calculator, {
 			}
 
 			h.push('<tr>' +
-				cell((i + 1) + ': ' + GBName, StrongClass, ` data-text="${HTML.escapeHtml(GBName)}"`, '') +
+				cell((i + 1) + ': ' + GBName, StrongClass, numberSort(-NameRank.get(GBName)), '') +
 				cell(GBLevel, StrongClass, numberSort(GBLevel)) +
 				cell(HTML.Format(CurrentProgress) + ' / ' + HTML.Format(MaxProgress), StrongClass, numberSort(CurrentProgress)) +
 				cell(ProfitString, StrongClass, numberSort(ProfitValue)) +
