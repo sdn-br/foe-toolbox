@@ -348,6 +348,7 @@
     "Boxes.CityMap.ShowAscendableBuildings": "Verbesserbare Gebäude",
     "Boxes.CityMap.ShowDecayedBuildings": "Abgelaufene Gebäude",
     "Boxes.CityMap.ShowNoStreetBuildings": "Gebäude ohne Straße",
+    "Boxes.CityMap.SendDoubleOptIn": "Bist du wirklich sicher, dass du die Daten an foe-rechner.de bzw. foe-helper.com übertragen und ggfs. einen Bann auf foe-rechner.de bzw. foe-helper.com in Kauf nehmen möchtest?",
     "Boxes.CityMap.ShowSubmitBox": "Stadtplaner",
     "Boxes.CityMap.ShowWorstBuildings": "Ineffiziente Gebäude",
     "Boxes.CityMap.StreetsAmount": "Anzahl Straßen",

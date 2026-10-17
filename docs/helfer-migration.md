@@ -20,7 +20,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
 - [x] 11 Blaue Galaxie: Diamanten
 - [x] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
-- [ ] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
+- [x] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
 - [ ] 14 Spielerlinks nur auf dem Icon
 - [ ] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
 - [ ] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
@@ -133,6 +133,12 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Anpassung: Upstream-Name `FilteredCache` für die aktiven Ereignisse bleibt (alt umbenannt in `ActiveCache`). Upstream setzt inzwischen selbst Timer auf den Startzeitpunkt (`RefreshGui`), damit wandert ein Ereignis von selbst aus der Zukunfts- in die aktive Liste.
 - Bugfix gegenüber alt: die Box schloss sich nach `getOverview`, sobald **eine** der beiden Listen leer war (`||`); jetzt nur, wenn beide leer sind. `RefreshGui` ohne geladene Ereignisse warf einen TypeError, jetzt Abbruch.
 - Die Warnung "zweispurige Straße fehlt" betrifft weiter nur aktive Ereignisse (wie Upstream).
+
+**Notizen 13**
+- Scroll zum aktiven Gebäude: hat Upstream inzwischen selbst, nichts übernommen. Das aktive Gebäude heißt in 4.8.3 `.highlighted` (alt `.pulsate`), bleibt beim Neuzeichnen erhalten (`SetMapBuildings` liest `ActiveId` aus dem DOM) und `CityMap.FocusEntities` zentriert es (Produktionen "auf der Karte zeigen", Zoom-Wechsel, Toolbox-Auge aus 1). Der alte Parameter `ActiveEntityId` von `CityMap.init` und `scrollToActiveElementOrCenter` entfallen.
+- Tooltips: `trigger: 'hover'` an beiden Bootstrap-Tooltip-Aufrufen in `citymap.js` (Außenposten/QI und Hauptstadt). Die Gebäude der Hauptstadt nutzen in 4.8.3 meist den eigenen Tooltip (`fh-tooltip`, nur Hover), dort war nichts zu tun.
+- Double-Opt-In wie alt: `window.confirm(Boxes.CityMap.SendDoubleOptIn)` vor dem Senden der Stadt (`CityMap.SubmitData`) und eines Außenpostens (`Outposts.SubmitData`). Anders als alt erst nach der Prüfung auf den API-Token (den verlangt 4.8.3 neu), damit ohne Token nicht erst gefragt und dann abgebrochen wird. Text wie alt (Ziel `api.foe-rechner.de`, Anzeige auf foe-helper.com), Tippfehler korrigiert.
+- Versand unabhängig von `GlobalSend` (alt `forceSend = true`): kommt mit 15.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
