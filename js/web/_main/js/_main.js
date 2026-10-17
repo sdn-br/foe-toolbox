@@ -1638,7 +1638,8 @@ let MainParser = {
 			if (localStorage.getItem('linkSite') === 'siteForgedb')
 				PlayerLink = HTML.i18nReplacer(PlayerLinkFormat2, { 'server': ExtWorld.toLowerCase().replace(/[0-9]/g, ''), 'world': ExtWorld.toLowerCase(), 'playerid': PlayerID });
 
-			return `<a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${HTML.escapeHtml(PlayerName)} ${LinkIcon}</a>`;
+			// Toolbox: only the icon is a link, a click on the name stays in the game
+			return `${HTML.escapeHtml(PlayerName)} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return HTML.escapeHtml(PlayerName);
@@ -1669,7 +1670,8 @@ let MainParser = {
 			if (localStorage.getItem('linkSite') === 'siteForgedb')
 				GuildLink = HTML.i18nReplacer(GuildLinkFormat2, { 'server': ExtWorld.toLowerCase().replace(/[0-9]/g, ''), 'world': ExtWorld.toLowerCase(), 'guildid': GuildID });
 
-			return `<a class="external-link game-cursor" href="${GuildLink}" target="_blank">${HTML.escapeHtml(GuildName)} ${LinkIcon}</a>`;
+			// Toolbox: only the icon is a link
+			return `${HTML.escapeHtml(GuildName)} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return HTML.escapeHtml(GuildName);
@@ -1689,7 +1691,8 @@ let MainParser = {
 		if (Settings.GetSetting('ShowLinks')) {
 			let BuildingLink = HTML.i18nReplacer(BuildingsLinkFormat, {'buildingid': BuildingID });
 
-			return `<a class="external-link game-cursor" href="${BuildingLink}" target="_blank">${BuildingName} ${LinkIcon}</a>`;
+			// Toolbox: only the icon is a link
+			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank">${LinkIcon}</a>`;
 		}
 		else {
 			return BuildingName;
