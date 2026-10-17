@@ -521,6 +521,17 @@ let _menu = {
 		let btn = _menu.MakeButton('sabotage', true);
 
 		let btnEl = $('<span />').on('click', function () {
+			// without one of these settings visitPlayer never unlocks the button
+			if (!Settings.GetSetting('ShowPlayersAttDeffValues') && !Settings.GetSetting('ShowNeighborsLootables')) {
+				HTML.ShowToastMsg({
+					head: i18n('Menu.Sabotage.Title'),
+					text: i18n('Menu.Sabotage.SettingOff'),
+					type: 'warning',
+					hideAfter: 4000
+				});
+				return;
+			}
+
 			if (Sabotage.OtherPlayer !== undefined) {
 				Sabotage.showResult();
 			}
