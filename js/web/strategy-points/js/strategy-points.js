@@ -63,8 +63,7 @@ let StrategyPoints = {
 	 * @returns {Promise<void>}
 	 */
 	checkForDB: async (playerID)=> {
-		// own name, the DB of the toolbox 1.x / FoE Helfer stays untouched
-		const FP_DBName = `FoEToolbox2DB_FPCollector_${playerID}`;
+		const FP_DBName = `FoEToolbox2DB_FPCollector_${playerID}`; // TOOLBOX: own name, the legacy DB is only read
 
 		StrategyPoints.db = new Dexie(FP_DBName);
 
@@ -75,7 +74,7 @@ let StrategyPoints = {
 			ForgePointsStats: '++id,counter,event,notes,amount,date'
 		});
 
-		await IndexDB.openWithLegacyCopy(StrategyPoints.db, [`FoeHelperDB_FPCollector_${playerID}`]);
+		await IndexDB.openWithLegacyCopy(StrategyPoints.db, [`FoeHelperDB_FPCollector_${playerID}`]); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
 	},
 
 
