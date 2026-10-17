@@ -344,12 +344,12 @@ let Sabotage = {
 
 		// one box per army, a line per boost: [icon class, label key, value, max value]
 		const armyCard = (titleKey, lines) => html`
-			<div class="army-card">
+			<div class="toolbox-card">
 				<h4>${t(titleKey)}</h4>
 				${lines.map(([icon, labelKey, value, max]) => html`
-					<div class="army-line">
-						<span class="army-label"><span class="resicon ${icon}"></span>${t(labelKey)}</span>
-						<span class="text-right"><span class="boost-value">${fmt(value)}%</span>${max !== undefined ? html`<br><small class="boost-max">max ${fmt(max)}%</small>` : ''}</span>
+					<div class="toolbox-card-line">
+						<span class="toolbox-card-label"><span class="toolbox-card-icon resicon ${icon}"></span>${t(labelKey)}</span>
+						<span class="text-right"><span class="toolbox-card-value">${fmt(value)}%</span>${max !== undefined ? html`<br><small class="toolbox-card-sub">max ${fmt(max)}%</small>` : ''}</span>
 					</div>`)}
 			</div>`;
 
@@ -372,7 +372,7 @@ let Sabotage = {
 					${vm.showLoot ? html`<span class="btn button-showloot" @click=${() => Sabotage.ShowLoot(vm.playerId)}>${t('ShowLoot')}</span>` : ''}
 				</p>` : ''}
 				${!b ? '' : html`
-					<div class="army-cards">
+					<div class="toolbox-cards">
 						${armyCard('AttackingArmy', [
 							['att_boost_attacker-all', 'Attack', b.AttackAttackBoost, b.AttackAttackBoost + 50],
 							['def_boost_attacker-all', 'Defense', b.AttackDefenseBoost],
@@ -382,7 +382,7 @@ let Sabotage = {
 							['def_boost_defender-all', 'Defense', b.DefenseDefenseBoost, b.DefenseDefenseBoost + 60],
 						])}
 					</div>
-					<p class="plunder-repel">${t('PlunderRepel')}: <span class="boost-value">${fmt(b.PlunderRepel)}%</span></p>`}
+					<p class="plunder-repel">${t('PlunderRepel')}: <span class="toolbox-card-value">${fmt(b.PlunderRepel)}%</span></p>`}
 			</div>
 			${!p ? '' : html`
 				<table class="foe-table">
