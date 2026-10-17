@@ -13,6 +13,6 @@
 
 let Languages = {
 	PossibleLanguages: {
-		'de': 'Deutsch'
+		'de': 'Deutsch' // TOOLBOX: German only
 	},
 };

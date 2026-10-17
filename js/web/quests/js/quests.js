@@ -101,7 +101,7 @@ let Quests = {
 			$('#quests-counter-hud').append(
 				$('<div />')
 					.addClass('hud-btn-gold')
-					.attr('title', 'FoE Toolbox: ' + i18n('Quests.CounterTooltip.Content'))
+					.attr('title', 'FoE Toolbox: ' + i18n('Quests.CounterTooltip.Content')) // TOOLBOX: branding
 					.tooltip({
 						extraClass: 'quest-tooltip',
 						placement: 'right'

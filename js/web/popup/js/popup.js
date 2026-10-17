@@ -86,6 +86,7 @@ let Popup = {
 			height = (size && size.h) || options.height || Math.max(box.offsetHeight, 220);
 
 		const boxTitle = box.querySelector('.window-head .title');
+		// TOOLBOX: branding
 		let title = options.title || (boxTitle ? boxTitle.textContent.trim() : 'FoE Toolbox');
 		if (title.indexOf('FoE Toolbox') === -1) {
 			title += ' - FoE Toolbox';
@@ -156,7 +157,7 @@ let Popup = {
 			URL.revokeObjectURL(winUrl);
 			delete Popup._pending[id];
 			HTML.ShowToastMsg({
-				head: 'FoE Toolbox',
+				head: 'FoE Toolbox', // TOOLBOX: branding
 				text: i18n('PopUp.Blocked'),
 				type: 'error',
 				hideAfter: 6000
@@ -229,7 +230,7 @@ let Popup = {
 		// inline handlers (onclick="...") must run in the main window's scope
 		Popup._rebindInlineHandlers(box);
 
-		// module code that looks up its elements natively must find them in the pop-up
+		// TOOLBOX: module code that looks up its elements natively must find them in the pop-up
 		Popup._installLookupShims();
 
 		// close the window when the module removes its own box (e.g.
@@ -345,6 +346,7 @@ let Popup = {
 	},
 
 
+	// TOOLBOX-BEGIN: lookup shims for boxes in a pop-up
 	/**
 	 * jQuery.find before _installLookupShims replaced it, null while no shims are installed
 	 */
@@ -447,6 +449,7 @@ let Popup = {
 		jQuery.find = Popup._nativeFind;
 		Popup._nativeFind = null;
 	},
+	// TOOLBOX-END
 
 
 	/**
@@ -462,7 +465,7 @@ let Popup = {
 		if (!entry) return;
 
 		delete Popup.windows[id];
-		if (Object.keys(Popup.windows).length === 0) {
+		if (Object.keys(Popup.windows).length === 0) { // TOOLBOX: lookup shims
 			Popup._removeLookupShims();
 		}
 		clearInterval(entry.watchdog);
