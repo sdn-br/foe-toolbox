@@ -293,6 +293,7 @@ GetFights = () =>{
 		GexStat.checkForDB(ExtPlayerID);
 		Guild_fights.checkForDB(ExtPlayerID);
 		QiProgress.checkForDB(ExtPlayerID);
+		GBGActionLog.checkForDB(ExtPlayerID);
 
 		// which tab is active in StartUp Object?
 		let vals = {
