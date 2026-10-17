@@ -154,6 +154,20 @@
 		"sort": 19
 	},
 	{
+		"name": "ShowNeighborsLootables",
+		"status": false,
+		"doubleoptin": true,
+		"group": "Boxes",
+		"sort": 21
+	},
+	{
+		"name": "ShowPlayersAttDeffValues",
+		"status": true,
+		"doubleoptin": true,
+		"group": "Boxes",
+		"sort": 22
+	},
+	{
 		"name": "SelectedMenu",
 		"callback": "MenuSelected",
 		"group": "Extension",

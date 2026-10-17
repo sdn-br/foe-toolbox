@@ -801,6 +801,10 @@ p {
 	background-image: url('../images/menu/findGB.png');
 }
 
+[id$=sabotage-Btn] span {
+	background-image: url('../images/menu/sabotage.png');
+}
+
 [id$=unit-Btn] span {
 	background-image: url('../images/menu/units.png');
 }
