@@ -130,6 +130,7 @@
     "Boxes.Looting.Unknown": "Unbekannt",
     "Boxes.Neighbors.GuildPower": "Gildenmacht",
     "Boxes.Neighbors.ReadyProductions": "Fertige Produktionen",
+    "Boxes.RecurringQuests.Empty": "Noch keine wiederkehrenden Quests erfasst. Sie werden gespeichert, sobald sie im Quest-Menü erscheinen.",
     "Boxes.Sabotage.AlreadySetAlarm": "Alarm",
     "Boxes.Sabotage.Attack": "Angriff",
     "Boxes.Sabotage.AttackingArmy": "Angriffsarmee",
