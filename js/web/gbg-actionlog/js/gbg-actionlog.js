@@ -595,12 +595,11 @@ let GBGActionLog = {
                 $(document).off('click.gbgal');
                 return;
             }
-            let $t = $(e.target);
-            // Action dropdown (.dropdown component, Report + Activity tabs): stays open while interacting inside it; outside click unchecks it
-            if ($t.closest('.gbgal-action-dd').length) return;
-            document.querySelectorAll(`#${GBGActionLog.windowId}Body .gbgal-action-dd .dropdown-checkbox`).forEach(cb => cb.checked = false);
-            if ($t.closest('.gbg-log-popup, .gbg-log-filterbtn, .gbg-log-reset').length) return;
-            GBGActionLog.hideAllPopups();
+            GBGActionLog.closeOnOutsideClick(e);
+        });
+        // In a pop-out window (popup.js) clicks never bubble up to the game document
+        $(`#${GBGActionLog.windowId}`).on('click.gbgal', (e) => {
+            if (e.currentTarget.ownerDocument !== document) GBGActionLog.closeOnOutsideClick(e);
         });
 
         // Init tabs first so the active tab highlights immediately; the tables fill in once the DB loads
@@ -613,6 +612,18 @@ let GBGActionLog = {
 
         // Only the active Details tab builds on open; the rest build when first selected
         await GBGActionLog.loadTab('gbgalDetails');
+    },
+
+    /**
+     * Closes open action dropdowns and filter popups unless the click was inside them
+     */
+    closeOnOutsideClick: (e) => {
+        let $t = $(e.target);
+        // Action dropdown (.dropdown component, Report + Activity tabs): stays open while interacting inside it; outside click unchecks it
+        if ($t.closest('.gbgal-action-dd').length) return;
+        document.querySelectorAll(`#${GBGActionLog.windowId}Body .gbgal-action-dd .dropdown-checkbox`).forEach(cb => cb.checked = false);
+        if ($t.closest('.gbg-log-popup, .gbg-log-filterbtn, .gbg-log-reset').length) return;
+        GBGActionLog.hideAllPopups();
     },
 
     /**
