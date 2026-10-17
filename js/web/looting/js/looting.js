@@ -403,6 +403,10 @@ let Looting = {
 			HTML.AddCssFile('looting');
 		}
 
+		// an existing box may be hidden or behind others, e.g. when opened from the city information; raised after
+		// the opening click, whose body handler (HTML.Box) raises the clicked box
+		const box = $('#looting').show();
+		setTimeout(() => HTML.BringToFront(box), 0);
 		Looting.Render();
 	},
 
