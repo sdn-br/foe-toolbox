@@ -99,32 +99,34 @@ if (typeof globalThis.FoEproxy == 'undefined') {
 
             // nur die jSON mit den Daten abfangen
             if (url.indexOf("game/json?h=") > -1) {
-                let d = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
+                // the whole response (all entries of this request) is passed to the handlers as third
+                // argument, e.g. for the toolbox PvP history, which needs entries of other services
+                let responseData = /** @type {FoE_NETWORK_TYPE[]} */(JSON.parse(this.responseText));
 
                 let requestData = postData;
 
                 try {
                     requestData = JSON.parse(new TextDecoder().decode(postData));
                     // StartUp Service als erstes behandeln
-                    for (let entry of d) {
+                    for (let entry of responseData) {
                         if (entry['requestClass'] === 'StaticDataService' && entry['requestMethod'] === 'getMetadata') {
                             FoEproxy._addToHistory(entry.requestClass + '.' + entry.requestMethod);
-                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
                         }
                     }
                     // StartUp Service als zweites behandeln
-                    for (let entry of d) {
+                    for (let entry of responseData) {
                         if (entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') {
                             FoEproxy._addToHistory(entry.requestClass + '.' + entry.requestMethod);
-                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
                         }
                     }
 
-                    for (let entry of d) {
+                    for (let entry of responseData) {
                         if (!(entry['requestClass'] === 'StartupService' && entry['requestMethod'] === 'getData') &&
                             !(entry['requestClass'] === 'StaticDataService' && entry['requestMethod'] === 'getMetadata')) {
                             FoEproxy._addToHistory(entry.requestClass + '.' + entry.requestMethod);
-                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData);
+                            FoEproxy._proxyAction(entry.requestClass, entry.requestMethod, entry, requestData, responseData);
                         }
                     }
 
@@ -275,26 +277,26 @@ if (typeof globalThis.FoEproxy == 'undefined') {
         // ############### XHR-Utility ###############
         // ###########################################
 
-        function _proxyAction(service, method, data, postData) {
+        function _proxyAction(service, method, data, postData, responseData) {
             const map = proxyMap[service];
             if (!map) return;
             const list = map[method];
             if (!list) return;
             for (let callback of list) {
                 try {
-                    callback(data, postData);
+                    callback(data, postData, responseData);
                 } catch (e) {
                     console.error(e);
                 }
             }
         }
 
-        function proxyAction(service, method, data, postData) {
+        function proxyAction(service, method, data, postData, responseData) {
             let filteredPostData = postData.filter(r => r && r.requestId && data && data.requestId && r.requestId === data.requestId);
-            _proxyAction(service, method, data, filteredPostData);
-            _proxyAction('all', method, data, filteredPostData);
-            _proxyAction(service, 'all', data, filteredPostData);
-            _proxyAction('all', 'all', data, filteredPostData);
+            _proxyAction(service, method, data, filteredPostData, responseData);
+            _proxyAction('all', method, data, filteredPostData, responseData);
+            _proxyAction(service, 'all', data, filteredPostData, responseData);
+            _proxyAction('all', 'all', data, filteredPostData, responseData);
         }
 
         function _proxyRequestAction(service, method, postData) {
