@@ -285,6 +285,9 @@ let Calculator = {
 			h.push('</span></strong>');
 		}
 
+		// Toolbox: FP in stock
+		h.push('<p class="fp-storage-line">' + i18n('Boxes.Calculator.AvailableFP') + ': <strong class="fp-storage">' + HTML.Format(StrategyPoints.AvailableFP) + '</strong></p>');
+
 		// different arc bonus-buttons, the own arc bonus is always one of them
 		let customButtons = localStorage.getItem('CustomCalculatorButtons'),
 			investmentSteps = Calculator.SettingsSanitizeButtons(customButtons ? JSON.parse(customButtons) : Calculator.DefaultButtons)
@@ -341,6 +344,8 @@ let Calculator = {
 	 * costs to demand ("fordern") and to safely take the spot, the resulting
 	 * profit and the blueprint/medal rewards, colour coded by state
 	 * (profit, negative profit, level warning, taken, own contribution).
+	 * Toolbox: three column groups (demand | blueprints/medals | minimal investment),
+	 * the minimal investment group shows the costs to just secure the spot, its profit and rate.
 	 */
 	BuildTable: ()=> {
 		let h = [];
@@ -527,15 +532,25 @@ let Calculator = {
 			}
 		}
 
+		// Toolbox: group header (demand | rewards | minimal investment)
 		h.push('<thead>' +
+			'<tr class="group-head">' +
+				'<th colspan="3">' + i18n('Boxes.Calculator.FriendlyInvestment') + ' ' + HTML.Format(Calculator.ForderBonus) + '%</th>' +
+				'<th colspan="' + (ShowBoost ? 3 : 2) + '" class="group-start"></th>' +
+				'<th colspan="3" class="group-start">' + i18n('Boxes.Calculator.AggressiveInvestment') + '</th>' +
+			'</tr>' +
+			'<tr>' +
 			'<th>#</th>' +
 			'<th><span class="forgepoints" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Commitment')) + '"></span></th>' +
 			'<th>' + i18n('Boxes.Calculator.Profit') + '</th>');
-			h.push('<th><span class="blueprint"' + GreatBuildings.BlueprintIconStyle(MainParser.CurrentGB.Tier) + ' title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.BPs')) + '"></span></th>');
+			h.push('<th class="group-start"><span class="blueprint"' + GreatBuildings.BlueprintIconStyle(MainParser.CurrentGB.Tier) + ' title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.BPs')) + '"></span></th>');
 			h.push('<th><span class="medal" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Meds')) + '"></span></th>');
 			if (ShowBoost)
 				h.push('<th><span class="contribution-boost"' + GreatBuildings.ContributionBoostIconStyle(MainParser.CurrentGB.Tier) + ' title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Boost')) + '"></span></th>');
-		h.push('</thead>');
+			h.push('<th class="group-start"><span class="forgepoints" title="' + HTML.i18nTooltip(i18n('Boxes.Calculator.Commitment')) + '"></span></th>');
+			h.push('<th>' + i18n('Boxes.Calculator.Profit') + '</th>');
+			h.push('<th>' + i18n('Boxes.Calculator.Rate') + '</th>');
+		h.push('</tr></thead>');
 
 		for (let Rank = 0; Rank < ForderRankCosts.length; Rank++) {
 			let ForderCosts = (ForderStates[Rank] === 'Self' ? Einzahlungen[Rank] : ForderFPRewards[Rank]),
@@ -680,9 +695,10 @@ let Calculator = {
 				<td>
 					<strong class="${GewinnClass} td-tooltip copy-fp" data-copy="${ForderGewinn}" data-original-title="${HTML.i18nTooltip(GewinnTooltip.join('<br>'))}">${GewinnText}</strong>
 				</td>
-				<td> ${GreatBuildings.FormatBlueprintRewards(BPTierRewards[Rank], BPRewards[Rank])} </td>
+				<td class="group-start"> ${GreatBuildings.FormatBlueprintRewards(BPTierRewards[Rank], BPRewards[Rank])} </td>
 				<td> <small> ${HTML.Format(MedalRewards[Rank])} </small> </td>
 				${ShowBoost ? `<td> <small> ${HTML.Format(BoostRewards[Rank])} </small> </td>` : ''}
+				${Calculator.AggressiveInvestmentCells(SaveStates[Rank], SaveRankCosts[Rank], SaveCosts, SaveGewinn, Kurs, Einzahlungen[Rank], FPNettoRewards[Rank], FPRewards[Rank])}
 			</tr>`);
 		}
 
@@ -693,6 +709,104 @@ let Calculator = {
 			container: 'body'
 		});
 	},
+
+
+	/**
+	 * Toolbox: cells of the "Minimal Investition" column group for one rank:
+	 * the costs to just secure the spot, the resulting profit and the rate
+	 * (costs / netto reward), coloured by the state of the spot.
+	 *
+	 * @param {string} State - SaveStates[Rank]: NotPossible / WorseProfit / Self / NegativeProfit / LevelWarning / Profit
+	 * @param {number} SafeCosts - FP needed to secure the spot
+	 * @param {number} Costs - FP paid (own spot) or needed (others)
+	 * @param {number} Profit - Brutto reward minus Costs
+	 * @param {number} Kurs - Rate in percent
+	 * @param {number} Paid - FP already paid on this spot
+	 * @param {number} NettoReward - FP reward without arc bonus
+	 * @param {number} BruttoReward - FP reward with arc bonus
+	 * @returns {string} HTML of three td cells
+	 */
+	AggressiveInvestmentCells: (State, SafeCosts, Costs, Profit, Kurs, Paid, NettoReward, BruttoReward) => {
+		let CellClass = '',
+			EinsatzClass = (SafeCosts > StrategyPoints.AvailableFP ? 'error' : ''), // red if the FP stock is too low
+			EinsatzText = HTML.Format(SafeCosts),
+			EinsatzTooltip = [],
+			GewinnClass = (Profit >= 0 ? 'success' : 'error'),
+			GewinnText = HTML.Format(Profit),
+			GewinnTooltip = [],
+			KursClass = (Profit >= 0 ? 'success' : 'error'),
+			KursText = (Profit >= 0 ? Calculator.FormatKurs(Kurs) : '-'),
+			KursTooltip = [],
+			arcfactor = (100 + MainParser.ArkBonus);
+
+		if (SafeCosts > StrategyPoints.AvailableFP) {
+			EinsatzTooltip.push(HTML.i18nReplacer(i18n('Boxes.Calculator.TTAggressiveInvestmentFPStockLow'), { 'fpstock': StrategyPoints.AvailableFP, 'costs': SafeCosts, 'tooless': (SafeCosts - StrategyPoints.AvailableFP) }));
+		}
+
+		if (Profit >= 0) {
+			GewinnTooltip = [HTML.i18nReplacer(i18n('Boxes.Calculator.TTProfit'), { 'nettoreward': NettoReward, 'arcfactor': arcfactor, 'bruttoreward': BruttoReward, 'safe': SafeCosts, 'costs': Costs, 'profit': Profit })];
+		}
+		else {
+			GewinnTooltip = [HTML.i18nReplacer(i18n('Boxes.Calculator.TTLoss'), { 'nettoreward': NettoReward, 'arcfactor': arcfactor, 'bruttoreward': BruttoReward, 'safe': SafeCosts, 'costs': Costs, 'loss': 0 - Profit })];
+		}
+
+		if (State === 'Self') {
+			CellClass = 'info-row';
+			EinsatzClass = (Paid < SafeCosts ? 'error' : 'info');
+			EinsatzText = HTML.Format(Paid) + (Paid < SafeCosts ? '/' + HTML.Format(SafeCosts) : '');
+
+			if (Paid < SafeCosts) {
+				EinsatzTooltip.push(HTML.i18nReplacer(i18n('Boxes.Calculator.TTPaidTooLess'), { 'paid': Paid, 'topay': SafeCosts, 'tooless': SafeCosts - Paid }));
+			}
+
+			GewinnClass = 'info';
+			if (Profit > 0) {
+				GewinnTooltip = [HTML.i18nReplacer(i18n('Boxes.Calculator.TTProfitSelf'), { 'nettoreward': NettoReward, 'arcfactor': arcfactor, 'bruttoreward': BruttoReward, 'paid': Costs, 'profit': Profit })];
+			}
+			else {
+				GewinnTooltip = [HTML.i18nReplacer(i18n('Boxes.Calculator.TTLossSelf'), { 'nettoreward': NettoReward, 'arcfactor': arcfactor, 'bruttoreward': BruttoReward, 'paid': Costs, 'loss': 0 - Profit })];
+			}
+
+			KursClass = 'info';
+			KursText = Calculator.FormatKurs(Kurs);
+			KursTooltip.push(HTML.i18nReplacer(i18n('Boxes.Calculator.TTRate'), { 'costs': Paid, 'nettoreward': NettoReward, 'rate': Kurs }));
+		}
+		else if (State === 'NegativeProfit') {
+			CellClass = 'bg-red';
+		}
+		else if (State === 'LevelWarning') {
+			CellClass = 'bg-yellow';
+			EinsatzTooltip.push(i18n('Boxes.Calculator.LevelWarning'));
+		}
+		else if (State === 'Profit') {
+			CellClass = 'bg-green';
+			KursTooltip.push(HTML.i18nReplacer(i18n('Boxes.Calculator.TTRate'), { 'costs': SafeCosts, 'nettoreward': NettoReward, 'rate': Kurs }));
+			Calculator.PlaySound();
+		}
+		else { // NotPossible / WorseProfit
+			CellClass = 'text-grey';
+			EinsatzText = '-';
+			GewinnText = '-';
+			GewinnTooltip = [];
+			KursText = '-';
+		}
+
+		const Cell = (ExtraClass, TextClass, Tooltip, Text, Copy) =>
+			`<td class="${ExtraClass} ${CellClass}"><strong class="${TextClass} td-tooltip${Copy !== undefined ? ' copy-fp clickable' : ''}"${Copy !== undefined ? ` data-copy="${Copy}"` : ''} data-original-title="${HTML.i18nTooltip(Tooltip.join('<br>'))}">${Text}</strong></td>`;
+
+		return Cell('group-start', EinsatzClass, EinsatzTooltip, EinsatzText, (EinsatzText !== '-' && State !== 'Self' ? SafeCosts : undefined)) +
+			Cell('', GewinnClass, GewinnTooltip, GewinnText) +
+			Cell('', KursClass, KursTooltip, KursText);
+	},
+
+
+	/**
+	 * Formats a rate in percent, '-' for 0
+	 *
+	 * @param {number} Kurs
+	 * @returns {string}
+	 */
+	FormatKurs: (Kurs) => (Kurs === 0 ? '-' : HTML.Format(Kurs) + '%'),
 
 
 	/**
