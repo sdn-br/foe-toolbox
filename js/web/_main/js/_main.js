@@ -619,6 +619,18 @@ GetFights = () =>{
 			if (data.responseData.friends)
 				MainParser.UpdatePlayerDict(data.responseData.friends, 'PlayerList', 'getFriendsList');
 		}
+		// Toolbox: player profile and event history also update the player data
+		else if (data.requestMethod === 'getOtherPlayerVO') {
+			MainParser.UpdatePlayerDict(data.responseData, 'PlayerVO');
+		}
+		else if (data.requestMethod === 'getEventsPaginated') {
+			MainParser.UpdatePlayerDict(data.responseData, 'Events');
+		}
+	});
+
+	// Toolbox: PvP arena opened, update the player data of the opponents
+	FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
+		MainParser.UpdatePlayerDict(data.responseData, 'PvPArena');
 	});
 
 
@@ -1277,6 +1289,7 @@ let MainParser = {
 
 		MainParser.CityEntities = Metadata;
 		MainParser.correctBuildingType();
+		MainParser.setToolboxEntityFlags();
 		MainParser.Inactives.check();
 	},
 
@@ -1369,6 +1382,74 @@ let MainParser = {
 				CityEntity.type = CityEntity?.components?.AllAge?.tags?.tags?.find(value => value.hasOwnProperty('buildingType')).buildingType;
 			}
         }
+	},
+
+
+	/**
+	 * Toolbox: derived flags on every CityEntity, used by the city information
+	 * (plunder helper) and the PvP history. Must run after `correctBuildingType`.
+	 *
+	 * - `is_motivatable`, `is_polishable`: can be motivated / polished
+	 * - `chainId`, `is_chainBuilding`, `is_chainStartBuilding`, `bonus_multiplier`
+	 *   (number of link positions of the chain building)
+	 * - `is_outpostBuilding`: placed on another grid than the main city
+	 * - `is_plunderable`: production can be plundered by neighbours
+	 *
+	 * Classic entities carry this information as `abilities`, generic entities
+	 * (`GenericCityEntity`) as `components.AllAge` (same sources as `CityBuildings`).
+	 */
+	setToolboxEntityFlags: () => {
+		for (let id in MainParser.CityEntities) {
+			if (!MainParser.CityEntities.hasOwnProperty(id)) continue;
+
+			let e = MainParser.CityEntities[id],
+				abilities = e.abilities || [],
+				isGeneric = (e.__class__ === 'GenericCityEntity'),
+				hasAbility = (cls) => abilities.some(a => a.__class__ === cls),
+				interaction = e.components?.AllAge?.socialInteraction?.interactionType;
+
+			e.is_motivatable = hasAbility('MotivatableAbility') || (isGeneric && interaction === 'motivate');
+			e.is_polishable = hasAbility('PolishableAbility') || (isGeneric && interaction === 'polish');
+
+			e.chainId = '';
+			e.is_chainBuilding = false;
+			e.is_chainStartBuilding = false;
+			e.bonus_multiplier = 1;
+
+			let chain = (isGeneric ? e.components?.AllAge?.chain : undefined);
+			if (chain?.chainId) {
+				e.chainId = chain.chainId;
+				e.is_chainBuilding = true;
+				e.is_chainStartBuilding = (chain.config?.__class__ === 'ChainStartConfig');
+				if (chain.linkPositions !== undefined) e.bonus_multiplier = chain.linkPositions.length;
+			}
+			else {
+				let chainAbility = abilities.find(a => a.chainId !== undefined);
+				if (chainAbility) {
+					e.chainId = chainAbility.chainId;
+					e.is_chainBuilding = true;
+				}
+				e.is_chainStartBuilding = hasAbility('ChainStartAbility');
+				abilities.forEach(a => {
+					if (a.chainId !== undefined && a.linkPositions !== undefined) {
+						e.bonus_multiplier = a.linkPositions.length;
+					}
+				});
+			}
+
+			e.is_outpostBuilding = abilities.some(a => a.gridId !== undefined && a.gridId !== 'main');
+
+			e.is_plunderable = (
+				!e.is_outpostBuilding && (
+					e.type === 'production' || e.type === 'goods' || (
+						(e.type === 'residential' || e.type === 'clan_power_production' || (e.type === undefined && isGeneric)) &&
+						!hasAbility('AddResourcesToGuildTreasuryAbility') &&
+						!hasAbility('RandomChestRewardAbility') &&
+						!hasAbility('NotPlunderableAbility')
+					)
+				)
+			);
+		}
 	},
 
 
@@ -1961,12 +2042,18 @@ let MainParser = {
 	/**
 	 * Player information Updating message list & Website data
 	 *
+	 * Toolbox: returns a promise that resolves when the players are also
+	 * written to the IndexDB (table `players`).
+	 *
 	 * @param d
 	 * @param Source
 	 * @param ListType
+	 * @returns {Promise<void>}
 	 * @constructor
 	 */
 	UpdatePlayerDict: (d, Source, ListType = undefined) => {
+		let promises = [];
+
 		if (Source === 'Conversation') {
 			for (let i in d['messages']) {
 				if (!d['messages'].hasOwnProperty(i))
@@ -1975,13 +2062,13 @@ let MainParser = {
 				let Message = d['messages'][i];
 
 				if (Message.sender !== undefined) {
-					MainParser.UpdatePlayerDictCore(Message.sender);
+					promises.push(MainParser.UpdatePlayerDictCore(Message.sender));
 				}
 			}
 		}
 
 		else if (Source === 'LGOverview' && d[0]) {
-			MainParser.UpdatePlayerDictCore(d[0].player);
+			promises.push(MainParser.UpdatePlayerDictCore(d[0].player));
 		}
 
 		else if (Source === 'LGContributions') {
@@ -1989,7 +2076,7 @@ let MainParser = {
 				if (!d.hasOwnProperty(i))
 					continue;
 
-				MainParser.UpdatePlayerDictCore(d[i].player);
+				promises.push(MainParser.UpdatePlayerDictCore(d[i].player));
 			}
 		}
 
@@ -1998,7 +2085,7 @@ let MainParser = {
 				if (!d.hasOwnProperty(i))
 					continue;
 
-				MainParser.UpdatePlayerDictCore(d[i]);
+				promises.push(MainParser.UpdatePlayerDictCore(d[i]));
 			}
 
 			if (ListType === 'getNeighborList') {
@@ -2015,39 +2102,131 @@ let MainParser = {
 				EventHandler.CalcMoppelHelperBody();
 			}
 		}
+
+		// Toolbox: OtherPlayerService.getOtherPlayerVO
+		else if (Source === 'PlayerVO') {
+			promises.push(MainParser.UpdatePlayerDictCore(d));
+		}
+
+		// Toolbox: OtherPlayerService.getEventsPaginated
+		else if (Source === 'Events') {
+			for (let i in d?.events) {
+				if (d.events[i].other_player !== undefined) {
+					promises.push(MainParser.UpdatePlayerDictCore(d.events[i].other_player));
+				}
+			}
+		}
+
+		// Toolbox: OtherPlayerService.visitPlayer, called by the toolbox modules
+		else if (Source === 'VisitPlayer') {
+			if (d?.other_player) {
+				let Player = d.other_player;
+				if (Player['era'] === undefined && d['other_player_era'] !== undefined) {
+					Player = Object.assign({}, Player, { era: d['other_player_era'] });
+				}
+				promises.push(MainParser.UpdatePlayerDictCore(Player));
+			}
+		}
+
+		// Toolbox: PVPArenaService.getOverview
+		else if (Source === 'PvPArena') {
+			for (let i in d?.opponents) {
+				if (!d['opponents'].hasOwnProperty(i)) continue;
+				let Player = d['opponents'][i]?.opposingPlayer?.player;
+				if (Player) promises.push(MainParser.UpdatePlayerDictCore(Player));
+			}
+		}
+
+		return Promise.all(promises).then(() => undefined);
+	},
+
+
+	/**
+	 * Toolbox: load a player from the IndexDB into the PlayerDict
+	 * if it is not known in this session yet
+	 *
+	 * @param PlayerID
+	 * @returns {Promise<void>}
+	 */
+	loadPlayerIntoDict: (PlayerID) => {
+		if (PlayerDict[PlayerID] !== undefined) return Promise.resolve();
+
+		return IndexDB.loadPlayer(PlayerID).then(PlayerFromDB => {
+			if (!PlayerFromDB || PlayerDict[PlayerID] !== undefined) return;
+
+			let Player = PlayerDict[PlayerID] = { PlayerID: PlayerID };
+			if (PlayerFromDB['name'] !== undefined) Player['PlayerName'] = PlayerFromDB['name'];
+			if (PlayerFromDB['clanName'] !== undefined) Player['ClanName'] = PlayerFromDB['clanName'];
+			if (PlayerFromDB['clanId'] !== undefined) Player['ClanId'] = PlayerFromDB['clanId'];
+			if (PlayerFromDB['avatar'] !== undefined) Player['Avatar'] = PlayerFromDB['avatar'];
+			if (PlayerFromDB['era'] !== undefined && PlayerFromDB['era'] !== 'unknown') Player['Era'] = PlayerFromDB['era'];
+			if (PlayerFromDB['score'] !== undefined) Player['Score'] = PlayerFromDB['score'];
+			if (PlayerFromDB['wonBattles'] !== undefined) Player['WonBattles'] = PlayerFromDB['wonBattles'];
+			if (PlayerFromDB['lastWonBattlesReceiveDate'] !== undefined) Player['WonBattlesReceiveDate'] = PlayerFromDB['lastWonBattlesReceiveDate'];
+			if (PlayerFromDB['lastWonBattlesChangeDate'] !== undefined) Player['WonBattlesDate'] = PlayerFromDB['lastWonBattlesChangeDate'];
+			// Toolbox 1.x wrote the misspelled "lastScoreReceiveData"
+			let ScoreReceiveDate = PlayerFromDB['lastScoreReceiveDate'] || PlayerFromDB['lastScoreReceiveData'];
+			if (ScoreReceiveDate !== undefined) Player['ScoreReceiveDate'] = ScoreReceiveDate;
+			if (PlayerFromDB['lastScoreChangeDate'] !== undefined) Player['ScoreDate'] = PlayerFromDB['lastScoreChangeDate'];
+		}).catch(e => console.error(e));
 	},
 
 
 	/**
 	 * Update player information
 	 *
+	 * Toolbox: additionally tracks when score and won battles were last received
+	 * and last seen rising (activity indicator) and stores the player in the IndexDB.
+	 *
 	 * @param Player
+	 * @returns {Promise<void>}
 	 * @constructor
 	 */
 	UpdatePlayerDictCore: (Player) => {
 
-		let PlayerID = Player['player_id'];
+		let PlayerID = Player?.['player_id'];
+		if (PlayerID === undefined) return Promise.resolve();
+
 		let HasGuildPermission = ((ExtGuildPermission & GuildMemberStat.GuildPermission_Leader) > 0 || (ExtGuildPermission & GuildMemberStat.GuildPermission_Founder) > 0);
 
-		if (PlayerID !== undefined) {
-			if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {
-										Activity: (Player['is_friend'] || (Player['is_guild_member'] && HasGuildPermission)) ? 0 : undefined
-									};
+		if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {
+									Activity: (Player['is_friend'] || (Player['is_guild_member'] && HasGuildPermission)) ? 0 : undefined
+								};
 
-			PlayerDict[PlayerID]['PlayerID'] = PlayerID;
-			if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
-			if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
-			if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
-			if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
-			if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
-			if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];
-			if (Player['is_friend'] !== undefined) PlayerDict[PlayerID]['IsFriend'] = Player['is_friend'];
-			if (Player['is_self'] !== undefined) PlayerDict[PlayerID]['IsSelf'] = Player['is_self'];
-			if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
-			if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
-			if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
-			if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
-		}
+		PlayerDict[PlayerID]['PlayerID'] = PlayerID;
+		if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
+		if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
+		if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
+		if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
+		if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
+		if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];
+		if (Player['is_friend'] !== undefined) PlayerDict[PlayerID]['IsFriend'] = Player['is_friend'];
+		if (Player['is_self'] !== undefined) PlayerDict[PlayerID]['IsSelf'] = Player['is_self'];
+		if (Player['is_active'] !== undefined) PlayerDict[PlayerID]['IsActive'] = Player['is_active'];
+		if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
+		if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
+		if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
+		if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
+
+		return IndexDB.loadPlayer(PlayerID).then((PlayerFromDB) => {
+			let p = PlayerDict[PlayerID],
+				now = MainParser.getCurrentDate();
+
+			if (PlayerFromDB) {
+				p['WonBattlesReceiveDate'] = (p['WonBattles'] !== undefined ? now : PlayerFromDB.lastWonBattlesReceiveDate);
+				p['WonBattlesDate'] = ((PlayerFromDB.wonBattles === undefined && p['WonBattles'] !== undefined) || PlayerFromDB.lastWonBattlesChangeDate === undefined || PlayerFromDB.wonBattles < p['WonBattles'] ? now : PlayerFromDB.lastWonBattlesChangeDate);
+				p['ScoreReceiveDate'] = (p['Score'] !== undefined ? now : (PlayerFromDB.lastScoreReceiveDate || PlayerFromDB.lastScoreReceiveData));
+				p['ScoreDate'] = ((PlayerFromDB.score === undefined && p['Score'] !== undefined) || PlayerFromDB.lastScoreChangeDate === undefined || PlayerFromDB.score < p['Score'] ? now : PlayerFromDB.lastScoreChangeDate);
+			}
+			else {
+				p['WonBattlesReceiveDate'] = (p['WonBattles'] !== undefined ? now : undefined);
+				p['WonBattlesDate'] = (p['WonBattles'] !== undefined ? now : undefined);
+				p['ScoreReceiveDate'] = (p['Score'] !== undefined ? now : undefined);
+				p['ScoreDate'] = (p['Score'] !== undefined ? now : undefined);
+			}
+
+			return IndexDB.addUserFromPlayerDictIfNotExists(PlayerID, true);
+		}).catch(e => console.error(e));
 	},
 
 

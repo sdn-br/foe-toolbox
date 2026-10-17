@@ -12,6 +12,80 @@
  */
 
 /*
+*   Toolbox tables (kept across starts, see GarbageCollector)
+*
+*   "neighborhoodAttacks" structure (PvP history of the toolbox, replaces the unused upstream "pvpActions")
+*   {
+*       playerId: number,
+*       date: Date,
+*       type: ACTION_TYPE_BATTLE_WIN | ACTION_TYPE_BATTLE_LOSS | ACTION_TYPE_BATTLE_SURRENDERED,
+*       battle: {
+*           myArmy: Unit[],
+*           otherArmy: Unit[],
+*           round: number,
+*           auto: boolean,
+*           era: string,
+*       }
+*   }
+*   OR
+*   {
+*       playerId: number,
+*       date: Date,
+*       type: Looting.ACTION_TYPE_LOOTED,
+*       resources: Object,
+*       doubleLoot: boolean | undefined, // double loot bonus is applied or not
+*       doubleLootApplied: boolean // true when double bonus is applied
+*       sp: number, // strategy points
+*       important: boolean, // if not supplies or money only
+*       entityId: number, // foe city entity Id
+*       buildId: string, // key for BuildingNamesi18n
+*   }
+*   OR
+*   {
+*       type: Looting.ACTION_TYPE_SHIELDED,
+*       playerId: number,
+*       date: Date,
+*       expireTime: number, // timestamp. usage: new Date(expireTime * 1000)
+*   }
+*   where Unit =
+*   {
+*       startHP: number, // usually 10
+*       endHp: number,
+*       attBoost: number,
+*       defBoost: number,
+*       unitTypeId: string,
+*       ownerId: number, // other player id
+*   }
+*
+*   "players" structure
+*   {
+*       id: number,
+*       name: string,
+*       clanId: number, // 0 if no clan
+*       clanName: string | undefined,
+*       avatar: string,
+*       era: string | 'unknown',
+*       score: number | undefined,
+*       lastScoreChangeDate: Date | undefined, // last time the score was seen rising
+*       lastScoreReceiveDate: Date | undefined, // last time the score was received
+*       wonBattles: number | undefined,
+*       lastWonBattlesChangeDate: Date | undefined,
+*       lastWonBattlesReceiveDate: Date | undefined,
+*       date: Date, // last time the player was seen
+*   }
+*
+*   "greatbuildings" structure
+*   {
+*       id: number,
+*       playerId: number,
+*       name: string,
+*       level: number,
+*       currentFp: number,
+*       bestRateNettoFp: number
+*       bestRateCosts: number,
+*       date: Date, // last visit date
+*   }
+*
 *  "statsGBGPlayers", Battle ground leader board
 * {
 *   date: Date,
@@ -311,10 +385,28 @@ let IndexDB = {
         // Keep logs for guild battlegrounds for 2 weeks
         const gbgExpiryTime = moment().subtract(2, 'weeks').toDate();
 
+        // Toolbox: players, their great buildings and the PvP history are kept for a year
+        // (upstream clears players and greatbuildings on every start)
+        const playerExpiryTime = moment().subtract(1, 'years').toDate();
+
         await IndexDB.getDB();
+        // upstream table, not used by the toolbox (PvP history lives in neighborhoodAttacks)
         await IndexDB.db.pvpActions.clear();
-        await IndexDB.db.players.clear();
-        await IndexDB.db.greatbuildings.clear();
+
+        await IndexDB.db.neighborhoodAttacks.where('date').below(playerExpiryTime).delete();
+
+        // Remove expired city shields (Looting.ACTION_TYPE_SHIELDED)
+        const now = moment().unix();
+        await IndexDB.db.neighborhoodAttacks
+            .where('type').equals(5)
+            .and(item => item.expireTime < now)
+            .delete();
+
+        await IndexDB.db.players.where('date').below(playerExpiryTime).delete();
+
+        // great buildings of players no longer known
+        const leftPlayers = await IndexDB.db.players.toCollection().primaryKeys();
+        await IndexDB.db.greatbuildings.where('playerId').noneOf(leftPlayers).delete();
 
         for (const table of ['statsRewards', 'statsUnitsD', 'statsTreasurePlayerD', 'statsTreasureClanD']) {
             await IndexDB.db[table].where('date').below(daylyExpiryTime).delete();
@@ -368,32 +460,61 @@ let IndexDB = {
 
 
     /**
-     * Add user from PlayerDict if not added, without era information
+     * Add user from PlayerDict if not added, otherwise update the
+     * toolbox fields (era, score, won battles and their dates)
      *
      * @param playerId
-     * @param updateDate
+     * @param updateDate update an existing player as well
      * @returns {Promise<void>}
      */
-    addUserFromPlayerDictIfNotExists: async(playerId, updateDate) => {
-        const playerFromDB = await IndexDB.db.players.get(playerId);
+    addUserFromPlayerDictIfNotExists: async (playerId, updateDate) => {
+        const playerFromDB = await IndexDB.loadPlayer(playerId);
+        const player = PlayerDict[playerId];
+        if (!player) return;
+
+        const fields = {
+            era: player.Era,
+            score: player.Score,
+            lastScoreChangeDate: player.ScoreDate,
+            lastScoreReceiveDate: player.ScoreReceiveDate,
+            wonBattles: player.WonBattles,
+            lastWonBattlesChangeDate: player.WonBattlesDate,
+            lastWonBattlesReceiveDate: player.WonBattlesReceiveDate,
+        };
+        // unknown values must not overwrite known ones
+        for (const key of Object.keys(fields)) {
+            if (fields[key] === undefined) delete fields[key];
+        }
+
         if (!playerFromDB) {
-            let player = PlayerDict[playerId];
-            if (player) {
-                await IndexDB.db.players.add({
-                    id: playerId,
-                    name: player.PlayerName,
-                    clanId: player.ClanId || 0,
-                    clanName: player.ClanName,
-                    avatar: player.Avatar,
-                    era: 'unknown', // Era can be discovered when user is visited, not now
-                    date: MainParser.getCurrentDate(),
-                });
-            }
+            // put instead of add: parallel updates of the same player must not fail
+            await IndexDB.db.players.put(Object.assign({
+                id: playerId,
+                name: player.PlayerName,
+                clanId: player.ClanId || 0,
+                clanName: player.ClanName,
+                avatar: player.Avatar,
+                era: 'unknown', // Era can be discovered when user is visited
+            }, fields, {
+                date: MainParser.getCurrentDate(),
+            }));
         }
         else if (updateDate) {
-            IndexDB.db.players.update(playerId, {
-                date: MainParser.getCurrentDate()
-            });
+            await IndexDB.db.players.update(playerId, Object.assign(fields, {
+                date: MainParser.getCurrentDate(),
+            }));
         }
+    },
+
+
+    /**
+     * Load a player from the db, waits until the db is ready
+     *
+     * @param playerId
+     * @returns {Promise<Object|undefined>}
+     */
+    loadPlayer: async (playerId) => {
+        await IndexDB.getDB();
+        return IndexDB.db.players.get(playerId);
     }
 };
