@@ -550,8 +550,6 @@ let _menu = {
 		let btn = _menu.MakeButton('possibleInvestments', true);
 
 		let btnEl = $('<span />').on('click', function () {
-			if (Calculator.Overview === undefined) return;
-
 			if (!Settings.GetSetting('ShowPossibleInvestments')) {
 				HTML.ShowToastMsg({
 					head: i18n('Menu.PossibleInvestments.Title'),
@@ -561,6 +559,8 @@ let _menu = {
 				});
 				return;
 			}
+
+			if (Calculator.Overview === undefined) return;
 
 			Calculator.ShowPossibleInvestments(true);
 		});
