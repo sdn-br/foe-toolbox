@@ -20,7 +20,7 @@
 	"unit",
 	{
 		"name": "calculator",
-		"parts": ["settings"]
+		"parts": ["settings", "overview"]
 	},
 	"infoboard",
 	{

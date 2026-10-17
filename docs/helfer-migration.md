@@ -11,7 +11,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 16a Bekannte Spieler: Name, Gilde und Avatar werden aktualisiert (Entscheidung Nutzer)
 - [x] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
 - [x] 2 PvP Angriffe (`looting`)
-- [ ] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
+- [x] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
 - [ ] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
 - [ ] 5 Kostenrechner schreibt LGs in IndexedDB
 - [ ] 7 Verhandlungsassistent in Gildengefechten (GbG)
@@ -76,6 +76,15 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Bugfixes: Klick-Handler wurden bei jedem Neuzeichnen erneut gebunden ("nächste Seite" sprang mehrere Seiten), jetzt einmal beim Anlegen der Box. Seitenzahl beim Arena-Filter zählt nur Arena-Kämpfe (alt alle Einträge dieser Spieler). Einheiten-Icons über `Unit.PrepareCoords()` (4.8.3).
 - Entfallen: tote Anzeige "Besucht" (`playerDate` war immer leer) samt Texten, `Looting.collectPlayer` (alt auskommentiert, ersetzt durch 16).
 - Offen: `BattlefieldService`-Antwort (`defenderPlayerId`, `PVPArenaService.addLog`) und `CityMapService.reset` mit `LootedState`/`PlunderedState` sind nur aus dem alten Code übernommen, im Spiel nicht geprüft.
+
+**Notizen 3**
+- Neuer Part `js/web/calculator/js/parts/overview.js` (in `js/internal.json` unter `calculator.parts`), Box `LGInvestmentOverviewBox` mit Ton-Schalter (`CalculatorOverviewTone`, default aus), CSS am Ende von `calculator.css`. Setting `ShowPossibleInvestments` (default aus, `doubleoptin`, wirkt erst mit 15).
+- Eigener Handler für `GreatBuildingsService.getOtherPlayerOverview` im Part (der Upstream-Handler in `_main.js` bleibt unverändert und läuft vorher, er füllt das PlayerDict). Spieler, Gilde und Aktivität (`IsActive` aus 16) kommen aus dem PlayerDict, bei Bedarf aus der DB (`loadPlayerIntoDict`).
+- Anpassung: P1 über `GreatBuildings.GetP1(era, level)` (4.8.3, mit Formel für Level ohne Tabelle) statt `GreatBuildings.Rewards[era][level]` (alt: ohne Tabelleneintrag P1 = 0, LG fiel heraus).
+- Anpassung: 4.8.3 hat keinen eigenen Kostenrechner-Menüknopf mehr (Kostenrechner steckt im Eigenanteilsrechner bzw. Split-View). Das alte `Calculator.Open()` (Umschalten zwischen Detail und Übersicht) entfällt. Die Übersicht öffnet sich automatisch beim Laden der LG-Liste; öffnet man danach ein LG eines **anderen** Spielers, schließt sie sich (wie alt "neuere Ansicht gewinnt"). Die Upstream-Boxen werden nicht angefasst.
+- "Wiedererkannt" (grün, Gewinn/Kurs bekannt) braucht Einträge in `greatbuildings`. Die schreibt erst der Kostenrechner aus 5 (`RefreshGreatBuildingsDB`); bis dahin nur aus migrierten 1.24-Daten. Ohne Eintrag: "???" (neu gefunden) wie alt.
+- Bugfixes: `BestKursNettoFP`/`BestKursEinsatz` waren implizite globale Variablen; fehlender PlayerDict-Eintrag warf einen TypeError.
+- Offen: die Übersichtszeilen werden über `city_entity_id` gelesen (alter Feldname, in 4.8.3-Code nicht verwendet, dort nur `entity_id`); im Spiel prüfen. Die LG-Stufen (Kupfer/Silber/Gold) gehen nicht in P1 ein (wie alt). Wiederöffnen der geschlossenen Box geht nur über erneutes Öffnen der LG-Liste im Spiel (kein Menüknopf).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
