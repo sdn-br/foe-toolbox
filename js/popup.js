@@ -15,7 +15,7 @@
 $(function(){
 	// Open external links in new tab
 	$('body').on('click', '.foe-link', ()=> {
-		chrome.tabs.create({url: "https://foe-rechner.de/"});
+		chrome.tabs.create({url: "https://github.com/sdn-br/foe-toolbox"});
 	});
 
 	$('body').on('click', '.paypal-link', ()=> {
