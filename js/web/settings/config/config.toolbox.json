@@ -1,0 +1,38 @@
+{
+	"remove": ["Help", "LoadBeta2"],
+	"entries": [
+		{
+			"name": "GlobalSend",
+			"status": false,
+			"doubleoptin": true
+		},
+		{
+			"name": "ShowNeighborsLootables",
+			"status": false,
+			"doubleoptin": true,
+			"group": "Boxes",
+			"sort": 21
+		},
+		{
+			"name": "ShowPlayersAttDeffValues",
+			"status": false,
+			"doubleoptin": true,
+			"group": "Boxes",
+			"sort": 22
+		},
+		{
+			"name": "ShowPossibleInvestments",
+			"status": false,
+			"doubleoptin": true,
+			"group": "Boxes",
+			"sort": 23
+		},
+		{
+			"name": "AutomaticNegotiationForGbG",
+			"status": false,
+			"doubleoptin": true,
+			"group": "Boxes",
+			"sort": 24
+		}
+	]
+}

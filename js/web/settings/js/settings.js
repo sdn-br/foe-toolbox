@@ -42,6 +42,13 @@ let Settings = {
 	 * Load config from config file
 	 */
 	LoadConfig: (callback) => {
+		// TOOLBOX-BEGIN merge config.toolbox.json: "entries" override by name or are appended, "remove" drops names
+		const toolbox = fetch(`${extUrl}js/web/settings/config/config.toolbox.json`).then(r => r.json()), upstream = callback;
+		callback = (config) => toolbox.then(t => {
+			config = config.filter(e => !t.remove.includes(e.name)).map(e => Object.assign(e, t.entries.find(o => o.name === e.name)));
+			upstream(config.concat(t.entries.filter(o => !config.some(e => e.name === o.name))));
+		});
+		// TOOLBOX-END
 		fetch(
 			`${extUrl}js/web/settings/config/config.json`
 		).then(response => {

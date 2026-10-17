@@ -154,34 +154,6 @@
 		"sort": 19
 	},
 	{
-		"name": "ShowNeighborsLootables",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Boxes",
-		"sort": 21
-	},
-	{
-		"name": "ShowPlayersAttDeffValues",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Boxes",
-		"sort": 22
-	},
-	{
-		"name": "ShowPossibleInvestments",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Boxes",
-		"sort": 23
-	},
-	{
-		"name": "AutomaticNegotiationForGbG",
-		"status": false,
-		"doubleoptin": true,
-		"group": "Boxes",
-		"sort": 24
-	},
-	{
 		"name": "SelectedMenu",
 		"callback": "MenuSelected",
 		"group": "Extension",
@@ -245,8 +217,7 @@
 	},
 	{
 		"name": "GlobalSend",
-		"status": false,
-		"doubleoptin": true,
+		"status": true,
 		"group": "About",
 		"sort": 5
 	},
@@ -255,6 +226,12 @@
 		"callback": "ApiTokenInput",
 		"group": "About",
 		"sort": 7
+	},
+	{
+		"name": "Help",
+		"callback": "Help",
+		"group": "About",
+		"sort": 9
 	},
 	{
 		"name": "About",
@@ -267,6 +244,12 @@
 		"callback": "VersionInfo",
 		"group": "About",
 		"sort": 13
+	},
+	{
+		"name": "LoadBeta2",
+		"group": "About",
+		"button":"window.open('https://github.com/mainIine/foe-helfer-extension/archive/refs/heads/beta.zip', '_blank').focus();",
+		"sort": 19
 	},
 
 	{
