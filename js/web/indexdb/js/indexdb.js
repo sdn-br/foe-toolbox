@@ -158,7 +158,9 @@ let IndexDB = {
 
 
     Init: async (playerId) => {
-        const primaryDBName = 'FoEToolboxDB_' + playerId; //Create different IndexDBs if two players are sharing the same PC playing on the same world
+        // Own name, the DBs of the toolbox 1.x ("FoEToolboxDB_") stay untouched so that 1.x can still be used.
+        // Different DBs per player if two players are sharing the same PC playing on the same world
+        const primaryDBName = 'FoEToolbox2DB_' + playerId;
         const isNewDB = !await Dexie.exists(primaryDBName);
 
         const db = IndexDB.db = new Dexie(primaryDBName);
@@ -223,57 +225,116 @@ let IndexDB = {
         });
         db.version(3).stores({
             buildingMeta: 'id, hash, json',
-            // Toolbox 1.x table (PvP attacks). Declared here so that upgrading an existing
-            // FoEToolboxDB_ (schema v2) does not drop it; Dexie deletes undeclared tables on upgrade.
+            // PvP history of the toolbox, filled from the toolbox 1.x DB on first start
             neighborhoodAttacks: '++id,playerId,date,type',
         });
     },
 
     /**
-     * Database migration util function. Should be called once
+     * Database migration util function. Should be called once, when the main DB was just created.
+     * Takes over the data of the toolbox 1.x or, if there is none, of a previous
+     * "FoE Helper Private" or FoE Helfer installation. All of them run in the game page as well,
+     * so their DBs are visible in this origin.
      */
     mergeDatabases: async (playerId) => {
         // Skip if main db is not empty
         if (await IndexDB.db.players.count()) { return; }
-        clearLog();
 
-        //log('Looks like your db is empty, trying to populate db using old databases');
+        await IndexDB.copyFromLegacyDB(IndexDB.db, [
+            'FoEToolboxDB_' + playerId,
+            'FoeHelperPrivateDB_' + playerId,
+            'FoeHelperDB_' + playerId,
+        ], {
+            // only a cache, rebuilt anyway
+            skipTables: ['buildingMeta'],
+        });
+    },
 
-        // Take over the data of a previous "FoE Helper Private" or FoE Helfer installation.
-        // Both run in the game page as well, so their DBs are visible in this origin.
-        // The source DBs are opened without a declared schema (Dexie dynamic mode),
-        // so it does not matter which schema version they have.
-        const foeHelperPrivDBName = 'FoeHelperPrivateDB_' + playerId;
-        const foeHelperDBName = 'FoeHelperDB_' + playerId;
 
-        let sourceDBName = foeHelperPrivDBName;
-        let sourceDB = await openIfFilled(foeHelperPrivDBName);
-        if (!sourceDB) {
-            sourceDBName = foeHelperDBName;
-            sourceDB = await openIfFilled(foeHelperDBName);
-        }
+    /**
+     * Opens a toolbox DB with a declared schema. If the DB did not exist yet,
+     * it is filled once with the data of the given legacy DBs (see copyFromLegacyDB).
+     * Used by the modules with an own DB.
+     *
+     * @param {Dexie} db destination DB, schema already declared, not opened yet
+     * @param {string[]} legacyNames legacy DB names in priority order
+     * @param {Object} [options] see copyFromLegacyDB
+     * @returns {Promise<void>}
+     */
+    openWithLegacyCopy: async (db, legacyNames, options) => {
+        try {
+            // decided before opening, opening creates the DB
+            const isNewDB = !await Dexie.exists(db.name);
+            await db.open();
 
-        if (sourceDB) {
-            log(`Found DB "${sourceDBName}"`);
-            const destTables = IndexDB.db.tables.map(t => t.name);
-            const tables = {};
-            for (const table of sourceDB.tables) {
-                // buildingMeta is only a cache and is rebuilt anyway
-                if (table.name !== 'buildingMeta' && destTables.includes(table.name)) {
-                    tables[table.name] = table.name;
-                }
+            if (isNewDB) {
+                await IndexDB.copyFromLegacyDB(db, legacyNames, options);
             }
-            await cloneTables(sourceDB, tables);
-            sourceDB.close();
+        } catch (e) {
+            console.error(e);
         }
+    },
 
-        // "FoE Helper Private" is discontinued, its DB can go.
-        // The FoE Helfer DB is kept: the FoE Helfer may still be installed and uses it.
-        if (await Dexie.exists(foeHelperPrivDBName)) {
-            log(`Deleting old DB "${foeHelperPrivDBName}"`);
-            await Dexie.delete(foeHelperPrivDBName);
+
+    /**
+     * Copies the data of a legacy DB into a freshly created toolbox DB.
+     *
+     * Legacy DBs (toolbox 1.x, FoE Helfer, FoE Helper Private) are read only: they are
+     * opened without a declared schema (Dexie dynamic mode), so no upgrade happens,
+     * it does not matter which schema version they have, and nothing is written to them.
+     * They are never deleted either, so the old installation keeps working.
+     *
+     * The first legacy DB with data wins. Only tables that exist in the destination schema are copied.
+     *
+     * @param {Dexie} db destination DB with a declared schema
+     * @param {string[]} legacyNames legacy DB names in priority order
+     * @param {Object} [options]
+     * @param {string[]} [options.skipTables] tables not to copy (caches)
+     * @param {Object<string, function(Object): Object>} [options.transformRows] per table: converts a
+     *        legacy row into the format of the current schema
+     * @returns {Promise<string|null>} name of the legacy DB the data was copied from
+     */
+    copyFromLegacyDB: async (db, legacyNames, options = {}) => {
+        const skipTables = options.skipTables || [];
+        const transformRows = options.transformRows || {};
+        const destTables = db.tables.map(t => t.name).filter(name => !skipTables.includes(name));
+
+        for (const legacyName of legacyNames) {
+            const source = await openIfFilled(legacyName);
+            if (!source) continue;
+
+            try {
+                log(`Copy "${legacyName}" (v${source.verno}) => "${db.name}"`);
+                for (const sourceTable of source.tables) {
+                    const tableName = sourceTable.name;
+                    if (!destTables.includes(tableName)) continue;
+
+                    try {
+                        let rows = await sourceTable.toArray();
+                        if (transformRows[tableName]) {
+                            rows = rows.map(transformRows[tableName]);
+                        }
+                        const destTable = db.table(tableName);
+                        // clear + add in one transaction: no mix with rows written meanwhile
+                        await db.transaction('rw', destTable, async () => {
+                            await destTable.clear();
+                            await destTable.bulkAdd(rows);
+                        });
+                        log(`  ${tableName}: ${rows.length} rows`);
+                    } catch (e) {
+                        log(`  ${tableName}: failed (${e && e.name})`);
+                        console.error(e);
+                    }
+                }
+            } finally {
+                source.close();
+            }
+            return legacyName;
         }
+        return null;
 
+        // Opens a legacy DB read only (dynamic mode), null if it does not exist
+        // or has no rows in the tables to copy
         async function openIfFilled(name) {
             if (!await Dexie.exists(name)) {
                 return null;
@@ -281,9 +342,9 @@ let IndexDB = {
             const sdb = new Dexie(name);
             await sdb.open();
             // Not only "players": the FoE Helfer 4.x clears its players table on every start,
-            // so a DB counts as filled as soon as any table (except the cache) has rows
+            // so a DB counts as filled as soon as any table to copy has rows
             for (const table of sdb.tables) {
-                if (table.name !== 'buildingMeta' && await table.count()) {
+                if (destTables.includes(table.name) && await table.count()) {
                     return sdb;
                 }
             }
@@ -291,28 +352,12 @@ let IndexDB = {
             return null;
         }
 
-        // Copy tables.
-        // Basicly this is not transaction safe to bulkAdd, but we can ignore it because
-        // `await getDb()` is used before insert or update.
-        async function cloneTables(source, tables) {
-            const destTables = Object.keys(tables);
-            for (let destTable of destTables) {
-                const sourceTable = tables[destTable];
-                log(`  Copy ${sourceTable} => ${destTable}...`);
-                await IndexDB.db[destTable].clear();
-                await IndexDB.db[destTable].bulkAdd(await source.table(sourceTable).toArray());
-            }
-        }
-
-        function clearLog() {
-            localStorage.setItem('FH_IndexDBLastMigraion', '');
-        }
-
+        // Migration log in localStorage, one line per copied DB and table.
+        // Copies happen only once per DB, the log is limited anyway.
         function log(text) {
-            //console.log('mergeDatabases: ' + text);
-            let logTxt = localStorage.getItem('FH_IndexDBLastMigraion') || '';
-            logTxt += text + '\n';
-            localStorage.setItem('FH_IndexDBLastMigraion', logTxt);
+            const lines = (localStorage.getItem('FH_IndexDBLastMigraion') || '').split('\n').filter(l => l);
+            lines.push(`${moment().format('YYYY-MM-DD HH:mm:ss')} ${text}`);
+            localStorage.setItem('FH_IndexDBLastMigraion', lines.slice(-200).join('\n') + '\n');
         }
     },
 

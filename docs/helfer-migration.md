@@ -34,9 +34,11 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - `background.js`: Upstream hatte den Update-Tab auskommentiert. Toolbox-Logik wieder drin: bei `onInstalled` Reload-Abfrage per `scripting.executeScript` in allen offenen Spiel-Tabs und Wiki-Changelog im neuen Tab. Zusätzlich verlinkt der neue Upstream-Toast "Neue Version installiert" (`_main.js`) auf das Toolbox-Changelog statt foe-helper.com.
 - Nur Deutsch: `inject.js` fällt auf `de` statt `en` zurück. Ein `user-language` im localStorage des Spiels, das die Toolbox nicht kennt (z. B. vom Helfer gesetzt), wird ignoriert, aber nicht überschrieben. `popup.js`/`alerts.js`: Wörterbuch und Übersetzungsschleife entfernt, das HTML ist der Text (die alte Toolbox lief für Nicht-Deutsch in einen TypeError). Settings: `Help` und `LoadBeta2` (Download der Helfer-Beta) entfernt, Weblate-Link entfernt.
 - Branding analog erweitert auf Stellen, die es in 3.1.0.1 noch nicht gab: `Menu.NewVersion.Title`, `Menu.MetaLoader.*`, Präfixe "FoE-Helfer:"/"FoE-Helper:" in `Boxes.MergerGame.KeysLeft.*`, `StrategyPoints.*` und im Quest-Tooltip (`quests.js`). Bewusst wie in der alten Toolbox belassen: Box-Titel-Suffix " - FoE Helper" (`_helper.js`), Discord-Webhook-Name, generische "Helfer"-Texte. Ebenso Upstream belassen: Titel " - FoE Helper" der neuen Pop-up-Fenster (`popup/js/popup.js`).
-- IndexedDB: Haupt-DB heißt `FoEToolboxDB_<id>`, Modul-DBs bleiben `FoeHelperDB_*_<id>` (wie in der alten Toolbox). Migration nur bei neuer Toolbox-DB: Quelle `FoeHelperPrivateDB_<id>`, sonst `FoeHelperDB_<id>`. Anders als alt: Quell-DBs werden ohne Schema geöffnet (Dexie dynamic mode; die alte Version mit fest `version(1)` scheiterte an neueren Helfer-DBs), kopiert werden alle gleichnamigen Tabellen außer dem Cache `buildingMeta`, "gefüllt" heißt irgendeine Tabelle hat Zeilen (Helfer 4.x leert `players` bei jedem Start). Upstream-Migration aus `FoeHelper_<id>`/`PlayerDB`/`StatsDb` entfällt wie in der alten Toolbox.
-- Anders als alt: `FoeHelperDB_<id>` wird nach dem Kopieren **nicht** gelöscht (liegt im selben Origin, ein parallel installierter Helfer würde seine Daten verlieren). `FoeHelperPrivateDB_<id>` wird weiter gelöscht.
-- Schema `version(3)` deklariert zusätzlich `neighborhoodAttacks`, damit ein Upgrade einer bestehenden `FoEToolboxDB_` (v2 aus 1.24) die Tabelle nicht verwirft (Dexie löscht nicht deklarierte Tabellen beim Upgrade). `pvpActions` legt Dexie dabei neu an. Achtung Zwischenstand: der Upstream-`GarbageCollector` leert weiter `players`/`greatbuildings`/`pvpActions` bei jedem Start; das gehört zu 2/16 (erledigt in 16, s. Notizen 16).
+- IndexedDB: alle DBs haben eigene Namen, Haupt-DB `FoEToolbox2DB_<id>`, Modul-DBs `FoEToolbox2DB_<Modul>_<id>` (Events, GexStat, GuildFights, GuildMemberStat, FPCollector, Qi). Grund: 1.24 (Dexie 2.0.4) öffnet keine DB mit höherer Version als deklariert; die neue Version hob `FoEToolboxDB_` (v2 -> v3), `FoeHelperDB_GuildFights_` (v1 -> v21) und `FoeHelperDB_GuildMemberStat_` (v1 -> v2) an. Die übrigen Modul-DBs haben gleiche Store-Deklarationen, kollidieren aber mit einem parallel installierten Helfer.
+- Einmalige Kopie beim ersten Start (neue DB existiert noch nicht, vor dem Öffnen geprüft): `IndexDB.copyFromLegacyDB` öffnet die Alt-DB ohne Schema (Dexie dynamic mode: kein Upgrade, kein Schreiben), kopiert alle Tabellen, die im neuen Schema existieren, und schließt sie. Alt-DBs werden nie beschrieben, angehoben oder gelöscht (auch `FoeHelperPrivateDB_<id>` nicht mehr). Quellen Haupt-DB in dieser Reihenfolge, die erste mit Daten gewinnt: `FoEToolboxDB_<id>`, `FoeHelperPrivateDB_<id>`, `FoeHelperDB_<id>`; "gefüllt" heißt irgendeine zu kopierende Tabelle hat Zeilen (Helfer 4.x leert `players` bei jedem Start). Quelle Modul-DB: gleichnamige `FoeHelperDB_<Modul>_<id>`. Upstream-Migration aus `FoeHelper_<id>`/`PlayerDB`/`StatsDb` entfällt wie in der alten Toolbox.
+- Nicht kopiert: der Cache `buildingMeta`. Zeilenformat: keines der Schemas hat `upgrade()`-Funktionen. GuildFights: 1.24 speicherte keine `attrition`, beim Kopieren wird sie in `snapshots` und in `history.participation` mit 0 ergänzt (die Anzeige rechnet damit). GuildMemberStat: `gex`-Zeilen aus v1 haben kein `trial`, die Leser setzen 0 ein, Kopie unverändert. `FoeHelperDB_UnitsGEX_` (Modul entfallen) wird nicht kopiert.
+- Protokoll in `localStorage` `FH_IndexDBLastMigraion`: je Kopie eine Zeile mit Zeit, Quelle (mit Version) und Ziel, darunter die Zeilenzahl je Tabelle; wird nicht mehr geleert, auf 200 Zeilen begrenzt.
+- Schema `version(3)` deklariert zusätzlich `neighborhoodAttacks` (PvP-Verlauf der Toolbox, kommt über die Kopie aus `FoEToolboxDB_`). Den Stand der Tests vor dieser Umstellung (Version hatte `FoEToolboxDB_` und Modul-DBs direkt angehoben) kann die Kopie nicht reparieren: wer damit getestet hat, kommt für diese DBs nicht mehr zu 1.24 zurück.
 - `.gitignore`: nur `*.ini` aus der Toolbox übernommen, die Upstream-Einträge bleiben. README und `changelog.md` aus Toolbox `master`, `changelog-de/en.md` entfernt.
 
 **Notizen 16**
@@ -331,6 +333,7 @@ Empfehlung zum Lesen: 1-3 und 7 sind die Features, die laut Wiki "auf Drängen v
 - `ShowPlayersAttDeffValues` ist default aus (Bann-Warnung), der Menüknopf weist ohne aktive Einstellung darauf hin.
 - Alerts-Link im Popup bleibt ausgeblendet wie im Helfer.
 - Firefox wird vorerst nicht unterstützt.
+- Eigene IndexedDB-Namen (`FoEToolbox2DB_*`), die DBs von 1.24 und Helfer werden nur gelesen (einmalige Kopie beim ersten Start), nie beschrieben oder gelöscht. Damit können Tester jederzeit zu 1.24 zurück; was in der Testphase neu entstand, sieht 1.24 nicht.
 
 ## Browser-Tests
 
@@ -339,15 +342,18 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 **17 Branding, Update, DB-Migration**
 - Erweiterung entpackt laden, während ein Spiel-Tab offen ist: im Spiel-Tab erscheint die Reload-Abfrage, es öffnet sich kein Changelog-Tab.
 - Popup und Einstellungen sind Deutsch, auch mit englischer Browsersprache.
-- Migration aus einem Profil mit `FoeHelperDB_<id>`: nach dem ersten Start enthält `FoEToolboxDB_<id>` die Daten, `FoeHelperDB_<id>` existiert weiter.
-- Upgrade über eine bestehende 1.24-`FoEToolboxDB_`: die Tabelle `neighborhoodAttacks` bleibt mit ihren Einträgen erhalten.
+- Frisches Profil mit 1.24-Daten (`FoEToolboxDB_<id>` v2, `FoeHelperDB_GuildFights_<id>` v1, `FoeHelperDB_GuildMemberStat_<id>` v1 usw.), dann diese Version laden: nach dem ersten Start enthalten `FoEToolbox2DB_<id>` (inkl. `neighborhoodAttacks`) und `FoEToolbox2DB_<Modul>_<id>` die Daten. Die Alt-DBs haben unverändert ihre Version (Application -> IndexedDB) und ihren Inhalt. `FH_IndexDBLastMigraion` im localStorage nennt Quelle und Ziel je DB.
+- Zweiter Start: es wird nichts erneut kopiert (keine neuen Zeilen in `FH_IndexDBLastMigraion`).
+- GuildFights: ein in 1.24 gespeicherter Verlauf (Spielerübersicht, alte Runde wählen) zeigt in der Spalte Zermürbung 0 statt `undefined`/`NaN`.
+- Zurück zu 1.24 (diese Version entfernen, 1.24 laden): 1.24 startet ohne Fehler, ihre Daten sind da; Daten aus der Testphase fehlen dort erwartungsgemäß.
+- Migration aus einem Profil nur mit `FoeHelperDB_<id>` (Helfer): nach dem ersten Start enthält `FoEToolbox2DB_<id>` die Daten, `FoeHelperDB_<id>` existiert unverändert weiter.
 
 **16 Datenmodell**
 - Spiel neu laden, 10 s warten: Tabelle `players` ist gefüllt und bleibt über Neustarts gefüllt, Einträge haben `score`, `wonBattles` und die Datumsfelder.
 - Konsole: `Object.values(MainParser.CityEntities).filter(e=>e.is_plunderable).length` > 0.
 
 **16a Bekannte Spieler**
-- Einen bekannten Spieler besuchen, der Name, Avatar oder Gilde geändert hat; in `FoEToolboxDB_<id>`, Tabelle `players`, stehen die neuen Werte.
+- Einen bekannten Spieler besuchen, der Name, Avatar oder Gilde geändert hat; in `FoEToolbox2DB_<id>`, Tabelle `players`, stehen die neuen Werte.
 - Ein Spieler ohne Gilde hat `clanId` 0 und kein `clanName`.
 
 **1 Stadtinformationen (Plünderhilfe)**
@@ -383,7 +389,7 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Arche-Prozent umschalten: Gruppenkopf "Fördern mit" zeigt den neuen Wert.
 
 **5 LGs in IndexedDB**
-- Fremdes LG mit sichtbarem Kostenrechner öffnen: in `FoEToolboxDB_<id>`, Tabelle `greatbuildings`, steht ein Eintrag mit `playerId`, `name` (= `cityentity_id`), `level`, `currentFp`, `bestRateNettoFp`, `bestRateCosts`, `date`; der Spieler steht in `players`.
+- Fremdes LG mit sichtbarem Kostenrechner öffnen: in `FoEToolbox2DB_<id>`, Tabelle `greatbuildings`, steht ein Eintrag mit `playerId`, `name` (= `cityentity_id`), `level`, `currentFp`, `bestRateNettoFp`, `bestRateCosts`, `date`; der Spieler steht in `players`.
 - Danach die LG-Liste desselben Spielers öffnen (Vorab-Scan an): das LG erscheint grün ("Wiedererkannt") mit Gewinn und Kurs statt "???", solange niemand eingezahlt hat.
 - LG-Stufen durchscrollen (Pfeile im Spiel): der Eintrag bleibt bei der aktuellen Stufe.
 - Spiel neu laden: der Eintrag bleibt erhalten.

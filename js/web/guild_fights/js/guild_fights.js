@@ -236,7 +236,9 @@ let Guild_fights = {
 	/**
 	 * Initializes and verifies the existence of a local IndexedDB database specific to the given player ID.
 	 *
-	 * Creates a new Dexie database instance named with the pattern `FoeHelperDB_GuildFights_<playerID>`.
+	 * Creates a new Dexie database instance named with the pattern `FoEToolbox2DB_GuildFights_<playerID>`.
+	 * On first start it is filled with the data of `FoeHelperDB_GuildFights_<playerID>` (toolbox 1.x or FoE Helfer),
+	 * which stays untouched.
 	 * Defines the database schema with two object stores:
 	 * - `snapshots`: Indexed by a composite key of `player_id+gbground+time`,
 	 *   and secondary indexes on `gbground+player_id`, `date+player_id`, and `gbground`.
@@ -249,7 +251,7 @@ let Guild_fights = {
 	 */
 	checkForDB: async (playerID) => {
 
-		const DBName = `FoeHelperDB_GuildFights_${playerID}`;
+		const DBName = `FoEToolbox2DB_GuildFights_${playerID}`;
 
 		Guild_fights.db = new Dexie(DBName);
 
@@ -258,7 +260,17 @@ let Guild_fights = {
 			history: '&gbground'
 		});
 
-		Guild_fights.db.open();
+		// The toolbox 1.x (schema v1) did not store the attrition, the readers expect a number
+		const withAttrition = (row) => Object.assign({}, row, { attrition: row.attrition || 0 });
+
+		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`], {
+			transformRows: {
+				snapshots: withAttrition,
+				history: (row) => Object.assign({}, row, {
+					participation: Array.isArray(row.participation) ? row.participation.map(withAttrition) : row.participation
+				}),
+			}
+		});
 	},
 
 
