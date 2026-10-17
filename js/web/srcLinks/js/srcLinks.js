@@ -75,7 +75,8 @@ let srcLinks = {
             const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
             // report the list at most every 7 days per player, with a 0.5% random roll
-            if ((!lastSent || (now - parseInt(lastSent, 10)) > SEVEN_DAYS) && Math.random() < 0.005) {
+            // Toolbox: nothing is sent without GlobalSend
+            if (MainParser.IsGlobalSendEnabled() && (!lastSent || (now - parseInt(lastSent, 10)) > SEVEN_DAYS) && Math.random() < 0.005) {
                 MainParser.sendExtMessage({
                     type: 'send2Api',
                     url: `${ApiURL}BuildingList/?world=${ExtWorld}&v=${extBaseVersion}`,

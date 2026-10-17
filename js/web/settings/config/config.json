@@ -245,7 +245,8 @@
 	},
 	{
 		"name": "GlobalSend",
-		"status": true,
+		"status": false,
+		"doubleoptin": true,
 		"group": "About",
 		"sort": 5
 	},

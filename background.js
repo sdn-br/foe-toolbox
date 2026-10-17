@@ -673,6 +673,42 @@ alertsDB.version(1).stores({
 				return APIsuccess(true);
 			}
 
+			case 'send2Server': { // type
+				// Toolbox: requests to the foe-helper API are made from the background instead of the game page
+				const allowedApis = ['https://api.foe-rechner.de/'];
+				if (typeof request.url !== 'string' || !allowedApis.includes(request.url)) return APIerror('send2Server: url not allowed');
+				if (typeof request.endpoint !== 'string' || !/^[A-Za-z0-9/_-]+$/.test(request.endpoint)) return APIerror('send2Server: invalid endpoint');
+
+				const params = new URLSearchParams({
+					player_id: request.playerId ?? '',
+					guild_id: request.guildId ?? '',
+					world: request.world ?? ''
+				});
+
+				try {
+					const response = await fetch(request.url + request.endpoint + '/?' + params.toString(), {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ data: request.data })
+					});
+
+					let body = null;
+					try {
+						body = await response.json();
+					}
+					catch (e) {
+						return APIsuccess({ status: response.status, statusText: response.statusText, body: null, error: 'invalid response: ' + e.message });
+					}
+
+					return APIsuccess({ status: response.status, statusText: response.statusText, body: body });
+				}
+				catch (e) {
+					return APIerror('send2Server: the server could not be reached: ' + e.message);
+				}
+			}
+
 			case 'showNotification': { // type
 				try {
 					const title = request.title;

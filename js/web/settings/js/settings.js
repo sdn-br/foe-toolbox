@@ -136,7 +136,8 @@ let Settings = {
 						$('<span />').addClass('check '+(status ? '' : 'unchecked')).append(
 							$('<span />').addClass('toogle-word').text(status ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive'))
 						).append(
-							$('<input class="setting-check game-cursor" type="checkbox" data-id="'+d['name']+'" '+(status ? 'checked' : '')+'/>')
+							// Toolbox: settings with "doubleoptin" ask for confirmation when switched on (see StoreSettings)
+							$('<input class="setting-check game-cursor' + (d['doubleoptin'] ? ' doubleoptin' : '') + '" type="checkbox" data-id="'+d['name']+'" '+(status ? 'checked' : '')+'/>')
 						)
 					)
 				}
@@ -192,6 +193,12 @@ let Settings = {
 	StoreSettings: (el, changeText = true) => {
 		let id = $(el).data('id'),
 			v = $(el).prop('checked');
+
+		// Toolbox: double opt-in, switching on needs a confirmation (text Settings.<id>.DoubleOptIn)
+		if (v === true && $(el).hasClass('doubleoptin') && !window.confirm(i18n(`Settings.${id}.DoubleOptIn`))) {
+			$(el).prop('checked', false);
+			return;
+		}
 
 		localStorage.setItem(id, v);
 
