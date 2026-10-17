@@ -178,7 +178,7 @@ let BonusService = {
 
 				sp.attr({
 					class: `hud-btn`,
-					title: 'FoE Toolbox: '+i18n('Boxes.BonusService.'+bt[i]),
+					title: 'FoE Toolbox: '+i18n('Boxes.BonusService.'+bt[i]), // TOOLBOX: branding
 				}).tooltip({
 					placement: 'left'
 				});

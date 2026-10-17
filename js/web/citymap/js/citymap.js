@@ -395,7 +395,7 @@ let CityMap = {
 		$('[data-original-title]').add($('#citymap-main [data-original-title]')).tooltip({
 			container: 'body',
 			html: true,
-			trigger: 'hover', // Toolbox: no tooltip sticking after a click
+			trigger: 'hover', // TOOLBOX: no tooltip sticking after a click
 		});
 
 		gridOuter.draggable();
@@ -953,7 +953,7 @@ let CityMap = {
 		$('[data-original-title]').add($('#citymap-main [data-original-title]')).tooltip({
 			container: 'body',
 			html: true,
-			trigger: 'hover', // Toolbox: no tooltip sticking after a click
+			trigger: 'hover', // TOOLBOX: no tooltip sticking after a click
 		});
 	},
 
@@ -1246,7 +1246,7 @@ let CityMap = {
 			return;
 		}
 
-		// Toolbox: double opt-in before sending the city to the server
+		// TOOLBOX: double opt-in before sending the city to the server
 		if (!window.confirm(i18n('Boxes.CityMap.SendDoubleOptIn'))) {
 			return;
 		}
@@ -1360,7 +1360,7 @@ let CityMap = {
 			$('#CityMapSubmit').fadeToggle(function () {
 				$(this).remove();
 			});
-		}, true); // Toolbox: forceSend, confirmed by the double opt-in above
+		}, true); // TOOLBOX: forceSend, confirmed by the double opt-in above
 	},
 
 

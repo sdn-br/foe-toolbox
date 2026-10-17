@@ -163,7 +163,7 @@ const BlueGalaxy = {
 			}
 
 			let FP = 0;
-			let Diamonds = 0; // Toolbox
+			let Diamonds = 0; // TOOLBOX: diamonds
 			let GoodsSum = 0;
 			let NextGoodsSum = 0;
 			let OlderGoodsSum = 0;
@@ -199,7 +199,7 @@ const BlueGalaxy = {
 					FP += 10 * parseInt(product.resources.amount);
 				}
 
-				// Toolbox: diamonds
+				// TOOLBOX: diamonds
 				if (product.type === 'resources' && product.resources?.premium) {
 					Diamonds += parseInt(product.resources.premium) || 0;
 				}
@@ -236,7 +236,7 @@ const BlueGalaxy = {
 				}
 			}
 
-			if (GoodsSum > 0 || NextGoodsSum > 0 || FP > 0 || Diamonds > 0 || FragmentAmount > 0 || OlderGoodsSum > 0) {
+			if (GoodsSum > 0 || NextGoodsSum > 0 || FP > 0 || Diamonds > 0 || FragmentAmount > 0 || OlderGoodsSum > 0) { // TOOLBOX: diamonds
 				Buildings.push({
 					building: CityEntity,
 					ID: CityEntity.id,
@@ -246,21 +246,21 @@ const BlueGalaxy = {
 					FragmentAmount: FragmentAmount,
 					FragmentName: Fragments[0]?.name || '',
 					FP: FP,
-					Diamonds: Diamonds,
+					Diamonds: Diamonds, // TOOLBOX: diamonds
 					Goods: GoodsSum,
 					NextGoods: NextGoodsSum,
 					OlderGoods: OlderGoodsSum,
 					GuildGoods: GuildGoodsSum,
 					In: CityEntity.state.times.in,
 					At: CityEntity.state.times.at,
-					CombinedValue: FP + Diamonds + BlueGalaxy.GoodsValue * GoodsSum + (showBGNextGoods ? BlueGalaxy.NextGoodsValue * NextGoodsSum : 0) + BlueGalaxy.OlderGoodsValue * OlderGoodsSum,
+					CombinedValue: FP + Diamonds + BlueGalaxy.GoodsValue * GoodsSum + (showBGNextGoods ? BlueGalaxy.NextGoodsValue * NextGoodsSum : 0) + BlueGalaxy.OlderGoodsValue * OlderGoodsSum, // TOOLBOX: diamonds
 				});
 			}
 		}
 
 		if (BlueGalaxy.DoubleCollections > 0) {
 			// Hide everything above 23h
-			Buildings = Buildings.filter(b => (b.FP > 0 || b.Diamonds > 0 || b.Goods > 0 || b.NextGoods > 0 || b.GuildGoods > 0 || b.FragmentAmount > 0) && b.In < 23.5 * 3600);
+			Buildings = Buildings.filter(b => (b.FP > 0 || b.Diamonds > 0 || b.Goods > 0 || b.NextGoods > 0 || b.GuildGoods > 0 || b.FragmentAmount > 0) && b.In < 23.5 * 3600); // TOOLBOX: diamonds
 		}
 
 		Buildings.sort((a, b) => {
@@ -301,7 +301,7 @@ const BlueGalaxy = {
 				`<th class="${sortClass('FragmentName')}" data-type="bg-group" data-colname="FragmentName">${i18n('Boxes.BlueGalaxy.Fragments')}</th>`
 				: '') +
 			iconTh('FP', 'fp', i18n('Boxes.BlueGalaxy.FP')) +
-			iconTh('Diamonds', 'diamonds', i18n('Boxes.BlueGalaxy.Diamonds')) +
+			iconTh('Diamonds', 'diamonds', i18n('Boxes.BlueGalaxy.Diamonds')) + // TOOLBOX: diamonds
 			iconTh('OlderGoods', 'old_goods', i18n('Boxes.BlueGalaxy.OlderGoods')) +
 			iconTh('Goods', 'goods', i18n('Boxes.BlueGalaxy.Goods')) +
 			(showBGNextGoods ? iconTh('NextGoods', 'next_goods', i18n('Boxes.BlueGalaxy.NextGoods')) : '') +
@@ -327,7 +327,7 @@ const BlueGalaxy = {
 			}
 
 			table.push(`<td class="text-center" data-number="${b.FP}">${HTML.Format(b.FP)}</td>`);
-			table.push(`<td class="text-center" data-number="${b.Diamonds}">${HTML.Format(b.Diamonds)}</td>`);
+			table.push(`<td class="text-center" data-number="${b.Diamonds}">${HTML.Format(b.Diamonds)}</td>`); // TOOLBOX: diamonds
 			table.push(`<td class="text-center" data-number="${b.OlderGoods}">${HTML.Format(b.OlderGoods)}</td>`);
 			table.push(`<td class="text-center" data-number="${b.Goods}">${HTML.Format(b.Goods)}</td>`);
 			if (showBGNextGoods) {

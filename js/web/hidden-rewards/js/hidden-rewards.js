@@ -52,7 +52,7 @@ let HiddenRewards = {
 
     Cache: null,
     FilteredCache : null,
-    FutureCache : [], // Toolbox: events that have not started yet
+    FutureCache : [], // TOOLBOX: events that have not started yet
     FirstCycle: true,
     GEprogress:0,
     GElookup:[0,0,1,1,1,2,2,3,3,3],
@@ -153,18 +153,18 @@ let HiddenRewards = {
      */
     RefreshGui: (fromHandler = false) => {
         HiddenRewards.FilteredCache = [];
-        HiddenRewards.FutureCache = [];
+        HiddenRewards.FutureCache = []; // TOOLBOX: future events, Cache is unset before the first event list
         if (!HiddenRewards.Cache) return;
 
         for (let i = 0; i < HiddenRewards.Cache.length; i++) {
 	    let StartTime = moment.unix(HiddenRewards.Cache[i].starts|0),
 		EndTime = moment.unix(HiddenRewards.Cache[i].expires);
             HiddenRewards.Cache[i].isVis = true;
-            if (EndTime < MainParser.getCurrentDateTime()) continue;
+            if (EndTime < MainParser.getCurrentDateTime()) continue; // TOOLBOX: future events are collected below
             if (HiddenRewards.Cache[i].isGE && !(HiddenRewards.GElookup[HiddenRewards.Cache[i].positionGE] <= Math.floor((HiddenRewards.GEprogress % 32)/8))) {
                 HiddenRewards.Cache[i].isVis = false;
             }
-            // Toolbox: future events get their own list and counter
+            // TOOLBOX: future events get their own list and counter
             if (StartTime > MainParser.getCurrentDateTime()) {
                 HiddenRewards.FutureCache.push(HiddenRewards.Cache[i]);
                 continue;
@@ -175,7 +175,7 @@ let HiddenRewards = {
         HiddenRewards.SetCounter();
 
         if ($('#HiddenRewardBox').length >= 1) {
-            if(fromHandler && HiddenRewards.FilteredCache.length === 0 && HiddenRewards.FutureCache.length === 0 && $('#HiddenRewardBox').length)
+            if(fromHandler && HiddenRewards.FilteredCache.length === 0 && HiddenRewards.FutureCache.length === 0 && $('#HiddenRewardBox').length) // TOOLBOX: future events
             {
                 $('#HiddenRewardBox').fadeOut('500', function() {
                     $(this).remove();
@@ -212,17 +212,17 @@ let HiddenRewards = {
 
         h.push('<tbody>');
 
-        // Toolbox: active events first, then the future ones ("Erscheint ...")
+        // TOOLBOX: active events first, then the future ones ("Erscheint ...")
         const Events = (HiddenRewards.FilteredCache || []).concat(HiddenRewards.FutureCache || []);
 
         if (Events.length > 0) {
             for (let idx in Events) {
 
-                if (!Events.hasOwnProperty(idx)) {
+                if (!Events.hasOwnProperty(idx)) { // TOOLBOX: active and future events
                     break;
                 }
 
-                let hiddenReward = Events[idx],
+                let hiddenReward = Events[idx], // TOOLBOX: active and future events
                     isFuture = HiddenRewards.FutureCache.includes(hiddenReward);
 
 
@@ -233,12 +233,14 @@ let HiddenRewards = {
                 }
                 h.push('<td class="incident" title="' + HTML.i18nTooltip(hiddenReward.type) + '"><img src="' + extUrl + 'js/web/hidden-rewards/images/' + img + '.png" alt=""></td>');
                 h.push('<td>' + hiddenReward.position + '</td>');
+                // TOOLBOX-BEGIN: future events show when they appear
                 if (isFuture) {
                     h.push('<td class="warning">' + i18n('Boxes.HiddenRewards.Appears') + ' ' + moment.unix(hiddenReward.starts).fromNow() + '</td>');
                 }
                 else {
                     h.push('<td class="">' + i18n('Boxes.HiddenRewards.Disappears') + ' ' + moment.unix(hiddenReward.expires).fromNow() + '</td>');
                 }
+                // TOOLBOX-END
                 h.push('</tr>');
             }
         }
@@ -255,17 +257,20 @@ let HiddenRewards = {
 
 
 	SetCounter: ()=> {
+	// TOOLBOX-BEGIN: counting moved to GetCount for the second counter
         let CountRelics = JSON.parse(localStorage.getItem('CountRelics') || 0);
 
         let count = HiddenRewards.GetCount(HiddenRewards.FilteredCache, CountRelics);
         $('#hidden-reward-count').text(count).toggle(count > 0);
 
-        // Toolbox: own counter for future events
+        // TOOLBOX: own counter for future events
         let futureCount = HiddenRewards.GetCount(HiddenRewards.FutureCache, CountRelics);
         $('#hidden-future-reward-count').text(futureCount).toggle(futureCount > 0);
+        // TOOLBOX-END
 	},
 
 
+	// TOOLBOX-BEGIN
 	/**
 	 * Number of events in a list, depending on the setting CountRelics
 	 * (0 = all, 1 = only visible ones, 2 = without guild expedition)
@@ -280,6 +285,7 @@ let HiddenRewards = {
         if (CountRelics == 2) return list.filter(x => !x.isGE).length;
         return list.length;
 	},
+	// TOOLBOX-END
 
     ShowSettingsButton: () => {
         let CountRelics = JSON.parse(localStorage.getItem('CountRelics') || 0);

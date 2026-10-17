@@ -143,7 +143,7 @@ let Settings = {
 						$('<span />').addClass('check '+(status ? '' : 'unchecked')).append(
 							$('<span />').addClass('toogle-word').text(status ? i18n('Boxes.Settings.Active') : i18n('Boxes.Settings.Inactive'))
 						).append(
-							// Toolbox: settings with "doubleoptin" ask for confirmation when switched on (see StoreSettings)
+							// TOOLBOX: settings with "doubleoptin" ask for confirmation when switched on (see StoreSettings)
 							$('<input class="setting-check game-cursor' + (d['doubleoptin'] ? ' doubleoptin' : '') + '" type="checkbox" data-id="'+d['name']+'" '+(status ? 'checked' : '')+'/>')
 						)
 					)
@@ -201,7 +201,7 @@ let Settings = {
 		let id = $(el).data('id'),
 			v = $(el).prop('checked');
 
-		// Toolbox: double opt-in, switching on needs a confirmation (text Settings.<id>.DoubleOptIn)
+		// TOOLBOX: double opt-in, switching on needs a confirmation (text Settings.<id>.DoubleOptIn)
 		if (v === true && $(el).hasClass('doubleoptin') && !window.confirm(i18n(`Settings.${id}.DoubleOptIn`))) {
 			$(el).prop('checked', false);
 			return;
@@ -255,10 +255,10 @@ let Settings = {
 	 * @returns {string}
 	 */
 	VersionInfo: () => {
-		let v = `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion.replaceAll('.', ''))}</p>`;
+		let v = `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion.replaceAll('.', ''))}</p>`; // TOOLBOX: toolbox changelog, also for betas
 		v +=	`<dl class="info-box">
 					<dt>${i18n('Settings.Version.Title')}</dt><dd>${extVersion}</dd>
-					<dt>${i18n('Settings.Version.Base')}</dt><dd>FoE Helfer ${extBaseVersion}</dd>
+					<dt>${i18n('Settings.Version.Base')}</dt><dd>FoE Helfer ${extBaseVersion}</dd> <!-- TOOLBOX: Helfer base version -->
 					<dt>${i18n('Settings.Version.PlayerId')}</dt><dd>${ExtPlayerID}</dd>
 					<dt>${i18n('Settings.Version.GuildId')}</dt><dd>${(ExtGuildID ? ExtGuildID : 'N/A')}</dd>
 					<dt>${i18n('Settings.Version.World')}</dt><dd>${ExtWorld}</dd>
@@ -380,7 +380,7 @@ let Settings = {
 	About: () => {
 		return '<hr>' +
 			'<h2>' + i18n('Settings.About.TranslateTitle') + '</h2>' +
-			'<p>' + i18n('Settings.About.TranslateDesc') + '</p>' +
+			'<p>' + i18n('Settings.About.TranslateDesc') + '</p>' + // TOOLBOX: no Weblate, German only
 			'<hr>' +
 			'<h2>' + i18n('Settings.About.RatingTitle') + '</h2>' +
 			'<p>' + i18n('Settings.About.RatingDesc') + '</p>';

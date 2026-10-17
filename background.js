@@ -262,7 +262,7 @@ alertsDB.version(1).stores({
 						message: alert.data.body,
 						iconUrl: '/images/app128.png',
 						eventTime: alert.data.expires,
-						contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://")
+						contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://") // TOOLBOX: branding
 
 					}
 				)
@@ -388,6 +388,7 @@ alertsDB.version(1).stores({
 	})();
 
 
+	// TOOLBOX-BEGIN: on update ask in open game tabs to reload instead of opening the update page
 	/**
 	 * Runs inside the game tab (injected via scripting.executeScript)
 	 * and asks whether the game should be reloaded to activate the new version
@@ -408,6 +409,7 @@ alertsDB.version(1).stores({
 					.catch((e) => console.error('InstallConfirm failed', e));
 			}
 		});
+		// TOOLBOX-END
 	});
 
 
@@ -663,7 +665,7 @@ alertsDB.version(1).stores({
 			}
 
 			case 'send2Api': { // type
-				// Toolbox: only the foe-helper API, the message also arrives from the game page
+				// TOOLBOX: only the foe-helper API, the message also arrives from the game page
 				if (typeof request.url !== 'string' || !request.url.startsWith('https://api.foe-rechner.de/')) return APIerror('send2Api: url not allowed');
 
 				fetch(request.url, {
@@ -677,7 +679,7 @@ alertsDB.version(1).stores({
 			}
 
 			case 'send2Server': { // type
-				// Toolbox: requests to the foe-helper API are made from the background instead of the game page
+				// TOOLBOX: requests to the foe-helper API are made from the background instead of the game page
 				const allowedApis = ['https://api.foe-rechner.de/'];
 				if (typeof request.url !== 'string' || !allowedApis.includes(request.url)) return APIerror('send2Server: url not allowed');
 				if (typeof request.endpoint !== 'string' || !/^[A-Za-z0-9/_-]+$/.test(request.endpoint)) return APIerror('send2Server: invalid endpoint');
