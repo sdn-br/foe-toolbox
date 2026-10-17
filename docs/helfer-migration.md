@@ -324,6 +324,19 @@ Empfehlung zum Lesen: 1-3 und 7 sind die Features, die laut Wiki "auf Drängen v
 - Zeilenzahlen sind Diff-Zeilen (`diff -w`, `>`/`<`) bzw. Dateigröße, nur Richtwerte.
 - Prüfung "Spiel-Feature noch vorhanden" nur aus dem Code, nicht aus dem Spiel. Nur GvG ist durch den Upstream-Commit "RIP GvG" belegt.
 
+## Übernahme aus Forge Hammer: GbG-Aktions-Log
+
+Quelle: `forge-hammer` `js/web/gbg-actionlog` ("Copyright (C) 2026 Forge Hammer & Arklur", Header unverändert).
+
+- Modul `js/web/gbg-actionlog` (JS + CSS) fast unverändert übernommen, damit spätere Forge-Hammer-Änderungen per Diff nachgezogen werden können. Abweichungen im JS: DB-Name und Legacy-Kopie in `checkForDB`, `GuildFights` -> `Guild_fights` (Standardwert von `loadActionLog`, `serverOffset`). Im CSS: Forge-Hammer-Variablen auf Toolbox-Variablen umgestellt (`--bg-light` -> `--background-light`, `--bg-dark` -> `--text-darker`, `--text` -> `--beige`), `.btn-round` im Modul ergänzt.
+- Kompatibilitätsschicht `js/web/fh-compat`: bildet nur die `FH.*`-Namen ab, die das Modul nutzt: `FH.t` -> `i18n`, `FH.HTML` -> `HTML`, `FH.helper` -> `helper`, `FH.proxy` -> `FoEproxy`, `FH.Main` -> `MainParser`, `FH.Storage.getItem/setItem` -> `localStorage` ohne Präfix `Hammer.` und ohne das Kopieren fremder Schlüssel, `FH.DateFormat.get('dateLong'|'dateTimeLong')` -> `i18n('Date')`/`i18n('DateTime')`. Dazu `ProvinceMap.SectorMapping` (Kurznamen der Sektoren beider Karten nach Karten-ID), weil die Toolbox nur die Sektoren der aktuellen Karte kennt. Ist schon ein globales `FH` da (Forge Hammer parallel installiert), wird es nicht ersetzt.
+- `i18nOr` braucht keine Anpassung: `i18n` gibt einen fehlenden Schlüssel unverändert zurück.
+- IndexedDB `FoEToolbox2DB_GBG_<id>` (Schema wie Forge Hammer: v1 `ActionLog`, v2 `ActionLogBatch`). Einmalige Kopie aus `FoeHelperDB_GBG_<id>` (Name in Forge Hammer) über `IndexDB.openWithLegacyCopy`, die Alt-DB wird nur gelesen. `foe-helper#gbgDBloaded` kommt erst nach dem Öffnen.
+- Einhängen: `checkForDB` in `_main.js`; in `guild_fights.js` Knopf "Aktions-Log" neben "Snapshot Log" (immer sichtbar, auch wenn "Snapshot Log" per Einstellung aus ist), Zähler `#GBGActionLogCount` im Handler `getBattleground`, entfernt beim Verlassen der Karte (`ActiveMapUpdated`). Zähler-CSS in `boxes.css` (eigene Regel, `.hud-counter` gilt nur in `.hud-btn`).
+- Einstellungen im Fenster (Schraubenschlüssel): Anzeigedauer der Meldung, Stunden bis der Zähler rot wird. `localStorage`-Schlüssel `GBGActionLogToastSeconds`, `GBGActionLogRedAfterHours`, `GBGActionLogLastCollected`, `GBGActionLogBuildingNames`. "Serverzeit anzeigen" (`LiveFightSettings.showServerTime`) gibt es in der Toolbox nicht, Zeiten sind immer lokal.
+- Texte: `Boxes.GBGActionLog.*` und `General.Total` neu in `de.json`, nach der Forge-Hammer-`de.json`; dort halb englische oder falsche Texte (`RangeCap*`, `Toast.PrevLoadTime`, `Toast.CurrLoadTime`, `RedAfterHoursHint`) neu übersetzt.
+- Kein neuer Netzwerkzugriff; Icons der Spalten kommen wie sonst über `srcLinks` vom Spiel-CDN.
+
 ## Entscheidungen
 
 - Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
@@ -441,6 +454,15 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 
 **Bugfix Resize**
 - Burg-Box (`#Castle`, `min-width: 360px`) am Griff kleiner ziehen: hält bei 360 px Breite an. Eine Box ohne CSS-Mindestgröße hält bei 220 x 100 px an. Box-Menü lässt sich weiter bis ca. 101 x 87 px verkleinern.
+
+**GbG-Aktions-Log (aus Forge Hammer)**
+- Braucht laufende Gildengefechte. GbG-Karte öffnen, Gildengefechte-Spielerübersicht öffnen: neben "Snapshot Log" steht "Aktions-Log", ein Klick öffnet das Fenster "Gefechts-Logbuch", ein zweiter schließt es.
+- Im Spiel das Gefechts-Log öffnen: Meldung mit der Zahl geladener Einträge; in `FoEToolbox2DB_GBG_<id>` stehen Zeilen in `ActionLog` und eine in `ActionLogBatch`. Erneut öffnen ohne neue Aktionen: 0 Einträge, keine neue Batch-Zeile.
+- Reiter Details, Spieler-Report, Daten, Stundenweise Aktivität zeigen Daten; Sektoren mit Kurznamen (z. B. `A1M`), Aktionen und Verursacher auf Deutsch. Spaltenfilter und Sortierung funktionieren.
+- "Export CSV" in jedem Reiter lädt eine Datei `GBGActionLog-<Reiter>-<Datum>.csv`, gefilterte Zeilen fehlen darin.
+- Zähler: nach dem ersten Sammeln, nach mindestens einer Stunde die GbG-Karte erneut öffnen: links auf der Karte erscheint eine Zahl (Stunden seit dem letzten Sammeln). Ab der eingestellten Stundenzahl (Standard 8) ist sie rot. Gefechts-Log öffnen setzt sie zurück, Karte verlassen entfernt sie.
+- Einstellungen: Anzeigedauer 0 -> keine Meldung mehr. Im Netzwerk-Tab keine neuen Anfragen außer Bildern vom Spiel-CDN.
+- Migration: Profil mit Forge-Hammer-Daten (`FoeHelperDB_GBG_<id>`), erster Start: die Daten stehen in `FoEToolbox2DB_GBG_<id>`, die Alt-DB ist unverändert, `FH_IndexDBLastMigraion` nennt die Kopie.
 
 ### Ungeprüfte Annahmen (aus den Notizen)
 - 16: `is_plunderable` für generische Gebäude folgt der alten Regel aus `abilities`, kein Plünderschutz-Component bekannt.

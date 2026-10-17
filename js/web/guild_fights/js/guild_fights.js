@@ -139,10 +139,17 @@ FoEproxy.addHandler('GuildBattlegroundService', 'getBattleground', (data, postDa
 	if ($('#LiveGildFighting').length > 0) {
 		Guild_fights.BuildFightContent();
 	}
+
+	// Toolbox: hours since the GBG action log was last collected (Forge Hammer)
+	let container = $('#GBGActionLogCount');
+	if (container.length === 0)
+		container = $('<div id="GBGActionLogCount"></div>').appendTo('body');
+	container.html(GBGActionLog.refreshMenuBadge());
 });
 // re-arm the auto open as soon as the battlegrounds map is left
 FoEproxy.addFoeHelperHandler('ActiveMapUpdated', () => {
 	if (ActiveMap !== 'gg') {
+		$('#GBGActionLogCount').remove();
 		Guild_fights.AutoOpenedOnMap = false;
 		Guild_fights.AutoOpenPending = false;
 		clearTimeout(Guild_fights.AutoOpenTimeout);
@@ -575,6 +582,7 @@ let Guild_fights = {
 				{
 					h.push(`<button id="gbg_showLog" class="btn">${i18n('Boxes.GuildFights.SnapshotLog')}</button>`);
 				}
+				h.push(`<button class="btn" onclick="GBGActionLog.toggleWindow()">${i18n('Boxes.GBGActionLog.Button')}</button>`);
 				h.push(`</div>`);
 			}
 			h.push(`</div>`);
