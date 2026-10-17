@@ -494,7 +494,9 @@ let Notice = {
 				Notice.notes = resp['notice'];
 
 				if(id === 'new'){
-					Notice.ActiveTab = Notice.notes.length;
+					// Toolbox: a new group may have been sorted in anywhere; local ids only grow, so the newest has the highest
+					const newId = Math.max(...Notice.notes.map(g => g.id));
+					Notice.ActiveTab = Notice.notes.findIndex(g => g.id === newId) + 1;
 
 				} else {
 					// loose comparison, "id" comes from the DOM as a string
