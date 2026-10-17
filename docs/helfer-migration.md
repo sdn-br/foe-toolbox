@@ -23,7 +23,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
 - [x] 14 Spielerlinks nur auf dem Icon
 - [x] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
-- [ ] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
+- [x] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
 
 Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 entfernt).
 
@@ -154,6 +154,10 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Notizen (`notice.js`): ohne `GlobalSend` wird nichts geladen, die Box zeigt den Hinweis `Boxes.Notice.GlobalSendRequired`. Ban-Erkennung wie alt: Antwort ohne Fehler, aber ohne `notice` -> `Notice.Banned`, die Box zeigt `Boxes.Notice.BannedFromApi` statt der Notizen. 4.8.3 verlangt für die Notizen zusätzlich den API-Token.
 - Entfällt: der alte Guard in `Notice.SaveContent` (`if (GlobalSend === true) return`) war verdreht und hätte das Speichern bei aktiver Übermittlung verhindert; ohne `GlobalSend` öffnet die Box ohnehin keine Notizen. Das alte Debug-`console.log` im Background entfällt.
 - Achtung: die Einstellungen liegen im `localStorage` der Spielseite. Läuft parallel der FoE Helfer, teilen sich beide den Schlüssel `GlobalSend`.
+
+**Notizen Bugfix Resize**
+- Geprüft: in 4.8.3 ist nichts vertauscht, `HTML.Resizeable` nutzt feste Werte (`minHeight: 100`, `minWidth: 220`, Sonderfall `menu_box` 101/87). Vertauscht war nur die alte Toolbox-Nebenänderung zu 8 (`minHeight` aus `min-width`, `minWidth` aus `min-height`), das ist ein echter Fehler: die CSS-Werte sind Breiten bzw. Höhen der Box (z. B. `#Castle` `min-width: 360px`, `#CalculatorBox` 280px, City-Builder 600px).
+- Übernommen in richtiger Zuordnung: `minWidth` aus `min-width`, `minHeight` aus `min-height` der Box, nur `px`-Werte größer 0 (alt hätte `0px` oder Prozentwerte wie `40%` übernommen), sonst die Upstream-Werte 220/100. Der Sonderfall `menu_box` bleibt (alt entfernt), das Menü hat keine CSS-Mindestgröße.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
