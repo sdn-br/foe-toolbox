@@ -161,22 +161,16 @@
 	color: var(--sunflower);
 }
 
-#LGInvestmentOverviewBox strong.warning,
-#LGInvestmentOverviewBox .color-description .no-payment {
+#LGInvestmentOverviewBox strong.warning {
 	color: var(--orange);
 }
 
-#LGInvestmentOverviewBox strong.success,
-#LGInvestmentOverviewBox .color-description .found-again {
+#LGInvestmentOverviewBox strong.success {
 	color: var(--success);
 }
 
 #LGInvestmentOverviewBox strong.error {
 	color: var(--danger-red);
-}
-
-#LGInvestmentOverviewBox .color-description .found-new {
-	color: var(--sunflower);
 }
 
 #LGInvestmentOverviewBox .no-investments-possible {
@@ -185,7 +179,6 @@
 }
 
 #LGInvestmentOverviewBox .color-description {
-	position: relative;
 	font-weight: 700;
 	display: inline-block;
 	margin-left: auto;
@@ -194,25 +187,9 @@
 	border-radius: 50%;
 	width: 10px;
 	line-height: 1.3em;
-	z-index: 1;
 }
 
-#LGInvestmentOverviewBox .color-description > span {
-	position: absolute;
-	white-space: nowrap;
-	text-align: left;
-	background: var(--black-65);
-	padding: 10px;
-	right: 20px;
-	top: 0;
-	z-index: 1;
-	display: none;
-}
-
-#LGInvestmentOverviewBox .color-description > span > span {
-	display: block;
-}
-
-#LGInvestmentOverviewBox .color-description:hover > span {
-	display: block;
+/* colour legend of the overview, the tooltip lives in the body of its document */
+.tooltip-inner .text-orange {
+	color: var(--orange);
 }
