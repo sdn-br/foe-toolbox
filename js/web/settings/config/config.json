@@ -162,7 +162,7 @@
 	},
 	{
 		"name": "ShowPlayersAttDeffValues",
-		"status": true,
+		"status": false,
 		"doubleoptin": true,
 		"group": "Boxes",
 		"sort": 22
