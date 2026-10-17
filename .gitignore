@@ -2,7 +2,7 @@
 /.vs
 /js/web/negotiationtables/Test
 bug.PNG
-*.ini
+desktop.ini
 .DS_Store
 Icon?
 /foe-v*.zip

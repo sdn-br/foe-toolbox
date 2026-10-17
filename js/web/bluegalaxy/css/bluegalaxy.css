@@ -165,11 +165,6 @@
     background-position: 0 3px;
 }
 
-/* Toolbox: diamonds */
-#bluegalaxy table th.icon.diamonds span::before  {
-    background-position: -209px 3px;
-}
-
 #bluegalaxy #bluegalaxyBody td {
     position: relative;
     font-size: 95%;
