@@ -85,6 +85,7 @@ Object.assign(Calculator, {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('LGInvestmentOverviewBox'),
 				speaker: 'CalculatorOverviewTone'
 			});
 

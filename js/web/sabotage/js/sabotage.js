@@ -267,6 +267,7 @@ let Sabotage = {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('sabotageInfo'),
 			});
 
 			HTML.AddCssFile('sabotage');

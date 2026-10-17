@@ -60,6 +60,7 @@ let Investment = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('Investment'),
 				settings: () => Investment.ShowInvestmentSettings()
 			});
 
