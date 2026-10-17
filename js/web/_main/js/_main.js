@@ -796,12 +796,7 @@ GetFights = () =>{
 			lgUpdate();
 		}
 
-		// Toolbox: keep the visited city current (e.g. after a contribution), a GB clicked there again reads it
-		for (const entity of data.responseData) {
-			if (CityMap.OtherPlayer.mapData[entity?.id]?.player_id === entity.player_id) {
-				CityMap.OtherPlayer.mapData[entity.id] = entity;
-			}
-		}
+		updateVisitedCity(data.responseData);
 
 		if (data.responseData[0]?.player_id === ExtPlayerID) {
 
@@ -883,6 +878,28 @@ GetFights = () =>{
 		}
 	});
 
+
+	// Toolbox: a contribution to a foreign GB answers with CityMapService.reset (formerly updateEntity)
+	FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
+		updateVisitedCity(data.responseData);
+	});
+
+	// Toolbox: keep the visited city current (e.g. after a contribution), a GB clicked there again reads it
+	function updateVisitedCity(entities) {
+		if (!Array.isArray(entities)) return;
+
+		for (const entity of entities) {
+			if (CityMap.OtherPlayer.mapData[entity?.id]?.player_id === entity.player_id) {
+				CityMap.OtherPlayer.mapData[entity.id] = entity;
+
+				// the same GB opened again reuses the remembered entity instead of mapData
+				if (gbCityMapEntity?.responseData?.[0]?.id === entity.id) {
+					gbCityMapEntity = { responseData: [entity] };
+					if (gbUpdateData?.CityMapEntity) gbUpdateData.CityMapEntity = gbCityMapEntity;
+				}
+			}
+		}
+	}
 
 	// Update Funktion, die ausgeführt wird, sobald beide Informationen in gbUpdateData vorhanden sind.
 	function lgUpdate() {
