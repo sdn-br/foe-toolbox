@@ -85,6 +85,7 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - "Wiedererkannt" (grün, Gewinn/Kurs bekannt) braucht Einträge in `greatbuildings`. Die schreibt erst der Kostenrechner aus 5 (`RefreshGreatBuildingsDB`); bis dahin nur aus migrierten 1.24-Daten. Ohne Eintrag: "???" (neu gefunden) wie alt.
 - Bugfixes: `BestKursNettoFP`/`BestKursEinsatz` waren implizite globale Variablen; fehlender PlayerDict-Eintrag warf einen TypeError.
 - Offen: die Übersichtszeilen werden über `city_entity_id` gelesen (alter Feldname, in 4.8.3-Code nicht verwendet, dort nur `entity_id`); im Spiel prüfen. Die LG-Stufen (Kupfer/Silber/Gold) gehen nicht in P1 ein (wie alt). Wiederöffnen der geschlossenen Box geht nur über erneutes Öffnen der LG-Liste im Spiel (kein Menüknopf).
+- Menüknopf `possibleInvestments` (Icon `calculator.png`, wie `sabotage`): öffnet die Box mit dem letzten Scan erneut; rot/Warnung bis ein Scan vorliegt; bei ausgeschalteter Einstellung `ShowPossibleInvestments` Toast-Hinweis. Ohne Einstellung wird kein Scan gespeichert, der Knopf bleibt dann rot. Im Spiel zu prüfen.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 

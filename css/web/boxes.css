@@ -809,6 +809,10 @@ p {
 	background-image: url('../images/menu/looting.png');
 }
 
+[id$=possibleInvestments-Btn] span {
+	background-image: url('../images/menu/calculator.png');
+}
+
 [id$=unit-Btn] span {
 	background-image: url('../images/menu/units.png');
 }
