@@ -87,8 +87,7 @@ let EventHandler = {
 	* @returns {Promise<void>}
 	*/
 	checkForDB: async (playerID) => {
-		// own name, the DB of the toolbox 1.x / FoE Helfer stays untouched
-		const DBName = `FoEToolbox2DB_Events_${playerID}`;
+		const DBName = `FoEToolbox2DB_Events_${playerID}`; // TOOLBOX: own name, the legacy DB is only read
 
 		EventHandler.db = new Dexie(DBName);
 
@@ -99,7 +98,7 @@ let EventHandler = {
 			Events: 'eventid,date,eventtype,playerid,entityid,isneighbor,isguildmember,isfriend'
 		});
 
-		await IndexDB.openWithLegacyCopy(EventHandler.db, [`FoeHelperDB_Events_${playerID}`]);
+		await IndexDB.openWithLegacyCopy(EventHandler.db, [`FoeHelperDB_Events_${playerID}`]); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
 		window.dispatchEvent(new CustomEvent('foe-helper#eventDBloaded'))
 	},
 

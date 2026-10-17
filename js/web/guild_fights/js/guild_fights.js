@@ -140,16 +140,17 @@ FoEproxy.addHandler('GuildBattlegroundService', 'getBattleground', (data, postDa
 		Guild_fights.BuildFightContent();
 	}
 
-	// Toolbox: hours since the GBG action log was last collected (Forge Hammer)
+	// TOOLBOX-BEGIN: hours since the GBG action log was last collected (Forge Hammer)
 	let container = $('#GBGActionLogCount');
 	if (container.length === 0)
 		container = $('<div id="GBGActionLogCount"></div>').appendTo('body');
 	container.html(GBGActionLog.refreshMenuBadge());
+	// TOOLBOX-END
 });
 // re-arm the auto open as soon as the battlegrounds map is left
 FoEproxy.addFoeHelperHandler('ActiveMapUpdated', () => {
 	if (ActiveMap !== 'gg') {
-		$('#GBGActionLogCount').remove();
+		$('#GBGActionLogCount').remove(); // TOOLBOX: GBG action log badge
 		Guild_fights.AutoOpenedOnMap = false;
 		Guild_fights.AutoOpenPending = false;
 		clearTimeout(Guild_fights.AutoOpenTimeout);
@@ -243,9 +244,7 @@ let Guild_fights = {
 	/**
 	 * Initializes and verifies the existence of a local IndexedDB database specific to the given player ID.
 	 *
-	 * Creates a new Dexie database instance named with the pattern `FoEToolbox2DB_GuildFights_<playerID>`.
-	 * On first start it is filled with the data of `FoeHelperDB_GuildFights_<playerID>` (toolbox 1.x or FoE Helfer),
-	 * which stays untouched.
+	 * Creates a new Dexie database instance named with the pattern `FoeHelperDB_GuildFights_<playerID>`.
 	 * Defines the database schema with two object stores:
 	 * - `snapshots`: Indexed by a composite key of `player_id+gbground+time`,
 	 *   and secondary indexes on `gbground+player_id`, `date+player_id`, and `gbground`.
@@ -258,7 +257,7 @@ let Guild_fights = {
 	 */
 	checkForDB: async (playerID) => {
 
-		const DBName = `FoEToolbox2DB_GuildFights_${playerID}`;
+		const DBName = `FoEToolbox2DB_GuildFights_${playerID}`; // TOOLBOX: own name, the legacy DB is only read
 
 		Guild_fights.db = new Dexie(DBName);
 
@@ -267,17 +266,7 @@ let Guild_fights = {
 			history: '&gbground'
 		});
 
-		// The toolbox 1.x (schema v1) did not store the attrition, the readers expect a number
-		const withAttrition = (row) => Object.assign({}, row, { attrition: row.attrition || 0 });
-
-		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`], {
-			transformRows: {
-				snapshots: withAttrition,
-				history: (row) => Object.assign({}, row, {
-					participation: Array.isArray(row.participation) ? row.participation.map(withAttrition) : row.participation
-				}),
-			}
-		});
+		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`], { transformRows: IndexDB.guildFightsLegacyRows }); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
 	},
 
 
@@ -582,7 +571,7 @@ let Guild_fights = {
 				{
 					h.push(`<button id="gbg_showLog" class="btn">${i18n('Boxes.GuildFights.SnapshotLog')}</button>`);
 				}
-				h.push(`<button class="btn" onclick="GBGActionLog.toggleWindow()">${i18n('Boxes.GBGActionLog.Button')}</button>`);
+				h.push(`<button class="btn" onclick="GBGActionLog.toggleWindow()">${i18n('Boxes.GBGActionLog.Button')}</button>`); // TOOLBOX: GBG action log
 				h.push(`</div>`);
 			}
 			h.push(`</div>`);

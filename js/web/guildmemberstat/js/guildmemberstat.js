@@ -174,8 +174,7 @@ let GuildMemberStat = {
 	 * @returns {Promise<void>}
 	 */
 	checkForDB: async (playerID) => {
-		// own name, the DB of the toolbox 1.x / FoE Helfer stays untouched
-		const DBName = `FoEToolbox2DB_GuildMemberStat_${playerID}`;
+		const DBName = `FoEToolbox2DB_GuildMemberStat_${playerID}`; // TOOLBOX: own name, the legacy DB is only read
 
 		GuildMemberStat.db = new Dexie(DBName);
 
@@ -197,8 +196,7 @@ let GuildMemberStat = {
 			forum: 'player_id'
 		});
 
-		// v1 rows (toolbox 1.x) only lack the "trial" field of v2, readers default it to 0
-		await IndexDB.openWithLegacyCopy(GuildMemberStat.db, [`FoeHelperDB_GuildMemberStat_${playerID}`]);
+		await IndexDB.openWithLegacyCopy(GuildMemberStat.db, [`FoeHelperDB_GuildMemberStat_${playerID}`]); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
 	},
 
 
