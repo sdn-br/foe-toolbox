@@ -14,7 +14,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
 - [x] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
 - [x] 5 Kostenrechner schreibt LGs in IndexedDB
-- [ ] 7 Verhandlungsassistent in Gildengefechten (GbG)
+- [x] 7 Verhandlungsassistent in Gildengefechten (GbG)
 - [ ] 8 Fenster fixieren
 - [ ] 9 Alarme `requireInteraction`
 - [ ] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
@@ -100,6 +100,12 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Bugfix aus Upstream/alt: `BestKursNettoFP`/`BestKursEinsatz` waren in 4.8.3 nur block-lokal (tote Variablen), jetzt am Anfang von `BuildTable` deklariert.
 - Neu: beim Durchscrollen der LG-Stufen (`Parts.IsPreviousLevel`) wird nicht geschrieben, die Ränge gehören dann zu einer anderen Stufe. Fehler beim Schreiben (z. B. ConstraintError bei zwei schnellen Renderings) werden geloggt, nicht geworfen.
 - Damit bekommt 3 Daten: öffnet man ein fremdes LG mit sichtbarem Kostenrechner, erscheint es bei der nächsten LG-Übersicht dieses Spielers grün ("Wiedererkannt"), solange Level und investierte FP gleich sind. Geschrieben wird nur, wenn der Kostenrechner gerendert wird (eigene Box oder kombinierte Box ohne "Eigenanteilsrechner für alle LGs"), wie alt nur bei offenem Kostenrechner.
+
+**Notizen 7**
+- Wie alt: Setting `AutomaticNegotiationForGbG` (Gruppe Boxes, default aus, `doubleoptin`, Bestätigung kommt mit 15). Ist es an, bricht `Negotiation.StartNegotiation` im Kontext `guildBattleground` nicht mehr ab (Upstream-Guard "no negotiation helper for GBG" bleibt sonst unverändert, inkl. rotem Menüknopf).
+- Das Upstream-Setting `AutomaticNegotiation` ist in 4.8.3 versteckt (`hidden`, immer an); der Assistent öffnet sich also bei jeder Verhandlung, mit dem neuen Setting auch in GbG.
+- Nachgezogen für 1 und 3: die Einstellungen brauchen in 4.8.3 einen Eintrag `Settings.Entry.<Name>` für den Untertab-Namen. Ergänzt für `ShowNeighborsLootables`, `ShowPlayersAttDeffValues`, `ShowPossibleInvestments` und `AutomaticNegotiationForGbG` (vorher stand dort der i18n-Schlüssel).
+- Offen: ob die GbG-Verhandlung im Spiel 2026 noch dasselbe Format wie die normale Verhandlung hat (`NegotiationGameService.startNegotiation`, `context`), ist nicht geprüft. Upstream sperrt GbG seit Jahren, Fehler in diesem Pfad würden upstream also nicht auffallen.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 

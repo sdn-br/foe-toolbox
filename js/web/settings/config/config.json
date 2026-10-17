@@ -175,6 +175,13 @@
 		"sort": 23
 	},
 	{
+		"name": "AutomaticNegotiationForGbG",
+		"status": false,
+		"doubleoptin": true,
+		"group": "Boxes",
+		"sort": 24
+	},
+	{
 		"name": "SelectedMenu",
 		"callback": "MenuSelected",
 		"group": "Extension",
