@@ -119,10 +119,13 @@ Notice.Store = {
 
 		if (data.type === 'grp') {
 			if (isNew) {
+				// an empty sort field means "append", which is also what SaveModal assumes when it
+				// selects the last tab; Number('') would be 0 and put the group first
+				const last = await db.groups.orderBy('sort').last();
 				await db.groups.add({
 					group_name: data.name || '',
 					player_group: data.player_group || null,
-					sort: Number.isFinite(sort) ? sort : 1
+					sort: (data.sort !== '' && Number.isFinite(sort)) ? sort : (last ? last.sort + 1 : 1)
 				});
 			}
 			else if (data.name) {

@@ -465,7 +465,8 @@ let Notice = {
 				id: id,
 				type: type,
 				name: txt,
-				sort: $(`.inp-grp-sort`).val() || 1,
+				// Toolbox: no default, the local store appends a new group when the field is empty
+				sort: $(`.inp-grp-sort`).val(),
 				apiToken: Notice.ApiToken
 			},
 			grpSel = $('#player-grp option:selected');
