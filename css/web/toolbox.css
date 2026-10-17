@@ -74,6 +74,11 @@
 	cursor: default;
 }
 
+/* recurring quests: hint while no quest is recorded yet */
+#RecurringQuestsBoxBody .recurring-empty {
+	padding: 10px;
+}
+
 /* menu icons */
 [id$=sabotage-Btn] span {
 	background-image: url('../images/menu/sabotage.png');

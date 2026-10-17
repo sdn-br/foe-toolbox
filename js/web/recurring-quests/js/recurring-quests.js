@@ -79,10 +79,9 @@ let Recurring = {
         Recurring.SetCounter();
         if ($('#RecurringQuestsBox').length < 1) return;
 
+        // TOOLBOX: an empty list keeps the box open with a hint instead of closing it right away
         if (Object.keys(Recurring.data.Questlist).length === 0) {
-            $('#RecurringQuestsBox').fadeOut('500', function() {
-                $(this).remove();
-            });
+            $('#RecurringQuestsBoxBody').html(`<div class="text-center recurring-empty">${i18n('Boxes.RecurringQuests.Empty')}</div>`);
         }
         else
             Recurring.BuildBox();
