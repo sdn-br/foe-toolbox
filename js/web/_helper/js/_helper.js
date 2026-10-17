@@ -194,6 +194,7 @@ let HTML = {
 	 * @param {boolean|Function} [args.popout=false] - Whether the box includes a popout button. Can also accept a callback function for custom behavior.
 	 * @param {boolean|Function} [args.map=false] - Whether the box includes a map button. Can also accept a callback function for custom behavior.
 	 * @param {boolean|Function} [args.dragdrop=false] - Whether the box is draggable. Can include a callback function to save the box's new position.
+	 * @param {boolean} [args.fixdragdrop=true] - Toolbox: show the button to pin/unpin a draggable box (state in localStorage '<id>Draggable').
 	 * @param {boolean} [args.saveCords=false] - Whether the box's position should be saved and restored on reload.
 	 * @param {boolean} [args.resize=false] - Whether the box should be resizable.
 	 * @param {boolean} [args.keepRatio=false] - Whether resizing should maintain the original aspect ratio.
@@ -251,6 +252,25 @@ let HTML = {
 		// sounds (was in the calculators)
 		if (args.speaker) {
 			buttons.prepend($('<span />').addClass('window-speaker').attr('id', args.speaker));
+		}
+
+		// Toolbox: pin/unpin a draggable box
+		if (args.dragdrop && args.fixdragdrop !== false) {
+			const dragToggle = $('<span />')
+				.addClass('window-dragtoggle')
+				.attr('id', `${args.id}-dragtoggle`)
+				.attr('title', i18n('Boxes.General.DragToggle'))
+				.toggleClass('deactivated', !HTML.IsDraggable(args.id));
+
+			dragToggle.on('click', function () {
+				const draggable = !HTML.IsDraggable(args.id);
+
+				localStorage.setItem(args.id + 'Draggable', JSON.stringify(draggable));
+				$(this).toggleClass('deactivated', !draggable);
+				HTML.DragBox(document.getElementById(args.id), args.saveCords);
+			});
+
+			buttons.prepend(dragToggle);
 		}
 
 		// initialize position of movable windows and prevent them from being placed off-screen
@@ -451,18 +471,46 @@ let HTML = {
 
 
 	/**
+	 * Toolbox: whether a box may be dragged (pinned boxes are not), default true
+	 *
+	 * @param {string} id Box element ID
+	 * @returns {boolean}
+	 */
+	IsDraggable: (id) => {
+		try {
+			return JSON.parse(localStorage.getItem(id + 'Draggable')) !== false;
+		} catch (e) {
+			return true;
+		}
+	},
+
+
+	/**
 	 * Makes an HTML box draggable
+	 * Toolbox: a pinned box (see HTML.IsDraggable) gets its drag handler removed instead.
 	 *
 	 * @param {HTMLElement} el Box element
 	 * @param {boolean} [save=true] Whether to persist the position in localStorage
 	 */
 	DragBox: (el, save = true) => {
+		if (!el) return;
+
 		const id = el.id,
 			header = document.getElementById(id + 'Header');
 
 		let xStartM = 0, yStartM = 0, xStartEl = 0, yStartEl = 0;
 
 		header?.removeEventListener('pointerdown', dragMouseDown);
+
+		// pinned, or moved to a pop-up window (popup.js removes the handler itself and rebinds it on return)
+		if (!HTML.IsDraggable(id) || el.classList.contains('popup-mode')) {
+			if (header) {
+				header.onpointerdown = null;
+			} else {
+				el.onpointerdown = null;
+			}
+			return;
+		}
 
 		if (header) {
 			header.onpointerdown = dragMouseDown;

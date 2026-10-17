@@ -15,7 +15,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
 - [x] 5 Kostenrechner schreibt LGs in IndexedDB
 - [x] 7 Verhandlungsassistent in Gildengefechten (GbG)
-- [ ] 8 Fenster fixieren
+- [x] 8 Fenster fixieren
 - [ ] 9 Alarme `requireInteraction`
 - [ ] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
 - [ ] 11 Blaue Galaxie: Diamanten
@@ -106,6 +106,13 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Das Upstream-Setting `AutomaticNegotiation` ist in 4.8.3 versteckt (`hidden`, immer an); der Assistent öffnet sich also bei jeder Verhandlung, mit dem neuen Setting auch in GbG.
 - Nachgezogen für 1 und 3: die Einstellungen brauchen in 4.8.3 einen Eintrag `Settings.Entry.<Name>` für den Untertab-Namen. Ergänzt für `ShowNeighborsLootables`, `ShowPlayersAttDeffValues`, `ShowPossibleInvestments` und `AutomaticNegotiationForGbG` (vorher stand dort der i18n-Schlüssel).
 - Offen: ob die GbG-Verhandlung im Spiel 2026 noch dasselbe Format wie die normale Verhandlung hat (`NegotiationGameService.startNegotiation`, `context`), ist nicht geprüft. Upstream sperrt GbG seit Jahren, Fehler in diesem Pfad würden upstream also nicht auffallen.
+
+**Notizen 8**
+- Wie alt: jede verschiebbare Box (`HTML.Box` mit `dragdrop`) bekommt in der Kopfzeile den Knopf `window-dragtoggle` (`<id>-dragtoggle`), außer mit `fixdragdrop: false` (nur `CloseBox`, wie alt). Zustand pro Box in `localStorage` `<id>Draggable` (default verschiebbar). Das Menü (`menu_box`, Box-Menü) hat den Knopf damit auch.
+- Anpassung: neue Hilfsfunktion `HTML.IsDraggable(id)`; `HTML.DragBox` entfernt bei fixierter Box den Handler statt einen `toggle`-Parameter zu nehmen (alt: `DragBox(el, save, toggle)`). Damit bleibt eine fixierte Box auch fixiert, wenn sie aus einem Pop-up-Fenster (`popup.js`, neu in 4.8.3) zurückkommt. Im Pop-up ist der Knopf ausgeblendet.
+- Icon: das alte Sprite-Feld (`box-sprite.png` bei -220px) belegt in 4.8.3 das Pop-out-Icon, das Sprite wird deshalb nicht ersetzt. Das Icon (Verschiebe-Pfeile, gelb = fixiert) kommt als SVG per `::after` wie Upstreams `window-split`. Neuer Tooltip `Boxes.General.DragToggle`. Das ungenutzte alte `_menu_box.ToggleDraggable` und `Boxes.Menu.ToggleDrag` entfallen.
+- `CloseBox` wie alt: `Ignore: ['menu_box']` (Alle ausblenden/schließen lässt das Box-Menü stehen; in 4.8.3 hätte "Alle schließen" das Menü entfernt), Titel ohne Suffix (`onlyTitle`). `Ignore` liegt anders als alt nicht in `CloseBox.Settings`, damit es nicht in `CloseBoxSettings` gespeichert wird.
+- Die Resize-Nebenänderung (`minWidth`/`minHeight` aus CSS) gehört zum Bugfix-Punkt, s. dort.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
