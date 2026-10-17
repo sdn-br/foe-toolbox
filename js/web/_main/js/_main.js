@@ -2197,6 +2197,8 @@ let MainParser = {
 		if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
 		if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
 		if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
+		// Toolbox: player left the guild, drop the outdated guild name
+		if (Player['clan_id'] === 0 && Player['clan'] === undefined) delete PlayerDict[PlayerID]['ClanName'];
 		if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
 		if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
 		if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];

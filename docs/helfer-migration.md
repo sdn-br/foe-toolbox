@@ -8,6 +8,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] Import Helfer 4.8.3.0
 - [x] 17 Branding, nur Deutsch, Update-/Reload-Logik, DB-Migration
 - [x] 16 Datenmodell-Unterbau
+- [x] 16a Bekannte Spieler: Name, Gilde und Avatar werden aktualisiert (Entscheidung Nutzer)
 - [ ] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
 - [ ] 2 PvP Angriffe (`looting`)
 - [ ] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
@@ -50,6 +51,11 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Schema: keine neue Version nötig. `players` (`id,date`), `greatbuildings` (`playerId`) und `neighborhoodAttacks` (`playerId,date,type`) haben die Indizes, die 1-3 und der GarbageCollector brauchen. Die zusätzlichen Spielerfelder sind nicht indiziert (wie alt).
 - Darauf können 1-3 bauen: `MainParser.UpdatePlayerDict(data.responseData, 'VisitPlayer').then(...)`, `MainParser.loadPlayerIntoDict(id)`, `PlayerDict[id].IsActive|ScoreDate|WonBattlesDate`, `IndexDB.db.neighborhoodAttacks`, `IndexDB.db.players`, `IndexDB.db.greatbuildings` bleiben über Neustarts erhalten, `CityEntity.is_plunderable` usw., Handler-Signatur `(data, postData, responseData)`.
 - Offen: `is_plunderable` für generische Gebäude ist nicht geprüft (kein Plünder-Schutz-Component bekannt, die Regel ist die alte). Das PvP-Arena-Format (`opponents[].opposingPlayer.player`) ist nur aus dem alten Code übernommen; Zugriffe sind abgesichert.
+
+**Notizen 16a**
+- Entscheidung Nutzer: für Spieler, die schon in `players` stehen, werden jetzt auch `name`, `clanId`, `clanName` und `avatar` aktualisiert (alt und in 16 nur beim ersten Anlegen geschrieben). Regel bleibt: unbekannte Werte (`undefined`) überschreiben keine bekannten.
+- Gildenaustritt: `clan_id` = 0 ohne `clan` gilt als bekannter Wert "keine Gilde". Dann wird `ClanName` im PlayerDict entfernt und `clanName` in der DB gelöscht, sonst bliebe der alte Gildenname stehen.
+- Neue Spieler ohne bekannte Gilde bekommen weiter `clanId` 0 (wie alt).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
