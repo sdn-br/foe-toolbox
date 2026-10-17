@@ -322,6 +322,16 @@ Empfehlung zum Lesen: 1-3 und 7 sind die Features, die laut Wiki "auf Drängen v
 - Zeilenzahlen sind Diff-Zeilen (`diff -w`, `>`/`<`) bzw. Dateigröße, nur Richtwerte.
 - Prüfung "Spiel-Feature noch vorhanden" nur aus dem Code, nicht aus dem Spiel. Nur GvG ist durch den Upstream-Commit "RIP GvG" belegt.
 
+## Entscheidungen
+
+- Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
+- "1 FP für Plätze ohne FP" bleibt default aus (abweichend vom Helfer).
+- Bonus pro LG: ohne gespeicherten Wert gelten die globalen Prozente.
+- `GlobalSend` teilt sich vorerst den localStorage-Schlüssel mit einem parallel installierten Helfer, kein eigener Schlüssel.
+- `ShowPlayersAttDeffValues` ist default aus (Bann-Warnung), der Menüknopf weist ohne aktive Einstellung darauf hin.
+- Alerts-Link im Popup bleibt ausgeblendet wie im Helfer.
+- Firefox wird vorerst nicht unterstützt.
+
 ## Browser-Tests
 
 Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt laden" auf den Worktree. Spiel in einem Tab offen, DevTools (Konsole, Application -> IndexedDB) griffbereit. Nach jeder Code-Änderung Erweiterung neu laden und Spiel-Tab neu laden.
