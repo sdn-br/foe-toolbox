@@ -119,6 +119,7 @@
 	--tooltip-inhabitant: #a4a45d;
 
 	--hud-counter-color: #468fca;
+	--hud-counter-warn: #d07e03; /* Toolbox: future hidden events */
 	--hud-counter-success: #5c8d20;
 	--hud-counter-bg: 1px 0 0 1px #0000003e;
 	--hud-counter-size: 16px;

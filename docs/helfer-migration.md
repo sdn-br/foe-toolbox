@@ -19,7 +19,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 9 Alarme `requireInteraction`
 - [x] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
 - [x] 11 Blaue Galaxie: Diamanten
-- [ ] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
+- [x] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
 - [ ] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
 - [ ] 14 Spielerlinks nur auf dem Icon
 - [ ] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
@@ -127,6 +127,12 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Quelle: Produktionen vom Typ `resources` mit `resources.premium` (alt `products.premium`, gleiche Bedeutung; so liest auch Upstream `productions.js` Diamanten).
 - Entfällt: der Diamanten-Anteil im "Erwarteten Bonus" (`EstimatedBonus`), die Anzeige gibt es in 4.8.3 nicht mehr.
 - Offen: Diamanten aus generischen Belohnungen (`genericReward`, z. B. Diamanten-Pakete) werden nicht gezählt, das Format ist nicht bekannt. Ob die Galaxie Diamanten verdoppelt, ist nicht geprüft (alt angenommen).
+
+**Notizen 12**
+- Wie alt: Ereignisse mit `startTime` in der Zukunft stehen in `HiddenRewards.FutureCache` und in der Liste nach den aktiven mit "Erscheint <relativ>" (orange, `warning`). Eigener oranger Zähler `#hidden-future-reward-count` (unten rechts am Menüknopf, Farbe `--hud-counter-warn`), gezählt nach derselben Einstellung `CountRelics` wie der normale Zähler (`HiddenRewards.GetCount`).
+- Anpassung: Upstream-Name `FilteredCache` für die aktiven Ereignisse bleibt (alt umbenannt in `ActiveCache`). Upstream setzt inzwischen selbst Timer auf den Startzeitpunkt (`RefreshGui`), damit wandert ein Ereignis von selbst aus der Zukunfts- in die aktive Liste.
+- Bugfix gegenüber alt: die Box schloss sich nach `getOverview`, sobald **eine** der beiden Listen leer war (`||`); jetzt nur, wenn beide leer sind. `RefreshGui` ohne geladene Ereignisse warf einen TypeError, jetzt Abbruch.
+- Die Warnung "zweispurige Straße fehlt" betrifft weiter nur aktive Ereignisse (wie Upstream).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
