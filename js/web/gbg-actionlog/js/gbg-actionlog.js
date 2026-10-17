@@ -548,6 +548,9 @@ let GBGActionLog = {
 				settings: GBGActionLog.showSettings,
 			});
 			FH.HTML.AddCssFile('gbg-actionlog');
+
+			// bound on the box, not on document, so it also fires in the pop-out window
+			$(`#${GBGActionLog.windowId}`).on('click', '.settingsbox-wrapper .saveSettings', GBGActionLog.saveSettings);
 		}
 
         GBGActionLog.Tabs = [];
@@ -668,7 +671,7 @@ let GBGActionLog = {
               + `<p><label for="gbgalRedAfterHours">${FH.t('Boxes.GBGActionLog.RedAfterHours')}</label>`
               +   `<input type="number" id="gbgalRedAfterHours" min="1" value="${redHours}"></p>`
               + `<p class="gbgal-set-hint">${FH.t('Boxes.GBGActionLog.RedAfterHoursHint')}</p>`
-              + `<button onclick="GBGActionLog.saveSettings()" class="btn saveSettings">${FH.t('General.Save')}</button>`;
+              + `<button class="btn saveSettings">${FH.t('General.Save')}</button>`;
 
         $(`#${GBGActionLog.windowId}SettingsBox`).html(h);
     },
