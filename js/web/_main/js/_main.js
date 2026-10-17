@@ -123,6 +123,7 @@ const i18n_loadPromise = (async () => {
 		}
 
 		languages.push(GuiLng);
+		languages.push('toolbox.de'); // TOOLBOX: German only overlay, added last so its keys win
 
 		// parrallel mache:
 		const languageDatas = await Promise.all(
