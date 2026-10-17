@@ -35,7 +35,7 @@ Bei gemischten Dateien steht die Hauptklasse in der Tabelle, die Aufteilung unte
 | 25 | `js/web/citymap/js/citymap.js` | 8/1 | STAYS | `trigger:'hover'` (Bugfix, upstream-würdig), Double-Opt-In |
 | 26 | `js/web/closebox/js/closebox.js` | 7/2 | STAYS | `Ignore`-Liste, `fixdragdrop:false` |
 | 27 | `js/web/dbexport/js/dbexport.js` | 1/1 | REVERT | Dateiname kosmetisch |
-| 28 | `js/web/discord/js/discord.js` | 2/2 | REVERT | Testtext, Webhook-Name kosmetisch |
+| 28 | `js/web/discord/js/discord.js` | 2/2 | STAYS | Testtext, Webhook-Name "FoE Toolbox" (entschieden 2026-10-17) |
 | 29 | `js/web/eventhandler/js/eventhandler.js` | 3/2 | HOOK | DB-Name + Legacy-Copy (Muster A oder B, s. u.) |
 | 30 | `js/web/gexstat/js/gexstat.js` | 3/2 | HOOK | wie 29 |
 | 31 | `js/web/guild_fights/js/guild_fights.js` | 23/3 | HOOK | DB-Muster; Badge EXTRACTABLE; Button 1 Zeile STAYS |

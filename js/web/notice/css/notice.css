@@ -195,16 +195,3 @@
 	width: 70%;
 	text-align: center;
 }
-
-/* FoE Toolbox: import from the FoE Helfer server (edit mode) */
-.window-body .notices .notice-import-btn {
-	position: absolute;
-	right: 4px;
-	top: 2px;
-	z-index: 10;
-}
-
-#notices-modalBody .notice-import-text {
-	width: 100%;
-	margin-top: 0;
-}
