@@ -35,9 +35,6 @@ let Notice = {
 
 	ApiToken: null,
 
-	// Toolbox: the API answered without notes, i.e. the player is blocked there
-	Banned: false,
-
 	initDone:false,
 
 	/**
@@ -45,32 +42,9 @@ let Notice = {
 	 */
 	init: ()=> {
 
-		// Toolbox: without GlobalSend nothing is loaded, the box shows the hint
-		if (!MainParser.IsGlobalSendEnabled()) {
-			Notice.buildBox(false);
-			return;
-		}
-
-		let apiToken = localStorage.getItem('ApiToken');
-
-		if(apiToken === null) {
-			HTML.ShowToastMsg({
-				head: i18n('Boxes.CityMap.MissingApiKeyErrorHeader'),
-				text: [
-					i18n('Boxes.CityMap.MissingApiKeySubmitError'),
-					`<a target="_blank" href="${i18n('Settings.ApiTokenUrl')}">${i18n('Settings.ApiTokenUrl')}</a>`
-				],
-				type: 'error',
-				hideAfter: 10000,
-			});
-
-			return;
-		}
-
-		Notice.ApiToken = apiToken;
-
+		// Toolbox: the notes are stored locally (Notice.Store), no GlobalSend or API token needed
 		if(Notice.notes === null){
-			MainParser.send2Server({apiToken:apiToken}, 'Notice/get',(resp)=>{
+			Notice.Store.send({}, 'Notice/get',(resp)=>{
 				if(resp['status'] === 'ERROR') {
 					HTML.ShowToastMsg({
 						head: 'Error',
@@ -78,12 +52,6 @@ let Notice = {
 						type: 'error',
 						hideAfter: 10000,
 					});
-				}
-				// Toolbox: status OK without notes = blocked on the API
-				else if (resp['notice'] === undefined) {
-					Notice.Banned = true;
-
-					Notice.buildBox(false);
 				}
 				else {
 					Notice.notes = resp['notice'];
@@ -128,14 +96,8 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		if(MainParser.IsGlobalSendEnabled() && !Notice.Banned && Notice.notes !== null){
-			Notice.prepareContent();
-		}
-
-		// global send is deactivated (Toolbox: or blocked on the API)
-		else {
-			$('#noticesBody').empty().addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(Notice.Banned ? i18n('Boxes.Notice.BannedFromApi') : i18n('Boxes.Notice.GlobalSendRequired')) );
-		}
+		// Toolbox: local notes, no GlobalSend requirement
+		Notice.prepareContent();
 	},
 
 
@@ -325,7 +287,7 @@ let Notice = {
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {
-				$('.tab-edit, .sub-tab-edit').remove();
+				$('.tab-edit, .sub-tab-edit, .notice-import-btn').remove();
 			}
 
 			Notice.EditMode = !Notice.EditMode;
@@ -518,7 +480,7 @@ let Notice = {
 			data['name'] = txt;
 		}
 
-		MainParser.send2Server(data, 'Notice/set', (resp)=>{
+		Notice.Store.send(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -575,7 +537,7 @@ let Notice = {
 
 		txt = MainParser.ClearText(txt);
 
-		MainParser.send2Server({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
+		Notice.Store.send({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -629,7 +591,7 @@ let Notice = {
 		}
 
 		// send content changes to server und change local object
-		MainParser.send2Server({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
+		Notice.Store.send({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
@@ -739,7 +701,7 @@ let Notice = {
 		// set the active Tab for reload
 		Notice.ActiveTab = Notice.notes.findIndex(idx => idx.id === Notice.ActualGrp) + 1;
 
-		MainParser.send2Server(data, 'Notice/set', (resp)=>{
+		Notice.Store.send(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -774,6 +736,9 @@ let Notice = {
 
 		$('.tab-edit, .sub-tab-edit').remove();
 
+		// Toolbox: import from the FoE Helfer server
+		Notice.Store.BuildImportButton();
+
 		// Sortfunction for horizontal + Stop event
 		$('ul.horizontal').sortable({
 			axis: 'x',
@@ -789,7 +754,7 @@ let Notice = {
 					});
 				});
 
-				MainParser.send2Server({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
+				Notice.Store.send({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 					if(resp['status'] === 'ERROR') {
 						HTML.ShowToastMsg({
 							head: 'Error',
@@ -847,7 +812,7 @@ let Notice = {
 						});
 					});
 
-					MainParser.send2Server({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
+					Notice.Store.send({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 						if(resp['status'] === 'ERROR') {
 							HTML.ShowToastMsg({
 								head: 'Error',
@@ -895,7 +860,7 @@ let Notice = {
 	 * @constructor
 	 */
 	DeleteElement: (type, id)=> {
-		MainParser.send2Server({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{
+		Notice.Store.send({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
