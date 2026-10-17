@@ -274,6 +274,20 @@ let Sabotage = {
 			});
 
 			HTML.AddCssFile('sabotage');
+
+			// delegated once on the box, only the body content is replaced on render
+			const box = $('#sabotageInfo');
+			box.on('click', '#sabotageInfoBody .show-entity', function () {
+				Sabotage.ShowFunction($(this).data('id'));
+			});
+			box.on('click', '#sabotageInfoBody .button-showcity', function () {
+				Sabotage.ShowFunction();
+			});
+			box.on('click', '#sabotageInfoBody .button-showloot', function () {
+				Looting.filterByPlayerId = Sabotage.PlayerId;
+				Looting.page = 1;
+				Looting.Show();
+			});
 		}
 
 		let div = $('#sabotageInfo'),
@@ -399,20 +413,6 @@ let Sabotage = {
 
 		div.find('#sabotageInfoBody').html(h.join(''));
 		div.show();
-
-		// bind once per render, the body is replaced on every render
-		let body = $('#sabotageInfoBody');
-		body.on('click', '.show-entity', function () {
-			Sabotage.ShowFunction($(this).data('id'));
-		});
-		body.on('click', '.button-showcity', function () {
-			Sabotage.ShowFunction();
-		});
-		body.on('click', '.button-showloot', function () {
-			Looting.filterByPlayerId = Sabotage.PlayerId;
-			Looting.page = 1;
-			Looting.Show();
-		});
 	},
 
 
