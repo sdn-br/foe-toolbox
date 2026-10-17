@@ -399,7 +399,6 @@ alertsDB.version(1).stores({
 
 	browser.runtime.onInstalled.addListener(() => {
 		"use strict";
-		const version = browser.runtime.getManifest().version;
 
 		// ask in every open game tab whether it should be reloaded
 		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs) => {
@@ -408,10 +407,6 @@ alertsDB.version(1).stores({
 				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm})
 					.catch((e) => console.error('InstallConfirm failed', e));
 			}
-		});
-
-		browser.tabs.create({
-			url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
 		});
 	});
 

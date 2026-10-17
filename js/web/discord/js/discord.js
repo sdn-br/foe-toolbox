@@ -217,7 +217,7 @@ let Discord = {
 
 
 		h.push(`<b>${i18n('Boxes.Discord.Message')}</b>`);
-		h.push(`<textarea id="message" name="message" spellcheck="false">${data ? data['message'] : ':robot: **Test message**\nFoE Helper was here!'}</textarea>`);
+		h.push(`<textarea id="message" name="message" spellcheck="false">${data ? data['message'] : ':robot: **Test message**\nFoE Toolbox was here!'}</textarea>`);
 
 
 		h.push(`<div>`);
@@ -529,7 +529,7 @@ let Discord = {
 		Discord.SendMessage(
 			e.url,
 			{
-				username: 'FoE Helper',
+				username: 'FoE Toolbox',
 				avatar_url: 'https://foe-helper.com/theme/img/favicon/apple-touch-icon.png',
 				content: e.message
 			}
