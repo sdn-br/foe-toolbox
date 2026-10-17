@@ -371,7 +371,8 @@ let Looting = {
 				title: i18n('Boxes.Looting.Title'),
 				auto_close: true,
 				dragdrop: true,
-				minimize: true
+				minimize: true,
+				popout: () => MainParser.PopOut('looting')
 			});
 
 			HTML.AddCssFile('looting');

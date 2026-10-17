@@ -83,6 +83,7 @@ let Notice = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('notices'),
 				settings: true
 			});
 

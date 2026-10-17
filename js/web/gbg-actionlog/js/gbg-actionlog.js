@@ -544,6 +544,7 @@ let GBGActionLog = {
 				dragdrop: true,
 				minimize: true,
 				resize : true,
+				popout: () => MainParser.PopOut(GBGActionLog.windowId),
 				settings: GBGActionLog.showSettings,
 			});
 			FH.HTML.AddCssFile('gbg-actionlog');
