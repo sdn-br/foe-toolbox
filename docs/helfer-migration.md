@@ -359,6 +359,7 @@ Upstream `popup.js` verschiebt die Box per `adoptNode` in ein eigenes Fenster un
 - Bekannte Grenzen: Handler, die per `$('body').on(...)` oder `$(document).on(...)` am Spieldokument hängen, sehen Klicks im Pop-out nicht. Betrifft "beim Schließen speichern" der Notizen (das `blur` des Textfelds speichert vorher schon, bleibt so). Dialoge der Notizen (Gruppe, Seite, Spieler) öffnen im Spielfenster.
 - Gefechts-Logbuch: Aktions-Auswahl und Spaltenfilter schließen bei Klick daneben über `$(document).on('click.gbgal')`. Die Logik steht jetzt in `GBGActionLog.closeOnOutsideClick`, ein zweiter Handler an der Box ruft sie auf, wenn die Box im Pop-out liegt (`ownerDocument !== document`). Im Spielfenster läuft weiter nur der Handler am Dokument.
 - Stadtinformationen: `Sabotage.OtherPlayersBuildings` entfernt die Box bei jedem Besuch und baut sie neu auf, das schloss das Pop-out. Solange `Popup.IsOpen('sabotageInfo')`, bleibt die Box stehen und wird neu gefüllt (der Aufbau nutzt eine vorhandene Box ohnehin).
+- Fenstergröße (`popup.js`, markierter Block): Upstream nimmt die gemerkte Größe `PopupSize_<id>` vor der Boxgröße. Die Toolbox nimmt als Breite mindestens die Boxbreite (eine alte gemerkte Breite schnitt sonst das X ab) und als Höhe immer die Inhaltshöhe (220 px bis 80 % der Bildschirmhöhe), eine von Hand vergrößerte Höhe wird also nicht gemerkt. Bild-im-Bild rechnet die eigene Titelleiste in die angeforderte Höhe, der gemessene Abzug steht in `PopupHeightOffset` und wird aufgeschlagen.
 
 ## LG-Daten bei Klick in einer besuchten Stadt
 
