@@ -17,7 +17,6 @@ const extID = ExtbaseData.extID,
 	extUrl = ExtbaseData.extUrl,
 	GuiLng = ExtbaseData.GuiLng,
 	extVersion = ExtbaseData.extVersion,
-	extBaseVersion = ExtbaseData.extBaseVersion,
 	isRelease = ExtbaseData.isRelease,
 	devMode = ExtbaseData.devMode,
 	loadBeta = ExtbaseData.loadBeta;
@@ -117,10 +116,11 @@ const i18n_loadPromise = (async () => {
 	try {
 		let languages = [];
 
-		// Deutsches Fallback laden (die Toolbox liefert nur Deutsch aus)
+		// TOOLBOX-BEGIN: German fallback, the toolbox only ships German
 		if (GuiLng !== 'de') {
 			languages.push('de');
 		}
+		// TOOLBOX-END
 
 		languages.push(GuiLng);
 		languages.push('toolbox.de'); // TOOLBOX: German only overlay, added last so its keys win
@@ -187,8 +187,6 @@ GetFights = () =>{
 
 	// the world select window is opened, get world list update
 	FoEproxy.addHandler('WorldService', 'getWorlds', (data, postData) => {
-		if (!MainParser.IsGlobalSendEnabled()) return; // Toolbox: nothing is sent without GlobalSend
-
 		MainParser.sendExtMessage({
 			type: 'send2Api',
 			url: `${ApiURL}Worlds/?world=${ExtWorld}`,
@@ -294,8 +292,6 @@ GetFights = () =>{
 		GexStat.checkForDB(ExtPlayerID);
 		Guild_fights.checkForDB(ExtPlayerID);
 		QiProgress.checkForDB(ExtPlayerID);
-		GBGActionLog.checkForDB(ExtPlayerID);
-		Notice.Store.checkForDB(ExtPlayerID);
 
 		// which tab is active in StartUp Object?
 		let vals = {
@@ -624,18 +620,6 @@ GetFights = () =>{
 			if (data.responseData.friends)
 				MainParser.UpdatePlayerDict(data.responseData.friends, 'PlayerList', 'getFriendsList');
 		}
-		// Toolbox: player profile and event history also update the player data
-		else if (data.requestMethod === 'getOtherPlayerVO') {
-			MainParser.UpdatePlayerDict(data.responseData, 'PlayerVO');
-		}
-		else if (data.requestMethod === 'getEventsPaginated') {
-			MainParser.UpdatePlayerDict(data.responseData, 'Events');
-		}
-	});
-
-	// Toolbox: PvP arena opened, update the player data of the opponents
-	FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
-		MainParser.UpdatePlayerDict(data.responseData, 'PvPArena');
 	});
 
 
@@ -735,21 +719,18 @@ GetFights = () =>{
 					// Own GB: take the entity from the local city data (like the game client does)
 					gbCityMapEntity = { responseData: [{ ...MainParser.CityMapData[requestedEntityId], player_id: ExtPlayerID }] };
 				}
+				// TOOLBOX-BEGIN: GB clicked in a visited city, no getOtherPlayerCityMapEntity follows.
+				// Take the entity from the visitPlayer data (like the game client does) and
+				// prepare it like that handler would, so bonus and era are kept below
+				else if (gbCityMapEntity?.responseData?.[0]?.id !== requestedEntityId && CityMap.OtherPlayer.mapData[requestedEntityId]?.player_id === requestedPlayerId) {
+					gbCityMapEntity = { responseData: [CityMap.OtherPlayer.mapData[requestedEntityId]] };
+					gbUpdateData = { Rankings: null, CityMapEntity: gbCityMapEntity };
+				}
+				// TOOLBOX-END
 				else if (gbCityMapEntity?.responseData?.[0]?.id !== requestedEntityId) {
-					const visitedEntity = CityMap.OtherPlayer.mapData[requestedEntityId];
-
-					if (visitedEntity?.player_id === requestedPlayerId) {
-						// Toolbox: GB clicked in a visited city, no getOtherPlayerCityMapEntity follows.
-						// Take the entity from the visitPlayer data (like the game client does) and
-						// prepare it like that handler would, so bonus and era are kept below
-						gbCityMapEntity = { responseData: [visitedEntity] };
-						gbUpdateData = { Rankings: null, CityMapEntity: gbCityMapEntity };
-					}
-					else {
-						// Entity belongs to a different GB → discard and wait for getOtherPlayerCityMapEntity or updateEntity
-						gbCityMapEntity = null;
-						if (gbUpdateData) gbUpdateData.CityMapEntity = null;
-					}
+					// Entity belongs to a different GB → discard and wait for getOtherPlayerCityMapEntity or updateEntity
+					gbCityMapEntity = null;
+					if (gbUpdateData) gbUpdateData.CityMapEntity = null;
 				}
 			}
 		}
@@ -797,7 +778,7 @@ GetFights = () =>{
 			lgUpdate();
 		}
 
-		updateVisitedCity(data.responseData);
+		updateVisitedCity(data.responseData); // TOOLBOX: keep the visited city current
 
 		if (data.responseData[0]?.player_id === ExtPlayerID) {
 
@@ -880,12 +861,13 @@ GetFights = () =>{
 	});
 
 
-	// Toolbox: a contribution to a foreign GB answers with CityMapService.reset (formerly updateEntity)
+	// TOOLBOX-BEGIN: stays in core, it needs the closure variables gbCityMapEntity and gbUpdateData
+	// a contribution to a foreign GB answers with CityMapService.reset (formerly updateEntity)
 	FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
 		updateVisitedCity(data.responseData);
 	});
 
-	// Toolbox: keep the visited city current (e.g. after a contribution), a GB clicked there again reads it
+	// keep the visited city current (e.g. after a contribution), a GB clicked there again reads it
 	function updateVisitedCity(entities) {
 		if (!Array.isArray(entities)) return;
 
@@ -901,6 +883,7 @@ GetFights = () =>{
 			}
 		}
 	}
+	// TOOLBOX-END
 
 	// Update Funktion, die ausgeführt wird, sobald beide Informationen in gbUpdateData vorhanden sind.
 	function lgUpdate() {
@@ -1150,7 +1133,7 @@ let MainParser = {
 			HTML.ShowToastMsg({
 				show: true,
 				head: i18n('Menu.NewVersion.Title'),
-				text: i18n('Menu.NewVersion.Desc') + ' <a href="https://github.com/sdn-br/foe-toolbox/wiki/Changelog#' + extVersion.replaceAll('.', '') + '" target="_blank">ChangeLog</a>',
+				text: i18n('Menu.NewVersion.Desc') + ' <a href="https://github.com/sdn-br/foe-toolbox/wiki/Changelog#' + extVersion.replaceAll('.', '') + '" target="_blank">ChangeLog</a>', // TOOLBOX: own changelog
 				type: 'success',
 				allowToastClose: true,
 				hideAfter: 30000,
@@ -1329,7 +1312,6 @@ let MainParser = {
 
 		MainParser.CityEntities = Metadata;
 		MainParser.correctBuildingType();
-		MainParser.setToolboxEntityFlags();
 		MainParser.Inactives.check();
 	},
 
@@ -1367,7 +1349,7 @@ let MainParser = {
 			el.className = 'menu-' + menu;
 			el.innerHTML = `<div class="loadericon"></div>
 				<div class="text">
-					<strong>${t('Menu.MetaLoader.Title', 'Preparing FoE Toolbox')}</strong>
+					<strong>${t('Menu.MetaLoader.Title', 'Preparing FoE Helper')}</strong>
 					<span>${t('Menu.MetaLoader.Desc', 'The building database is being built. This is only needed on the first start or after game updates – the helper starts automatically afterwards.')}</span>
 					<div class="bar"><div class="fill"></div></div>
 					<span class="count"></span>
@@ -1426,74 +1408,6 @@ let MainParser = {
 
 
 	/**
-	 * Toolbox: derived flags on every CityEntity, used by the city information
-	 * (plunder helper) and the PvP history. Must run after `correctBuildingType`.
-	 *
-	 * - `is_motivatable`, `is_polishable`: can be motivated / polished
-	 * - `chainId`, `is_chainBuilding`, `is_chainStartBuilding`, `bonus_multiplier`
-	 *   (number of link positions of the chain building)
-	 * - `is_outpostBuilding`: placed on another grid than the main city
-	 * - `is_plunderable`: production can be plundered by neighbours
-	 *
-	 * Classic entities carry this information as `abilities`, generic entities
-	 * (`GenericCityEntity`) as `components.AllAge` (same sources as `CityBuildings`).
-	 */
-	setToolboxEntityFlags: () => {
-		for (let id in MainParser.CityEntities) {
-			if (!MainParser.CityEntities.hasOwnProperty(id)) continue;
-
-			let e = MainParser.CityEntities[id],
-				abilities = e.abilities || [],
-				isGeneric = (e.__class__ === 'GenericCityEntity'),
-				hasAbility = (cls) => abilities.some(a => a.__class__ === cls),
-				interaction = e.components?.AllAge?.socialInteraction?.interactionType;
-
-			e.is_motivatable = hasAbility('MotivatableAbility') || (isGeneric && interaction === 'motivate');
-			e.is_polishable = hasAbility('PolishableAbility') || (isGeneric && interaction === 'polish');
-
-			e.chainId = '';
-			e.is_chainBuilding = false;
-			e.is_chainStartBuilding = false;
-			e.bonus_multiplier = 1;
-
-			let chain = (isGeneric ? e.components?.AllAge?.chain : undefined);
-			if (chain?.chainId) {
-				e.chainId = chain.chainId;
-				e.is_chainBuilding = true;
-				e.is_chainStartBuilding = (chain.config?.__class__ === 'ChainStartConfig');
-				if (chain.linkPositions !== undefined) e.bonus_multiplier = chain.linkPositions.length;
-			}
-			else {
-				let chainAbility = abilities.find(a => a.chainId !== undefined);
-				if (chainAbility) {
-					e.chainId = chainAbility.chainId;
-					e.is_chainBuilding = true;
-				}
-				e.is_chainStartBuilding = hasAbility('ChainStartAbility');
-				abilities.forEach(a => {
-					if (a.chainId !== undefined && a.linkPositions !== undefined) {
-						e.bonus_multiplier = a.linkPositions.length;
-					}
-				});
-			}
-
-			e.is_outpostBuilding = abilities.some(a => a.gridId !== undefined && a.gridId !== 'main');
-
-			e.is_plunderable = (
-				!e.is_outpostBuilding && (
-					e.type === 'production' || e.type === 'goods' || (
-						(e.type === 'residential' || e.type === 'clan_power_production' || (e.type === undefined && isGeneric)) &&
-						!hasAbility('AddResourcesToGuildTreasuryAbility') &&
-						!hasAbility('RandomChestRewardAbility') &&
-						!hasAbility('NotPlunderableAbility')
-					)
-				)
-			);
-		}
-	},
-
-
-	/**
 	 * Etwas zur background.js schicken
 	 *
 	 * @param {any & {type: string}} data
@@ -1521,8 +1435,7 @@ let MainParser = {
 
 		const response = await new Promise((resolve, reject) => {
 			responsePromise.then(resolve, reject);
-			// Toolbox: 5 s instead of 1 s, server requests (send2Server) run through the background script
-			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 5000)
+			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 5000) // TOOLBOX: 5 s instead of 1 s, send2Server requests run through the background script
 		});
 
 		if (typeof response !== 'object' || typeof response.ok !== 'boolean') {
@@ -1679,8 +1592,7 @@ let MainParser = {
 			if (localStorage.getItem('linkSite') === 'siteForgedb')
 				PlayerLink = HTML.i18nReplacer(PlayerLinkFormat2, { 'server': ExtWorld.toLowerCase().replace(/[0-9]/g, ''), 'world': ExtWorld.toLowerCase(), 'playerid': PlayerID });
 
-			// Toolbox: only the icon is a link, a click on the name stays in the game
-			return `${HTML.escapeHtml(PlayerName)} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`;
+			return `${HTML.escapeHtml(PlayerName)} <a class="external-link game-cursor" href="${PlayerLink}" target="_blank">${LinkIcon}</a>`; // TOOLBOX: only the icon is a link, a click on the name stays in the game
 		}
 		else {
 			return HTML.escapeHtml(PlayerName);
@@ -1711,8 +1623,7 @@ let MainParser = {
 			if (localStorage.getItem('linkSite') === 'siteForgedb')
 				GuildLink = HTML.i18nReplacer(GuildLinkFormat2, { 'server': ExtWorld.toLowerCase().replace(/[0-9]/g, ''), 'world': ExtWorld.toLowerCase(), 'guildid': GuildID });
 
-			// Toolbox: only the icon is a link
-			return `${HTML.escapeHtml(GuildName)} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`;
+			return `${HTML.escapeHtml(GuildName)} <a class="external-link game-cursor" href="${GuildLink}" target="_blank">${LinkIcon}</a>`; // TOOLBOX: only the icon is a link
 		}
 		else {
 			return HTML.escapeHtml(GuildName);
@@ -1732,8 +1643,7 @@ let MainParser = {
 		if (Settings.GetSetting('ShowLinks')) {
 			let BuildingLink = HTML.i18nReplacer(BuildingsLinkFormat, {'buildingid': BuildingID });
 
-			// Toolbox: only the icon is a link
-			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank">${LinkIcon}</a>`;
+			return `${BuildingName} <a class="external-link game-cursor" href="${BuildingLink}" target="_blank">${LinkIcon}</a>`; // TOOLBOX: only the icon is a link
 		}
 		else {
 			return BuildingName;
@@ -1765,54 +1675,39 @@ let MainParser = {
 
 
 	/**
-	 * Toolbox: whether data may be sent to the foe-helper API (setting GlobalSend, default off).
-	 * Reads localStorage directly, some handlers run before the settings (config.json) are loaded.
-	 *
-	 * @returns {boolean}
-	 */
-	IsGlobalSendEnabled: () => (localStorage.getItem('GlobalSend') === 'true'),
-
-
-	/**
 	 * Sending data "home"
 	 *
 	 * @param data
 	 * @param ep
 	 * @param successCallback
 	 * @param errorCallback optional - receives a readable message when the request itself fails (network, HTTP != 200, invalid JSON)
-	 * @param forceSend Toolbox: send even if GlobalSend is off (only for confirmed user actions)
 	 */
-	send2Server: (data, ep, successCallback, errorCallback, forceSend = false) => {
-		// Toolbox: only with the setting GlobalSend (default off) or an explicit, confirmed user action (forceSend)
-		if (!MainParser.IsGlobalSendEnabled() && !forceSend) {
-			return;
-		}
+	send2Server: (data, ep, successCallback, errorCallback) => {
 
-		// Toolbox: the request runs in the background script, not in the game page
-		let req = MainParser.sendExtMessage({
-			type: 'send2Server',
-			url: ApiURL,
-			endpoint: ep,
-			playerId: ExtPlayerID,
-			guildId: ExtGuildID,
-			world: ExtWorld,
-			data: data
-		});
+		let req = MainParser.fetchViaBackground( // TOOLBOX: the request runs in the background script, see toolbox-main.js
+			ApiURL + ep + '/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ data })
+			}
+		);
 
 		if (successCallback !== undefined) {
 			req
 				.then(response => {
-					if (!response) {
-						if (errorCallback) errorCallback('The server could not be reached');
+					if (response.status === 200) {
+						response
+							.json()
+							.then(successCallback)
+							.catch(err => {
+								if (errorCallback) errorCallback('The server sent an invalid response: ' + err.message);
+							});
 					}
-					else if (response.status !== 200) {
-						if (errorCallback) errorCallback('The server responded with HTTP ' + response.status + ' (' + response.statusText + ')');
-					}
-					else if (response.body === null) {
-						if (errorCallback) errorCallback('The server sent an invalid response: ' + response.error);
-					}
-					else {
-						successCallback(response.body);
+					else if (errorCallback) {
+						errorCallback('The server responded with HTTP ' + response.status + ' (' + response.statusText + ')');
 					}
 				})
 				.catch(err => {
@@ -1916,7 +1811,7 @@ let MainParser = {
 	 */
 	SelfPlayer: (d) => {
 
-		if (!MainParser.IsGlobalSendEnabled()) {
+		if (Settings.GetSetting('GlobalSend') === false) {
 			return;
 		}
 
@@ -1929,7 +1824,7 @@ let MainParser = {
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
-			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extBaseVersion}`,
+			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extVersion}`,
 			data: JSON.stringify(data)
 		});
 	},
@@ -2001,7 +1896,6 @@ let MainParser = {
 
 
 	SendLGData: (d)=> {
-		if (!MainParser.IsGlobalSendEnabled()) return; // Toolbox: nothing is sent without GlobalSend
 
 		const dataEntity = d['CityMapEntity']['responseData'][0],
 			meta = MainParser.CityEntities?.[dataEntity['cityentity_id']],
@@ -2030,7 +1924,7 @@ let MainParser = {
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
-			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extBaseVersion}`,
+			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extVersion}`,
 			data: JSON.stringify(realData)
 		});
 	},
@@ -2102,18 +1996,12 @@ let MainParser = {
 	/**
 	 * Player information Updating message list & Website data
 	 *
-	 * Toolbox: returns a promise that resolves when the players are also
-	 * written to the IndexDB (table `players`).
-	 *
 	 * @param d
 	 * @param Source
 	 * @param ListType
-	 * @returns {Promise<void>}
 	 * @constructor
 	 */
 	UpdatePlayerDict: (d, Source, ListType = undefined) => {
-		let promises = [];
-
 		if (Source === 'Conversation') {
 			for (let i in d['messages']) {
 				if (!d['messages'].hasOwnProperty(i))
@@ -2122,13 +2010,13 @@ let MainParser = {
 				let Message = d['messages'][i];
 
 				if (Message.sender !== undefined) {
-					promises.push(MainParser.UpdatePlayerDictCore(Message.sender));
+					MainParser.UpdatePlayerDictCore(Message.sender);
 				}
 			}
 		}
 
 		else if (Source === 'LGOverview' && d[0]) {
-			promises.push(MainParser.UpdatePlayerDictCore(d[0].player));
+			MainParser.UpdatePlayerDictCore(d[0].player);
 		}
 
 		else if (Source === 'LGContributions') {
@@ -2136,7 +2024,7 @@ let MainParser = {
 				if (!d.hasOwnProperty(i))
 					continue;
 
-				promises.push(MainParser.UpdatePlayerDictCore(d[i].player));
+				MainParser.UpdatePlayerDictCore(d[i].player);
 			}
 		}
 
@@ -2145,7 +2033,7 @@ let MainParser = {
 				if (!d.hasOwnProperty(i))
 					continue;
 
-				promises.push(MainParser.UpdatePlayerDictCore(d[i]));
+				MainParser.UpdatePlayerDictCore(d[i]);
 			}
 
 			if (ListType === 'getNeighborList') {
@@ -2162,133 +2050,39 @@ let MainParser = {
 				EventHandler.CalcMoppelHelperBody();
 			}
 		}
-
-		// Toolbox: OtherPlayerService.getOtherPlayerVO
-		else if (Source === 'PlayerVO') {
-			promises.push(MainParser.UpdatePlayerDictCore(d));
-		}
-
-		// Toolbox: OtherPlayerService.getEventsPaginated
-		else if (Source === 'Events') {
-			for (let i in d?.events) {
-				if (d.events[i].other_player !== undefined) {
-					promises.push(MainParser.UpdatePlayerDictCore(d.events[i].other_player));
-				}
-			}
-		}
-
-		// Toolbox: OtherPlayerService.visitPlayer, called by the toolbox modules
-		else if (Source === 'VisitPlayer') {
-			if (d?.other_player) {
-				let Player = d.other_player;
-				if (Player['era'] === undefined && d['other_player_era'] !== undefined) {
-					Player = Object.assign({}, Player, { era: d['other_player_era'] });
-				}
-				promises.push(MainParser.UpdatePlayerDictCore(Player));
-			}
-		}
-
-		// Toolbox: PVPArenaService.getOverview
-		else if (Source === 'PvPArena') {
-			for (let i in d?.opponents) {
-				if (!d['opponents'].hasOwnProperty(i)) continue;
-				let Player = d['opponents'][i]?.opposingPlayer?.player;
-				if (Player) promises.push(MainParser.UpdatePlayerDictCore(Player));
-			}
-		}
-
-		return Promise.all(promises).then(() => undefined);
-	},
-
-
-	/**
-	 * Toolbox: load a player from the IndexDB into the PlayerDict
-	 * if it is not known in this session yet
-	 *
-	 * @param PlayerID
-	 * @returns {Promise<void>}
-	 */
-	loadPlayerIntoDict: (PlayerID) => {
-		if (PlayerDict[PlayerID] !== undefined) return Promise.resolve();
-
-		return IndexDB.loadPlayer(PlayerID).then(PlayerFromDB => {
-			if (!PlayerFromDB || PlayerDict[PlayerID] !== undefined) return;
-
-			let Player = PlayerDict[PlayerID] = { PlayerID: PlayerID };
-			if (PlayerFromDB['name'] !== undefined) Player['PlayerName'] = PlayerFromDB['name'];
-			if (PlayerFromDB['clanName'] !== undefined) Player['ClanName'] = PlayerFromDB['clanName'];
-			if (PlayerFromDB['clanId'] !== undefined) Player['ClanId'] = PlayerFromDB['clanId'];
-			if (PlayerFromDB['avatar'] !== undefined) Player['Avatar'] = PlayerFromDB['avatar'];
-			if (PlayerFromDB['era'] !== undefined && PlayerFromDB['era'] !== 'unknown') Player['Era'] = PlayerFromDB['era'];
-			if (PlayerFromDB['score'] !== undefined) Player['Score'] = PlayerFromDB['score'];
-			if (PlayerFromDB['wonBattles'] !== undefined) Player['WonBattles'] = PlayerFromDB['wonBattles'];
-			if (PlayerFromDB['lastWonBattlesReceiveDate'] !== undefined) Player['WonBattlesReceiveDate'] = PlayerFromDB['lastWonBattlesReceiveDate'];
-			if (PlayerFromDB['lastWonBattlesChangeDate'] !== undefined) Player['WonBattlesDate'] = PlayerFromDB['lastWonBattlesChangeDate'];
-			// Toolbox 1.x wrote the misspelled "lastScoreReceiveData"
-			let ScoreReceiveDate = PlayerFromDB['lastScoreReceiveDate'] || PlayerFromDB['lastScoreReceiveData'];
-			if (ScoreReceiveDate !== undefined) Player['ScoreReceiveDate'] = ScoreReceiveDate;
-			if (PlayerFromDB['lastScoreChangeDate'] !== undefined) Player['ScoreDate'] = PlayerFromDB['lastScoreChangeDate'];
-		}).catch(e => console.error(e));
 	},
 
 
 	/**
 	 * Update player information
 	 *
-	 * Toolbox: additionally tracks when score and won battles were last received
-	 * and last seen rising (activity indicator) and stores the player in the IndexDB.
-	 *
 	 * @param Player
-	 * @returns {Promise<void>}
 	 * @constructor
 	 */
 	UpdatePlayerDictCore: (Player) => {
 
-		let PlayerID = Player?.['player_id'];
-		if (PlayerID === undefined) return Promise.resolve();
-
+		let PlayerID = Player['player_id'];
 		let HasGuildPermission = ((ExtGuildPermission & GuildMemberStat.GuildPermission_Leader) > 0 || (ExtGuildPermission & GuildMemberStat.GuildPermission_Founder) > 0);
 
-		if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {
-									Activity: (Player['is_friend'] || (Player['is_guild_member'] && HasGuildPermission)) ? 0 : undefined
-								};
+		if (PlayerID !== undefined) {
+			if (PlayerDict[PlayerID] === undefined) PlayerDict[PlayerID] = {
+										Activity: (Player['is_friend'] || (Player['is_guild_member'] && HasGuildPermission)) ? 0 : undefined
+									};
 
-		PlayerDict[PlayerID]['PlayerID'] = PlayerID;
-		if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
-		if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
-		if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
-		// Toolbox: player left the guild, drop the outdated guild name
-		if (Player['clan_id'] === 0 && Player['clan'] === undefined) delete PlayerDict[PlayerID]['ClanName'];
-		if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
-		if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
-		if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];
-		if (Player['is_friend'] !== undefined) PlayerDict[PlayerID]['IsFriend'] = Player['is_friend'];
-		if (Player['is_self'] !== undefined) PlayerDict[PlayerID]['IsSelf'] = Player['is_self'];
-		if (Player['is_active'] !== undefined) PlayerDict[PlayerID]['IsActive'] = Player['is_active'];
-		if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
-		if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
-		if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
-		if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
-
-		return IndexDB.loadPlayer(PlayerID).then((PlayerFromDB) => {
-			let p = PlayerDict[PlayerID],
-				now = MainParser.getCurrentDate();
-
-			if (PlayerFromDB) {
-				p['WonBattlesReceiveDate'] = (p['WonBattles'] !== undefined ? now : PlayerFromDB.lastWonBattlesReceiveDate);
-				p['WonBattlesDate'] = ((PlayerFromDB.wonBattles === undefined && p['WonBattles'] !== undefined) || PlayerFromDB.lastWonBattlesChangeDate === undefined || PlayerFromDB.wonBattles < p['WonBattles'] ? now : PlayerFromDB.lastWonBattlesChangeDate);
-				p['ScoreReceiveDate'] = (p['Score'] !== undefined ? now : (PlayerFromDB.lastScoreReceiveDate || PlayerFromDB.lastScoreReceiveData));
-				p['ScoreDate'] = ((PlayerFromDB.score === undefined && p['Score'] !== undefined) || PlayerFromDB.lastScoreChangeDate === undefined || PlayerFromDB.score < p['Score'] ? now : PlayerFromDB.lastScoreChangeDate);
-			}
-			else {
-				p['WonBattlesReceiveDate'] = (p['WonBattles'] !== undefined ? now : undefined);
-				p['WonBattlesDate'] = (p['WonBattles'] !== undefined ? now : undefined);
-				p['ScoreReceiveDate'] = (p['Score'] !== undefined ? now : undefined);
-				p['ScoreDate'] = (p['Score'] !== undefined ? now : undefined);
-			}
-
-			return IndexDB.addUserFromPlayerDictIfNotExists(PlayerID, true);
-		}).catch(e => console.error(e));
+			PlayerDict[PlayerID]['PlayerID'] = PlayerID;
+			if (Player['name'] !== undefined) PlayerDict[PlayerID]['PlayerName'] = Player['name'];
+			if (Player['clan'] !== undefined) PlayerDict[PlayerID]['ClanName'] = Player['clan']['name'];
+			if (Player['clan_id'] !== undefined) PlayerDict[PlayerID]['ClanId'] = Player['clan_id'];
+			if (Player['avatar'] !== undefined) PlayerDict[PlayerID]['Avatar'] = Player['avatar'];
+			if (Player['is_neighbor'] !== undefined) PlayerDict[PlayerID]['IsNeighbor'] = Player['is_neighbor'];
+			if (Player['is_guild_member'] !== undefined) PlayerDict[PlayerID]['IsGuildMember'] = Player['is_guild_member'];
+			if (Player['is_friend'] !== undefined) PlayerDict[PlayerID]['IsFriend'] = Player['is_friend'];
+			if (Player['is_self'] !== undefined) PlayerDict[PlayerID]['IsSelf'] = Player['is_self'];
+			if (Player['score'] !== undefined) PlayerDict[PlayerID]['Score'] = Player['score'];
+			if (Player['won_battles'] !== undefined) PlayerDict[PlayerID]['WonBattles'] = Player['won_battles'];
+			if (Player['activity'] !== undefined) PlayerDict[PlayerID]['Activity'] = Player['activity'];
+			if (Player['era'] !== undefined) PlayerDict[PlayerID]['Era'] = Player['era'];
+		}
 	},
 
 
@@ -2734,5 +2528,5 @@ if (window.foeHelperBgApiHandler !== undefined && window.foeHelperBgApiHandler i
 	delete window.foeHelperBgApiHandler;
 }
 
-console.log('FOE Toolbox version ' + extVersion + ' started. ID: ' + extID);
+console.log('FOE Toolbox version ' + extVersion + ' started. ID: ' + extID); // TOOLBOX: branding
 console.log(navigator.userAgent);
