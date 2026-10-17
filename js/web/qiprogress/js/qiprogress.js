@@ -63,7 +63,8 @@ let QiProgress = {
 	 * @returns {Promise<void>}
 	 */
 	checkForDB: async (playerID) => {
-		const DBName = `FoeHelperDB_Qi_${playerID}`;
+		// own name, the DB of a parallel installed FoE Helfer stays untouched
+		const DBName = `FoEToolbox2DB_Qi_${playerID}`;
 
 		QiProgress.db = new Dexie(DBName);
 
@@ -72,7 +73,7 @@ let QiProgress = {
 			history: '&qiround'
 		});
 
-		QiProgress.db.open();
+		await IndexDB.openWithLegacyCopy(QiProgress.db, [`FoeHelperDB_Qi_${playerID}`]);
 	},
 
 

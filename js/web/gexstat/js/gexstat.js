@@ -69,7 +69,8 @@ let GexStat = {
 	 */
 	checkForDB: async (playerID) => {
 
-		const DBName = `FoeHelperDB_GexStat_${playerID}`;
+		// own name, the DB of the toolbox 1.x / FoE Helfer stays untouched
+		const DBName = `FoEToolbox2DB_GexStat_${playerID}`;
 
 		GexStat.db = new Dexie(DBName);
 
@@ -81,7 +82,7 @@ let GexStat = {
 			participation: '&gexweek'
 		});
 
-		GexStat.db.open();
+		await IndexDB.openWithLegacyCopy(GexStat.db, [`FoeHelperDB_GexStat_${playerID}`]);
 	},
 
 

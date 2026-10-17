@@ -87,7 +87,8 @@ let EventHandler = {
 	* @returns {Promise<void>}
 	*/
 	checkForDB: async (playerID) => {
-		const DBName = `FoeHelperDB_Events_${playerID}`;
+		// own name, the DB of the toolbox 1.x / FoE Helfer stays untouched
+		const DBName = `FoEToolbox2DB_Events_${playerID}`;
 
 		EventHandler.db = new Dexie(DBName);
 
@@ -98,7 +99,7 @@ let EventHandler = {
 			Events: 'eventid,date,eventtype,playerid,entityid,isneighbor,isguildmember,isfriend'
 		});
 
-		EventHandler.db.open();
+		await IndexDB.openWithLegacyCopy(EventHandler.db, [`FoeHelperDB_Events_${playerID}`]);
 		window.dispatchEvent(new CustomEvent('foe-helper#eventDBloaded'))
 	},
 
