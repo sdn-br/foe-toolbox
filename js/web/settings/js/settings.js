@@ -241,9 +241,10 @@ let Settings = {
 	 * @returns {string}
 	 */
 	VersionInfo: () => {
-		let v = extVersion.includes('beta') ? `` : `<p>${i18n('Settings.Version.Link').replace('__version__', '')}</p>`;
+		let v = `<p>${i18n('Settings.Version.Link').replace('__version__', extVersion.replaceAll('.', ''))}</p>`;
 		v +=	`<dl class="info-box">
 					<dt>${i18n('Settings.Version.Title')}</dt><dd>${extVersion}</dd>
+					<dt>${i18n('Settings.Version.Base')}</dt><dd>FoE Helfer ${extBaseVersion}</dd>
 					<dt>${i18n('Settings.Version.PlayerId')}</dt><dd>${ExtPlayerID}</dd>
 					<dt>${i18n('Settings.Version.GuildId')}</dt><dd>${(ExtGuildID ? ExtGuildID : 'N/A')}</dd>
 					<dt>${i18n('Settings.Version.World')}</dt><dd>${ExtWorld}</dd>
@@ -365,7 +366,7 @@ let Settings = {
 	About: () => {
 		return '<hr>' +
 			'<h2>' + i18n('Settings.About.TranslateTitle') + '</h2>' +
-			'<p>' + i18n('Settings.About.TranslateDesc') + ' <a href="http://i18n.foe-helper.com/projects/foe-helper/extension/" target="_blank">Weblate</a></p>' +
+			'<p>' + i18n('Settings.About.TranslateDesc') + '</p>' +
 			'<hr>' +
 			'<h2>' + i18n('Settings.About.RatingTitle') + '</h2>' +
 			'<p>' + i18n('Settings.About.RatingDesc') + '</p>';

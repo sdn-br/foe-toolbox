@@ -262,7 +262,7 @@ alertsDB.version(1).stores({
 						message: alert.data.body,
 						iconUrl: '/images/app128.png',
 						eventTime: alert.data.expires,
-						contextMessage: 'FoE-Helper − '+trimPrefix(alert.server, "https://")
+						contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://")
 
 					}
 				)
@@ -388,22 +388,31 @@ alertsDB.version(1).stores({
 	})();
 
 
+	/**
+	 * Runs inside the game tab (injected via scripting.executeScript)
+	 * and asks whether the game should be reloaded to activate the new version
+	 */
+	function InstallConfirm() {
+		if (confirm('Die FoE-Toolbox wurde aktualisiert.\n\nSoll das Spiel jetzt neu geladen werden, damit die neuen Features sofort verfügbar sind?'))
+			window.location.reload();
+	}
+
 	browser.runtime.onInstalled.addListener(() => {
 		"use strict";
-		//const version = browser.runtime.getManifest().version;
-		let lng = browser.i18n.getUILanguage();
+		const version = browser.runtime.getManifest().version;
 
-		// Fallback to "en"
-		if(lng !== 'de' && lng !== 'en'){
-			lng = 'en';
-		}
+		// ask in every open game tab whether it should be reloaded
+		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs) => {
+			for (const tab of tabs) {
+				browser.tabs.update(tab.id, {active: true});
+				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm})
+					.catch((e) => console.error('InstallConfirm failed', e));
+			}
+		});
 
-		// @ts-ignore
-		//const askText = ask[lng];
-
-		/*if(!isDevMode() ) browser.tabs.create({
-			url: `https://foe-helper.com/extension/update?lang=${lng}`
-		});*/
+		browser.tabs.create({
+			url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
+		});
 	});
 
 

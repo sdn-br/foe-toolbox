@@ -228,12 +228,6 @@
 		"sort": 7
 	},
 	{
-		"name": "Help",
-		"callback": "Help",
-		"group": "About",
-		"sort": 9
-	},
-	{
 		"name": "About",
 		"callback": "About",
 		"group": "About",
@@ -244,12 +238,6 @@
 		"callback": "VersionInfo",
 		"group": "About",
 		"sort": 13
-	},
-	{
-		"name": "LoadBeta2",
-		"group": "About",
-		"button":"window.open('https://github.com/mainIine/foe-helfer-extension/archive/refs/heads/beta.zip', '_blank').focus();",
-		"sort": 19
 	},
 
 	{

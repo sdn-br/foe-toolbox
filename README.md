@@ -1,29 +1,27 @@
-## FoE Helper
-##### An extension for the Browser Game Forge of Empires to install in all Chromium based browsers like Google Chrome, Opera, Chromium or Microsoft Edge, Brave etc. and FireFox
+# ACHTUNG
+**Da ich Forge of Empires den Rücken gekehrt habe, werden keine weiteren Updates mehr folgen. Wenn jemand die Toolbox "offiziell" weiterführen möchte, kann er gerne unter Issues einen entsprechenden Thread öffnen und so einen Kommentar hinterlassen, dann werde ich den Link zum neuen Repository hier in der Readme hinterlegen.**
 
-[![Translation status](http://i18n.foe-helper.com/widgets/foe-helper/-/extension/svg-badge.svg)](http://i18n.foe-helper.com/engage/foe-helper/?utm_source=widget)
+## FoE Toolbox
+**Fork der Chrome Erweiterung FoE Helfer.**
 
+Die FoE Toolbox ist mehr oder weniger eine 1:1 Kopie des bekannten FoE Helfer mit einigen Features, die es nicht in den FoE Helfer schaffen werden bzw. dort nicht mehr vorhanden sind. Die FoE Toolbox Entwicklung findet unabhängig vom FoE Helfer statt, ist nicht mit dem FoE Helfer Team abgestimmt und steht auch sonst in keiner Beziehung zum FoE Helfer. Ich behalte mir aber vor, weiterhin den frei verfügbaren Quellcode des FoE Helfers als Basis für die FoE Toolbox zu verwenden.
 
-A manual for most modules and installation can be found here: [FoE Helper Docs](https://docs.foe-helper.com/english/installing)
+**Download und Nutzung wie bei allen Erweiterungen auf eigene Gefahr!**
 
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J52SY3V)
+* Die letzte aktuelle Version kann immer hier herunter geladen werden: [Latest Release](https://github.com/sdn-br/foe-toolbox/releases/latest)
+* Die Unterschiede zum FoE Helfer können hier eingesehen werden: [Unterschiede zum FoE-Helfer](https://github.com/sdn-br/foe-toolbox/wiki/Unterschiede-zum-FoE-Helfer)
+* Das FAQ ist hier zu finden: [FAQ](https://github.com/sdn-br/foe-toolbox/wiki/FAQ)
 
-###### FAQ
+##### Installationsanleitung für Google Chrome
 
-For questions and answers please use our [Discord](https://discord.gg/z97KZq4) server.
+1. Datei in ein Verzeichnis entpacken
+2. Neuen Browser Tab öffnen und dort als Adresse chrome://extensions eingeben oder einfach auf das Puzzlesymbol klicken und dann auf "Erweiterungen verwalten" klicken
+3. In der Erweiterungsübersicht andere FoE Helfer deaktivieren oder entfernen
+4. Entwicklermodus anschalten (Schalter in der oberen rechten Ecke)
+5. Den Knopf "Entpackte Erweitung laden" klicken
+6. Verzeichnis, in das die Erweiterung entpackt wurde, auswählen
+7. Spiel neu laden
 
+fertig!
 
-###### Bugs & Wishes
-
-If you find an error or have a request, please use the [ticket system](https://github.com/mainIine/foe-helfer-extension/issues).
-
-_This is an Open Source Project under the [AGPLv3 License](LICENSE.md)._
-
-###### Building a release
-The browser packages are generated from `manifests/` (shared `base.json` plus one overlay per browser). The root `manifest.json` is for local development only.
-
-```bash
-node manifests/build.js --zip
-```
-
-creates `foe-v<version>.zip` (Chrome), `foe-v<version>-edge.zip` (Edge) and `foe-v<version>-firefox.zip`. Pass a version (`node manifests/build.js 4.9.0.0 --zip`) to bump it first.
+_Dies ist ein Open Source Projekt unter der [AGPLv3 Lizenz](LICENSE.md)._

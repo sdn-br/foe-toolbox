@@ -84,7 +84,7 @@ let IndexDB = {
 
 
     Init: async (playerId) => {
-        const primaryDBName = 'FoeHelperDB_' + playerId; //Create different IndexDBs if two players are sharing the same PC playing on the same world
+        const primaryDBName = 'FoEToolboxDB_' + playerId; //Create different IndexDBs if two players are sharing the same PC playing on the same world
         const isNewDB = !await Dexie.exists(primaryDBName);
 
         const db = IndexDB.db = new Dexie(primaryDBName);
@@ -149,6 +149,9 @@ let IndexDB = {
         });
         db.version(3).stores({
             buildingMeta: 'id, hash, json',
+            // Toolbox 1.x table (PvP attacks). Declared here so that upgrading an existing
+            // FoEToolboxDB_ (schema v2) does not drop it; Dexie deletes undeclared tables on upgrade.
+            neighborhoodAttacks: '++id,playerId,date,type',
         });
     },
 
@@ -162,116 +165,57 @@ let IndexDB = {
 
         //log('Looks like your db is empty, trying to populate db using old databases');
 
-        let betaDB = null;
-        let masterDB = null;
-        let statsDB = null;
+        // Take over the data of a previous "FoE Helper Private" or FoE Helfer installation.
+        // Both run in the game page as well, so their DBs are visible in this origin.
+        // The source DBs are opened without a declared schema (Dexie dynamic mode),
+        // so it does not matter which schema version they have.
+        const foeHelperPrivDBName = 'FoeHelperPrivateDB_' + playerId;
+        const foeHelperDBName = 'FoeHelperDB_' + playerId;
 
-        // DB from beta
-        const betaDBName = 'FoeHelper_' + playerId;
-        if (await Dexie.exists(betaDBName)) {
-            betaDB = new Dexie(betaDBName);
+        let sourceDBName = foeHelperPrivDBName;
+        let sourceDB = await openIfFilled(foeHelperPrivDBName);
+        if (!sourceDB) {
+            sourceDBName = foeHelperDBName;
+            sourceDB = await openIfFilled(foeHelperDBName);
+        }
 
-            betaDB.version(1).stores({
-                players: 'id,date',
-                actions: '++id,playerId,date,type',
-                greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-           });
-
-            betaDB.version(2).stores({
-                players: 'id,date',
-                actions: '++id,playerId,date,type',
-                greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-                investhistory: '++id,playerId,entity_id,&[playerId+entity_id],name,level,max_progress,current_progress,profit,currentFp,fphistory,date'
-            });
-
-            betaDB.open();
-            if (!(await betaDB.players.count())) {
-                betaDB = null;
+        if (sourceDB) {
+            log(`Found DB "${sourceDBName}"`);
+            const destTables = IndexDB.db.tables.map(t => t.name);
+            const tables = {};
+            for (const table of sourceDB.tables) {
+                // buildingMeta is only a cache and is rebuilt anyway
+                if (table.name !== 'buildingMeta' && destTables.includes(table.name)) {
+                    tables[table.name] = table.name;
+                }
             }
+            await cloneTables(sourceDB, tables);
+            sourceDB.close();
         }
 
-        // Database from master
-        const masterDBName = 'PlayerDB';
-        if (await Dexie.exists(masterDBName)) {
-            masterDB = new Dexie(masterDBName);
-            masterDB.version(7).stores({
-                players: 'id,date',
-                actions: '++id,playerId,date,type'
-            });
-            masterDB.version(6).stores({
-                players: 'id',
-                actions: '++id,playerId,date,type'
-            });
-            masterDB.open();
-            if (!(await masterDB.players.count())) {
-                masterDB = null;
+        // "FoE Helper Private" is discontinued, its DB can go.
+        // The FoE Helfer DB is kept: the FoE Helfer may still be installed and uses it.
+        if (await Dexie.exists(foeHelperPrivDBName)) {
+            log(`Deleting old DB "${foeHelperPrivDBName}"`);
+            await Dexie.delete(foeHelperPrivDBName);
+        }
+
+        async function openIfFilled(name) {
+            if (!await Dexie.exists(name)) {
+                return null;
             }
-        }
-
-        // Stats db, beta
-        const statsDBName = 'StatsDb';
-        if (await Dexie.exists(statsDBName)) {
-            statsDB = new Dexie(statsDBName);
-            statsDB.version(4).stores({
-                // battleground
-                gbgPlayers: 'date', // battleground
-                playerCache: 'id, date', // Cache of players for using in gbgPlayers
-                // rewards
-                rewards: 'date', // Collected rewards by Himeji, etc
-                rewardTypes: 'id', // Human readable cache info about rewards
-                // units
-                unitsDaily: 'date',
-                units: 'date',
-                // treasure player
-                treasurePlayer: 'date',
-                treasurePlayerDaily: 'date',
-                // treasure clan
-                treasureClan: 'date, clanId',
-                treasureClanDaily: 'date, clanId',
-            });
-            statsDB.open();
-            if (!(await  statsDB.treasurePlayer.count())) {
-                statsDB = null;
+            const sdb = new Dexie(name);
+            await sdb.open();
+            // Not only "players": the FoE Helfer 4.x clears its players table on every start,
+            // so a DB counts as filled as soon as any table (except the cache) has rows
+            for (const table of sdb.tables) {
+                if (table.name !== 'buildingMeta' && await table.count()) {
+                    return sdb;
+                }
             }
+            sdb.close();
+            return null;
         }
-
-        if (betaDB) {
-            //log(`Found DB "${betaDBName}"`)
-            await cloneTables(betaDB, {
-                players: 'players',
-                pvpActions: 'actions',
-                greatbuildings: 'greatbuildings'
-            });
-        } else if (masterDB) {
-            //log(`Found DB "${masterDBName}"`)
-            await cloneTables(masterDB, {
-                players: 'players',
-                pvpActions: 'actions',
-            });
-        }
-        if (statsDB) {
-            log(`Found DB "${statsDBName}"`)
-            await cloneTables(statsDB, {
-                statsGBGPlayers: 'gbgPlayers',
-                statsGBGPlayerCache: 'playerCache',
-                statsRewards: 'rewards',
-                statsRewardTypes: 'rewardTypes',
-                statsUnitsD: 'unitsDaily',
-                statsUnitsH: 'units',
-                statsTreasurePlayerH: 'treasurePlayer',
-                statsTreasurePlayerD: 'treasurePlayerDaily',
-                statsTreasureClanH: 'treasureClan',
-                statsTreasureClanD: 'treasureClanDaily',
-            });
-        }
-
-
-
-        // log('Deleting old databases');
-        await Dexie.delete(betaDBName);
-        await Dexie.delete(masterDBName);
-        await Dexie.delete(statsDBName);
-        //log('Done.');
 
         // Copy tables.
         // Basicly this is not transaction safe to bulkAdd, but we can ignore it because
@@ -282,7 +226,7 @@ let IndexDB = {
                 const sourceTable = tables[destTable];
                 log(`  Copy ${sourceTable} => ${destTable}...`);
                 await IndexDB.db[destTable].clear();
-                await IndexDB.db[destTable].bulkAdd(await source[sourceTable].toArray());
+                await IndexDB.db[destTable].bulkAdd(await source.table(sourceTable).toArray());
             }
         }
 
