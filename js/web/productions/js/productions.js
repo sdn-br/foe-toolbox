@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -11,6 +11,15 @@
  * **************************************************************************************
  */
 
+// collections, moves etc.: keep an open box in sync with the city
+FoEproxy.addFoeHelperHandler('CityMapUpdated', () => {
+	if ($('#Productions').length === 0) return
+
+	clearTimeout(Productions.RefreshTimer)
+	Productions.RefreshTimer = setTimeout(Productions.Refresh, 1500)
+})
+
+
 let Productions = {
 
 	CombinedCityMapData: {},
@@ -18,30 +27,40 @@ let Productions = {
 	BuildingsProducts: [],
 	BuildingsProductsGroups: [],
 	ShowDaily: false,
-
 	ActiveTab: 1,
+	ViewState: {},
+	RefreshTimer: null,
 
 	Tabs: [],
 	TabsContent: [],
 
 	Types: [
-		'strategy_points',	// Forge Punkte
-		'money',			// Münzen
-		'supplies',			// Werkzeuge
-		'medals',			// Medaillien
-		'units',			// Einheiten
-		'premium',			// Diamanten
-		'clan_power',		// Macht der Gilde
-		'clan_goods',		// Gildengüter (Arche, Ehrenstatue etc.)
-		'population',		// Bevölkerung
-		'happiness',		// Zufriedenheit
-		'att_boost_attacker', //Angriffsbonus angreifende Armee
-		'def_boost_attacker', //Verteidigungsbonus angreifende Armee
-		'att_boost_defender', //Angriffsbonus verteidigenden Armee
-		'def_boost_defender', //Verteidigungsbonus verteidigenden Armee
-		'goods',			// Güter Gruppe (5 verschieden z.B.)
+		'strategy_points',			// Forge Points
+		'forge_points_production', 	// FP Boost
+		'goods',					// Regular goods
+		'special_goods', 			// *special* goods
+		'items',					// Fragments, blueprints, boosts etc
+		'money',					// Coins
+		'coin_production', 			// Coin Boost
+		'supplies',
+		'supply_production', 		// Supply Boost
+		'medals',
+		'premium',					// Diamonds
+		'population',
+		'happiness',
+		'units',
+		'att_boost_attacker',
+		'def_boost_attacker',
+		'att_boost_defender',
+		'def_boost_defender',
+		'clan_goods',
+		'guild_raids'
 	],
+	FSPqualifiedResources: ["strategy_points","clan_goods","goods-previous","goods-current","goods-next"],
 
+	HappinessBoost: 0,
+	PopulationSum: 0,
+	HappinessSum: 0,
 	Boosts: [],
 
 	Buildings: [
@@ -54,802 +73,213 @@ let Productions = {
 		'goods',
 		'culture',
 		'main_building',
-		'clan_power_production',
 		'off_grid',
 		'generic_building'
 	],
 
-	RatingCurrentTab: 'Settings',
-	RatingEnableds: {},
-	RatingProdPerTiles: {},
 
-	RatingTypes: [
-		'strategy_points',	// Forge Punkte
-		'money',			// Münzen
-		'supplies',			// Werkzeuge
-		'medals',			// Medaillien
-		'units',			// Einheiten
-		'clan_power',		// Macht der Gilde
-		'clan_goods',		// Gildengüter (Arche, Ehrenstatue etc.)
-		'population',		// Bevölkerung
-		'happiness',		// Zufriedenheit
-		'att_boost_attacker', //Angriffsbonus angreifende Armee
-		'def_boost_attacker', //Verteidigungsbonus angreifende Armee
-		'att_boost_defender', //Angriffsbonus verteidigenden Armee
-		'def_boost_defender', //Verteidigungsbonus verteidigenden Armee
-		'goods',				// Güter Gruppe (5 verschieden z.B.)
-	],
+	fragmentsSet: new Set(),
 
 
 	/**
-	 *  Start der ganzen Prozedur
+	 * Initializes the Productions module, sets up building data, and toggles the box.
 	 */
 	init: () => {
+		if (ActiveMap === 'OtherPlayer') return
 
-		moment.locale(i18n('Local'));
-
-		Productions.CombinedCityMapData = MainParser.CityMapData;
-		if (MainParser.CityMapEraOutpostData) {
-			Productions.CombinedCityMapData = Object.assign({}, Productions.CombinedCityMapData, MainParser.CityMapEraOutpostData);
-		}
-
-		// leere Arrays erzeugen
-		for(let i in Productions.Types)
-		{
-			if (!Productions.Types.hasOwnProperty(i)) continue;
-
-			Productions.BuildingsProducts[Productions.Types[i]] = [];
-			if (Productions.Types[i] === 'goods') continue;
-			Productions.BuildingsProductsGroups[ Productions.Types[i] ] = [];
-		}
-
-		Productions.ReadData();
+		Productions.ViewState = {}
+		Productions.ReadData()
+		Productions.showBox()
 	},
 
 
 	/**
-	 * Alle Gebäude durchsteppen
+	 * Re-renders the open box with the current city data, e.g. after a collection:
+	 * the current productions and timers would stay stale otherwise. Keeps the active tab,
+	 * the search terms, the list/group view, the sort order and the scroll position.
+	 */
+	Refresh: () => {
+		if ($('#Productions').length === 0 || ActiveMap === 'OtherPlayer') return
+
+		Productions.ReadData()
+
+		const $tabs = $('#Productions .production-tabs > ul > li')
+		Productions.ActiveTab = Math.max(1, $tabs.index($tabs.filter('.active')) + 1)
+		Productions.CaptureViewState()
+		Productions.CalcBody()
+	},
+
+
+	/**
+	 * Remembers the search terms, the list/group view and the sort order of every rendered tab
+	 * as well as the scroll position, so a re-render does not reset them.
+	 */
+	CaptureViewState: () => {
+		const state = { tabs: {}, scrollTop: $('#Productions #ProductionsBody').scrollTop() || 0 }
+
+		$('#Productions #ProductionsBody .content').each(function () {
+			const $tables = $(this).children('table.sortable-table')
+			if ($tables.length === 0) return
+
+			state.tabs[this.id] = {
+				filters: $(this).find('input.filterCurrentList').map(function () { return $(this).val() }).get(),
+				activeTable: $tables.index($tables.filter('.active')),
+				// only columns the user sorted, the pre-marked default headers are left alone
+				sorts: $tables.get().map(table => {
+					const column = $(table).data('sortedColumn')
+					if (column === undefined) return null
+
+					const $th = $(table).find('tr.sorter-header').first().children('th').eq(column)
+					if (!($th.hasClass('ascending') || $th.hasClass('descending'))) return null
+
+					return { column: column, ascending: $th.hasClass('ascending') }
+				})
+			}
+		})
+
+		Productions.ViewState = state
+	},
+
+
+	/**
+	 * Re-applies the remembered search terms, list/group view and sort order to a freshly rendered tab.
 	 *
+	 * @param {string} type Production type (= id of the tab content)
+	 */
+	RestoreViewState: (type) => {
+		const tabState = Productions.ViewState?.tabs?.[type]
+		if (!tabState) return
+
+		delete Productions.ViewState.tabs[type]
+
+		const $content = $('#Productions #' + type),
+			$tables = $content.children('table.sortable-table')
+
+		if (tabState.activeTable > -1 && tabState.activeTable < $tables.length) {
+			$tables.removeClass('active').css('display', '')
+			$tables.eq(tabState.activeTable).addClass('active')
+		}
+
+		// replay the sort with a click on the header; table-sorter derives the direction from the header class
+		;(tabState.sorts || []).forEach((sort, i) => {
+			if (!sort || i >= $tables.length) return
+
+			const $th = $tables.eq(i).find('tr.sorter-header').first().children('th').eq(sort.column)
+			if ($th.length === 0 || $th.hasClass('no-sort')) return
+
+			const numeric = $th.hasClass('is-number')
+			$th.removeClass('ascending descending')
+			if (numeric && sort.ascending) $th.addClass('descending')
+			if (!numeric && !sort.ascending) $th.addClass('ascending')
+			$th.trigger('click')
+			$tables.eq(i).data('sortedColumn', sort.column)
+		})
+
+		$content.find('input.filterCurrentList').each(function (i) {
+			if (tabState.filters[i]) $(this).val(tabState.filters[i]).trigger('keyup')
+		})
+	},
+
+
+	/**
+	 * Calculates the daily production sums (forge points, units, goods and guild goods)
+	 * for the player profile without rendering the production overview box.
+	 */
+	calcDailyProduction: () => {
+		if (ActiveMap === 'OtherPlayer') return
+
+		MainParser.CityBuildingsData = CityBuildings.createBuildings(Object.values(MainParser.CityMapData))
+		Productions.CombinedCityMapData = MainParser.CityBuildingsData
+
+		if (CityMap.EraOutpost.data) {
+			Productions.CombinedCityMapData = Object.assign({}, Productions.CombinedCityMapData, CityMap.EraOutpost.data)
+		}
+
+		Productions.BuildingsAll = Object.values(Productions.CombinedCityMapData)
+		Productions.setChainsAndSets(Productions.BuildingsAll)
+
+		let fpSum = 0,
+			unitSum = 0,
+			guildGoodsSum = 0,
+			goodsTotal = {}
+
+		for (const building of Productions.BuildingsAll) {
+			if (building.player_id !== ExtPlayerID || building.chainBuilding?.type === "linked") continue
+
+			let fp = parseFloat(Productions.getBuildingProductionByCategory(false, building, 'strategy_points').amount)
+			if (building.isBoostable)
+				fp = Math.round(fp + (fp * Boosts.Sums.forge_points_production / 100))
+			fpSum += fp
+
+			unitSum += parseFloat(Productions.getBuildingProductionByCategory(false, building, 'units').amount)
+
+			const goods = CityBuildings.getBuildingGoodsByEra(false, building, true)
+			for (const [era, value] of Object.entries(goods?.eras || {})) {
+				goodsTotal[era] = (goodsTotal[era] || 0) + value
+			}
+
+			const guildGoods = CityBuildings.getBuildingGuildGoodsByEra(false, building, true)
+			for (const value of Object.values(guildGoods?.eras || {})) {
+				guildGoodsSum += value
+			}
+		}
+
+		Profile.fpProduction = fpSum
+		Profile.units = unitSum
+		Profile.goods = goodsTotal
+		Profile.guildGoods = guildGoodsSum
+	},
+
+
+	/**
+	 * Processes the city building data: builds the building list, resets the product
+	 * groups and calculates the population and happiness sums.
 	 */
 	ReadData: ()=> {
+		MainParser.CityBuildingsData = CityBuildings.createBuildings(Object.values(MainParser.CityMapData))
+		Productions.CombinedCityMapData = MainParser.CityBuildingsData
 
-		let d = Productions.CombinedCityMapData;
-		Productions.BuildingsAll = [];
-
-		let PopulationSum = 0,
-			HappinessSum = 0;
-
-		Productions.Boosts = [];
-
-		for(let i in d)
-		{
-			if (!d.hasOwnProperty(i)) continue;
-
-			if (d[i]['id'] >= 2000000000 && !d[i]['cityentity_id'].startsWith('V_AllAge_CastleSystem')) continue; //Exclude all off grid buildings except Castle
-
-			// jede einzelne Produktart holen
-			let building = Productions.readType(d[i]);
-
-			// das Gebäude produziert etwas?
-			if (Object.keys(building.motivatedproducts).length > 0){
-				Productions.BuildingsAll.push(building);
-
-				if (building['products']['population']) {
-					PopulationSum += building['products']['population'];
-				}
-				if (building['products']['happiness']) {
-					HappinessSum += building['products']['happiness'];
-				}
-			}
+		if (CityMap.EraOutpost.data) {
+			Productions.CombinedCityMapData = Object.assign({}, Productions.CombinedCityMapData, CityMap.EraOutpost.data)
 		}
 
-		let ProdBonus = 0;
-		if (HappinessSum < PopulationSum) {
-			ProdBonus = -0.5;
-		}
-		else if (HappinessSum < 1.4 * PopulationSum) {
-			ProdBonus = 0;
-		}
-		else {
-			ProdBonus = 0.2;
+		// Create empty arrays
+		for (const type of Productions.Types) {
+			Productions.BuildingsProducts[type] = []
+			if (type !== 'goods') Productions.BuildingsProductsGroups[type] = []
 		}
 
-		Productions.Boosts['money'] += ProdBonus;
-		Productions.Boosts['supplies'] += ProdBonus;
+		Productions.BuildingsAll = Object.values(Productions.CombinedCityMapData)
+		Productions.setChainsAndSets(Productions.BuildingsAll)
 
-		for(let i in Productions.BuildingsAll)
-		{
-			if (!Productions.BuildingsAll.hasOwnProperty(i)) continue;
+		Productions.PopulationSum = 0,
+		Productions.HappinessSum = 0
 
-			let building = Productions.BuildingsAll[i];
+		Productions.BuildingsAll.forEach(building => {
+			if (building.happiness)
+				Productions.HappinessSum += building.happiness
+			if (building.population && building.population > 0)
+				Productions.PopulationSum += building.population
+		})
 
-			if (building['type'] === 'residential' || building['type'] === 'production')
-			{
-				if (building['products']['money']) {
-					building['products']['money'] = MainParser.round(building['products']['money'] * Productions.Boosts['money']);
-				}
+		let ProdBonus = 0
+		if (Productions.HappinessSum < Productions.PopulationSum)
+			ProdBonus = -0.5
+		else if (Productions.HappinessSum < 1.4 * Productions.PopulationSum)
+			ProdBonus = 0
+		else
+			ProdBonus = 0.2
 
-				if (building['motivatedproducts']['money']) {
-					building['motivatedproducts']['money'] = MainParser.round(building['motivatedproducts']['money'] * Productions.Boosts['money']);
-				}
-
-				if (building['products']['supplies']) {
-					building['products']['supplies'] = MainParser.round(building['products']['supplies'] * Productions.Boosts['supplies']);
-				}
-
-				if (building['motivatedproducts']['supplies']) {
-					building['motivatedproducts']['supplies'] = MainParser.round(building['motivatedproducts']['supplies'] * Productions.Boosts['supplies']);
-				}
-
-				if (building['products']['strategy_points']) {
-					building['products']['strategy_points'] = MainParser.round(building['products']['strategy_points'] * Productions.Boosts['fp']);
-				}
-
-				if (building['motivatedproducts']['strategy_points']) {
-					building['motivatedproducts']['strategy_points'] = MainParser.round(building['motivatedproducts']['strategy_points'] * Productions.Boosts['fp']);
-				}
-			}
-
-			// Nach Produkt
-			for (let x in building['products'])
-			{
-				if (!building['products'].hasOwnProperty(x))
-				{
-					break;
-				}
-
-				if (Productions.Types.includes(x))
-				{
-					// Alle Gebäude einzeln auflisten, nach Produkt sortiert
-					Productions.BuildingsProducts[x].push(building);
-
-					let index = Productions.BuildingsProductsGroups[x].map((el) => el.eid).indexOf(building['eid']);
-
-					// Alle Gebäude gruppieren und
-					if (index === -1)
-					{
-						let ni = Productions.BuildingsProductsGroups[x].length + 1;
-
-						Productions.BuildingsProductsGroups[x][ni] = [];
-						Productions.BuildingsProductsGroups[x][ni]['name'] = building['name'];
-						Productions.BuildingsProductsGroups[x][ni]['eid'] = building['eid'];
-						Productions.BuildingsProductsGroups[x][ni]['era'] = building['era'];
-						Productions.BuildingsProductsGroups[x][ni]['dailyfactor'] = building['dailyfactor'];
-						Productions.BuildingsProductsGroups[x][ni]['units'] = building['units'];
-						Productions.BuildingsProductsGroups[x][ni]['products'] = Productions.GetDaily(parseInt(building['products'][x]), building['dailyfactor'], x);
-						Productions.BuildingsProductsGroups[x][ni]['motivatedproducts'] = Productions.GetDaily(parseInt(building['motivatedproducts'][x]), building['dailyfactor'], x);
-						Productions.BuildingsProductsGroups[x][ni]['count'] = 1;
-
-					}
-					else
-					{
-						Productions.BuildingsProductsGroups[x][index]['products'] += parseInt(building['products'][x]);
-						Productions.BuildingsProductsGroups[x][index]['motivatedproducts'] += parseInt(building['motivatedproducts'][x]);
-						Productions.BuildingsProductsGroups[x][index]['count']++;
-					}
-				}
-
-				else {
-					let mId = Productions.BuildingsAll[i]['eid'] + '_' + Productions.BuildingsAll[i]['id'];
-
-					if (Array.isArray(Productions.BuildingsProducts['goods'][mId]) === false) {
-						Productions.BuildingsProducts['goods'][mId] = [];
-						Productions.BuildingsProducts['goods'][mId]['at'] = building['at'];
-						Productions.BuildingsProducts['goods'][mId]['id'] = building['id'];
-						Productions.BuildingsProducts['goods'][mId]['era'] = building['era'];
-						Productions.BuildingsProducts['goods'][mId]['name'] = building['name'];
-						Productions.BuildingsProducts['goods'][mId]['type'] = building['type'];
-						Productions.BuildingsProducts['goods'][mId]['dailyfactor'] = building['dailyfactor'];
-						Productions.BuildingsProducts['goods'][mId]['products'] = [];
-						Productions.BuildingsProducts['goods'][mId]['motivatedproducts'] = [];
-					}
-
-					Productions.BuildingsProducts['goods'][mId]['products'][x] = building['products'][x];
-					Productions.BuildingsProducts['goods'][mId]['motivatedproducts'][x] = building['motivatedproducts'][x];
-				}
-			}
-		}
-
-		Productions.showBox();
+		Productions.HappinessBoost = ProdBonus
+		Productions.Boosts['money'] += ProdBonus
+		Productions.Boosts['supplies'] += ProdBonus
 	},
 
 
 	/**
-	 * alle Produkte auslesen
-	 *
-	 * @param d
-	 * @returns {{eid: *, at: *, in: *, name: *, id: *, type: *, products: *, motivatedproducts: *}}
-	 */
-	readType: (d) => {
-		let Products = [],
-			EntityID = d['cityentity_id'],
-			CityEntity = MainParser.CityEntities[EntityID],
-			BuildingSize = CityMap.GetBuildingSize(d);
-
-		// Münzboost ausrechnen und bereitstellen falls noch nicht initialisiert
-		if (Productions.Boosts['money'] === undefined) Productions.Boosts['money'] = ((MainParser.BoostSums['coin_production'] + 100) / 100);
-		if (Productions.Boosts['supplies'] === undefined) Productions.Boosts['supplies'] = ((MainParser.BoostSums['supply_production'] + 100) / 100);
-		if (Productions.Boosts['fp'] === undefined) Productions.Boosts['fp'] = ((MainParser.BoostSums['forge_points_production'] + 100) / 100);
-
-		let era = CityMap.GetBuildingEra(d);
-
-		let Ret = {
-			name: CityEntity['name'],
-			id: d['id'],
-			eid: d['cityentity_id'],
-			type: d['type'],
-			era: era,
-			at: (MainParser.getCurrentDate().getTime()) / 1000,
-			in: 0
-		};
-
-		if (!BuildingSize['is_connected']) {
-			Ret.at = undefined;
-			Ret.in = undefined;
-		}
-		else if (d['state']) {
-			let At = d['state']['next_state_transition_at'],
-				In = d['state']['next_state_transition_in'];
-
-			if (At) Ret.at = At;
-			if (In) Ret.in = In;
-		}
-
-		let DoubleProductionWhenMotivated = false,
-			DoubleHappinessWhenMotivated = false,
-			IsPolivated = (d['state']['socialInteractionId'] === 'motivate' || d['state']['socialInteractionId'] === 'polish');;
-
-		//GenericCityEntity
-		if (CityEntity['components']) {
-			let Products = {},
-				MotivatedProducts = {};
-
-			if(CityEntity['components']['AllAge'] && CityEntity['components']['AllAge']['tags'] && CityEntity['components']['AllAge']['tags']['tags']){
-				let Tags = CityEntity['components']['AllAge']['tags']['tags'];
-				for(let i = 0; i < Tags.length;i++)
-				{
-					let Tag = Tags[i];
-					if(Tag['buildingType']){
-						Ret['type'] = Tag['buildingType'];
-					}
-				}
-			}
-
-			if (d.state && d['state']['productionOption'] && d['state']['productionOption']['products']) {
-				let CurrentProducts = d['state']['productionOption']['products'],
-					ProductionName = d['state']['productionOption']['name'];
-
-				for (let i = 0; i < CurrentProducts.length; i++) {
-					let CurrentProduct = CurrentProducts[i];
-
-					if (CurrentProduct['playerResources'] && CurrentProduct['playerResources']['resources']) {
-						let Resources = CurrentProduct['playerResources']['resources'];
-						for (let ResName in Resources) {
-							if (!Products[ResName]) Products[ResName] = 0;
-							if (!MotivatedProducts[ResName]) MotivatedProducts[ResName] = 0;
-
-							if (!CurrentProduct['onlyWhenMotivated'] || IsPolivated) {
-								Products[ResName] += Resources[ResName];
-								MotivatedProducts[ResName] += Resources[ResName];
-							}
-						}
-					}
-
-					if (CurrentProduct['guildResources'] && CurrentProduct['guildResources']['resources']) {
-						let Resources = CurrentProduct['guildResources']['resources'];
-
-						for (let GoodID in Resources) {
-							if (!Resources.hasOwnProperty(GoodID)) continue;
-
-							let Amount = Resources[GoodID];
-
-							if (!CurrentProduct['onlyWhenMotivated'] || IsPolivated) {
-								if (!Products['clan_goods']) Products['clan_goods'] = 0;
-								Products['clan_goods'] += Amount;
-							}
-
-							if (!MotivatedProducts['clan_goods']) MotivatedProducts['clan_goods'] = 0;
-							MotivatedProducts['clan_goods'] += Amount;
-                        }
-					}
-				}
-
-				if (!IsPolivated && ProductionName) {
-					if (CityEntity['components']['AllAge'] && CityEntity['components']['AllAge'] && CityEntity['components']['AllAge']['socialInteraction'] && CityEntity['components']['AllAge']['socialInteraction']['interactionType'] === 'motivate') {
-						DoubleProductionWhenMotivated = true;
-					}
-
-					let LoopEras = [CurrentEra, 'AllAge'];
-
-					for (let i = 0; i < LoopEras.length; i++) {
-						let LoopEra = LoopEras[i],
-							EraData = CityEntity['components'][LoopEra];
-
-						if (EraData && EraData['production'] && EraData['production']['options']) {
-							let Options = EraData['production']['options'];
-							for (let j = 0; j < Options.length; j++) {
-								let CurrentOption = Options[j];
-
-								if (CurrentOption['name'] !== ProductionName) continue;
-
-								for (let k = 0; k < CurrentOption['products'].length; k++) {
-									let CurrentProduct = CurrentOption['products'][k];
-
-									if (!CurrentProduct['onlyWhenMotivated']) continue;
-
-									if (CurrentProduct['playerResources']) {
-										let Resources = CurrentProduct['playerResources']['resources'];
-										for (let ResName in Resources) {
-											if (ResName.startsWith('random_good') || ResName.startsWith('all_goods')) {
-												let Amount = Resources[ResName] / 5;
-
-												let StartIndex = (era - 2) * 5;
-												if(ResName.endsWith('previous_age')) StartIndex -= 5;
-
-												if (StartIndex >= 0 && StartIndex + 5 <= GoodsList.length) {
-													for (let i = 0; i < 5; i++) {
-														let Resource2 = GoodsList[StartIndex + i]['id'];
-														if (!Products[Resource2]) Products[Resource2] = 0;
-														if (!MotivatedProducts[Resource2]) MotivatedProducts[Resource2] = 0;
-
-														MotivatedProducts[Resource2] += Amount;
-													}
-												}
-											}
-											else {
-												if (!Products[ResName]) Products[ResName] = 0;
-												if (!MotivatedProducts[ResName]) MotivatedProducts[ResName] = 0;
-
-												MotivatedProducts[ResName] += Resources[ResName];
-											}
-
-										}
-									}
-
-									if (CurrentProduct['guildResources']) {
-										let Resources = CurrentProduct['guildResources']['resources'];
-										if (Resources['all_goods_of_age']) {
-											if (CurrentProduct['onlyWhenMotivated']) {
-												if (!Products['clan_goods']) Products['clan_goods'] = 0;
-												if (!MotivatedProducts['clan_goods']) MotivatedProducts['clan_goods'] = 0;
-
-												MotivatedProducts['clan_goods'] += Resources['all_goods_of_age'];
-											}										
-										}
-                                    }
-                                }
-							}
-						}
-					}
-                }				
-			}
-
-			if (d['state'] && d['state']['__class__'] !== 'ConstructionState') {
-				let EraName = Technologies.EraNames[era],
-					EraComponents = CityEntity['components'][EraName];
-
-				if (EraComponents) {
-					if (EraComponents['staticResources'] && EraComponents['staticResources']['resources'] && EraComponents['staticResources']['resources']['resources']) {
-						let Population = EraComponents['staticResources']['resources']['resources']['population'];
-						if (Population) {
-							if (!Products['population']) Products['population'] = 0;
-							Products['population'] += Population;
-
-							if (!MotivatedProducts['population']) MotivatedProducts['population'] = 0;
-							MotivatedProducts['population'] += Population;
-                        }
-					}
-
-					if (BuildingSize['is_connected']) {
-						if (EraComponents['happiness']) {
-							let Happiness = EraComponents['happiness']['provided'];
-
-							if (Happiness) {
-								if (d['state']['__class__'] === 'PolishedState') Happiness *= 2;
-
-								if (!Products['happiness']) Products['happiness'] = 0;
-								Products['happiness'] += Happiness;
-
-								if (!MotivatedProducts['happiness']) MotivatedProducts['happiness'] = 0;
-								MotivatedProducts['happiness'] += Happiness;
-							}
-						}
-
-						if (EraComponents['boosts'] && EraComponents['boosts']['boosts']) {
-							for (let i = 0; i < EraComponents['boosts']['boosts'].length; i++) {
-								let Boost = EraComponents['boosts']['boosts'][i],
-									BoostType = Boost['type'];
-
-								if (Boost['type'] === 'att_boost_attacker' || Boost['type'] === 'att_boost_defender' || Boost['type'] === 'def_boost_attacker' || Boost['type'] === 'def_boost_defender') {
-
-									if (!Products[BoostType]) Products[BoostType] = 0;
-									Products[BoostType] += Boost['value'];
-
-									if (!MotivatedProducts[BoostType]) MotivatedProducts[BoostType] = 0;
-									MotivatedProducts[BoostType] += Boost['value'];
-								}
-                            }
-                        }
-                    }
-				}
-			}
-
-			Ret.products = Products;
-			Ret.motivatedproducts = MotivatedProducts;
-
-			if (d['state'] && d['state']['productionOption'] && d['state']['productionOption']['time']) {
-				Ret['dailyfactor'] = 86400 / d['state']['productionOption']['time'];
-			}
-			else {
-				Ret['dailyfactor'] = 1;
-			}
-		}
-
-		// Legacy Building
-		else {
-			let CurrentResources = [],
-				AdditionalResources = [],
-				Units;
-
-			if (CityEntity['abilities']) {
-				for (let AbilityIndex in CityEntity['abilities']) {
-					if (!CityEntity['abilities'].hasOwnProperty(AbilityIndex)) continue
-
-					let Ability = CityEntity['abilities'][AbilityIndex];
-
-					if (Ability['__class__'] === 'DoubleProductionWhenMotivatedAbility') DoubleProductionWhenMotivated = true;
-					if (Ability['__class__'] === 'PolishableAbility') DoubleHappinessWhenMotivated = true;
-
-					if (!IsPolivated && Ability['additionalResources'] && Ability['__class__'] === 'AddResourcesWhenMotivatedAbility') {
-						if (Ability['additionalResources']['AllAge'] && Ability['additionalResources']['AllAge']['resources']) {
-							let NewResources = Ability['additionalResources']['AllAge']['resources'];
-							for (let Resource in NewResources) {
-								if (!NewResources.hasOwnProperty(Resource)) continue;
-
-								if (Resource.startsWith('random_good') || Resource.startsWith('all_goods')) {
-									let Amount = NewResources[Resource] / 5;
-
-									let StartIndex = (era - 2) * 5;
-									if (StartIndex >= 0 && StartIndex + 5 <= GoodsList.length) {
-										for (let i = 0; i < 5; i++) {
-											let Resource2 = GoodsList[StartIndex + i]['id'];
-											if (!AdditionalResources[Resource2]) AdditionalResources[Resource2] = 0;
-											AdditionalResources[Resource2] += Amount;
-										}
-									}
-								}
-								else {
-									if (!AdditionalResources[Resource]) AdditionalResources[Resource] = 0;
-									AdditionalResources[Resource] += NewResources[Resource];
-								}
-							}
-						}
-
-						let EraName = Technologies.EraNames[era];
-						if (EraName && Ability['additionalResources'][EraName] && Ability['additionalResources'][EraName]['resources']) {
-							let NewResources = Ability['additionalResources'][EraName]['resources'];
-							for (let Resource in NewResources) {
-								if (!NewResources.hasOwnProperty(Resource)) continue;
-								if (!AdditionalResources[Resource]) AdditionalResources[Resource] = 0;
-								AdditionalResources[Resource] += NewResources[Resource];
-							}
-						}
-					}
-
-					// this buildung produces random units
-					else if (Ability['__class__'] === 'RandomUnitOfAgeWhenMotivatedAbility') {
-						Units = Ability['amount'];
-					}
-				}
-			}
-
-			if (d.state && d['state']['current_product']) {
-				if (d['state']['current_product']['product'] && d['state']['current_product']['product']['resources']) {
-					CurrentResources = Object.assign({}, d['state']['current_product']['product']['resources']);
-				}
-
-				if (d['state']['current_product']['clan_power']) {
-					CurrentResources['clan_power'] = d['state']['current_product']['clan_power']; // z.B. Ruhmeshalle
-				}
-
-				if (d['state']['current_product']['name'] === 'penal_unit') {
-					CurrentResources['units'] = d['state']['current_product']['amount'];
-				}
-
-				if (d['state']['current_product']['units']) {
-					CurrentResources['units'] = d['state']['current_product']['units'];
-				}
-
-				if (d['state']['current_product']['name'] === 'clan_goods' && d['state']['current_product']['goods']) {
-					let GoodSum = 0;
-
-					for (let i = 0; i < d['state']['current_product']['goods'].length; i++) {
-						GoodSum += d['state']['current_product']['goods'][i]['value'];
-					}
-
-					if (GoodSum > 0) {
-						CurrentResources['clan_goods'] = GoodSum;
-					}
-				}
-
-				if (d['state']['current_product']['guildProduct'] && d['state']['current_product']['guildProduct']['resources']) {
-					let GoodSum = 0;
-
-					for (let ResourceName in d['state']['current_product']['guildProduct']['resources']) {
-						if (!d['state']['current_product']['guildProduct']['resources'].hasOwnProperty(ResourceName)) continue;
-
-						if (ResourceName === 'clan_power') {
-							CurrentResources[ResourceName] = d['state']['current_product']['guildProduct']['resources'][ResourceName];
-						}
-						else {
-							GoodSum += d['state']['current_product']['guildProduct']['resources'][ResourceName];
-						}
-					}
-
-					if (GoodSum > 0) {
-						CurrentResources['clan_goods'] = GoodSum;
-					}
-				}
-			}
-
-			// Units filled?
-			if (Units) CurrentResources['units'] = Units;
-
-			for (let Resource in CurrentResources) {
-				if (!CurrentResources.hasOwnProperty(Resource)) continue;
-
-				if (Resource !== 'credits') { // Marscredits nicht zu den Gütern zählen
-					Products[Resource] = CurrentResources[Resource];
-				}
-			}
-
-			if (MainParser.Boosts[d['id']]) {
-				let Boosts = MainParser.Boosts[d['id']];
-				for (let i = 0; i < Boosts.length; i++) {
-					let Boost = Boosts[i];
-
-					if (Boost['type'] === 'happiness_amount') {
-						Products['happiness'] = (Products['happiness'] ? Products['happiness'] : 0) + Boost['value'];
-					}
-
-					if (Boost['type'] === 'att_boost_attacker' || Boost['type'] === 'att_boost_defender' || Boost['type'] === 'def_boost_attacker' || Boost['type'] === 'def_boost_defender') {
-						Products[Boost['type']] = (Products[Boost['type']] ? Products[Boost['type']] : 0) + Boost['value'];
-					}
-				}
-			}
-
-			if (d['bonus']) {
-				let BonusType = d['bonus']['type'];
-				if (BonusType === 'population' || BonusType === 'happiness') {
-					Products[BonusType] = (Products[BonusType] ? Products[BonusType] : 0) + d['bonus']['value'];
-				}
-				else if (BonusType === 'military_boost') {
-					Products['att_boost_attacker'] = (Products['att_boost_attacker'] ? Products['att_boost_attacker'] : 0) + d['bonus']['value'];
-					Products['def_boost_attacker'] = (Products['def_boost_attacker'] ? Products['def_boost_attacker'] : 0) + d['bonus']['value'];
-				}
-				else if (BonusType === 'fierce_resistance') {
-					Products['att_boost_defender'] = (Products['att_boost_defender'] ? Products['att_boost_defender'] : 0) + d['bonus']['value'];
-					Products['def_boost_defender'] = (Products['def_boost_defender'] ? Products['def_boost_defender'] : 0) + d['bonus']['value'];
-				}
-				else if (BonusType === 'advanced_tactics') {
-					Products['att_boost_attacker'] = (Products['att_boost_attacker'] ? Products['att_boost_attacker'] : 0) + d['bonus']['value'];
-					Products['att_boost_defender'] = (Products['att_boost_defender'] ? Products['att_boost_defender'] : 0) + d['bonus']['value'];
-					Products['def_boost_attacker'] = (Products['def_boost_attacker'] ? Products['def_boost_attacker'] : 0) + d['bonus']['value'];
-					Products['def_boost_defender'] = (Products['def_boost_defender'] ? Products['def_boost_defender'] : 0) + d['bonus']['value'];
-				}
-			}
-
-			if (d['state'] && d['state']['__class__'] !== 'ConstructionState') {
-
-				if (CityEntity['staticResources'] && CityEntity['staticResources']['resources'] && CityEntity['staticResources']['resources']['population']) {
-					Products['population'] = (Products['population'] ? Products['population'] : 0) + CityEntity['staticResources']['resources']['population'];
-				}
-
-				if (CityEntity['provided_happiness'] && BuildingSize['is_connected']) {
-					let Faktor = 1;
-
-					if (d['state']['__class__'] === 'PolishedState') {
-						Faktor = 2;
-					}
-
-					Products['happiness'] = CityEntity['provided_happiness'] * Faktor;
-				}
-			}
-
-			if (CityEntity['entity_levels'] && CityEntity['entity_levels'][d['level']]) {
-				let EntityLevel = CityEntity['entity_levels'][d['level']];
-
-				if (EntityLevel['provided_population']) {
-					Products['population'] = (Products['population'] ? Products['population'] : 0) + EntityLevel['provided_population'];
-				}
-
-				if (EntityLevel['provided_happiness']) {
-					let Faktor = 1;
-
-					if (d['state']['__class__'] === 'PolishedState') {
-						Faktor = 2;
-					}
-
-					Products['happiness'] = (Products['happiness'] ? Products['happiness'] : 0) + EntityLevel['provided_happiness'] * Faktor;
-				}
-			}
-
-			if (d['cityentity_id'].startsWith('V_AllAge_CastleSystem')) {
-				Ret.at = undefined;
-				Ret.in = undefined;
-
-				//Boosts
-				for (let i in MainParser.Boosts) {
-					if (!MainParser.Boosts.hasOwnProperty(i)) continue;
-
-					let BoostList = MainParser.Boosts[i],
-						NewBoostList = [];
-
-					for (let j = 0; j < BoostList.length; j++) {
-						let Boost = BoostList[j];
-
-						if (Boost['origin'] !== 'castle_system') continue;
-
-						if (MainParser.BoostMapper[Boost['type']]) {
-							let MappedBoosts = MainParser.BoostMapper[Boost['type']];
-							for (let k = 0; k < MappedBoosts.length; k++) {
-								let NewBoost = Object.assign({}, Boost);
-								NewBoost['type'] = MappedBoosts[k];
-								NewBoostList.push(NewBoost);
-							}
-						}
-						else {
-							NewBoostList.push(Boost);
-						}
-					}
-
-					for (let j = 0; j < NewBoostList.length; j++) {
-						let Boost = NewBoostList[j];
-
-						let ResName = Boost['type'],
-							Value = Boost['value'];
-
-						if (!Productions.Types.includes(ResName)) continue;
-
-						if (!Products[ResName]) Products[ResName] = 0;
-						Products[ResName] += Value;
-					}
-				}
-
-				//Daily Chest
-				let CastleLevel,
-					CastlePoints = ResourceStock['castle_points'] | 0;
-
-				for (let i=0; i < MainParser.CastleSystemLevels.length; i++) {
-					let NextLevel = MainParser.CastleSystemLevels[i];
-					if (CastlePoints < NextLevel['requiredPoints']) break;
-					CastleLevel = NextLevel;
-				}			
-
-				if (CastleLevel) {
-					let DailyReward = CastleLevel['dailyReward'][CurrentEra];
-
-					for (let i = 0; i < DailyReward['rewards'].length; i++) {
-						let Reward = DailyReward['rewards'][i];
-						let Resources = Productions.CalcAverageRewards(Reward);
-
-						for (let ResName in Resources) {
-							if (!Resources.hasOwnProperty(ResName)) continue;
-
-							if (!Products[ResName]) Products[ResName] = 0;
-							Products[ResName] += Resources[ResName];
-                        }
-                    }
-                }
-				
-			}
-			else if(d['id'] === 1) {
-				// Botschafter durchsteppen
-				if (MainParser.EmissaryService !== null) {
-
-					for (let i in MainParser.EmissaryService) {
-						if (!MainParser.EmissaryService.hasOwnProperty(i)) continue;
-
-						let Emissary = MainParser.EmissaryService[i],
-							ResName = (Emissary['bonus']['type'] === 'unit' ? 'units' : Emissary['bonus']['subType']);
-
-						if (!Products[ResName]) Products[ResName] = 0;
-						Products[ResName] += Emissary['bonus']['amount'];
-					}
-				}
-
-				// es gibt min 1 täglichen FP
-				if (MainParser.BonusService !== null) {
-					let FPBonus = MainParser.BonusService.find(o => (o['type'] === 'daily_strategypoint'));
-
-					if (FPBonus && FPBonus['value']) {
-						if (!Products['strategy_points']) Products['strategy_points'] = 0;
-						Products['strategy_points'] += FPBonus['value'];
-					}
-				}
-            }
-
-			let AdditionalProduct,
-				MotivatedProducts = [];
-
-			for (let ProductName in Products) {
-				let MotivationFactor;
-				if ((ProductName === 'money' || ProductName === 'supplies' || ProductName === 'clan_power') && DoubleProductionWhenMotivated && !IsPolivated) {
-					MotivationFactor = 2;
-				}
-				else if (ProductName === 'happiness' && DoubleHappinessWhenMotivated && IsPolivated){
-					MotivationFactor = 2;
-                }
-				else { //Keine Doppelproduktion durch Motivierung oder schon motiviert
-					MotivationFactor = 1;
-				}
-
-				MotivatedProducts[ProductName] = Products[ProductName] * MotivationFactor;
-			}
-
-			for (let Resource in AdditionalResources) {
-				if (!AdditionalResources.hasOwnProperty(Resource)) continue;
-
-				AdditionalProduct = AdditionalResources[Resource];
-
-				if (AdditionalProduct > 0) {
-					if (Products[Resource] === undefined) {
-						Products[Resource] = 0;
-						MotivatedProducts[Resource] = AdditionalProduct;
-					}
-					else if (Products[Resource] < AdditionalProduct) {
-						MotivatedProducts[Resource] += AdditionalProduct;
-					}
-				}
-			}
-
-			Ret.products = Products;
-			Ret.motivatedproducts = MotivatedProducts;
-
-			if (d['state'] && d['state']['current_product'] && d['state']['current_product']['production_time']) {
-				Ret['dailyfactor'] = 86400 / d['state']['current_product']['production_time'];
-			}
-			else {
-				Ret['dailyfactor'] = 1;
-			}
-		}
-
-		return Ret;
-	},
-
-
-	/**
-	 * Calculates average reward of a GenericReward
-	 * */
-	CalcAverageRewards: (GenericReward, DropChance=100) => {
-		let Ret = {};
-
-		if (GenericReward['type'] === 'resource' || GenericReward['type'] === 'good') {
-			Ret[GenericReward['subType']] = GenericReward['amount'] * DropChance/100.0;
-		}
-		else if(GenericReward['type'] === 'chest') {
-			for (let i = 0; i < GenericReward['possible_rewards'].length; i++) {
-				let CurrentReward = GenericReward['possible_rewards'][i];
-
-				let Rewards = Productions.CalcAverageRewards(CurrentReward['reward'], CurrentReward['drop_chance']);
-				for (let ResName in Rewards) {
-					if (!Ret[ResName]) Ret[ResName] = 0;
-					Ret[ResName] += Rewards[ResName];
-                }
-            }
-		}
-
-		return Ret;
-    },
-
-	/**
-	 * HTML Box erstellen und einblenden
+	 * Displays the main production overview box.
 	 */
 	showBox: () => {
-
-		String.prototype.cleanup = function () {
-			return this.toLowerCase().replace(/[^a-zA-Z0-9]+/g, '');
-		};
 
 		if ($('#Productions').length > 0){
 			HTML.CloseOpenBox('Productions');
@@ -857,7 +287,6 @@ let Productions = {
 			return;
 		}
 
-		// CSS in den DOM prügeln
 		HTML.AddCssFile('productions');
 
 		HTML.Box({
@@ -866,18 +295,20 @@ let Productions = {
 			auto_close: true,
 			dragdrop: true,
 			minimize: true,
-			resize: true
+			resize: true,
+			popout: () => MainParser.PopOut('Productions', 1100, 580),
+        	settings: () => Productions.ShowSettings()
 		});
 
 		Productions.ActiveTab = 1;
 		Productions.CalcBody();
 
-		Productions.SwitchFunction();
+		Productions.SwitchFunction()
 	},
 
 
 	/**
-	 * Aktualisiert den Inhalt
+	 * Calculates and generates the content for the production overview box, including tabs and tables.
 	 */
 	CalcBody: () => {
 		Productions.Tabs = [];
@@ -887,511 +318,570 @@ let Productions = {
 
 		h.push('<div class="production-tabs tabs">');
 
-		// einzelne Güterarten durchsteppen
-		for(let pt in Productions.Types)
-		{
-			if (!Productions.Types.hasOwnProperty(pt)) break;
-			
-			let type = Productions.Types[pt];
+		Productions.BuildingsAll.forEach(building => {
+			let boosts = Object.keys(Boosts.Sums)
+			let saveBuilding = {id: building.id, entityId: building.entityId}
 
-			if (!Productions.BuildingsProducts.hasOwnProperty(type)) break;
-			
-			Productions.SetTabs(type);
-
-			Productions.BuildingsProducts[type] = helper.arr.multisort(Productions.BuildingsProducts[type], ['name'], ['ASC']);
-
-			if(type !== 'goods') Productions.BuildingsProductsGroups[type] = helper.arr.multisort(Productions.BuildingsProductsGroups[type], ['name'], ['ASC']);
-
-			let buildings = Productions.BuildingsProducts[type],
-				groups = Productions.BuildingsProductsGroups[type],
-				table = [],
-				rowA = [],
-				rowB = [],
-				countProducts = [],
-				countProductsMotivated = [],
-				countProductsDone = [],
-				countAll = 0,
-				countAllMotivated = 0,
-				countAllDone = 0,
-				sizes = [],
-				sizetooltips = [];
-      
-				// Gebäudegrößen für Effizienzberechnung laden
-				for (let i in Productions.CombinedCityMapData) {
-					if (!Productions.CombinedCityMapData.hasOwnProperty(i)) continue;
-
-					let BuildingSize = CityMap.GetBuildingSize(Productions.CombinedCityMapData[i]);
-
-					sizes[Productions.CombinedCityMapData[i]['cityentity_id']] = BuildingSize['total_area'];
-					sizetooltips[Productions.CombinedCityMapData[i]['cityentity_id']] = (BuildingSize['street_area'] > 0 ? HTML.i18nReplacer(i18n('Boxes.Productions.SizeTT'), { 'streetnettosize': BuildingSize['street_area'] }) : '');
-	            }
-
-			// einen Typ durchsteppen [money,supplies,strategy_points,...]
-			for(let i in buildings)
-			{
-				if(buildings.hasOwnProperty(i))
-				{
-					if(type !== 'goods')
-					{
-						let ProductCount = Productions.GetDaily(buildings[i]['products'][type], buildings[i]['dailyfactor'], type),
-							MotivatedProductCount = Productions.GetDaily(buildings[i]['motivatedproducts'][type], buildings[i]['dailyfactor'], type);
-
-						countAll += ProductCount;
-						countAllMotivated += MotivatedProductCount;
-						countAllDone += (buildings[i]['at'] * 1000 < MainParser.getCurrentDateTime() ? ProductCount : 0);
-
-						rowA.push('<tr>');
-						rowA.push('<td data-text="' + buildings[i]['name'].cleanup() + '">' + buildings[i]['name'] + '</td>');
-						rowA.push('<td class="text-right is-number" data-number="' + MotivatedProductCount + '">' + HTML.Format(ProductCount) + (ProductCount !== MotivatedProductCount ? '/' + HTML.Format(MotivatedProductCount) : '') + '</td>');
-						
-						let size = sizes[buildings[i]['eid']];
-
-						if (!size) size = 0;
-
-						let SizeToolTip = sizetooltips[buildings[i]['eid']],
-							efficiency = (MotivatedProductCount / size);
-
-						let EfficiencyString;
-
-						if (size !== 0) {
-							if (type === 'strategy_points') {
-								EfficiencyString = HTML.Format(MainParser.round(efficiency * 100) / 100);
-							}
-							else if (type === 'premium') {
-								EfficiencyString = HTML.Format(MainParser.round(efficiency * 1000) / 1000);
-							}
-							else if (type === 'units') {
-								EfficiencyString = HTML.Format(MainParser.round(efficiency * 100) / 100);
-							}
-							else if (type === 'att_boost_attacker' || type === 'att_boost_defender' || type === 'def_boost_attacker' || type === 'def_boost_defender') {
-								EfficiencyString = HTML.Format(MainParser.round(efficiency * 100) / 100);
-							}
-							else {
-								EfficiencyString = HTML.Format(MainParser.round(efficiency));
-							}
+			boosts.forEach(boost => {
+				Productions.getBoost(building, boost, function(result) {
+					if (result !== undefined) {
+						if (Productions.BuildingsProducts[boost]) {
+							if (Productions.BuildingsProducts[boost].find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts[boost].push(saveBuilding)
 						}
-						else {
-							EfficiencyString = 'N/A';
+						if (boost.includes('guild_raids')) {
+							if (Productions.BuildingsProducts.guild_raids.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts.guild_raids.push(saveBuilding)
 						}
-					
-						rowA.push('<td class="text-right is-number addon-info" data-number="' + size + '" title="' + HTML.i18nTooltip(SizeToolTip) + '">' + HTML.Format(size) + '</td>');
-						rowA.push('<td class="text-right is-number addon-info" data-number="' + efficiency + '">' + EfficiencyString + '</td>');
-						rowA.push('<td class="addon-info is-number" data-number="' + buildings[i]['era'] + '">' + i18n('Eras.' + buildings[i]['era']) + '</td>');
-						
-						if (Productions.TypeHasProduction(type)) {
-							rowA.push('<td class="wsnw is-date" data-date="' + buildings[i]['at'] + '">' + (buildings[i]['at'] ? moment.unix(buildings[i]['at']).format(i18n('DateTime')) : i18n('Boxes.Productions.DateNA')) + '</td>');
-							if (!buildings[i]['at']) { //No date available
-								rowA.push('<td>');
-                            }						
-							else if (buildings[i]['at'] * 1000 <= MainParser.getCurrentDateTime()) {
-								rowA.push('<td style="white-space:nowrap"><strong class="success">' + i18n('Boxes.Productions.Done') + '</strong></td>');
-							}
-							else {
-								rowA.push('<td style="white-space:nowrap">' + moment.unix(buildings[i]['at']).fromNow() + '</td>');
-							}
-						}
-						else {
-							rowA.push('<td><td>');
-						}
-
-						rowA.push('<td class="text-right"><span class="show-entity" data-id="' + buildings[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
-						rowA.push('</tr>');
 					}
+				})
+			})
 
-					// nur Gebäude mit Gütern
-					else {
-
-						let tds = '<td data-text="' + buildings[i]['name'].cleanup() + '">' + buildings[i]['name'] + '</td>';
-
-						let pA = [],
-							CurrentBuildingCount = 0,
-							CurrentBuildingMotivatedCount = 0;
-
-						for(let p in buildings[i]['motivatedproducts'])
-						{
-							if (!buildings[i]['motivatedproducts'].hasOwnProperty(p)) continue;
-
-							if (Productions.Types.includes(p) === false) {
-								if (countProducts[p] === undefined) {
-									countProducts[p] = 0;
-									countProductsMotivated[p] = 0;
-									countProductsDone[p] = 0;
-								}
-
-								let Amount = Productions.GetDaily(buildings[i]['products'][p], buildings[i]['dailyfactor'], p),
-									MotivatedAmount = Productions.GetDaily(buildings[i]['motivatedproducts'][p], buildings[i]['dailyfactor'], p);
-
-								countProducts[p] += Amount;
-								countProductsMotivated[p] += MotivatedAmount;
-
-								CurrentBuildingCount += Amount;
-								CurrentBuildingMotivatedCount += MotivatedAmount;
-
-								countAll += Amount;
-								countAllMotivated += MotivatedAmount;
-
-								if (buildings[i]['at'] * 1000 < MainParser.getCurrentDateTime()) {
-									countProductsDone[p] += Amount;
-									countAllDone += Amount;
-								}
-
-								pA.push(HTML.Format(Amount) + (Amount !== MotivatedAmount ? '/' + HTML.Format(MotivatedAmount) : '') + ' ' + Productions.GetGoodName(p));
-							}
-						}
-
-						tds += '<td class="is-number" data-number="' + CurrentBuildingCount + '">' + pA.join('<br>') + '</td>' +
-							'<td class="addon-info is-number" data-number="' + buildings[i]['era'] + '" title="' + HTML.i18nTooltip(i18n('Boxes.Productions.TTGoodsEra')) + '">' + i18n('Eras.' + buildings[i]['era']) + '</td>' +
-							'<td class="wsnw is-date" data-date="' + buildings[i]['at'] + '">' + (buildings[i]['at'] ? moment.unix(buildings[i]['at']).format(i18n('DateTime')) : i18n('Boxes.Productions.DateNA')) + '</td>';
-
-						if (!buildings[i]['at']) {
-							tds += '<td></td>';
-                        }
-						else if (buildings[i]['at'] * 1000 <= MainParser.getCurrentDateTime()) {
-							tds += '<td style="white-space:nowrap"><strong class="success">' + i18n('Boxes.Productions.Done') + '</strong></td>';
-						}
-						else {
-							tds += '<td style="white-space:nowrap">' + moment.unix(buildings[i]['at']).fromNow() + '</td>';
-						}
-
-						tds += '<td class="text-right"><span class="show-entity" data-id="' + buildings[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>' +
-							'</tr>';
-
-						rowA.push(tds);
+			if (building.production) {
+				building.production.forEach(production => {
+					if (production.type === "guildResources") {
+						if (Productions.BuildingsProducts.clan_goods.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts["clan_goods"].push(saveBuilding)
 					}
-				}
+					if (production.type === "unit") {
+						if (Productions.BuildingsProducts.units.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts["units"].push(saveBuilding)
+					}
+					if (production.type === "random") {
+						production.resources.forEach(resource => {
+							if (resource.type === "unit") {
+								if (Productions.BuildingsProducts.units.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["units"].push(saveBuilding)
+							}
+							if (resource.type === "forgepoint_package" || resource.subType === "forgepoint_package") { // e.g. grilling grove
+								if (Productions.BuildingsProducts.strategy_points.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["strategy_points"].push(saveBuilding)
+							}
+							if (resource.type === "consumable" || resource.type.includes("chest")) {
+								if (Productions.BuildingsProducts.items.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["items"].push(saveBuilding)
+							}
+							if (resource.type === "resources" && resource.subType === "strategy_points") {
+								if (Productions.BuildingsProducts.strategy_points.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["strategy_points"].push(saveBuilding)
+							}
+							if (resource.type === "resources" && resource.subType === "money") {
+								if (Productions.BuildingsProducts.money.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["money"].push(saveBuilding)
+							}
+							if (resource.type === "resources" && resource.subType === "supplies") {
+								if (Productions.BuildingsProducts.supplies.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["supplies"].push(saveBuilding)
+							}
+							if (resource.type === "resources" && resource.subType === "medals") {
+								if (Productions.BuildingsProducts.medals.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["medals"].push(saveBuilding)
+							}
+							if (resource.type.includes("good") && !resource.type.includes("guild")) {
+								if (Productions.BuildingsProducts.goods.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["goods"].push(saveBuilding)
+							}
+							if (resource.type.includes("good") && resource.type.includes("guild")) {
+								if (Productions.BuildingsProducts.clan_goods.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts.clan_goods.push(saveBuilding)
+							}
+						})
+					}
+					if (production.type === 'special_goods') {
+						if (Productions.BuildingsProducts.special_goods.find(x => x.id === building.id) === undefined) {
+							Productions.BuildingsProducts["special_goods"].push(saveBuilding)}
+					}
+					if (production.type === "resources") {
+						let types = Object.keys(production.resources)
+						if (production.resources.money) {
+							if (Productions.BuildingsProducts.money.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts["money"].push(saveBuilding)
+						}
+						if (production.resources.supplies) {
+							if (Productions.BuildingsProducts.supplies.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts["supplies"].push(saveBuilding)
+						}
+						if (production.resources.medals) {
+							if (Productions.BuildingsProducts.medals.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts["medals"].push(saveBuilding)
+						}
+						if (production.resources.premium) {
+							Productions.BuildingsProducts["premium"].push(saveBuilding)
+						}
+						if (production.resources.strategy_points) {
+							if (Productions.BuildingsProducts.strategy_points.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts["strategy_points"].push(saveBuilding)
+						}
+						if (types.find(x => x.includes('random_good_of_') || x.includes('all_goods_of_'))) {
+							if (Productions.BuildingsProducts.goods.find(x => x.id === building.id) === undefined)
+								Productions.BuildingsProducts["goods"].push(saveBuilding)
+						}
+					}
+					if (production.resources?.type === "consumable") {
+						if (Productions.BuildingsProducts.items.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts["items"].push(saveBuilding)
+					}
+				})
+			}
+			if (building.state.production) {
+				building.state.production.forEach(production => {
+					if (production.type === "guildResources") {
+						if (Productions.BuildingsProducts.clan_goods.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.clan_goods.push(saveBuilding)
+					}
+					if (production.type === "unit") {
+						if (Productions.BuildingsProducts.units.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.units.push(saveBuilding)
+					}
+					if (production.type === "genericReward" || production.type === "random") {
+						if (Productions.BuildingsProducts.items.find(x => x.id === building.id) === undefined) {
+							Productions.BuildingsProducts.items.push(saveBuilding)
+						}
+					}
+					if (production.type === "resources") {
+						if (production.resources.money) {
+							if (Productions.BuildingsProducts.money.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.money.push(saveBuilding)
+						}
+						if (production.resources.supplies) {
+							if (Productions.BuildingsProducts.supplies.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.supplies.push(saveBuilding)
+						}
+						if (production.resources.medals) {
+							if (Productions.BuildingsProducts.medals.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.medals.push(saveBuilding)
+						}
+						if (production.resources.premium) {
+							if (Productions.BuildingsProducts.premium.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.premium.push(saveBuilding)
+						}
+						if (production.resources.strategy_points) {
+							if (Productions.BuildingsProducts.strategy_points.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts.strategy_points.push(saveBuilding)
+						}
+						Object.keys(production.resources).forEach(name => {
+							let good = GoodsList.find(x => x.id === name)
+							if (good !== undefined) {
+								if (Productions.BuildingsProducts.goods.find(x => x.id === building.id) === undefined)
+									Productions.BuildingsProducts["goods"].push(saveBuilding)
+							}
+						})
+					}
+					if (production.resources?.icon === "next_age_goods") {
+						if (Productions.BuildingsProducts.goods.find(x => x.id === building.id) === undefined)
+							Productions.BuildingsProducts["goods"].push(saveBuilding)
+					}
+				})
 			}
 
-			// Gruppierte Ansicht
-			if(type !== 'goods') {
-
-				for (let i in groups) {
-					if (groups.hasOwnProperty(i)) {
-
-						let ProductCount = Productions.GetDaily(groups[i]['products'], groups[i]['dailyfactor'], type),
-							MotivatedProductCount = Productions.GetDaily(groups[i]['motivatedproducts'], groups[i]['dailyfactor'], type),
-							size = sizes[groups[i]['eid']],
-							efficiency = (MotivatedProductCount / (size * groups[i]['count']));
-
-						let EfficiencyString;
-						if (type === 'strategy_points') {
-							EfficiencyString = HTML.Format(MainParser.round(efficiency * 100) / 100);
-						}
-						else {
-							EfficiencyString = HTML.Format(MainParser.round(efficiency));
-						}
-									
-						let tds = '<tr>' +
-							'<td class="text-right is-number" data-number="' + groups[i]['count'] + '">' + groups[i]['count'] + 'x </td>' +
-							'<td colspan="3" data-text="' + groups[i]['name'].cleanup() + '">' + groups[i]['name'] + '</td>' +
-							'<td class="is-number" data-number="' + MotivatedProductCount + '">' + HTML.Format(ProductCount) + (ProductCount !== MotivatedProductCount ? '/' + HTML.Format(MotivatedProductCount) : '') + '</td>' +
-							'<td class="text-right is-number addon-info" data-number="' + (size*groups[i]['count']) + '">' + (size*groups[i]['count']) + '</td>'+
-							'<td class="text-right is-number addon-info" data-number="' + efficiency + '">' + EfficiencyString + '</td>'+
-							'</tr>';
-
-						rowB.push(tds);
-					}
-				}
+			if (building.happiness !== 0) {
+				Productions.BuildingsProducts["happiness"].push(saveBuilding)
 			}
-
-			table.push('<table class="foe-table sortable-table">');
-
-
-			// alle Güter nach Zeitalter
-			if(Productions.isEmpty(countProducts) === false)
-			{
-				let eras = [],
-					eraSums = [],
-					eraSumsMotivated = [],
-					eraSumsDone = [];
-
-				// nach Zeitalter gruppieren und Array zusammen fummlen
-				for(let ca in countProducts)
-				{
-					if (!countProducts.hasOwnProperty(ca)) continue;
-
-					let era = Technologies.Eras[GoodsData[ca]['era']];
-
-					if (eras[era] === undefined) eras[era] = [];
-
-					eras[era].push('<span>' + Productions.GetGoodName(ca) + ' <strong>' + HTML.Format(countProducts[ca]) + (countProducts[ca] !== countProductsMotivated[ca] ? '/' + HTML.Format(countProductsMotivated[ca]) : '') + '</strong></span>');
-
-					if (eraSums[era] === undefined) {
-						eraSums[era] = 0;
-						eraSumsMotivated[era] = 0;
-						eraSumsDone[era] = 0;
-					}
-					eraSums[era] += countProducts[ca];
-					eraSumsMotivated[era] += countProductsMotivated[ca];
-					eraSumsDone[era] += countProductsDone[ca];
-				}
-
-
-				table.push('<thead>');
-
-				if (Productions.ShowDaily)
-				{
-					table.push('<span class="btn-default change-daily game-cursor" data-value="' + (pt - (-1)) + '">' + i18n('Boxes.Productions.ModeDaily') + '</span>');
-				}
-				else {
-					table.push('<span class="btn-default change-daily game-cursor" data-value="' + (pt - (-1)) + '">' + i18n('Boxes.Productions.ModeCurrent') + '</span>');
-				}
-
-				if (CurrentEraID === 18 && !MainParser.CityMapEraOutpostData) {
-					table.push('<tr><th colspan="6">' + i18n('Boxes.Productions.NoMarsDataWarning') + '</th></tr>');
-				}
-				if (CurrentEraID === 19 && !MainParser.CityMapEraOutpostData) {
-					table.push('<tr><th colspan="6">' + i18n('Boxes.Productions.NoAsteroidDataWarning') + '</th></tr>');
-				}
-				if (CurrentEraID === 20 && !MainParser.CityMapEraOutpostData) {
-					table.push('<tr><th colspan="6">' + i18n('Boxes.Productions.NoVenusDataWarning') + '</th></tr>');
-				}
-
-				// Zeitalterweise in die Tabelle legen
-				for (let era = eras.length; era >= 0; era--)
-				{
-					if (!eras.hasOwnProperty(era)) continue;
-					
-					table.push('<tr><th colspan="3"><strong class="text-warning">' + i18n('Eras.' + era) + '</strong></th>');
-					table.push('<th colspan="3" class="text-right text-warning" style="font-weight:normal"><span>' + i18n('Boxes.Productions.GoodEraTotal') + ':</span> <strong>' + HTML.Format(eraSums[era]) + (eraSums[era] !== eraSumsMotivated[era] ? '/' + HTML.Format(eraSumsMotivated[era]) : '') + '</strong>');
-					table.push(' <span class="success">' + i18n('Boxes.Productions.Done') + ':</span> <strong class="success">' + HTML.Format(eraSumsDone[era]) + '</strong></th ></tr > ');
-
-					table.push('<tr><td colspan="6" class="all-products">');
-
-					table.push(eras[era].join(''));
-
-					table.push('</td></tr>');
-				}
-				table.push('</thead>');
-
-				table.push('<tbody class="goods-mode goods-single">');
-
-				table.push('<tr class="other-header"><td class="total-products text-right" colspan="6"><strong>' + i18n('Boxes.Productions.Total') + HTML.Format(countAll) + '</strong>');
-				table.push(' <strong class="success">' + i18n('Boxes.Productions.Done') + ': ' + HTML.Format(countAllDone) + '</strong></td ></tr > ');
-
-				table.push('<tr class="sorter-header">');
-				table.push('<th class="ascending game-cursor" data-type="goods-single">' + i18n('Boxes.Productions.Headings.name') + '</th>');
-				table.push('<th class="is-number game-cursor" data-type="goods-single">' + i18n('Boxes.Productions.Headings.amount') + '</th>');
-				table.push('<th class="is-number game-cursor" data-type="goods-single">' + i18n('Boxes.Productions.Headings.era') + '</th>');
-				table.push('<th class="is-date game-cursor" data-type="goods-single">' + i18n('Boxes.Productions.Headings.earning') + '</th>');
-				table.push('<th class="no-sort">&nbsp;</th>');
-				table.push('<th class="no-sort">&nbsp;</th>');
-				table.push('</tr>');
+			if (building.population !== 0) {
+				Productions.BuildingsProducts["population"].push(saveBuilding)
 			}
-			else {
-				table.push('<thead>');
+		})
 
-				table.push('<tr class="other-header">');
+		Productions.Types.forEach(type => {
+			Productions.SetTabs(type)
+			Productions.SetTabContent(type, "") // empty content, fill later
+		})
 
-				table.push('<th colspan="3">');
-
-				if (Productions.TypeHasProduction(type)) {
-					if (Productions.ShowDaily) {
-						table.push('<span class="btn-default change-daily game-cursor" data-value="' + (pt - (-1)) + '">' + i18n('Boxes.Productions.ModeDaily') + '</span>');
-					}
-					else {
-						table.push('<span class="btn-default change-daily game-cursor" data-value="' + (pt - (-1)) + '">' + i18n('Boxes.Productions.ModeCurrent') + '</span>');
-					}
-				}
-
-				table.push('<span class="btn-default change-view game-cursor" data-type="' + type + '">' + i18n('Boxes.Productions.ModeSingle') + '</span>');
-				table.push('</th>');
-
-				table.push('<th colspan="6" class="text-right"><strong>' + Productions.GetGoodName(type) + ': ' + HTML.Format(countAll) + (countAll !== countAllMotivated ? '/' + HTML.Format(countAllMotivated) : '') + '</strong>');
-				if (Productions.TypeHasProduction(type)) {
-					table.push(' <strong class="success">' + i18n('Boxes.Productions.Done') + ': ' + HTML.Format(countAllDone) + '</strong>');
-				}
-				table.push('</th>');
-				table.push('</tr>');
-
-				table.push('</thead>');
-				table.push('<tbody class="' + type + '-mode ' + type + '-single">');
-
-				// Sortierung - Einzelheader
-				table.push('<tr class="sorter-header">');
-				table.push('<th class="ascending game-cursor" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.name') + '</th>');
-				table.push('<th class="is-number game-cursor text-right" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.amount') + '</th>');
-				table.push('<th class="is-number game-cursor text-right" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.size') + '</th>');
-				table.push('<th class="is-number game-cursor text-right" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.efficiency') + '</th>');
-				table.push('<th class="is-number game-cursor" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.era') + '</th>');
-				if (Productions.TypeHasProduction(type)) {
-					table.push('<th class="is-date game-cursor" data-type="' + type + '-single">' + i18n('Boxes.Productions.Headings.earning') + '</th>');
-				}
-				else {
-					table.push('<th class="no-sort">&nbsp;</th>');
-				}
-				table.push('<th class="no-sort">&nbsp;</th>');
-				table.push('<th class="no-sort">&nbsp;</th>');
-				table.push('</tr>');
-			}
-
-			table.push( rowA.join('') );
-			table.push('</tbody>');
-
-			// Gruppierte Ansicht drunter
-			if(Productions.isEmpty(rowB) === false)
-			{
-				table.push('<tbody class="' + type + '-mode ' + type + '-groups" style="display:none">');
-
-				// Sortierung - Gruppiert-Header
-				table.push('<tr class="sorter-header">');
-				table.push('<th colspan="1" class="game-cursor text-right is-number" data-type="' + type + '-groups">' + i18n('Boxes.Productions.Headings.number') + '</th>');
-				table.push('<th colspan="3" class="ascending game-cursor" data-type="' + type + '-groups">Name</th>');
-				table.push('<th colspan="1" class="is-number game-cursor" data-type="' + type + '-groups">' + i18n('Boxes.Productions.Headings.amount') + '</th>');
-				table.push('<th colspan="1" class="is-number game-cursor text-right" data-type="' + type + '-groups">' + i18n('Boxes.Productions.Headings.area') + '</th>');
-				table.push('<th colspan="1" class="is-number game-cursor text-right" data-type="' + type + '-groups">' + i18n('Boxes.Productions.Headings.efficiency') + '</th>');
-				table.push('</tr>');
-
-				table.push( rowB.join('') );
-				table.push('</tbody>');
-			}
-
-			table.push('</table>');
-
-			Productions.SetTabContent(type, table.join(''));
-		}
-
-
-		// alles auf einmal ausgeben
-		Productions.BuildingsAll = helper.arr.multisort(Productions.BuildingsAll, ['name'], ['ASC']);
-		Productions.SetTabs('all');
-
-		let building = Productions.BuildingsAll,
-			TableAll = [],
-			rowC = [];
-
-		for(let i in building)
-		{
-			if(building.hasOwnProperty(i))
-			{
-				let pA = [],
-					prod = building[i]['products'],
-					ShowTime = false;
-
-				for(let p in prod)
-				{
-					if(prod.hasOwnProperty(p))
-					{
-						pA.push(HTML.Format(Productions.GetDaily(prod[p], building[i]['dailyfactor'], p)) + ' ' + Productions.GetGoodName(p));
-						if (Productions.TypeHasProduction(p)) {
-							ShowTime = true;
-						}
-					}
-				}
-
-				rowC.push('<tr class="' + building[i]['type'] + ' ' + (!ShowTime || building[i]['at'] * 1000 >= MainParser.getCurrentDateTime() ? 'notdone' : '') + '">');
-				rowC.push('<td>' + building[i]['name'] + '</td>');
-
-				rowC.push('<td>' + pA.join('<br>') + '</td>');
-
-				rowC.push('<td>' + i18n('Eras.' + building[i]['era']) + '</td>');
-
-				if (ShowTime) {
-					rowC.push('<td>' + (building[i]['at'] ? moment.unix(building[i]['at']).format(i18n('DateTime')) : i18n('Boxes.Productions.DateNA')) + '</td>');
-
-					if (!building[i]['at']) {
-						rowC.push('<td></td>');
-                    }
-					else if (building[i]['at'] * 1000 <= MainParser.getCurrentDateTime()) {
-						rowC.push('<td style="white-space:nowrap"><strong class="success">' + i18n('Boxes.Productions.Done') + '</strong></td>');
-					}
-					else {
-						rowC.push('<td style="white-space:nowrap" colspan="2">' + moment.unix(building[i]['at']).fromNow() + '</td>');
-					}
-				}
-				else {
-					rowC.push('<td></td><td colspan="2"></td>');
-				}
-                rowC.push('</tr>');
-			}
-		}
-
-		TableAll.push('<table class="foe-table">');
-
-		TableAll.push('<thead>');
-		TableAll.push('<tr>');
-		TableAll.push('<th><input type="text" id="all-search" placeholder="' + i18n('Boxes.Productions.SearchInput') + '" onkeyup="Productions.Filter()">');
-
-		if (Productions.ShowDaily) {
-			TableAll.push('<span class="btn-default change-daily game-cursor" data-value="' + (Productions.Types.length - (-1)) + '">' + i18n('Boxes.Productions.ModeDaily') + '</span>');
-		}
-		else {
-			TableAll.push('<span class="btn-default change-daily game-cursor" data-value="' + (Productions.Types.length - (-1)) + '">' + i18n('Boxes.Productions.ModeCurrent') + '</span>');
-		}
-
-		TableAll.push('</th>');
-
-		TableAll.push('<th class="text-right" id="all-dropdown-th"></th>');
-		TableAll.push('</tr>');
-		TableAll.push('</thead>');
-
-		TableAll.push('</table>');
-
-		TableAll.push('<table class="foe-table all-mode">');
-		TableAll.push( rowC.join('') );
-		TableAll.push('</table>');
-
-		Productions.SetTabContent('all', TableAll.join(''));
-
-
-		// alles zusammen basteln
 		h.push( Productions.GetTabs() );
 		h.push( Productions.GetTabContent() );
 
 		h.push('</div>');
 
 		$('#Productions').find('#ProductionsBody').html(h.join('')).promise().done(function () {
+			// fill first table
+			let type = Productions.Types[0]
+			let firstTabContent = Productions.buildTableByType(type)
+			$("#Productions #"+type).html(firstTabContent)
 
-			// Zusatzfunktionen für die Tabelle
-			$('.production-tabs').tabslet({ active: Productions.ActiveTab });
-			$('.sortable-table').tableSorter();
-			Productions.SortingAllTab();
+			// fill other tables on demand
+			$('.production-tabs li, #Productions .typeBoost').click(function() {
+				let type = $("a", this).attr("href").replace("#","")
 
-			// Ein Gebäude soll auf der Karte dargestellt werden
-			$('#Productions').on('click', '.foe-table .show-entity', function () {
-				Productions.ShowFunction($(this).data('id'));
+				if ($("#Productions #"+type).html().length === 0) {
+					let content = Productions.buildTableByType(type)
+					$("#Productions #"+type).html(content).promise().done(() => {
+
+						$('#Productions .typeBoost').click(function(e) {
+							e.preventDefault()
+							let type = $("a", this).attr("href").replace("#","")
+
+							if ($("#Productions #"+type).html().length === 0) {
+								let content = Productions.buildTableByType(type)
+								$("#Productions #"+type).html(content)
+								$('.TSinactive').tableSorter()
+								$('.TSinactive').removeClass('TSinactive')
+								HTML.FilterTable('#Productions .filterCurrentList')
+								Productions.RestoreViewState(type)
+							}
+							$("#Productions .content").css('display','none')
+							$("#Productions #"+type).css('display','block')
+						});
+
+					})
+					$('.TSinactive').tableSorter()
+					$('.TSinactive').removeClass('TSinactive')
+					HTML.FilterTable('#Productions .filterCurrentList')
+					Productions.RestoreViewState(type)
+
+					//$('#Productions [data-original-title]').tooltip({container: "#Productions", html:true});
+				}
+				$("#Productions .content").css('display','none')
+				$("#Productions #"+type).css('display','block')
+			});
+
+			// extra functionality
+			$('.production-tabs').tabslet({ active: Productions.ActiveTab })
+			$('.TSinactive').tableSorter()
+			$('.TSinactive').removeClass('TSinactive')
+			HTML.FilterTable('#Productions .filterCurrentList')
+			Productions.RestoreViewState(type)
+
+			// re-render (refresh, settings): only the first table is filled above, fill the restored tab as well
+			if (Productions.ActiveTab > 1) $('.production-tabs li').eq(Productions.ActiveTab - 1).trigger('click')
+
+			if (Productions.ViewState?.scrollTop) {
+				$('#Productions #ProductionsBody').scrollTop(Productions.ViewState.scrollTop)
+				Productions.ViewState.scrollTop = 0
+			}
+
+			// remember the column the user sorted by, so a refresh can restore it
+			$('#Productions').off('click.productionsSort').on('click.productionsSort', 'tr.sorter-header th:not(.no-sort)', function () {
+				$(this).closest('table').data('sortedColumn', $(this).index())
+			})
+
+			// mark a building in the city, fall back to the city map box if unsupported
+			$('#Productions').off('click', '.foe-table .show-entity').on('click', '.foe-table .show-entity', async function () {
+				const id = $(this).data('id');
+
+				if (!await BuildingMarker.show(id)) {
+					Productions.ShowOnMap(id);
+				}
 			});
 		});
 	},
 
 
 	/**
-	 * Merkt sich alle Tabs
+	 * Calculates and updates set and chain bonuses for buildings.
+	 * Identifies adjacent set buildings and processes chained building links.
 	 *
-	 * @param id
+	 * @param {Array} [buildings] - Optional array of buildings to process. Defaults to all city buildings.
+	 */
+	setChainsAndSets(buildings) {
+		if (buildings === undefined) buildings = Object.values(MainParser.CityBuildingsData)
+		let idsToRemove = [];
+
+		for (const building of buildings) {
+			if (building?.setBuilding !== undefined) {
+				let adjacentIds = CityBuildings.findAdjacentSetBuildingByCoords(building);
+				let uniqueAdjacentEntities = new Set();
+				for (let id of adjacentIds) {
+					let adjB = CityBuildings.getBuildingById(id);
+					if (adjB) uniqueAdjacentEntities.add(adjB.entityId);
+				}
+				building.setBuilding.uniqueAdjacentCount = uniqueAdjacentEntities.size;
+			}
+			else if (building?.chainBuilding !== undefined && building?.chainBuilding?.type === "start") {
+
+				let linkedBuildings = CityBuildings.hasLinks(building);
+				if (linkedBuildings.length > 1) {
+					CityBuildings.createChainedBuilding(linkedBuildings);
+
+					for (const link of linkedBuildings) {
+						if (link.chainBuilding.type === 'linked') {
+							idsToRemove.push(link.id);
+						}
+					}
+				}
+			}
+		}
+
+		if (idsToRemove.length > 0) {
+			Productions.BuildingsAll = Productions.BuildingsAll.filter(b => !idsToRemove.includes(b.id));
+		}
+	},
+
+
+	/**
+	 * Calculates production values for a building based on the specified category.
+	 *
+	 * @param {boolean} [current=false] - If true, calculates based on current production state; otherwise, base production.
+	 * @param {Object} building - The building object to analyze.
+	 * @param {string} category - The production category (e.g., "strategy_points", "clan_goods", "units").
+	 * @returns {Object} An object containing production amount, type, and unit details.
+	 */
+	getBuildingProductionByCategory(current = false, building, category) {
+		let prod = {
+			amount: 0,
+			type: null, // units
+			units: [],
+			hasRandomProductions: false,
+			doubleWhenMotivated: false
+		}
+		let productions = (current ? building.state.production : building.production);
+
+		if (building.type === "production" && !current) {
+			productions = [productions[productions?.length-1]];
+		}
+
+		if (productions) {
+			for (let production of productions) {
+				if (production === undefined) continue;
+
+				if (production.type === 'random') {
+					production.resources.forEach(resource => {
+						if (resource.type+"s" === category) { // units
+							prod.amount += resource.amount * resource.dropChance
+							prod.hasRandomProductions = true
+							let Uera = Technologies.Eras[building.eraName]
+							Uera = Uera + (resource.name.includes("next") && Uera<Technologies.getMaxEra() ? 1 : 0)
+							let Utype=resource.name
+							prod.units.push({type:Utype.replace(/next./,""),amount:0,random:resource.amount * resource.dropChance,era:Utype==="rogue"?0:Uera})
+						}
+						if (resource.type === "guild_goods" && category === "clan_goods"
+							|| resource.subType === "strategy_points" && category === "strategy_points"
+							|| resource.subType === "money" && category === "money"
+							|| resource.subType === "supplies" && category === "supplies"
+							|| resource.subType === "medals" && category === "medals") {
+							prod.amount += resource.amount * resource.dropChance;
+							prod.hasRandomProductions = true;
+						}
+					})
+				}
+
+				if (production.type === "resources" && category !== "goods") {
+					if (production.resources[category]) {
+						prod.doubleWhenMotivated = production.doubleWhenMotivated
+						prod.amount += production.resources[category] //* doubleMoney
+					}
+				}
+
+				if (production.type === "special_goods" && category === "special_goods") {
+					let combinedValues = Object.entries(production.resources).length === 1 ? Math.round(prod.amount * Boosts.Sums.special_goods_production/100) : 0;
+					for (let [type,value] of Object.entries(production.resources)) {
+						let boostedValue = Math.round(value * Boosts.Sums.special_goods_production/100);
+						combinedValues += value+boostedValue;
+					}
+					prod.amount = combinedValues;
+				}
+
+				if (production.type+"s" === category) { // units
+					let Utype = Object.keys(production.resources)[0]
+					let UAmount = production.resources[Utype]
+					let Uera = Technologies.Eras[building.eraName]
+					if (!current && building.type === "main_building") Utype = "random" //does not work... why???
+					Uera = Uera + (Utype.includes("next") && Uera<Technologies.getMaxEra() ? 1 : 0)
+					prod.amount += UAmount
+
+					if (!current && building.type === "greatbuilding") {
+						let m = Object.values(MainParser.CityMapData).filter(x => x.type === "military")
+						let RAmount = UAmount/m.length
+						m.forEach (x => {
+							let Rtype = MainParser.CityEntities[x.cityentity_id].available_products[0].unit_class
+							if (MainParser.CityEntities[x.cityentity_id].available_products[0].unit_type_id === "rogue") Rtype="rogue"   //Banners + Drummers???
+							let Rera = Technologies.Eras[MainParser.CityEntities[x.cityentity_id].requirements.min_era]
+							prod.units.push({type:Rtype.replace(/next./,""),amount:0,random:RAmount,era:Rtype === "rogue"?0:Rera})
+						})
+					}
+					else {
+						prod.units.push({type:Utype.replace(/next./,""),amount:UAmount,random:0,era:building.type === "greatbuilding" || Utype === "rogue" ?0:Uera})
+					}
+
+					if (current === true && building.type !== "main_building" && building.type !== "greatbuilding")
+						prod.type = Utype
+					else
+						prod.type = null
+				}
+				if (category === "clan_goods" && production.type === "guildResources") {
+					if (production.resources?.all_goods_of_age)
+						prod.amount = production.resources?.all_goods_of_age
+					else {
+						if (production.resources !== undefined) {
+							let good = GoodsList.find(x => x.id === Object.keys(production.resources)[0])
+							if (good !== undefined)
+								prod.amount = production.resources[good.id]*5 // multiply found good by 5
+						}
+					}
+				}
+			}
+		}
+
+		if (building.population && category === "population") {
+			prod.amount += building.population
+		}
+		if (building.happiness && category === "happiness") {
+			prod.amount += building.happiness
+		}
+
+		if (category === "goods") {
+			return CityBuildings.getBuildingGoodsByEra(current, building, true);
+		}
+		if (category === "forge_points_production" || category === "coin_production" || category === "supply_production") {
+			prod.amount = building.boosts.filter(x => x.type[0] === category)[0].value // not really rock solid like this
+		}
+		return prod
+	},
+
+
+	/**
+	 * Gathers and returns HTML representations of items and units produced by a building.
+	 *
+	 * @param {boolean} [current=false] - Whether to use current state or base production.
+	 * @param {Object} building - The building object.
+	 * @returns {Array} Array containing HTML strings for items, units, and raw item data.
+	 */
+	showBuildingItems(current = false, building) {
+		let allItems = '',
+			allUnits = '',
+			itemArray = [];
+
+		// random productions (chests, "20 %: 10x ..."): listed with their average per collection
+		const addRandom = (resources) => {
+			for (const resource of (Array.isArray(resources) ? resources : [])) {
+				if (resource.type.includes("good") || resource.type === "resources") continue;
+
+				let frag = resource.subType === "fragment"
+				let amount = parseFloat(Math.round(resource.amount*resource.dropChance * 100) / 100)
+				if (resource.type === "unit") {
+					allUnits += "Ø " + amount + "x " + (frag ? "🧩 " : "" ) + `<img src='${srcLinks.get("/shared/icons/"+resource.name.replace(/next./,"").replace("random","random_production")+".png",true)}'>` + "<br>"
+				} else {
+					allItems += "<span>Ø " + amount + "x " + (frag ? "🧩 " : "" ) + resource.name + "</span><br>"
+					itemArray.push({fragment:frag,name:resource.name,amount:0,random:amount})
+				}
+			}
+		}
+
+		// current item production
+		if (current && (building.state?.isPolivated === true || building.state?.isPolivated === undefined) && Array.isArray(building.state?.production)) {
+			for (const production of building.state?.production) {
+				if (production.type === "random") {
+					addRandom(production.resources)
+					continue
+				}
+				if (production.type !== "genericReward") continue;
+				if (production.resources?.icon?.includes("good")) return false;
+
+				// rolled random production: the result the server has already determined for this collection
+				let frag = production.resources.subType === "fragment";
+				let rolled = production.isRandom === true;
+				allItems += `<span${rolled ? ` title="${i18n('Boxes.Productions.RandomRoll')}"` : ''}>` + (rolled ? "🎲 " : "") + production.resources.amount + "x " + (frag ? "🧩 " : "" ) + production.resources.name + "</span><br>";
+				itemArray.push({fragment:frag,name:production.resources.name,amount:production.resources.amount,random:0,rolled:rolled});
+			}
+		}
+		// general item production
+		else {
+			if (building.production) {
+				for (const production of building.production) {
+					if (production.type === "random") {
+						addRandom(production.resources)
+					}
+					if (production.type === "unit") {
+						for (let u of Object.keys(production.resources)) {
+							allUnits += production.resources[u] + "x " + `<img src='${srcLinks.get("/shared/icons/"+u.replace(/next./,"").replace("random","random_production")+".png",true)}'>` + "<br>"
+						}
+					}
+					if (production.resources?.type === "consumable") {
+						let itemId = production.resources.id.split('#')[1]
+						itemId = (itemId === undefined) ? '' : itemId
+						let frag = production.resources.subType === "fragment"
+						allItems += `<span class="'${itemId}'">`+production.resources.amount + "x " + (frag ? "🧩 " : "" ) + production.resources.name.replace(/^\d+/, "") + "</span><br>"
+						itemArray.push({fragment:frag,name:production.resources.name,amount:production.resources.amount,random:0})
+					}
+				}
+			}
+		}
+		return [allItems,allUnits,itemArray];
+	},
+
+
+	/**
+	 * Determines the specific sub-type of production data.
+	 *
+	 * @param {Object} d - The data object to analyze.
+	 * @returns {string} The identified production sub-type.
+	 */
+    readType: (d) => {
+	   // Boost ausrechnen und bereitstellen falls noch nicht initialisiert
+	   if (Productions.Boosts['money'] === undefined) Productions.Boosts['money'] = ((Boosts.Sums['coin_production'] + 100) / 100);
+	   if (Productions.Boosts['supplies'] === undefined) Productions.Boosts['supplies'] = ((Boosts.Sums['supply_production'] + 100) / 100);
+	   if (Productions.Boosts['fp'] === undefined) Productions.Boosts['fp'] = ((Boosts.Sums['forge_points_production'] + 100) / 100);
+   },
+
+
+	/**
+	 * Sets the active tab ID.
+	 *
+	 * @param {number|string} id - The ID of the tab to set as active.
 	 */
 	SetTabs: (id)=> {
-		Productions.Tabs.push('<li class="' + id + ' game-cursor"><a href="#' + id + '" class="game-cursor"><span>&nbsp;</span></a></li>');
+		Productions.Tabs.push('<li class="' + id + '" id="prod-' + id + '"><a href="#' + id + '"><span>&nbsp;</span></a></li>');
 	},
 
 
 	/**
-	 * Gibt alle gemerkten Tabs aus
+	 * Retrieves the current active tab ID.
 	 *
-	 * @returns {string}
+	 * @returns {number|string} The active tab ID.
 	 */
 	GetTabs: ()=> {
-		return '<ul class="horizontal dark-bg">' + Productions.Tabs.join('') + '</ul>';
+		return '<ul class="horizontal dark-bg clickable">' + Productions.Tabs.join('') + '</ul>';
 	},
 
 
 	/**
-	 * Speichert BoxContent zwischen
+	 * Adds content to a specific tab.
 	 *
-	 * @param id
-	 * @param content
+	 * @param {number|string} id - The ID of the tab.
+	 * @param {string} content - The HTML content for the tab.
 	 */
 	SetTabContent: (id, content)=> {
 		// ab dem zweiten Eintrag verstecken
 		let style = Productions.TabsContent.length > 0 ? ' style="display:none"' : '';
 
-		Productions.TabsContent.push('<div id="' + id + '"' + style + '>' + content + '</div>');
+		Productions.TabsContent.push('<div class="content" id="' + id + '"' + style + '>' + content + '</div>');
 	},
 
+
 	/**
-	 * Gibt an, ob der jeweilige Ressourcentyp produziert wird oder nicht (z.B. Bevölkerung, Zufriedenheits, Kampfboosts)
-	*
-    * @param Type
-    */
+	 * Retrieves all tab content.
+	 *
+	 * @returns {Array} Array of tab content strings.
+	 */
+	GetTabContent: ()=> {
+		return Productions.TabsContent.join('');
+	},
+
+
+	/**
+	 * Initializes or refreshes the tab switching functionality and event handlers.
+	 */
+	SwitchFunction: ()=>{
+		$('#Productions').on('click', '.change-view', function() {
+			let activeTable = $(this).parents('table'),
+				hiddenTable = activeTable.next('table')
+
+			if (hiddenTable.length === 0) hiddenTable = activeTable.siblings('table').first();
+
+			activeTable.fadeOut(400, function(){
+				hiddenTable.fadeIn(400)
+				activeTable.removeClass('active')
+				hiddenTable.addClass('active')
+			});
+		});
+	},
+
+
+	/**
+	 * Checks if a specific production type has any production from buildings.
+	 *
+	 * @param {string} Type - The production type to check.
+	 * @returns {boolean} True if there is production for the type, false otherwise.
+	 */
 	TypeHasProduction: (Type) => {
 		if (Type === 'population' || Type === 'happiness' || Type === 'att_boost_attacker' || Type === 'att_boost_defender' || Type === 'def_boost_attacker' || Type === 'def_boost_defender') {
 			return false;
@@ -1401,638 +891,469 @@ let Productions = {
         }
     },
 
+
 	/**
-	 * Setzt alle gespeicherten Tabellen zusammen
+	 * Highlights buildings on the city map based on their IDs and centers the
+	 * map view on them once they are rendered: a single building ends up in the
+	 * middle of the viewport, a group is centered on its common bounding box.
 	 *
-	 * @returns {string}
+	 * @param {Array|number|string} ids - One building ID or an array of building IDs to highlight.
 	 */
-	GetTabContent: ()=> {
-		return Productions.TabsContent.join('');
+	ShowOnMap: (ids) => {
+		const idList = (Array.isArray(ids) ? ids : [ids]);
+
+		if ($('#citymap-main').length < 1) CityMap.init(null);
+
+		$('#grid-outer').removeClass('desaturate');
+		$('[data-id]').removeClass('highlighted');
+
+		// the map may still be rendering, so retry until the entities exist
+		const waitForEntities = (attempt = 0) => {
+			const targets = idList
+				.map(id => document.querySelector(`.entity[data-id="${id}"]`))
+				.filter(Boolean);
+
+			if (targets.length === 0) {
+				if (attempt < 20) setTimeout(() => waitForEntities(attempt + 1), 250);
+				return;
+			}
+
+			$('#grid-outer').addClass('desaturate');
+			targets.forEach(target => target.classList.add('highlighted'));
+			CityMap.FocusEntities(targets);
+		};
+
+		setTimeout(waitForEntities, 300);
 	},
 
 
 	/**
-	 * Schalter für die Tabs [Einzelansicht|Gesamtansicht]
+	 * Highlights buildings on the city map based on their name and centers the
+	 * map view on the matched group.
 	 *
+	 * @param {string} name - The name (or partial name) of buildings to highlight.
 	 */
-	SwitchFunction: ()=>{
-		$('#Productions').on('click', '.change-view', function(){
-			let btn = $(this),
-				t = $(this).data('type'),
-				hiddenTb = $('.' + t + '-mode:hidden'),
-				vissibleTb = $('.' + t + '-mode:visible');
+	ShowSearchOnMap: (name) => {
+		if ($('#citymap-main').length < 1) CityMap.init(null);
 
-			vissibleTb.fadeOut(400, function(){
-				hiddenTb.fadeIn(400);
+		$('#grid-outer').removeClass('desaturate');
 
-				if( $('.' + t + '-single').is(':visible') ){
-					btn.text(i18n('Boxes.Productions.ModeSingle'));
-				} else {
-					btn.text(i18n('Boxes.Productions.ModeGroups'));
-				}
-			});
-		});
-
-		$('#Productions').on('click', '.change-daily', function () {
-			let Tab = $(this).data('value');
-			Productions.ActiveTab = Tab;
-			Productions.ShowDaily = !Productions.ShowDaily;
-			if (Productions.ShowDaily) {
-				$(this).text(i18n('Boxes.Productions.ModeDaily'));
-			}
-			else {
-				$(this).text(i18n('Boxes.Productions.ModeCurrent'));
+		// the map may still be rendering, so retry until the entities exist
+		const waitForEntities = (attempt = 0) => {
+			if ($('.entity').length === 0) {
+				if (attempt < 20) setTimeout(() => waitForEntities(attempt + 1), 250);
+				return;
 			}
 
-			Productions.CalcBody();
-		});
+			CityMap.filterBuildings(name);
+			$('#BuildingsFilter').attr('value', name);
+			CityMap.FocusEntities($('.entity.highlighted').toArray());
+		};
+
+		setTimeout(waitForEntities, 300);
 	},
 
 
 	/**
-	 * Sortiert alle Gebäude des letzten Tabs
+	 * Returns a translated name for a given good type or era-specific good.
 	 *
+	 * @param {string} GoodType - The good type identifier.
+	 * @returns {string} The localized name of the good type.
 	 */
-	SortingAllTab: ()=>{
-
-		// Gruppiert die Gebäude
-		$('#all tr').each(function(){
-
-			let regex = /([a-z_])*/i;
-			let matches = regex.exec( $(this).attr('class') );
-
-			if(matches.length && matches[0] !== "undefined")
-			{
-				if(!$('#parent-' + matches[0]).length)
-				{
-					$('<tbody id="parent-' + matches[0] + '" class="parent"><tr><th colspan="5">' + i18n('Boxes.Productions.Headings.' + matches[0]) + '</th></tr></tbody>').appendTo('.all-mode');
-				}
-
-				$(this).appendTo( $('#parent-' + matches[0]) );
-			}
-		});
-
-
-		// Dropdown zum Filtern
-		let drop = $('<select />').attr('id', 'all-drop').addClass('game-cursor');
-
-		drop.append( $('<option />').attr('data-type', 'all').text( i18n('Boxes.Productions.Headings.all') ) )
-
-		for(let i in Productions.Buildings)
-		{
-			if(Productions.Buildings.hasOwnProperty(i))
-			{
-				drop.append($('<option />').attr('data-type', Productions.Buildings[i]).text(i18n('Boxes.Productions.Headings.' + Productions.Buildings[i])).addClass('game-cursor') )
-			}
+	GetTypeName: (GoodType) => {
+		// army boost columns exist in several contexts (base, GE, GBG, QI); include the
+		// context in the name so every column gets a unique label — otherwise the
+		// export overwrites one column with the other (#3503)
+		let BoostContext = '';
+		if (GoodType.includes('-guild_expedition')) {
+			BoostContext = ' (' + i18n('Boxes.General.Guild_Expedition') + ')';
+		}
+		else if (GoodType.includes('-battleground')) {
+			BoostContext = ' (' + i18n('Boxes.General.Guild_Battlegrounds') + ')';
+		}
+		else if (GoodType.includes('-guild_raids')) {
+			BoostContext = ' (' + i18n('Boxes.General.Quantum_Incursion') + ')';
 		}
 
-		drop.append($('<option />').attr('data-type', 'done').text(i18n('Boxes.Productions.Headings.Done')))
-
-		$('#all-dropdown-th').append(drop);
-
-		setTimeout(()=>{
-			Productions.Dropdown();
-		}, 100)
-	},
-
-
-	/**
-	 * Blendet je nach Dropdown die Typen ein
-	 */
-	Dropdown: ()=>{
-		$('#Productions').on('change', '#all-drop', function() {
-			let t = $('select#all-drop :selected').data('type');
-
-			if (t === 'all') {
-				$('.all-mode').find('.parent').show();
-				$('.all-mode').find('.notdone').show();
-			}
-			else if (t === 'done') {
-				$('.all-mode').find('.parent').show();
-				$('.all-mode').find('.notdone').hide();
-            }
-			else {
-				$('.all-mode').find('.parent').hide();
-				$('.all-mode').find('#parent-' + t).show();
-				$('.all-mode').find('.notdone').show();
-			}
-		});
-	},
-
-
-	/**
-	 * Kleine Suche für die "Gesamt"-Liste
-	 *
-	 */
-	Filter: ()=>{
-		let input, filter, tr, td, i, txtValue;
-
-		input = $("#all-search").val();
-		filter = input.toUpperCase();
-		tr = $('#all').find('tr');
-
-		// durch alle TRs rennen
-		for (i = 0; i < tr.length; i++) {
-			td = $(tr[i]).find('td')[0];
-
-			if (td) {
-				txtValue = $(td).text();
-
-				if (txtValue.toUpperCase().indexOf(filter) > -1) {
-					tr[i].style.display = "";
-				} else {
-					tr[i].style.display = "none";
-				}
-			}
+		if (GoodType.includes('att_boost_attacker')) {
+			return i18n('Boxes.Productions.att_boost_attacker') + BoostContext;
 		}
-	},
-
-
-	/**
-	 * Hilfsfunktion zum Prüfen auf "leer"
-	 *
-	 * @param obj
-	 * @returns {boolean}
-	 */
-	isEmpty: (obj)=> {
-		for(let key in obj) {
-			if(obj.hasOwnProperty(key))
-				return false;
+		else if (GoodType.includes('att_boost_defender')) {
+			return i18n('Boxes.Productions.att_boost_defender') + BoostContext;
 		}
-		return true;
-	},
+		else if (GoodType.includes('def_boost_attacker')) {
+			return i18n('Boxes.Productions.def_boost_attacker') + BoostContext;
+		}
+		else if (GoodType.includes('def_boost_defender')) {
+			return i18n('Boxes.Productions.def_boost_defender') + BoostContext;
+		}
 
-
-	/**
-	 * Zeigt pulsierend ein Gebäude auf der Map
-	 *
-	 * @param ids
-	 */
-	ShowFunction: (ids) => {
-		let IDArray = (ids.length !== undefined ? ids : [ids]);
-
-		CityMap.init(MainParser.CityMapData);
-
-		$('[data-entityid]').removeClass('pulsate');
-
-		setTimeout(() => {
-			for (let i = 0; i < IDArray.length; i++) {
-				let target = $('[data-entityid="' + IDArray[i] + '"]');
-
-				if(i === 0) $('#map-container').scrollTo(target, 800, { offset: { left: -280, top: -280 }, easing: 'swing' });
-
-				target.addClass('pulsate');
-            }		
-		}, 500);
-	},
-
-
-	/**
-	 * Namen der Güter ermitteln
-	 *
-	 * @param GoodType
-	 * @returns {*|string}
-	 */
-	GetGoodName: (GoodType)=> {
-
-		if (GoodType === 'happiness') {
+		if (GoodType.includes('happiness')) {
 			return i18n('Boxes.Productions.Happiness');
-
 		}
+		else if (GoodType === 'guild_raids_action_points_collection') {
+			return i18n('Boxes.BoostList.guild_raids_action_points_collection');
+        }
+		else if (GoodType === 'guild_raids_units_start') {
+			return i18n('Boxes.BoostList.guild_raids_units_start');
+        }
+		else if (GoodType === 'guild_raids_goods_start') {
+			return i18n('Boxes.BoostList.guild_raids_goods_start');
+        }
+		else if (GoodType === 'guild_raids_coins_start') {
+			return i18n('Boxes.BoostList.guild_raids_coins_start');
+        }
+		else if (GoodType === 'guild_raids_coins_production') {
+			return i18n('Boxes.BoostList.guild_raids_coins_production');
+        }
+		else if (GoodType === 'guild_raids_supplies_start') {
+			return i18n('Boxes.BoostList.guild_raids_supplies_start');
+        }
+		else if (GoodType === 'guild_raids_supplies_production') {
+			return i18n('Boxes.BoostList.guild_raids_supplies_production');
+        }
 		else if (GoodType === 'clan_power') {
 			return i18n('Boxes.Productions.GuildPower');
-
 		}
 		else if (GoodType === 'clan_goods') {
 			return i18n('Boxes.Productions.GuildGoods');
-
         }
-		else if (GoodType === 'units'){
+		else if (GoodType.includes('units')) {
 			return i18n('Boxes.Productions.Units');
-
 		}
-		else if (GoodType === 'att_boost_attacker') {
-			return i18n('Boxes.Productions.att_boost_attacker');
-
+		else if (GoodType.includes('battleground')) {
+			return i18n('Boxes.General.Guild_Battlegrounds');
 		}
-		else if (GoodType === 'att_boost_defender') {
-			return i18n('Boxes.Productions.att_boost_defender');
-
+		else if (GoodType.includes('guild_expedition')) {
+			return i18n('Boxes.General.Guild_Expedition');
 		}
-		else if (GoodType === 'def_boost_attacker') {
-			return i18n('Boxes.Productions.def_boost_attacker');
-
-		}
-		else if (GoodType === 'def_boost_defender') {
-			return i18n('Boxes.Productions.def_boost_defender');
-
-		}
-		else if (GoodType === 'goods') {
-			return i18n('Boxes.Productions.goods');
+		else if (GoodType.includes('goods-next')) {
+			return i18n('Boxes.Productions.goods_next');
+        }
+		else if (GoodType === 'goods-current') {
+			return i18n('Boxes.Productions.goods_current');
+        }
+		else if (GoodType === 'goods-previous') {
+			return i18n('Boxes.Productions.goods_previous');
+        }
+		else if (GoodType === 'items') {
+			return i18n('Boxes.Productions.fragments');
+        }
+		else if (GoodType === 'fsp') {
+			return i18n('Boxes.Productions.FSP');
+        }
+		else if (GoodType === 'forge_points_production') {
+			return i18n('Boxes.Productions.fp_boost');
+        }
+		else if (GoodType === 'goods_production') {
+			return i18n('Boxes.Productions.goods_boost');
+        }
+		else if (GoodType === 'coin_production') {
+			return i18n('Boxes.Productions.coin_boost');
+        }
+		else if (GoodType === 'supply_production') {
+			return i18n('Boxes.Productions.supply_boost');
         }
 		else {
-			if(GoodType && GoodsData[GoodType]){
-				return GoodsData[GoodType]['name'];
-
-			} else {
-				return GoodType;
+			// prefer own translations for base resources - GoodsData names follow
+			// the world language instead of the extension language
+			const i18nKey = 'Boxes.General.Resource.' + GoodType;
+			const translated = i18n(i18nKey);
+			if (translated !== i18nKey) {
+				return translated;
 			}
+			if (GoodType && GoodsData[GoodType]) {
+				return GoodsData[GoodType]['name'];
+			}
+			return GoodType;
 		}
 	},
 
 
 	/**
-	 * Ermittelt die täglichen Güter, falls die Option ShowDaily gesetzt ist
+	 * Retrieves a boost value for a building and executes a callback with the result.
 	 *
-	 * */
-	GetDaily: (Amount, dailyfactor, type) => {
-		let Factor;
-		if (Productions.ShowDaily && Productions.TypeHasProduction(type)) {
-			Factor = dailyfactor;
-		}
-		else {
-			Factor = 1;
-		}
-
-		return Amount * Factor;
+	 * @param {Object} building - The building object.
+	 * @param {string} boostName - The name of the boost to retrieve.
+	 * @param {Function} callback - Callback function receiving the boost value object or undefined.
+	 */
+	getBoost: (building, boostName, callback) => {
+		building.boosts?.forEach(boost => {
+			let type = boost.type.find(x => x === boostName)
+			if (!boostName.includes('-')) {
+				if (type !== undefined) {
+					const value = { feature: boost.feature, value: boost.value }
+					callback(value)
+				}
+			}
+			callback(undefined)
+		})
 	},
 
 
-	ShowRating: () => {
-		if ($('#ProductionsRating').length === 0) {
+	/**
+	 * Displays the settings for the production overview box.
+	 */
+	ShowSettings: () => {
+        let showRelativeProductionTime = JSON.parse(localStorage.getItem('productionsShowRelativeTime')||"false")
+        let showAMPMTime = JSON.parse(localStorage.getItem('productionsShowAMPMTime')||"false")
+        let show24Time = (showAMPMTime === false && showRelativeProductionTime === false)
 
-			let RatingEnableds = localStorage.getItem('ProductionRatingEnableds');
-			if (RatingEnableds !== null) {
-				Productions.RatingEnableds = JSON.parse(RatingEnableds);
-			}
+        let h = []
+        h.push(`<p><input id="productionsShowRelativeTime" name="productionTime" value="1" type="radio" ${(showRelativeProductionTime === true) ? ' checked="checked"' : ''} /> <label for="productionsShowRelativeTime">${i18n('Boxes.Productions.RelativeTime')}</label><br>`)
+        h.push(`<input id="productionsShowAMPMTime" name="productionTime" value="1" type="radio" ${(showAMPMTime === true) ? ' checked="checked"' : ''} /> <label for="productionsShowAMPMTime">${i18n('Boxes.Productions.AMPMTime')}</label><br>`)
+        h.push(`<input id="productionsShow24Time" name="productionTime" value="1" type="radio" ${(show24Time === true) ? ' checked="checked"' : ''} /> <label for="productionsShow24Time">${i18n('Boxes.Productions.Time24')}</label></p>`)
+		h.push(`<p><button onclick="Productions.SaveSettings()" id="save-productions-settings" class="btn" style="width:100%">${i18n('Boxes.Settings.Save')}</button></p>`)
 
-			let RatingProdPerTiles = localStorage.getItem('ProductionRatingProdPerTiles');
-			if (RatingProdPerTiles !== null) {
-				Productions.RatingProdPerTiles = JSON.parse(RatingProdPerTiles);
-			}
+		let activeTable = $('#ProductionsBody .horizontal li.active').attr('id').replace('prod-','');
 
-			for (let i = 0; i < Productions.RatingTypes.length; i++) {
-				let Type = Productions.RatingTypes[i];
+		/* needs more thought put into it: only relevant on an unmotivated city, having to download so many tables is weird, without id you cannot create a large table from it etc
+		h.push(`<hr><p>${i18n('Boxes.General.Export')}: <span class="btn-group"><button class="btn" onclick="HTML.ExportTable($('#ProductionsBody #${activeTable}-list'),'csv','City-${activeTable}')" title="${HTML.i18nTooltip(i18n('Boxes.General.ExportCSV'))}">CSV</button>`);
+		h.push(`<button class="btn" onclick="HTML.ExportTable($('#ProductionsBody #${activeTable}-list'),'json','City-${activeTable}')" title="${HTML.i18nTooltip(i18n('Boxes.General.ExportJSON'))}">JSON</button></span></p>`);
+		*/
 
-				if (Productions.RatingEnableds[Type] === undefined) Productions.RatingEnableds[Type] = true;
-				if (Productions.RatingProdPerTiles[Type] === undefined) Productions.RatingProdPerTiles[Type] = Productions.GetDefaultProdPerTile(Type);
-            }
+        $('#ProductionsSettingsBox').html(h.join(''))
+    },
 
+
+	/**
+	 * Saves the settings for the production overview box.
+	 */
+	SaveSettings: () => {
+        let showRelativeProductionTime = false
+		if ($("#productionsShowRelativeTime").is(':checked')) showRelativeProductionTime = true
+		localStorage.setItem('productionsShowRelativeTime', showRelativeProductionTime)
+
+        let showAMPMTime = false
+		if ($("#productionsShowAMPMTime").is(':checked')) showAMPMTime = true
+		localStorage.setItem('productionsShowAMPMTime', showAMPMTime)
+
+		if ($("#productionsShow24Time").is(':checked')) {
+			localStorage.setItem('productionsShowAMPMTime', false)
+			localStorage.setItem('productionsShowRelativeTime', false)
+		}
+
+		Productions.Refresh()
+
+		$(`#ProductionsSettingsBox`).remove()
+	},
+
+
+	/**
+	 * Displays a modal box containing a list of item sources.
+	 *
+	 * If the modal box with the ID "ItemSources" does not already exist, it creates
+	 * one with customizable attributes such as auto_close, dragdrop, minimize, and resize.
+	 *
+	 * The item sources list is retrieved from the `Productions.buildingItemList` method and
+	 * rendered in a sortable and filterable table format. Each item can be clicked to update
+	 * item sources through the `Productions.updateItemSources` method.
+	 *
+	 * Functionality includes:
+	 * - Dynamically rendering a table of item sources with item icons and names.
+	 * - A filter input to narrow down visible items in the list.
+	 * - Making table rows sortable using the `tableSorter` function.
+	 * - Adding an interactive sub-table for each item toggled by a click event.
+	 */
+	showItemSources:()=>{
+		if ( $('#ItemSources').length === 0 ) {
 			HTML.Box({
-				id: 'ProductionsRating',
-				title: i18n('Boxes.ProductionsRating.Title'),
+				id: 'ItemSources',
+				title: i18n('Boxes.ItemSources.Title'),
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
 				resize: true
 			});
-
-			// CSS in den DOM prügeln
-			HTML.AddCssFile('productions');
-
-			// Ein Gebäude soll auf der Karte dargestellt werden
-			$('#ProductionsRating').on('click', '.foe-table .show-entity', function () {
-				let ID = $(this).data('id');
-
-				let Parts = ID.split('='),
-					GroupType = (Parts.length >= 1 ? Parts[0] : ''),
-					GroupID = (Parts.length >= 2 ? Parts[1] : '');
-									
-				let IDs = [];
-				for (let i in MainParser.CityMapData) {
-					if (!MainParser.CityMapData.hasOwnProperty(i)) continue;
-
-					let CurrentBuilding = MainParser.CityMapData[i];
-
-					if (GroupType === 'cityentity_id') {
-						if (CurrentBuilding['cityentity_id'] === GroupID) IDs.push(i);
-					}
-					else if (GroupType === 'setId' || GroupType === 'chainId') {
-						let Entity = MainParser.CityEntities[CurrentBuilding['cityentity_id']];
-
-						if (!Entity['abilities']) continue;
-						for (let j = 0; j < Entity['abilities'].length; j++) {
-							let Ability = Entity['abilities'][j];
-
-							if (Ability[GroupType] === GroupID) IDs.push(i);
-						}
-					}
-                }
-
-				Productions.ShowFunction(IDs);
-			});
-
-			$('#ProductionsRating').on('click', '.toggle-tab', function () {
-				Productions.RatingCurrentTab = $(this).data('value');
-
-				Productions.CalcRatingBody();
-			});
-
-			for (let i = 0; i < Productions.RatingTypes.length; i++) {
-				let Type = Productions.RatingTypes[i];
-
-				$('#ProductionsRating').on('click', '#Enabled-' + Type, function () {
-					let $this = $(this),
-						v = $this.prop('checked');
-
-					if (v) {
-						Productions.RatingEnableds[Type] = true;
-					}
-					else {
-						Productions.RatingEnableds[Type] = false;
-                    }
-
-					localStorage.setItem('ProductionRatingEnableds', JSON.stringify(Productions.RatingEnableds));
-					Productions.CalcRatingBody();
-				});
-
-				$('#ProductionsRating').on('blur', '#ProdPerTile-' + Type, function () {
-					Productions.RatingProdPerTiles[Type] = parseFloat($('#ProdPerTile-' + Type).val());
-					if (isNaN(Productions.RatingProdPerTiles[Type])) Productions.RatingProdPerTiles[Type] = 0;
-					localStorage.setItem('ProductionRatingProdPerTiles', JSON.stringify(Productions.RatingProdPerTiles));
-					Productions.CalcRatingBody();
-				});
-			}
-		} else {
-			HTML.CloseOpenBox('ProductionsRating');
 		}
 
-		Productions.CalcRatingBody();
+		let items = Productions.buildingItemList()
+
+        let h = `<div>
+					<table class="foe-table sortable-table">
+						<thead class="sticky">
+							<tr class="sorter-header"><th data-type="itemSourcesList"><input type="text" class="filterTable" placeholder="${i18n('Boxes.General.FilterItems')}" /> Items</th></tr>
+						</thead>
+						<tbody class="itemSourcesList">`
+							for (let item of Object.values(items)) {
+								h += `<tr><td onclick="Productions.updateItemSources(${JSON.stringify(item).replaceAll('"',"'")})" data-text="${helper.str.cleanup(item.name)}">${srcLinks.icons(item.icon)} ${item.name}<div class="innerTable" id="item-${helper.str.cleanup(item.name)}"></div></td></tr>`
+							}
+        			h +=`</tbody>
+					</table>
+				</div>`
+        $('#ItemSourcesBody').html(h)
+        $('#ItemSourcesBody .sortable-table').tableSorter()
+		HTML.FilterTable('#ItemSourcesBody .filterTable')
 	},
 
-	CalcRatingBody: () => {
-		let h = [];
 
-		if (!Productions.RatingCurrentTab) CurrentTab = 'Settings';
+	/**
+	 * Generates a list of building items by parsing city entities data and filtering specific attributes.
+	 *
+	 * The function processes city entities to extract details about items associated with buildings.
+	 * It generates an object containing item information such as `id`, `name`, `icon`, and
+	 * the buildings where they are utilized. It filters out irrelevant items such as fragments, icons,
+	 * or those matching the goods list.
+	 *
+	 * Steps performed by this function:
+	 * 1. Parses `MainParser.CityEntities` to retrieve relevant building entities that have IDs starting with "W".
+	 * 2. Extracts item data (id, name, icon) from JSON formatted data using regex patterns.
+	 * 3. Cleans the extracted data, normalizing IDs and names by removing fragments or numeric sequences.
+	 * 4. Filters out items based on their inclusion in `GoodsList` or matching specific conditions.
+	 * 5. Consolidates item information into an object where each item is mapped by its `id`,
+	 *    including relevant details and the buildings it is associated with.
+	 *
+	 * @returns {Object} An object where each key is an item `id` and the value is an object containing:
+	 *                   - `name` (String): The name of the item.
+	 *                   - `buildings` (Array): A list of building IDs where the item is utilized.
+	 *                   - `id` (String): The unique identifier of the item.
+	 *                   - `icon` (String): The icon asset name associated with the item.
+	 */
+	buildingItemList: () => {
+		let temp = Object.assign({},...Object.values(MainParser.CityEntities).filter(b=>b.id[0]==="W").map(x=>({[x.id]:[...JSON.stringify(x).matchAll(/"id":"([^"]*?)"[^()[\]{}]*?"name":"([^"]*?)"[^()[\]{}]*?"iconAssetName":"([^"]*?)"[^{}]*?"__class__":"(GenericReward|TimedReward)"/gm)].map(a=>({id:a[1],name:a[2],icon:a[3]}))})))
 
-		h.push('<div class="tabs">');
-		h.push('<ul class="horizontal dark-bg">');
-		h.push('<li class="' + (Productions.RatingCurrentTab === 'Settings' ? 'active' : '')  + '"><a class="toggle-tab" data-value="Settings"><span>' + i18n('Boxes.ProductionsRating.Settings') + '</span></a></li>');
-		h.push('<li class="' + (Productions.RatingCurrentTab === 'Results' ? 'active' : '') + '"><a class="toggle-tab" data-value="Results"><span>' + i18n('Boxes.ProductionsRating.Results') + '</span></a></li>');
-		h.push('</ul>');
-		h.push('</div>');
+		let gl = Object.values(GoodsList).map(g=>g.id)
+		let items = {}
 
-		//Einstellungen
-		if (Productions.RatingCurrentTab === 'Settings') {
-			h.push('<table class="foe-table">');
+		for (let [building,list] of Object.entries(temp)) {
+			for (let item of list) {
+				if (gl.includes(item.icon))
+					continue
 
-			h.push('<thead>')
-			h.push('<tr>');
-			h.push('<th></th>'); //Symbol
-			h.push('<th></th>'); //ResourceName
-			h.push('<th class="text-center">' + i18n('Boxes.ProductionsRating.Enabled') + '</th>');
-			h.push('<th class="text-center">' + i18n('Boxes.ProductionsRating.ProdPerTile') + '</th>');
-			h.push('</tr>');
-			h.push('</thead>')
+				if (["","icon_fragment"].includes(item.icon))
+					continue
 
-			h.push('<tbody>');
-			for (let i = 0; i < Productions.RatingTypes.length; i++) {
-				let Type = Productions.RatingTypes[i];
-
-				h.push('<tr>');
-				h.push('<td style="width:1%" class="text-center"><span class="resicon ' + Type + '"></span></td>');
-				h.push('<td>' + Productions.GetGoodName(Type) + '</td>');
-				h.push('<td class="text-center"><input id="Enabled-' + Type + '" class="enabled game-cursor" ' + (Productions.RatingEnableds[Type] ? 'checked' : '') + ' type="checkbox"></td>');
-				if (Productions.RatingEnableds[Type]) {
-					h.push('<td class="text-center"><input type="number" id="ProdPerTile-' + Type + '" step="0.01" min="0" max="1000000" value="' + Productions.RatingProdPerTiles[Type] + '"></td>');
+				if (/#\d+/.test(item.id)) {
+					item.id=item.id.replaceAll(/#\d+/g,'')
+					item.name=item.name.replaceAll(/\s?\d+\s?/g,'')
 				}
-				else {
-					h.push('<td></td>');
-                }
-				h.push('</tr>');
+				if (items[item.id]) {
+					if (!items[item.id].buildings.includes(building)) items[item.id].buildings.push(building)
+				} else {
+					items[item.id] = {name:item.name,buildings:[building],id:item.id,icon:item.icon}
+				}
 			}
-			h.push('</tbody>');
-
-			h.push('</table>');
 		}
-		//Ergebnisse
-		else if (Productions.RatingCurrentTab === 'Results') {
-			//Schritt1: Berechnung
-			let BuildingGroups = {};
-			for (let i in MainParser.CityMapData) {
-				if (!MainParser.CityMapData.hasOwnProperty(i)) continue;
+		return items
+	},
 
-				let Building = MainParser.CityMapData[i],
-					Entity = MainParser.CityEntities[Building['cityentity_id']],
-					GroupID = Building['cityentity_id'],
-					GroupName = Entity['name'],
-					GroupType = 'cityentity_id';
 
-				if (Entity['abilities']) {
-					let SkipBuilding = false;
-					for (let j = 0; j < Entity['abilities'].length; j++) {
-						let Ability = Entity['abilities'][j],
-							Class = Ability['__class__'];
+	/**
+	 * Retrieves a list of city buildings categorized by specific boost types.
+	 *
+	 * This method filters city entities based on their id, specifically those that start with "W",
+	 * and then evaluates their boost components to determine if they provide any of the specified boosts.
+	 *
+	 * Buildings that match the specified boosts are grouped and returned in a categorized object,
+	 * where each key is a boost type and the value is an array of buildings providing that boost.
+	 *
+	 * Special cases:
+	 * - Buildings tied to guild raid activities (identified by ids containing 'GuildRaids') are excluded
+	 *   for boosts that include 'guild_raids'.
+	 *
+	 * @param {string[]} [boostArray=[]] - An array of boost types to search for.
+	 * @returns {Object} An object where each key is a boost type from the input array, and the value is
+	 *                   an array of objects containing the name and entityId of the matching buildings.
+	 *                   Example structure:
+	 *                   {
+	 *                      "boost1": [{ name: "Building1", entityId: "W123" }],
+	 *                      "boost2": [{ name: "Building2", entityId: "W456" }]
+	 *                   }
+	 */
+	getBuildingsByBoosts: (boostArray = []) => {
+		let buildings = Object.values(MainParser.CityEntities).filter(b=>b.id[0]==="W")
+		let boostList = {};
+		boostArray.forEach(boost => boostList[boost] = [])
+		for (let building of buildings) {
+			let buildingAABoost = building.components?.AllAge?.boosts?.boosts;
+			let buildingCABoost = building.components?.[CurrentEra]?.boosts?.boosts;
+			if (buildingAABoost === undefined && buildingCABoost === undefined) continue;
 
-						if (Class === 'NotsellableAbility') { //Keine Gebäude, die man nicht abreißen kann
-							SkipBuilding = true;
-							break;
-						}
-						else if (Ability['chainId']) {
-							GroupID = Ability['chainId'];
-							GroupName = (MainParser.BuildingChains[Ability['chainId']] ? MainParser.BuildingChains[Ability['chainId']]['name'] : Ability['chainId']);
-							GroupType = 'chainId';
-						}
-						else if (Ability['setId']) {
-							GroupID = Ability['setId'];
-							GroupName = (MainParser.BuildingSets[Ability['setId']] ? MainParser.BuildingSets[Ability['setId']]['name'] : Ability['setId']);
-							GroupType = 'setId';
+			for (let boost of boostArray) {
+				let foundAllABoost = buildingAABoost?.find(x => x.type === boost);
+				let foundCurrentABoost = buildingCABoost?.find(x => x.type === boost);
 
-                        }
-					}
-					if (SkipBuilding) continue;
-				}
+				if (foundAllABoost === undefined && foundCurrentABoost === undefined) continue;
 
-				//Keine LGs, keine Straßen, keine Millitärgebäude
-				if (Entity['type'] === 'greatbuilding' || Entity['type'] === 'street' || Entity['type'] === 'military') continue;
+				if (boost.includes('guild_raids') && building.id.includes('GuildRaids')) continue;
 
-				let Production = Productions.readType(Building);
-				//let Score = 0;
-
-				Production['motivatedproducts']['goods'] = 0;
-				for (let Type in Production['motivatedproducts']) {
-					if (!Production['motivatedproducts'].hasOwnProperty(Type)) continue;
-
-					if (Productions.TypeHasProduction(Type)) Production.motivatedproducts[Type] *= Production['dailyfactor'];
-					if (Building['type'] === 'residential' || Building['type'] === 'production' || Building['type'] === 'generic_building') {
-						if (Type === 'money') Production.motivatedproducts[Type] *= (Productions.Boosts['money']);
-						if (Type === 'supplies') Production.motivatedproducts[Type] *= (Productions.Boosts['supplies']);
-					}
-				}
-
-				for (let Type in Production['motivatedproducts']) {
-					//Güter zusammenfassen
-					if (!Productions.Types.includes(Type)) {
-						Production.motivatedproducts['goods'] += Production.motivatedproducts[Type];
-						delete Production.motivatedproducts[Type];
-					}
-				}
-
-				for (let Type in Production['motivatedproducts']) {
-					if (!Production['motivatedproducts'].hasOwnProperty(Type)) continue;
-
-					if (!Productions.RatingEnableds[Type]) {
-						delete Production.motivatedproducts[Type];						
-					}
-				}
-				if (!BuildingGroups[GroupID]) BuildingGroups[GroupID] = [];
-
-				Production.GroupName = GroupName;
-				Production.GroupType = GroupType;
-				BuildingGroups[GroupID].push(Production);
+				boostList[boost].push({
+					name: building.name,
+					entityId: building.id
+				});
 			}
+		}
+		return boostList;
+	},
 
-			let GroupStats = [];
-			for (let GroupID in BuildingGroups) {
-				if (!BuildingGroups.hasOwnProperty(GroupID)) continue;
 
-				let CurrentGroup = BuildingGroups[GroupID],
-					TotalProducts = {},
-					TotalTiles = 0;
-
-				for (let i = 0; i < CurrentGroup.length; i++) {
-					let CurrentBuilding = CurrentGroup[i],
-						Entity = MainParser.CityEntities[CurrentBuilding['eid']];
-
-					for (let ResName in CurrentBuilding['motivatedproducts']) {
-						if (!CurrentBuilding['motivatedproducts'].hasOwnProperty(ResName)) continue;
-
-						if (!TotalProducts[ResName]) TotalProducts[ResName] = 0;
-						TotalProducts[ResName] += CurrentBuilding['motivatedproducts'][ResName];
-					}
-
-					let BuildingSize = CityMap.GetBuildingSize(MainParser.CityMapData[CurrentBuilding['id']]);
-
-					TotalTiles += BuildingSize['total_area'];
-				}
-
-				let TotalPoints = 0;
-				for (let ResName in TotalProducts) {
-					if (!TotalProducts.hasOwnProperty(ResName)) continue;
-
-					if (!Productions.RatingEnableds[ResName] || Productions.RatingProdPerTiles[ResName] <= 0) continue;
-
-					TotalPoints += TotalProducts[ResName] / Productions.RatingProdPerTiles[ResName];
-				}
-
-				let GroupStat = {};
-				GroupStat['ID'] = GroupID;
-				GroupStat['GroupName'] = CurrentGroup[0]['GroupName'];
-				GroupStat['GroupType'] = CurrentGroup[0]['GroupType'];
-				GroupStat['Count'] = CurrentGroup.length;
-				GroupStat['TotalProducts'] = TotalProducts;
-				GroupStat['Score'] = TotalPoints / TotalTiles;
-
-				GroupStats.push(GroupStat);
-            }
-
-			GroupStats = GroupStats.sort(function (a, b) {
-				return a['Score'] - b['Score'];
+	/**
+	 * Creates a list of buildings providing the specified boosts and displays it.
+	 *
+	 * @param {Array} [boostArray=[]] - Array of boost types to filter buildings by.
+	 */
+	createBuildingBoostList: (boostArray = []) => {
+		if ( $('#BoostList').length === 0 ) {
+			HTML.Box({
+				id: 'BoostList',
+				title: i18n('Boxes.BoostList.Title'),
+				auto_close: true,
+				dragdrop: true,
+				minimize: true,
+				resize: true
 			});
-
-			//Schritt2: Header
-			h.push('<table class="foe-table sortable-table">');
-
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push('<th>' + i18n('Boxes.ProductionsRating.BuildingName') + '</th>');
-			for (let i = 0; i < Productions.RatingTypes.length; i++) {
-				let Type = Productions.RatingTypes[i];
-
-				if (!Productions.RatingEnableds[Type]) continue;
-
-				h.push('<th style="width:1%" class="text-center"><span class="resicon ' + Type + '"></span></th>');
-			}
-			h.push('<th>' + i18n('Boxes.ProductionsRating.Score') + '</th>');
-			h.push('<th></th>');
-			h.push('</tr>');
-			h.push('<thead>');
-
-			//Schritt3: Body
-			h.push('<tbody>');
-			
-			for (let i = 0; i < GroupStats.length; i++) {
-				let GroupStat = GroupStats[i];
-
-				h.push('<tr>');
-				h.push('<td>' + GroupStat['Count'] + 'x ' + GroupStat['GroupName'] + '</td>');
-				for (let j = 0; j < Productions.RatingTypes.length; j++) {
-					let Type = Productions.RatingTypes[j];
-
-					if (!Productions.RatingEnableds[Type]) continue;
-
-					let Amount = (GroupStat['TotalProducts'][Type] ? GroupStat['TotalProducts'][Type] : 0);
-					h.push('<td class="text-center">' + HTML.Format(Math.round(Amount)) + '</td>');
-				}
-
-				let ScorePercent = Math.round(GroupStat['Score'] * 100);
-
-				h.push('<td><strong class="' + (ScorePercent >= 100 ? 'success' : 'error') + '">' + (ScorePercent > 0 ? ScorePercent + '%' : 'N/A') + '</strong></td>');
-				h.push('<td class="text-right"><span class="show-entity" data-id="' + GroupStat['GroupType'] + '=' + GroupStat['ID'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
-				h.push('</tr>');
-            }
-
-			h.push('</tbody>');
-
-			h.push('</table>');
 		}
-		else {
-			h.push('Tab error...');
-        }
 
-		$('#ProductionsRatingBody').html(h.join(''));
-    },
+		let groupedBuildings = Productions.getBuildingsByBoosts(boostArray);
 
-	GetDefaultProdPerTile: (Type) => {
-		if (Type === 'strategy_points') {
-			return 0.2;
-		}
-		if (Type === 'money') {
-			return 0;
-		}
-		if (Type === 'supplies') {
-			return 0;
-		}
-		if (Type === 'medals') {
-			return 0;
-		}
-		if (Type === 'units') {
-			return 0.2;
-		}
-		if (Type === 'clan_power') {
-			let Entity = MainParser.CityEntities['Z_MultiAge_CupBonus1b'] //Hall of fame lvl2
-				Level = CurrentEraID - 1;
+        let h = `<div>
+					<table class="foe-table sortable-table">
+						<thead class="sticky">
+							<tr class="sorter-header"><th data-type="boostList"><input type="text" class="filterTable" placeholder="${i18n('Boxes.General.FilterItems')}" /> Boosts</th></tr>
+						</thead>
+						<tbody>`
+							for (let [group, buildings] of Object.entries(groupedBuildings)) {
+								h += '<tr><td><h2><span class="boost '+group+'"></span> '+i18n('Boxes.BoostList.'+group)+'</h2><ul>'
+								for (let building of buildings) {
+									h += '<li class="fh-tooltip" data-era="'+CurrentEra+'" data-callback_tt="Tooltips.buildingTT" data-meta_id="'+building.entityId+'">'+building.name+'</li>'
+								}
+								h += '</ul></td></tr>';
+							}
+        			h +=`</tbody>
+					</table>
+				</div>`
+        $('#BoostListBody').html(h)
+        $('#BoostListBody .sortable-table').tableSorter()
+		HTML.FilterTable('#BoostListBody .filterTable')
+	},
 
-			if (!Entity || !Entity['entity_levels'] || !Entity['entity_levels'][Level] || !Entity['entity_levels'][Level]['clan_power']) return 0;
 
-			return 2 * Entity['entity_levels'][Level]['clan_power'] / 10.5; //Motivated hall of fame lvl2
+	/**
+	 * Updates the sources of a given item and toggles its display state in the UI.
+	 *
+	 * This function adjusts the content and visibility of a specific HTML element corresponding
+	 * to the provided item. It either clears the element's content or populates it with a list
+	 * of buildings associated with the item. Additionally, it toggles a CSS class to change
+	 * the appearance of the parent element.
+	 *
+	 * @param {Object} item - The item object containing information to render the sources.
+	 * @param {string} item.name - The name of the item used to identify the target element.
+	 * @param {Array<string>} item.buildings - An array of building IDs associated with the item,
+	 * which are used to generate a list of building information.
+	 */
+	updateItemSources:(item)=>{
+		let itemId = '#item-'+helper.str.cleanup(item.name)
+		$(itemId).parent('td').toggleClass('open')
+		if ($(itemId).html() !== '') {
+			$(itemId).html('')
+			return
 		}
-		if (Type === 'clan_goods') {
-			return 0;
+		h=`<ul class="foe-table">`
+		for (b of item.buildings) {
+			h+=`<li class="fh-tooltip" data-era=${CurrentEra} data-callback_tt="Tooltips.buildingTT" data-meta_id="${b}">${MainParser.CityEntities[b].name}</li>`
 		}
-		if (Type === 'population') {
-			return 0;
-		}
-		if (Type === 'happiness') {
-			return 0;
-		}
-		if (Type === 'att_boost_attacker') {
-			return 1;
-		}
-		if (Type === 'def_boost_attacker') {
-			return 1;
-		}
-		if (Type === 'att_boost_defender') {
-			return 4;
-		}
-		if (Type === 'def_boost_defender') {
-			return 6;
-		}
-		if (Type === 'goods') {
-			return 1;
-		}
-		else {
-			return 0;
-        }
+		h+=`</ul>`
+		$(itemId).html(h)
 	},
 };
+

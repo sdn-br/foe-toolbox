@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -22,7 +22,7 @@
 	overflow: auto;
 }
 
-#stats #highcharts {
+#stats #statsChart {
 	height: 670px;
 }
 
@@ -33,10 +33,10 @@
 	align-items: center;
 	background-color: var(--black-50);
 	height: 50px;
-	border-bottom: 2px solid #864c1e;
+	border-bottom: 2px solid var(--border-tab);
 }
 
-#stats .options-2 .btn-tight {
+#stats .options-2 .btn-slim {
 	margin: 2px 0;
 }
 
@@ -67,7 +67,7 @@
 }
 
 #stats .option-chart-type-wrap span.active {
-	color: var(--text-bright);
+	color: var(--sunflower);
 }
 
 #stats .option-source-wrap {
@@ -82,7 +82,7 @@
 	padding-right: 10px;
 }
 
-.hidden {
+#stats .hidden {
 	visibility: hidden;
 }
 
@@ -95,60 +95,52 @@
 	    max-height: 700px;
     }
 
-    #stats #highcharts {
+    #stats #statsChart {
 	    height: 570px;
     }
 }
 
-/* Highcharts table wrapper */
-#stats .highcharts-data-table {
-	overflow: scroll;
+/* Chart data table (toolbox data view) */
+#stats .chart-data-table {
+	height: 100%;
+	overflow: auto;
 	user-select: text;
 }
 
-#stats .highcharts-data-table caption {
-	font-size: 150%;
-	text-align: left;
-	margin-top: 10px;
-	margin-left: 20px;
-}
-
-/* Highcharts table */
-#stats .highcharts-data-table table {
+#stats .chart-data-table table {
 	border-spacing: 0;
 	border-collapse: separate;
 	width: 100%;
 	background-color: transparent;
 }
 
-#stats .highcharts-data-table table thead tr th,
-#stats .highcharts-data-table table th,
+#stats .chart-data-table table thead tr th,
+#stats .chart-data-table table th,
 .thead th {
-	background-color: rgba(0,0,0, 0.5);
-}
-
-#stats .goods-sprite-50 {
-	width: 30px;
-}
-
-#stats .highcharts-data-table table tbody tr:nth-child(odd) {
-	background-color: rgba(255,255,255, 0.07);
-}
-
-#stats .highcharts-data-table table:not(.no-hover) tbody tr:hover {
-	background-color: var(--background-table-hover);
-}
-
-#stats .highcharts-data-table table tr th {
+	background-color: var(--black-50);
+	position: sticky;
+	top: 0;
 	white-space: nowrap;
 }
 
-#stats .highcharts-data-table table tr th,
-#stats .highcharts-data-table table tr td {
+#stats .sprite-50 {
+	width: 30px;
+}
+
+#stats .chart-data-table table tbody tr:nth-child(odd) {
+	background-color: var(--white-65);
+}
+
+#stats .chart-data-table table tbody tr:hover {
+	background-color: var(--table-bg-hover);
+}
+
+#stats .chart-data-table table tr th,
+#stats .chart-data-table table tr td {
 	padding: 2px 5px;
 }
 
-#stats .highcharts-data-table table tr td {
+#stats .chart-data-table table tr td {
 	border-top: 1px solid var(--border-table-top);
 	border-bottom: 1px solid var(--border-table-bottom);
 }
@@ -204,12 +196,56 @@
 #stats .tabs ul li.__event a span {
 	background-image: url(../../x_img/event.png);
 }
-#stats .tabs ul li.default a span {
+#stats .tabs ul li.hidden_reward a span {
 	background-image: url(../../x_img/incident.png);
 }
 #stats .tabs ul li.pvp_arena a span {
 	background-image: url(../../x_img/pvp_arena.png);
 }
+#stats .tabs ul li.guild_raids a span {
+	background-image: url(../../x_img/guild_raids.png);
+}
 #stats .tabs ul li.shards a span {
 	background-image: url(../../x_img/shards.png);
+}
+
+#LowStock .options {
+	border: 3px solid transparent;
+	height: 30px;
+	background-color: var(--background-light);
+}
+
+#LowStock .selected {
+	border-color: var(--limegreen);
+}
+#LowStockID {
+	width: 300px;
+	height: 34px;
+	margin-left: 5px;
+}
+#LowStockValue {
+	height: 30px;
+	margin-left: 5px;
+	margin-right: 5px;
+	background-color: var(--background-light);
+}
+#LowStockAddBtn {
+	height: 29px;
+    font-size: 18px;
+    margin-left: 5px;
+	font-weight: 900;
+}
+.LowStockRemBtn {
+	height: 20px;
+    font-size: 12px;
+    margin-left: 5px;
+	font-weight: 900;
+}
+.LShighlight {
+	background: var(--background-medium);
+    color: var(--white);
+}
+#LowStockAlarmsList img {
+    height: 25px;
+    background-color: var(--background-light);
 }

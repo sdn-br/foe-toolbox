@@ -1,10 +1,10 @@
 {
 	"appName": {
-		"message": "FoE Toolbox",
-		"description": "FoE Toolbox"
+		"message": "FoE - Helfer",
+		"description": "FoE - Helfer"
 	},
 	"appDesc": {
-		"message": "Kleine Toolbox für Forge of Empires. Ein inoffizieller Fork des berühmten FoE Helfer.",
-		"description":"Kleine Toolbox für Forge of Empires. Ein inoffizieller Fork des berühmten FoE Helfer."
+		"message": "Kleine Tools und Helfer für ein besseres Spielerlebnis in Forge of Empires",
+		"description":"Kleine Tools und Helfer für ein besseres Spielerlebnis in Forge of Empires"
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -10,87 +10,4 @@
  *
  * **************************************************************************************
  */
-
-
-#foe-helper-hud.hud-right {
-	right: 0;
-	top: 515px;
-	width: 63px;
-	height: 270px;
-	border-radius: 8px 0 0 8px;
-	transition: height 0.2s linear;
-	border-right-width: 0;
-	background-color: #301e0f;
-	padding-top: 22px;
-	padding-bottom: 22px;
-}
-
-.hud-right::before, .hud-right::after {
-	position: absolute;
-	content: '';
-	width: 64px;
-	height: 18px;
-	left: 0;
-}
-
-.hud-right::before {
-	top: 0;
-	border-bottom: 2px solid #755b43;
-}
-
-.hud-right::after {
-	border-top: 2px solid #755b43;
-	left: 0;
-	bottom: 0;
-}
-
-
-.hud-right #foe-helper-hud-wrapper {
-	width: inherit;
-	height: 218px;
-	right: 0;
-	top: 22px;
-}
-
-.hud-right #foe-helper-hud-slider {
-	position: absolute;
-	top: 0;
-	right: 3px;
-	transition: top 0.7s ease-in-out;
-}
-
-.hud-right .hud-btn {
-	height: 53px;
-    width: 54px;
-    margin-bottom: 2px;
-}
-
-.hud-right .menu-placeholder {
-	width: 55px;
-	height: 55px;
-}
-
-.hud-btn span.hud-counter {
-	padding: 2px;
-	width: 16px;
-	height: 16px;
-	top: unset;
-	bottom: -2px;
-	right: unset;
-	left: -2px;
-	line-height: 16px;
-	pointer-events: none !important;
-}
-
-.hud-right .hud-btn span.hud-future-counter {
-	padding: 2px;
-	width: 16px;
-	height: 16px;
-	top: unset;
-	bottom: -2px;
-	right: -2px;
-	left: unset;
-	line-height: 16px;
-	pointer-events: none;
-}
 
