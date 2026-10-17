@@ -7,6 +7,11 @@
 	--hud-counter-warn: #d07e03; /* future hidden events */
 }
 
+/* header block of the toolbox boxes (looting, GB investment overview) */
+.window-body .dark-bg.toolbox-head {
+	padding: 5px 0 3px;
+}
+
 /* menu icons */
 [id$=sabotage-Btn] span {
 	background-image: url('../images/menu/sabotage.png');

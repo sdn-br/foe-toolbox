@@ -38,6 +38,7 @@ Abweichungen:
 - **Fehlt:** `resize: true` (Breite fest `#lootingBody { width: 670px; max-height: 600px }`), `settings`. Fester Pixelwert statt resizebar ist die größte Optik-Abweichung zu productions/bluegalaxy/pvparena.
 - Box-Position nicht in CSS gesetzt (`#looting` hat keine `top/left`), Rest über `dragdrop`-Default.
 Aufwand: **S bis M**. S = Farben auf Variablen, Inline-Style raus, Summentabelle `foe-table`. M zusätzlich: `resize` mit flexibler Breite (Layout `.action-row` hängt an festen Spaltenbreiten 95/110 px).
+**Stand (umgesetzt):** Alle Farben in `looting.css` über Variablen aus `variables.css` (Zeilen `--table-bg-*`, Ränder `--border-table-*`, Text `--limegreen`/`--danger-red`/`--sunflower`/`--dark-beige`, Lebensbalken `--danger-red`/`--success`). Kopfblock mit Klasse `toolbox-head` (in `css/web/toolbox.css`) statt Inline-Style. Summentabelle hat `foe-table`. `resize: true`, Größe jetzt über `#looting` (670 x 600 px, `min-width: 480px`), `.action-content` nimmt die Restbreite, Einheiten brechen bei schmaler Box um.
 
 ### 2.2 Sabotage / Plünderhilfe (`js/web/sabotage/js/sabotage.js` 537 Z., `css/sabotage.css` 89 Z.)
 Abweichungen:
