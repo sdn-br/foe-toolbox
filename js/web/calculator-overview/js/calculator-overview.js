@@ -107,9 +107,13 @@ Object.assign(Calculator, {
 		const Player = PlayerDict[PlayerID] || {},
 			PlayerName = Player['PlayerName'] || Calculator.Overview[0]['player']['name'];
 
+		const legend = `<span class="text-warning">${i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundNew')}</span><br>` +
+			`<span class="text-success">${i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundAgain')}</span><br>` +
+			`<span class="text-orange">${i18n('Boxes.LGInvestmentOverviewBox.Tooltip.NoPayment')}</span>`;
+
 		let h = [];
 
-		h.push('<div class="text-center dark-bg" style="padding:5px 0 3px;">');
+		h.push('<div class="text-center dark-bg toolbox-head">');
 		h.push('<p class="head-bar">');
 
 		if (PlayerName) {
@@ -120,13 +124,7 @@ Object.assign(Calculator, {
 			h.push('</strong></span>');
 		}
 
-		h.push('<span class="color-description">?' +
-			'<span>' +
-				'<span class="found-new">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundNew')) + '</span>' +
-				'<span class="found-again">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.FoundAgain')) + '</span>' +
-				'<span class="no-payment">' + HTML.i18nTooltip(i18n('Boxes.LGInvestmentOverviewBox.Tooltip.NoPayment')) + '</span>' +
-			'</span>' +
-		'</span>');
+		h.push(`<span class="color-description" data-original-title="${HTML.i18nTooltip(legend)}">?</span>`);
 		h.push('</p>');
 
 		if (!Player['IsActive']) {
@@ -134,22 +132,32 @@ Object.assign(Calculator, {
 		}
 
 		h.push('</div>');
-		h.push('<table id="OverviewTable" class="foe-table">');
+		h.push('<table id="OverviewTable" class="foe-table sortable-table">');
 		h.push('<thead>' +
-			'<tr>' +
-				'<th>' + i18n('Boxes.LGInvestmentOverviewBox.Building') + '</th>' +
-				'<th class="text-center">' + i18n('Boxes.LGInvestmentOverviewBox.Level') + '</th>' +
-				'<th class="text-center">' + i18n('Boxes.LGInvestmentOverviewBox.PaidTotal') + '</th>' +
-				'<th class="text-center">' + i18n('Boxes.LGInvestmentOverviewBox.Profit') + '</th>' +
-				'<th class="text-center">' + i18n('Boxes.LGInvestmentOverviewBox.Rate') + '</th>' +
+			'<tr class="sorter-header">' +
+				'<th data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Building') + '</th>' +
+				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Level') + '</th>' +
+				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.PaidTotal') + '</th>' +
+				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Profit') + '</th>' +
+				'<th class="text-center is-number" data-type="lg-overview-group">' + i18n('Boxes.LGInvestmentOverviewBox.Rate') + '</th>' +
 			'</tr>' +
 		'</thead>');
-		h.push('<tbody>');
+		h.push('<tbody class="lg-overview-group">');
 
 		let PlayAudio = false,
 			LGFound = false;
 
 		await IndexDB.getDB();
+
+		// GBs of this player stored by the cost calculator, one row per GB
+		const KnownGBs = new Map(
+			(await IndexDB.db.greatbuildings.where('playerId').equals(PlayerID).toArray()).map(GB => [GB['name'], GB])
+		);
+
+		// data-text and data-number are the sort keys of tableSorter; without data-number ("???") the plugin sorts by a fixed value
+		const cell = (Content, StrongClass, Sort, Align = ' class="text-center"') =>
+			`<td${Align}${Sort}><strong${StrongClass}>${Content}</strong></td>`;
+		const numberSort = (Value) => (Value === undefined || isNaN(Value) ? '' : ` data-number="${Value}"`);
 
 		for (let i = 0; i < Calculator.Overview.length; i++) {
 			const Row = Calculator.Overview[i],
@@ -163,20 +171,18 @@ Object.assign(Calculator, {
 
 			if (!EntityID || MaxProgress === undefined) continue;
 
-			let Gewinn = undefined,
-				BestKurs = undefined,
+			let Profit = undefined,
+				BestRate = undefined,
 				StrongClass;
 
 			// GB known with the same level and invested FP (stored by the cost calculator) => values known
-			const KnownGB = await IndexDB.db.greatbuildings
-				.where({ playerId: PlayerID, name: EntityID })
-				.first();
+			const KnownGB = KnownGBs.get(EntityID);
 
 			if (KnownGB !== undefined && KnownGB['level'] === GBLevel && KnownGB['currentFp'] == CurrentProgress && KnownGB['bestRateNettoFp'] > 0) {
-				const BestKursNettoFP = KnownGB['bestRateNettoFp'],
-					BestKursEinsatz = KnownGB['bestRateCosts'];
-				BestKurs = MainParser.round(BestKursEinsatz / BestKursNettoFP * 1000) / 10;
-				Gewinn = MainParser.round(BestKursNettoFP * arc) - BestKursEinsatz;
+				const BestRateNetFP = KnownGB['bestRateNettoFp'],
+					BestRateCosts = KnownGB['bestRateCosts'];
+				BestRate = MainParser.round(BestRateCosts / BestRateNetFP * 1000) / 10;
+				Profit = MainParser.round(BestRateNetFP * arc) - BestRateCosts;
 			}
 
 			const Era = Technologies.Eras[GreatBuildings.GetEraName(EntityID)],
@@ -184,38 +190,44 @@ Object.assign(Calculator, {
 
 			// no own contribution yet and a profit is theoretically possible
 			if (Rank !== undefined || P1 * arc < (MaxProgress - CurrentProgress) / 2) continue;
-			if (Gewinn !== undefined && Gewinn < 0) continue;
+			if (Profit !== undefined && Profit < 0) continue;
 
 			LGFound = true;
 
-			let GewinnString,
-				KursString;
+			let ProfitValue,
+				RateValue,
+				ProfitString,
+				RateString;
 
 			if (CurrentProgress === 0) {
 				StrongClass = ' class="warning"'; // possibly not unlocked
-				GewinnString = HTML.Format(MainParser.round(P1 * arc) - Math.ceil((MaxProgress - CurrentProgress) / 2));
-				KursString = Calculator.FormatKurs(MainParser.round(MaxProgress / P1 / 2 * 1000) / 10);
+				ProfitValue = MainParser.round(P1 * arc) - Math.ceil((MaxProgress - CurrentProgress) / 2);
+				RateValue = MainParser.round(MaxProgress / P1 / 2 * 1000) / 10;
+				ProfitString = HTML.Format(ProfitValue);
+				RateString = Calculator.FormatKurs(RateValue);
 			}
-			else if (Gewinn === undefined) {
+			else if (Profit === undefined) {
 				StrongClass = '';
 				PlayAudio = true;
-				GewinnString = '???';
-				KursString = '???%';
+				ProfitString = '???';
+				RateString = '???%';
 			}
 			else {
 				StrongClass = ' class="success"';
 				PlayAudio = true;
-				GewinnString = HTML.Format(Gewinn);
-				KursString = Calculator.FormatKurs(BestKurs);
+				ProfitValue = Profit;
+				RateValue = BestRate;
+				ProfitString = HTML.Format(Profit);
+				RateString = Calculator.FormatKurs(BestRate);
 			}
 
-			h.push('<tr>');
-			h.push('<td><strong' + StrongClass + '>' + (i + 1) + ': ' + GBName + '</strong></td>');
-			h.push('<td class="text-center"><strong' + StrongClass + '>' + GBLevel + '</strong></td>');
-			h.push('<td class="text-center"><strong' + StrongClass + '>' + HTML.Format(CurrentProgress) + ' / ' + HTML.Format(MaxProgress) + '</strong></td>');
-			h.push('<td class="text-center"><strong' + StrongClass + '>' + GewinnString + '</strong></td>');
-			h.push('<td class="text-center"><strong' + StrongClass + '>' + KursString + '</strong></td>');
-			h.push('</tr>');
+			h.push('<tr>' +
+				cell((i + 1) + ': ' + GBName, StrongClass, ` data-text="${HTML.escapeHtml(GBName)}"`, '') +
+				cell(GBLevel, StrongClass, numberSort(GBLevel)) +
+				cell(HTML.Format(CurrentProgress) + ' / ' + HTML.Format(MaxProgress), StrongClass, numberSort(CurrentProgress)) +
+				cell(ProfitString, StrongClass, numberSort(ProfitValue)) +
+				cell(RateString, StrongClass, numberSort(RateValue)) +
+			'</tr>');
 		}
 
 		if (LGFound) {
@@ -231,5 +243,10 @@ Object.assign(Calculator, {
 		h.push('</table>');
 
 		$('#LGInvestmentOverviewBoxBody').html(h.join(''));
+		$('#OverviewTable').tableSorter();
+		$('#LGInvestmentOverviewBoxBody [data-original-title]').tooltip({
+			html: true,
+			container: 'body'
+		});
 	},
 });

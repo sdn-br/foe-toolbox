@@ -64,6 +64,7 @@ Abweichungen:
 - Stern-/Wahrheitswert-Klassen als `<strong class="success|warning|error">` statt Zell-/Zeilenklasse, daher das Override `#LGInvestmentOverviewBox strong { color: var(--sunflower) }`. Funktioniert, ist aber eine Sonderregel.
 - Mitgeänderter Kostenrechner (`calculator.js`, +178 Z.): gleiche Konkatenation (`'<th class="group-start">' + ...`), `AggressiveInvestmentCells` baut aber sauber mit Template-Literal und nutzt `--table-bg-*`. Gut.
 Aufwand: **S** (Inline-Style, Tooltip auf Standard, N+1), **M** wenn auch Rendering auf Zell-Helfer/Template-Literals und Sortierung.
+**Stand (umgesetzt, Modul jetzt `js/web/calculator-overview`):** Kopfblock mit Klasse `toolbox-head` statt Inline-Style. Farblegende über den Standard-Tooltip (`data-original-title` + `.tooltip({html: true, container: 'body'})`), das eigene Hover-Popup in `css/web/toolbox.css` ist entfernt, nur der runde "?"-Knopf und `.tooltip-inner .text-orange` bleiben. Eine DB-Abfrage pro Spieler (`where('playerId')` + `Map`) statt einer pro Zeile. Tabelle sortierbar (`sortable-table`, `sorter-header`, `data-text`/`data-number`, `tableSorter()`), Zeilen über einen Zell-Helfer. Deutsche lokale Bezeichner auf Englisch (`Profit`, `BestRate`, `ProfitString`, `RateString`); `Calculator.FormatKurs` bleibt, es liegt in `calculator.js`. Rendering weiter String-Bau.
 
 ### 2.4 GBG-Aktionslog (`js/web/gbg-actionlog/js/gbg-actionlog.js` 1370 Z., `css/gbg-actionlog.css` 277 Z.)
 Das ist die modernste der Toolbox-Boxen (Forge-Hammer-Port, das selbst auf 4.x aufsetzt).
