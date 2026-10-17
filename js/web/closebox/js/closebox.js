@@ -51,6 +51,9 @@ let CloseBox = {
         LiveGildFighting: { name: i18n('Menu.Gildfight.Title'), inj: 'guildfights' }
     },
 
+    // Toolbox: boxes never hidden or closed by the close box (the menu box)
+    Ignore: ['menu_box'],
+
     Settings: {
         ButtonSize: 60,
         Excludes: [],
@@ -88,6 +91,8 @@ let CloseBox = {
                 title: i18n('Boxes.CloseBox.Title'),
                 auto_close: false,
                 dragdrop: true,
+                fixdragdrop: false,
+                onlyTitle: true,
                 resize: false,
                 minimize: false,
                 settings: () => CloseBox.CloseBoxSettings()
@@ -151,7 +156,7 @@ let CloseBox = {
         $.each(openBoxes, function () {
 
             let box = $(this);
-            if (box.attr('id') !== 'CloseBox')
+            if (box.attr('id') !== 'CloseBox' && !CloseBox.Ignore.includes(box.attr('id')))
             {
                 box.hide();
             }
@@ -175,7 +180,7 @@ let CloseBox = {
 
         $.each(openBoxes, function () {
             let box = $(this);
-            if (box.attr('id') !== 'CloseBox' && box.attr('id') !== 'TooltipContainer' && !CloseBox.Settings.Excludes.includes(box.attr('id')))
+            if (box.attr('id') !== 'CloseBox' && box.attr('id') !== 'TooltipContainer' && !CloseBox.Ignore.includes(box.attr('id')) && !CloseBox.Settings.Excludes.includes(box.attr('id')))
             {
                 box.remove();
             }

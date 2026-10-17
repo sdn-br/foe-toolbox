@@ -1336,6 +1336,7 @@ FP-Bar */
 .window-settings,
 .window-map,
 .window-split,
+.window-dragtoggle,
 .window-close,
 .window-head:not(span),
 .foe-helper-overlay,
@@ -1355,6 +1356,7 @@ a {
 .window-settings:hover,
 .window-map:hover,
 .window-split:hover,
+.window-dragtoggle:hover,
 .window-close:hover,
 .window-head:not(span):hover,
 .button-own:hover,
@@ -1541,7 +1543,28 @@ a:hover {
 	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg stroke='%23ffd063' stroke-width='1.6'%3E%3Crect x='1' y='2.5' width='6.2' height='11' rx='1' fill='%23ffd06355'/%3E%3Crect x='8.8' y='2.5' width='6.2' height='11' rx='1' fill='none'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-.window-ask:hover, .open .window-minimize:hover, .closed .window-minimize:hover, .window-settings:hover, .window-map:hover, .window-popout:hover, .window-close:hover, .window-split:hover {
+/* Toolbox: pin/unpin a draggable box (HTML.Box), yellow = pinned */
+.window-dragtoggle {
+	background-position: -120px -95px, 0 0;
+	position: relative;
+}
+
+.window-dragtoggle::after {
+	content: '';
+	position: absolute;
+	inset: 4px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23c8cdd4' stroke-width='1.6' stroke-linecap='round' d='M8 1.5v13M1.5 8h13M8 1.5 5.8 3.7M8 1.5l2.2 2.2M8 14.5l-2.2-2.2M8 14.5l2.2-2.2M1.5 8l2.2-2.2M1.5 8l2.2 2.2M14.5 8l-2.2-2.2M14.5 8l-2.2 2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.window-dragtoggle.deactivated::after {
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffd063' stroke-width='1.6' stroke-linecap='round' d='M8 1.5v13M1.5 8h13M8 1.5 5.8 3.7M8 1.5l2.2 2.2M8 14.5l-2.2-2.2M8 14.5l2.2-2.2M1.5 8l2.2-2.2M1.5 8l2.2 2.2M14.5 8l-2.2-2.2M14.5 8l-2.2 2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.popup-mode .window-dragtoggle {
+	display: none;
+}
+
+.window-ask:hover, .open .window-minimize:hover, .closed .window-minimize:hover, .window-settings:hover, .window-map:hover, .window-popout:hover, .window-close:hover, .window-split:hover, .window-dragtoggle:hover {
 	filter: brightness(130%);
 }
 
