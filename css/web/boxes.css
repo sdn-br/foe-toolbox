@@ -805,6 +805,10 @@ p {
 	background-image: url('../images/menu/sabotage.png');
 }
 
+[id$=looting-Btn] span {
+	background-image: url('../images/menu/looting.png');
+}
+
 [id$=unit-Btn] span {
 	background-image: url('../images/menu/units.png');
 }

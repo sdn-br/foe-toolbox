@@ -10,7 +10,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 16 Datenmodell-Unterbau
 - [x] 16a Bekannte Spieler: Name, Gilde und Avatar werden aktualisiert (Entscheidung Nutzer)
 - [x] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
-- [ ] 2 PvP Angriffe (`looting`)
+- [x] 2 PvP Angriffe (`looting`)
 - [ ] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
 - [ ] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
 - [ ] 5 Kostenrechner schreibt LGs in IndexedDB
@@ -67,6 +67,15 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Bugfix: nächster Angriffszeitpunkt rechnete `moment.unix()` auf Millisekunden (`getCurrentDateTime`), jetzt `moment(ms)`.
 - "Angriffe anzeigen" und der Stadtschild (Tabelle `neighborhoodAttacks`, Typ 5) hängen an `Looting` (Feature 2). Der Knopf erscheint nur, wenn das Modul geladen ist.
 - Offen: Abwehr-"max" (+60 %) und Angriff-"max" (+50 %) sind die alten festen Aufschläge (Taverne/Gildenbonus), nicht geprüft. Kettenboni zählen ohne Prüfung der Verknüpfung (wie Upstream `getRatingValueForType`).
+
+**Notizen 2**
+- Neues Modul `js/web/looting` (in `js/internal.json` registriert), Menüknopf `looting` ohne Opt-in (wie alt), Bilder aus der Toolbox (`css/images/{sabotage,plunderrepel,shield,doubleloot}.png`, `css/images/menu/looting.png`, `js/web/x_img/doubleloot.png`), i18n nur in `de.json`.
+- Verhältnis zu Upstream `pvparena`: anderes Feature. Upstream zeigt das Arena-Protokoll aus `PVPArenaService.getOverview` (`actions`, Ranglistenpunkte, Notizen) nur für die laufende Sitzung. Die Toolbox speichert eigene Kämpfe (Nachbarschaft und Arena), Plünderungen, abgewehrte Plünderungen und Stadtschilde dauerhaft in `neighborhoodAttacks` und filtert nach Spieler bzw. aktuellen Arena-Gegnern. Beide bleiben nebeneinander, keine gemeinsame Datenhaltung.
+- Arena-Format `opponents[].opposingPlayer.player` ist bestätigt: Upstream `battle-assist` liest es in 4.8.3 genauso (damit ist das "Offen" aus 16 erledigt).
+- Anpassung: Plünderung bei generischen Gebäuden liest die Ressourcen aus `state.productionOption.products[].playerResources` (alt nur `current_product.product.resources`, generische Gebäude wurden nie erfasst). `plunderById` sucht den passenden Request in `postData` statt immer den ersten.
+- Bugfixes: Klick-Handler wurden bei jedem Neuzeichnen erneut gebunden ("nächste Seite" sprang mehrere Seiten), jetzt einmal beim Anlegen der Box. Seitenzahl beim Arena-Filter zählt nur Arena-Kämpfe (alt alle Einträge dieser Spieler). Einheiten-Icons über `Unit.PrepareCoords()` (4.8.3).
+- Entfallen: tote Anzeige "Besucht" (`playerDate` war immer leer) samt Texten, `Looting.collectPlayer` (alt auskommentiert, ersetzt durch 16).
+- Offen: `BattlefieldService`-Antwort (`defenderPlayerId`, `PVPArenaService.addLog`) und `CityMapService.reset` mit `LootedState`/`PlunderedState` sind nur aus dem alten Code übernommen, im Spiel nicht geprüft.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
