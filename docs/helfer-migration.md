@@ -18,7 +18,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 8 Fenster fixieren
 - [x] 9 Alarme `requireInteraction`
 - [x] 10 Eigenanteilsrechner: 1 FP für Plätze ohne FP, Bonus pro LG
-- [ ] 11 Blaue Galaxie: Diamanten
+- [x] 11 Blaue Galaxie: Diamanten
 - [ ] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
 - [ ] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
 - [ ] 14 Spielerlinks nur auf dem Icon
@@ -121,6 +121,12 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Zwei Optionen im Einstellungsdialog des Eigenanteilsrechners (`parts/settings.js`, neu in 4.8.3 ausgelagert): "1 FP für Plätze ohne FP berechnen" (`OneFPForNonFPPlace`) und "Bonuseinstellung pro LG speichern" (`ArcBonusForEachGB`), gespeichert wie alt unter `OwnPart_<Name>_<Spieler-ID>`.
 - `OneFPForNonFPPlace` default aus wie alt: ein Platz mit Belohnung, aber ohne FP zählt dann 0 statt 1 FP. Achtung: das ändert das Upstream-Verhalten (Upstream rechnet immer 1 FP), s. offene Fragen.
 - `ArcBonusForEachGB`: Arche-Prozente unter `OwnPart_ArcPercents_<cityentity_id>_<Spieler-ID>` (`Parts.ArcPercentsStorageKey`). Anpassung: alt wurden die Prozente nur beim ersten Rendern der Sitzung geladen (beim Wechsel auf ein anderes LG galten die alten Werte weiter, gespeichert wurde aber unter dem neuen LG), jetzt bei jedem LG-Wechsel. Ohne gespeicherte Werte für das LG gelten die globalen Prozente, erst dann die Standardwerte 90 % (alt direkt 90 %, und das Standard-Array wurde durch die Knöpfe verändert).
+
+**Notizen 11**
+- Upstream hat die Blaue Galaxie neu geschrieben (Gebäude aus `MainParser.CityBuildingsData`, `state.production[]`, sortierbare Icon-Spalten, kein "Erwarteter Bonus" mehr). Diamanten jetzt als eigene sortierbare Spalte nach FP (Icon aus `productions.png` wie im Produktions-Tab "Diamanten"), sie zählen wie alt 1:1 in die Gesamtbewertung (`CombinedValue`) und halten ein Gebäude in der Liste (auch im 23,5-h-Filter).
+- Quelle: Produktionen vom Typ `resources` mit `resources.premium` (alt `products.premium`, gleiche Bedeutung; so liest auch Upstream `productions.js` Diamanten).
+- Entfällt: der Diamanten-Anteil im "Erwarteten Bonus" (`EstimatedBonus`), die Anzeige gibt es in 4.8.3 nicht mehr.
+- Offen: Diamanten aus generischen Belohnungen (`genericReward`, z. B. Diamanten-Pakete) werden nicht gezählt, das Format ist nicht bekannt. Ob die Galaxie Diamanten verdoppelt, ist nicht geprüft (alt angenommen).
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
