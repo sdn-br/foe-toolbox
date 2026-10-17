@@ -13,7 +13,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 2 PvP Angriffe (`looting`)
 - [x] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
 - [x] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
-- [ ] 5 Kostenrechner schreibt LGs in IndexedDB
+- [x] 5 Kostenrechner schreibt LGs in IndexedDB
 - [ ] 7 Verhandlungsassistent in Gildengefechten (GbG)
 - [ ] 8 Fenster fixieren
 - [ ] 9 Alarme `requireInteraction`
@@ -94,6 +94,12 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - "Minimal Investition" (`Calculator.AggressiveInvestmentCells`): Einsatz zum Absichern, Differenz, Kurs, Farben und Tooltips wie alt (rot bei zu wenig FP im Lager, eigener Platz blau mit Kurs). Die Farbe gilt nur für die Zellen der Gruppe, nicht für die ganze Zeile. Neu: der Einsatz lässt sich wie die Fördern-Spalte per Klick in das Spiel übernehmen (`copy-fp`).
 - Texte: `Boxes.Calculator.Profit` heißt in 4.8.3 "Differenz" (alt "Gewinn"), übernommen. Neu in `de.json`: `AggressiveInvestment`, `Rate`, `TTRate`, `TTAggressiveInvestmentFPStockLow`. `Calculator.FormatKurs` ersetzt das `FormatOverviewKurs` aus 3.
 - "Spieler-Aktivität" (Delta-Tabelle) stand alt nur in der Übersicht (Feature 3, erledigt). Im Kostenrechner zeigt Upstream inzwischen selbst ein Aktivitäts-Icon (`activity_*`); nichts übernommen.
+
+**Notizen 5**
+- `Calculator.RefreshGreatBuildingsDB` wie alt: nach jedem Rendern der Tabelle (`BuildTable`) werden Level, investierte FP (`state.invested_forge_points`, fehlt bei 0 FP, dann 0 statt alt `undefined`), FP des Rangs mit dem besten Kurs und dessen Einsatz in `greatbuildings` geschrieben, vorher der Spieler per `addUserFromPlayerDictIfNotExists` (sonst löscht der GarbageCollector das LG beim nächsten Start).
+- Bugfix aus Upstream/alt: `BestKursNettoFP`/`BestKursEinsatz` waren in 4.8.3 nur block-lokal (tote Variablen), jetzt am Anfang von `BuildTable` deklariert.
+- Neu: beim Durchscrollen der LG-Stufen (`Parts.IsPreviousLevel`) wird nicht geschrieben, die Ränge gehören dann zu einer anderen Stufe. Fehler beim Schreiben (z. B. ConstraintError bei zwei schnellen Renderings) werden geloggt, nicht geworfen.
+- Damit bekommt 3 Daten: öffnet man ein fremdes LG mit sichtbarem Kostenrechner, erscheint es bei der nächsten LG-Übersicht dieses Spielers grün ("Wiedererkannt"), solange Level und investierte FP gleich sind. Geschrieben wird nur, wenn der Kostenrechner gerendert wird (eigene Box oder kombinierte Box ohne "Eigenanteilsrechner für alle LGs"), wie alt nur bei offenem Kostenrechner.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
