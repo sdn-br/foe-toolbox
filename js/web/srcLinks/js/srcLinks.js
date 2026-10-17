@@ -78,7 +78,7 @@ let srcLinks = {
             if ((!lastSent || (now - parseInt(lastSent, 10)) > SEVEN_DAYS) && Math.random() < 0.005) {
                 MainParser.sendExtMessage({
                     type: 'send2Api',
-                    url: `${ApiURL}BuildingList/?world=${ExtWorld}&v=${extVersion}`,
+                    url: `${ApiURL}BuildingList/?world=${ExtWorld}&v=${extBaseVersion}`,
                     data: JSON.stringify(srcLinks.FileList)
                 });
 
