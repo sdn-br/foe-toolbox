@@ -134,7 +134,8 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 				'variables',
 				'goods',
 				cssname,
-				'boxes'
+				'boxes',
+				'toolbox' // TOOLBOX: own styles, see css/web/toolbox.css
 			];
 
 			// insert stylesheet

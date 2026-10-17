@@ -801,18 +801,6 @@ p {
 	background-image: url('../images/menu/findGB.png');
 }
 
-[id$=sabotage-Btn] span {
-	background-image: url('../images/menu/sabotage.png');
-}
-
-[id$=looting-Btn] span {
-	background-image: url('../images/menu/looting.png');
-}
-
-[id$=possibleInvestments-Btn] span {
-	background-image: url('../images/menu/calculator.png');
-}
-
 [id$=unit-Btn] span {
 	background-image: url('../images/menu/units.png');
 }
@@ -1336,7 +1324,6 @@ FP-Bar */
 .window-settings,
 .window-map,
 .window-split,
-.window-dragtoggle,
 .window-close,
 .window-head:not(span),
 .foe-helper-overlay,
@@ -1356,7 +1343,6 @@ a {
 .window-settings:hover,
 .window-map:hover,
 .window-split:hover,
-.window-dragtoggle:hover,
 .window-close:hover,
 .window-head:not(span):hover,
 .button-own:hover,
@@ -1543,28 +1529,7 @@ a:hover {
 	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg stroke='%23ffd063' stroke-width='1.6'%3E%3Crect x='1' y='2.5' width='6.2' height='11' rx='1' fill='%23ffd06355'/%3E%3Crect x='8.8' y='2.5' width='6.2' height='11' rx='1' fill='none'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-/* Toolbox: pin/unpin a draggable box (HTML.Box), yellow = pinned */
-.window-dragtoggle {
-	background-position: -120px -95px, 0 0;
-	position: relative;
-}
-
-.window-dragtoggle::after {
-	content: '';
-	position: absolute;
-	inset: 4px;
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23c8cdd4' stroke-width='1.6' stroke-linecap='round' d='M8 1.5v13M1.5 8h13M8 1.5 5.8 3.7M8 1.5l2.2 2.2M8 14.5l-2.2-2.2M8 14.5l2.2-2.2M1.5 8l2.2-2.2M1.5 8l2.2 2.2M14.5 8l-2.2-2.2M14.5 8l-2.2 2.2'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-
-.window-dragtoggle.deactivated::after {
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffd063' stroke-width='1.6' stroke-linecap='round' d='M8 1.5v13M1.5 8h13M8 1.5 5.8 3.7M8 1.5l2.2 2.2M8 14.5l-2.2-2.2M8 14.5l2.2-2.2M1.5 8l2.2-2.2M1.5 8l2.2 2.2M14.5 8l-2.2-2.2M14.5 8l-2.2 2.2'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-
-.popup-mode .window-dragtoggle {
-	display: none;
-}
-
-.window-ask:hover, .open .window-minimize:hover, .closed .window-minimize:hover, .window-settings:hover, .window-map:hover, .window-popout:hover, .window-close:hover, .window-split:hover, .window-dragtoggle:hover {
+.window-ask:hover, .open .window-minimize:hover, .closed .window-minimize:hover, .window-settings:hover, .window-map:hover, .window-popout:hover, .window-close:hover, .window-split:hover {
 	filter: brightness(130%);
 }
 
@@ -2233,36 +2198,6 @@ input[type="range"]::-webkit-slider-thumb {
 	margin-top: 10%;
 }
 
-/* Toolbox: GBG action log, hours since the last collection (Forge Hammer); outside a .hud-btn, so not .hud-counter */
-#GBGActionLogCount {
-	position: absolute;
-	top: 50%;
-	left: 10px;
-	z-index: 100;
-	pointer-events: none;
-	margin-top: -110px;
-}
-
-#GBGActionLogCount .hammer-counter {
-	min-width: 15px;
-	max-height: 15px;
-	padding: 1px;
-	border-radius: 50px;
-	line-height: 13px;
-	text-align: center;
-	font-weight: bold;
-	font-size: 0.8rem;
-	display: block;
-	background-color: var(--hud-counter-color);
-	box-shadow: var(--hud-counter-bg);
-	white-space: nowrap;
-}
-
-#GBGActionLogCount .hammer-counter.counter-red {
-	background-color: var(--red);
-	box-shadow: 0 0 1px 1px var(--danger-red);
-}
-
 .hud-btn span.hud-counter {
 	width: 15px;
 	height: 15px;
@@ -2280,19 +2215,6 @@ input[type="range"]::-webkit-slider-thumb {
 	pointer-events: none;
 	font-weight: bold;
 	font-size: 0.8rem;
-}
-
-/* Toolbox: counter of future hidden events, bottom right */
-.hud-btn span.hud-counter.hud-future-counter {
-	left: unset;
-	right: 4px;
-	background-color: var(--hud-counter-warn);
-	display: none;
-}
-
-.hud-right .hud-btn span.hud-counter.hud-future-counter {
-	left: unset;
-	right: 2px;
 }
 
 .hud-btn #gex-attempt-count[data-number^="8"] {
