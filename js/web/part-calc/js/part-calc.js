@@ -130,6 +130,8 @@ let Parts = {
 
 	// Settings
 	CopyFormatPerGB: false,
+	OneFPForNonFPPlace: false, // Toolbox: count 1 FP for places without FP reward (upstream: always)
+	ArcBonusForEachGB: false, // Toolbox: store the arc bonus percentages per GB
 
 	FirstCycle: true,
 	LastPlayerID: null,
@@ -142,6 +144,7 @@ let Parts = {
 	TrustExistingPlaces: false,
 
 	ArcPercents: [90, 90, 90, 90, 90],
+	DefaultArcPercents: [90, 90, 90, 90, 90],
 	Exts: [0, 0, 0, 0, 0],
 
 	//Settings Copybox
@@ -255,7 +258,7 @@ let Parts = {
 				});
 
 				Parts.ArcPercents = ArcPercents;
-				localStorage.setItem(Parts.GetStorageKey('ArcPercents', null), JSON.stringify(ArcPercents));
+				localStorage.setItem(Parts.ArcPercentsStorageKey(), JSON.stringify(ArcPercents));
 
 				Parts.CalcBody(Parts.Level);
 			});
@@ -279,7 +282,7 @@ let Parts = {
 					$('.arc-percent-input').eq(i).val(ArkBonus);
 				}
 
-				localStorage.setItem(Parts.GetStorageKey('ArcPercents', null), JSON.stringify(Parts.ArcPercents));
+				localStorage.setItem(Parts.ArcPercentsStorageKey(), JSON.stringify(Parts.ArcPercents));
 
 				Parts.CalcBody(Parts.Level);
 			});
@@ -561,8 +564,16 @@ let Parts = {
 
 		// Restore Default settings
 		if (Parts.FirstCycle) {
-			let SavedArcPercents = localStorage.getItem(Parts.GetStorageKey('ArcPercents', null));
-			if (SavedArcPercents !== null) Parts.ArcPercents = JSON.parse(SavedArcPercents);
+			Parts.OneFPForNonFPPlace = (localStorage.getItem(Parts.GetStorageKey('OneFPForNonFPPlace', null)) === 'true');
+			Parts.ArcBonusForEachGB = (localStorage.getItem(Parts.GetStorageKey('ArcBonusForEachGB', null)) === 'true');
+		}
+
+		// Toolbox: with ArcBonusForEachGB the percentages are loaded again for every other GB
+		if (Parts.FirstCycle || (Parts.ArcBonusForEachGB && EntityID !== Parts.LastEntityID)) {
+			Parts.ArcPercents = Parts.LoadArcPercents();
+		}
+
+		if (Parts.FirstCycle) {
 
 			let SavedCopyOwnPlayerName = localStorage.getItem(Parts.GetStorageKey('CopyOwnPlayerName', null));
 			if (SavedCopyOwnPlayerName !== null) {
@@ -694,8 +705,11 @@ let Parts = {
 						if (FPCount > 0) {
 							FPRewards[Place] = MainParser.round(FPCount * arcs[Place]);
 						}
-						else {
+						else if (Parts.OneFPForNonFPPlace) {
 							FPRewards[Place] = 1;
+						}
+						else {
+							FPRewards[Place] = 0;
 						}
 						if (FPRewards[Place] === undefined) FPRewards[Place] = 0;
 
@@ -1152,6 +1166,35 @@ let Parts = {
 	 * @param {?string} EntityID - City entity id of the GB, null for player-wide settings
 	 * @returns {string} The localStorage key
 	 */
+	/**
+	 * Toolbox: localStorage key of the arc bonus percentages, per GB if ArcBonusForEachGB is set
+	 *
+	 * @returns {string}
+	 */
+	ArcPercentsStorageKey: () => Parts.GetStorageKey('ArcPercents', (Parts.ArcBonusForEachGB ? Parts.CurrentGB.Entity?.['cityentity_id'] : null)),
+
+
+	/**
+	 * Toolbox: loads the arc bonus percentages of the current GB (ArcBonusForEachGB),
+	 * falling back to the global ones and then to the defaults
+	 *
+	 * @returns {number[]}
+	 */
+	LoadArcPercents: () => {
+		for (const Key of [Parts.ArcPercentsStorageKey(), Parts.GetStorageKey('ArcPercents', null)]) {
+			const Saved = localStorage.getItem(Key);
+			if (Saved === null) continue;
+
+			try {
+				const Percents = JSON.parse(Saved);
+				if (Array.isArray(Percents) && Percents.length >= 5) return Percents;
+			} catch (e) { /* invalid value, try the next one */ }
+		}
+
+		return [...Parts.DefaultArcPercents];
+	},
+
+
 	GetStorageKey: (SettingName, EntityID) => {
 		if (EntityID) {
 			return 'OwnPart_' + SettingName + '_' + EntityID + '_' + ExtPlayerID;
