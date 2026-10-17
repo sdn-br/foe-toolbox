@@ -161,6 +161,11 @@
 	color: var(--sunflower);
 }
 
+/* player and guild in the head like the city information and the GB calculator */
+#LGInvestmentOverviewBox .player-name strong {
+	color: var(--beige);
+}
+
 #LGInvestmentOverviewBox strong.warning {
 	color: var(--orange);
 }
