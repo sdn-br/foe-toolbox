@@ -386,7 +386,7 @@ let Looting = {
 
 
 	/**
-	 * Create html for DOM and inject
+	 * Create the box if needed and render it
 	 */
 	Show: () => {
 		if ($('#looting').length === 0) {
@@ -404,37 +404,31 @@ let Looting = {
 			HTML.AddCssFile('unit');
 			Unit.PrepareCoords();
 
-			const box = $('#looting');
-			box[0].style.setProperty('--unit_scale', '5/5');
-
-			let reload = (fn) => function () {
-				if (Looting.loading) return;
-				fn.call(this);
-				Looting.Show();
-				$('#lootingBody').animate({ scrollTop: 0 }, 'fast');
-			};
-
-			box.on('click', '#lootingBody .load-1st-page', reload(function () {
-				Looting.page = 1;
-			}));
-			box.on('click', '#lootingBody .load-next-page', reload(function () {
-				Looting.page++;
-			}));
-			box.on('click', '#lootingBody .select-player', reload(function () {
-				const id = $(this).data('value');
-				Looting.page = 1;
-				Looting.filterByPlayerId = id ? +id : null;
-				Looting.filterByPvPArena = false;
-			}));
-			box.on('click', '#lootingBody .select-pvp-arena-opponents', reload(function () {
-				Looting.page = 1;
-				Looting.filterByPlayerId = null;
-				Looting.filterByPvPArena = true;
-			}));
+			$('#looting')[0].style.setProperty('--unit_scale', '5/5');
 		}
 
 		Looting.Render();
 	},
+
+
+	/**
+	 * Changes page or filter, then renders from the top
+	 *
+	 * @param change sets page and filter fields of Looting
+	 */
+	Reload: (change) => {
+		if (Looting.loading) return;
+		change();
+		Looting.Show();
+		$('#lootingBody').animate({ scrollTop: 0 }, 'fast');
+	},
+
+
+	SelectPlayer: (playerId) => Looting.Reload(() => {
+		Looting.page = 1;
+		Looting.filterByPlayerId = playerId || null;
+		Looting.filterByPvPArena = false;
+	}),
 
 
 	/**
@@ -451,101 +445,17 @@ let Looting = {
 
 
 	/**
-	 * Get all the content
+	 * Data and markup are separate steps, getViewModel collects, view renders
 	 *
 	 * @returns {Promise<void>}
 	 */
 	Render: async () => {
-		const { page, perPage, filterByPlayerId, filterByPvPArena } = Looting;
 		Looting.loading = true;
 
 		try {
-			await IndexDB.getDB();
-
-			const offset = (page - 1) * perPage;
-
-			let actions = await Looting.select(filterByPlayerId, filterByPvPArena)
-				.reverse()
-				.offset(offset)
-				.limit(perPage)
-				.sortBy('date');
-
-			const pages = Math.max(1, Math.ceil((await Looting.select(filterByPlayerId, filterByPvPArena).count()) / perPage));
-
-			// enrich actions with player info
-			for (const action of actions) {
-				await MainParser.loadPlayerIntoDict(action.playerId);
-			}
-			if (filterByPlayerId) await MainParser.loadPlayerIntoDict(filterByPlayerId);
-
-			actions = actions.map(it => {
-				const player = PlayerDict[it.playerId];
-				const playerInfo = player ? ({
-					playerId: player.PlayerID || 0,
-					playerName: player.PlayerName || 'unknown',
-					clanId: player.ClanId || 0,
-					clanName: player.ClanName || 'unknown',
-					avatar: player.Avatar,
-					playerEra: player.Era || 'unknown',
-					playerDate: null,
-				}) : ({
-					playerId: 0,
-					playerName: 'unknown',
-					clanId: 0,
-					clanName: 'unknown',
-					avatar: null,
-					playerEra: 'unknown',
-					playerDate: null,
-				});
-				return {
-					...it,
-					...playerInfo,
-				};
-			});
-
-			let playerName = '',
-				clanName = '',
-				clanId = 0;
-
-			if (filterByPlayerId) {
-				const p = PlayerDict[filterByPlayerId];
-				playerName = p?.PlayerName || i18n('Boxes.Looting.Unknown');
-				clanName = p?.ClanName || '';
-				clanId = p?.ClanId || 0;
-			}
-
-			const noArena = (Looting.lastPvPArenaOpponents.length === 0);
-
-			$('#lootingBody').html(`
-				<div class="dark-bg toolbox-head">
-					<div class="header">
-						<div class="strategy-points"></div>
-						<div class="filter">
-							<div class="filterd-by"><b>${i18n('Boxes.Looting.filteredByUser')}:</b><br>
-								<span class="player-name">
-									${filterByPlayerId ?
-										`${MainParser.GetPlayerLink(filterByPlayerId, playerName)} ${clanName ? ` [${MainParser.GetGuildLink(clanId, clanName)}]` : ''}` :
-										filterByPvPArena ?
-											`${i18n('Boxes.Looting.CurrentPvPArenaOpponents')}` :
-											`${i18n('Boxes.Looting.AllPlayers')}`
-									}
-								</span>
-							</div>
-							<div class="filter-buttons">
-								<div><button${noArena ? ' disabled' : ''} class="btn select-pvp-arena-opponents${filterByPvPArena ? ' btn-active' : ''}" data-value="" title="${noArena ? HTML.i18nTooltip(i18n('Boxes.Looting.PvPArenaOpponentsInactive')) : ''}">${i18n('Boxes.Looting.showPvPArenaOpponents')}</button></div>
-								<div><button class="btn select-player${!filterByPvPArena && filterByPlayerId === null ? ' btn-active' : ''}" data-value="">${i18n('Boxes.Looting.showAllPlayers')}</button></div>
-							</div>
-						</div>
-					</div>
-				</div>
-				${Looting.RenderActions(actions)}
-				<div class="pagination">
-					${page > 1 && pages > 1 ? `<button class="btn load-1st-page">${i18n('Boxes.Looting.goto1stPage')}</button>` : ''}
-					${i18n('Boxes.Looting.Page')} ${page}/${pages}
-					${pages > page ? `<button class="btn load-next-page">${i18n('Boxes.Looting.nextPage')}</button>` : ''}
-				</div>`);
-
-			await Looting.calculateSP(filterByPlayerId, filterByPvPArena);
+			const vm = await Looting.getViewModel();
+			// lit-html updates only what changed, the body element keeps its state across renders and pop-out moves
+			litHtml.render(Looting.view(vm), $('#lootingBody')[0]);
 		}
 		catch (e) {
 			console.error('Looting: render failed', e);
@@ -557,22 +467,91 @@ let Looting = {
 
 
 	/**
+	 * Everything the box shows, as plain data
+	 *
+	 * @returns {Promise<Object>}
+	 */
+	getViewModel: async () => {
+		const { page, perPage, filterByPlayerId, filterByPvPArena } = Looting;
+
+		await IndexDB.getDB();
+
+		let actions = await Looting.select(filterByPlayerId, filterByPvPArena)
+			.reverse()
+			.offset((page - 1) * perPage)
+			.limit(perPage)
+			.sortBy('date');
+
+		const pages = Math.max(1, Math.ceil((await Looting.select(filterByPlayerId, filterByPvPArena).count()) / perPage));
+
+		for (const action of actions) {
+			await MainParser.loadPlayerIntoDict(action.playerId);
+		}
+		if (filterByPlayerId) await MainParser.loadPlayerIntoDict(filterByPlayerId);
+
+		// enrich actions with player info, consecutive actions of one player show it only once
+		let lastPlayerId = null;
+		actions = actions.map(it => {
+			const player = PlayerDict[it.playerId],
+				isSamePlayer = (it.playerId === lastPlayerId);
+			lastPlayerId = it.playerId;
+
+			return {
+				...it,
+				isSamePlayer,
+				playerId: player?.PlayerID || 0,
+				playerName: player?.PlayerName || i18n('Boxes.Looting.Unknown'),
+				clanId: player?.ClanId || 0,
+				clanName: player?.ClanName || i18n('Boxes.Looting.Unknown'),
+				avatar: player?.Avatar && srcLinks.GetPortrait(player.Avatar),
+				eraName: (player?.Era && Technologies.Eras[player.Era] !== undefined ? i18n('Eras.' + Technologies.Eras[player.Era]) : undefined),
+			};
+		});
+
+		let filterLabel;
+		if (filterByPlayerId) {
+			const p = PlayerDict[filterByPlayerId];
+			filterLabel = {
+				playerLink: MainParser.GetPlayerLink(filterByPlayerId, p?.PlayerName || i18n('Boxes.Looting.Unknown')),
+				guildLink: (p?.ClanName ? MainParser.GetGuildLink(p.ClanId || 0, p.ClanName) : undefined),
+			};
+		}
+		else {
+			filterLabel = { text: i18n(filterByPvPArena ? 'Boxes.Looting.CurrentPvPArenaOpponents' : 'Boxes.Looting.AllPlayers') };
+		}
+
+		return {
+			page,
+			pages,
+			filterByPlayerId,
+			filterByPvPArena,
+			filterLabel,
+			noArena: (Looting.lastPvPArenaOpponents.length === 0),
+			sp: await Looting.calculateSP(filterByPlayerId, filterByPvPArena),
+			actions,
+		};
+	},
+
+
+	/**
 	 * Sum up the plundered forge points (today, last 7 days, total)
 	 *
 	 * @param filterByPlayerId
 	 * @param filterByPvPArena
-	 * @returns {Promise<void>}
+	 * @returns {Promise<Object>} per period the forge points and the part from double loot
 	 */
 	calculateSP: async (filterByPlayerId, filterByPvPArena) => {
 		const dateThisWeek = moment().subtract(1, 'weeks').toDate();
 		const dateToday = moment().startOf('day').toDate();
-
-		let todaySP = 0,
-			todaySPNoDouble = 0,
-			thisWeekSP = 0,
-			thisWeekSPNoDouble = 0,
-			totalSP = 0,
-			totalSPNoDouble = 0;
+		const sp = {
+			today: { all: 0, double: 0 },
+			week: { all: 0, double: 0 },
+			total: { all: 0, double: 0 },
+		};
+		const add = (period, all, double) => {
+			sp[period].all += all;
+			sp[period].double += double;
+		};
 
 		const totalSPSelect = (filterByPlayerId ?
 			IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId) :
@@ -581,168 +560,162 @@ let Looting = {
 				IndexDB.db.neighborhoodAttacks.where('type').equals(Looting.ACTION_TYPE_LOOTED)));
 
 		await totalSPSelect.each((it) => {
-			const sp = (it.sp || 0);
-			const spNoDouble = (it.doubleLoot ? sp / 2 : sp);
-			totalSP += sp;
-			totalSPNoDouble += spNoDouble;
+			const all = (it.sp || 0),
+				double = (it.doubleLoot ? all / 2 : 0);
+			add('total', all, double);
 			if (dateThisWeek < it.date) {
-				thisWeekSP += sp;
-				thisWeekSPNoDouble += spNoDouble;
-
-				if (dateToday < it.date) {
-					todaySP += sp;
-					todaySPNoDouble += spNoDouble;
-				}
+				add('week', all, double);
+				if (dateToday < it.date) add('today', all, double);
 			}
 		});
 
-		const doubleTitle = HTML.i18nTooltip(i18n('Boxes.Looting.DoubleLootPartFP')),
-			fpTitle = HTML.i18nTooltip(i18n('Boxes.Looting.TotalFP'));
-
-		$('#lootingBody .strategy-points').html(`
-			<table class="foe-table">
-				<thead>
-					<tr>
-						<th colspan="2"><strong>${i18n('Boxes.Looting.collectedToday')}</strong></th>
-						<th colspan="2"><strong>${i18n('Boxes.Looting.thisWeek')}</strong></th>
-						<th colspan="2"><strong>${i18n('Boxes.Looting.total')}</strong></th>
-					</tr>
-					<tr>
-						<th><span class="doubleloot" title="${doubleTitle}"></span></th>
-						<th><span class="forgepoints" title="${fpTitle}"></span></th>
-						<th><span class="doubleloot" title="${doubleTitle}"></span></th>
-						<th><span class="forgepoints" title="${fpTitle}"></span></th>
-						<th><span class="doubleloot" title="${doubleTitle}"></span></th>
-						<th><span class="forgepoints" title="${fpTitle}"></span></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td><strong>${todaySP - todaySPNoDouble}</strong></td>
-						<td><strong>${todaySP}</strong></td>
-						<td><strong>${thisWeekSP - thisWeekSPNoDouble}</strong></td>
-						<td><strong>${thisWeekSP}</strong></td>
-						<td><strong>${totalSP - totalSPNoDouble}</strong></td>
-						<td><strong>${totalSP}</strong></td>
-					</tr>
-				</tbody>
-			</table>
-		`);
+		return sp;
 	},
 
 
 	/**
-	 * Render actions
+	 * Markup of the box body, a pure function of the view model
 	 *
-	 * @param actions
-	 * @returns {string}
+	 * @param vm result of getViewModel
+	 * @returns {TemplateResult}
 	 */
-	RenderActions: (actions) => {
-		if (actions.length === 0) {
-			return `<div class="no-data"> - ${i18n('Boxes.Looting.noData')} - </div>`;
-		}
+	view: (vm) => {
+		const { html, unsafeHTML } = litHtml,
+			t = (key) => i18n('Boxes.Looting.' + key),
+			f = vm.filterLabel,
+			periods = [['collectedToday', vm.sp.today], ['thisWeek', vm.sp.week], ['total', vm.sp.total]];
 
-		let lastPlayerId = null;
-		return actions.map(action => {
-			const isSamePlayer = action.playerId === lastPlayerId;
-			lastPlayerId = action.playerId;
-			return Looting.RenderAction({ action, isSamePlayer });
-		}).join('');
+		return html`
+			<div class="dark-bg toolbox-head">
+				<div class="header">
+					<div class="strategy-points">
+						<table class="foe-table">
+							<thead>
+								<tr>${periods.map(([key]) => html`<th colspan="2"><strong>${t(key)}</strong></th>`)}</tr>
+								<tr>${periods.map(() => html`
+									<th><span class="doubleloot" title="${t('DoubleLootPartFP')}"></span></th>
+									<th><span class="forgepoints" title="${t('TotalFP')}"></span></th>`)}
+								</tr>
+							</thead>
+							<tbody>
+								<tr>${periods.map(([, sp]) => html`<td><strong>${sp.double}</strong></td><td><strong>${sp.all}</strong></td>`)}</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="filter">
+						<div class="filterd-by"><b>${t('filteredByUser')}:</b><br>
+							<span class="player-name">${f.text !== undefined ? f.text
+								: html`${unsafeHTML(f.playerLink)}${f.guildLink ? html` [${unsafeHTML(f.guildLink)}]` : ''}`}</span>
+						</div>
+						<div class="filter-buttons">
+							<div><button class="btn select-pvp-arena-opponents ${vm.filterByPvPArena ? 'btn-active' : ''}" ?disabled=${vm.noArena}
+								title="${vm.noArena ? t('PvPArenaOpponentsInactive') : ''}"
+								@click=${() => Looting.Reload(() => {
+									Looting.page = 1;
+									Looting.filterByPlayerId = null;
+									Looting.filterByPvPArena = true;
+								})}>${t('showPvPArenaOpponents')}</button></div>
+							<div><button class="btn select-player ${!vm.filterByPvPArena && vm.filterByPlayerId === null ? 'btn-active' : ''}"
+								@click=${() => Looting.SelectPlayer(null)}>${t('showAllPlayers')}</button></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			${vm.actions.length === 0 ? html`<div class="no-data"> - ${t('noData')} - </div>` : vm.actions.map(Looting.viewAction)}
+			<div class="pagination">
+				${vm.page > 1 ? html`<button class="btn load-1st-page" @click=${() => Looting.Reload(() => Looting.page = 1)}>${t('goto1stPage')}</button>` : ''}
+				${t('Page')} ${vm.page}/${vm.pages}
+				${vm.pages > vm.page ? html`<button class="btn load-next-page" @click=${() => Looting.Reload(() => Looting.page++)}>${t('nextPage')}</button>` : ''}
+			</div>`;
 	},
 
 
 	/**
-	 * Render action
+	 * One row of the history
 	 *
-	 * @param action
-	 * @param isSamePlayer
-	 * @returns {string}
+	 * @param action enriched action of getViewModel
+	 * @returns {TemplateResult}
 	 */
-	RenderAction: ({ action, isSamePlayer }) => {
+	viewAction: (action) => {
+		const { html, unsafeHTML } = litHtml,
+			t = (key) => i18n('Boxes.Looting.' + key),
+			select = () => Looting.SelectPlayer(action.playerId);
+
 		const type = {
-			[Looting.ACTION_TYPE_LOOTED]: i18n('Boxes.Looting.actionLooted'),
-			[Looting.ACTION_TYPE_BATTLE_WIN]: i18n('Boxes.Looting.actionBattleWon'),
-			[Looting.ACTION_TYPE_BATTLE_LOSS]: i18n('Boxes.Looting.actionBattleLost'),
-			[Looting.ACTION_TYPE_BATTLE_SURRENDERED]: i18n('Boxes.Looting.actionSurrendered'),
-			[Looting.ACTION_TYPE_SHIELDED]: i18n('Boxes.Looting.actionShielded'),
-			[Looting.ACTION_TYPE_REPELLED]: i18n('Boxes.Looting.actionRepelled'),
-		}[action.type] || 'unknown';
+			[Looting.ACTION_TYPE_LOOTED]: 'actionLooted',
+			[Looting.ACTION_TYPE_BATTLE_WIN]: 'actionBattleWon',
+			[Looting.ACTION_TYPE_BATTLE_LOSS]: 'actionBattleLost',
+			[Looting.ACTION_TYPE_BATTLE_SURRENDERED]: 'actionSurrendered',
+			[Looting.ACTION_TYPE_SHIELDED]: 'actionShielded',
+			[Looting.ACTION_TYPE_REPELLED]: 'actionRepelled',
+		}[action.type];
 
-		const avatar = action.avatar && srcLinks.GetPortrait(action.avatar);
-		const date = moment(action.date).format(i18n('DateTime'));
-		const dateFromNow = moment(action.date).fromNow();
-
-		let era = '';
-		const playerName = action.playerName !== 'unknown' ? action.playerName : i18n('Boxes.Looting.Unknown');
-		const clanName = action.clanName !== 'unknown' ? action.clanName : i18n('Boxes.Looting.Unknown');
-		const pvpArena = action.pvpArena ? `<br><span class="pvparena">${i18n('Boxes.Looting.PvPArenaAction')}</span>` : '';
-
-		if (action.playerEra && action.playerEra !== 'unknown' && Technologies.Eras[action.playerEra] !== undefined) {
-			const eraName = i18n('Eras.' + Technologies.Eras[action.playerEra]);
-			era = `<div class="era" title="${i18n('Boxes.Looting.PlayersEra')}: ${eraName}"><strong>${eraName}</strong></div>`;
-		}
-
-		return `<div class="action-row action-row-type-${action.type}">
-					<div class="avatar select-player game-cursor" data-value="${action.playerId}">
-						${isSamePlayer || !avatar ? '' : `<img class="player-avatar" src="${avatar}" alt="" /><br>`}
-						<span class="type text-${action.type === Looting.ACTION_TYPE_BATTLE_LOSS ? 'danger' : 'success'}">${type}</span>
-						${pvpArena}
+		return html`
+			<div class="action-row action-row-type-${action.type}">
+				<div class="avatar select-player game-cursor" @click=${select}>
+					${action.isSamePlayer || !action.avatar ? '' : html`<img class="player-avatar" src="${action.avatar}" alt=""><br>`}
+					<span class="type text-${action.type === Looting.ACTION_TYPE_BATTLE_LOSS ? 'danger' : 'success'}">${type ? t(type) : 'unknown'}</span>
+					${action.pvpArena ? html`<br><span class="pvparena">${t('PvPArenaAction')}</span>` : ''}
+				</div>
+				<div class="info-column">
+					<div>
+						${moment(action.date).format(i18n('DateTime'))}<br>
+						<em>${moment(action.date).fromNow()}</em>
 					</div>
-					<div class="info-column">
-						<div>
-							${date} <br />
-							<em>${dateFromNow}</em>
-						</div>
-						<div>
-							${isSamePlayer ? '' : era}
-						</div>
+					<div>
+						${action.isSamePlayer || !action.eraName ? '' : html`<div class="era" title="${t('PlayersEra')}: ${action.eraName}"><strong>${action.eraName}</strong></div>`}
 					</div>
-					<div class="action-content">
-						${isSamePlayer ? '' : `
-						<div class="player-name select-player game-cursor" data-value="${action.playerId}">
-							${action.playerId ? MainParser.GetPlayerLink(action.playerId, playerName) : HTML.escapeHtml(playerName)}<br><span class="clan">[${action.clanId ? MainParser.GetGuildLink(action.clanId, action.clanName) : HTML.escapeHtml(clanName)}]</span>
-						</div>
-						`}
-						<div class="content">${Looting.RenderActionContent(action)}</div>
-					</div>
-				</div>`;
+				</div>
+				<div class="action-content">
+					${action.isSamePlayer ? '' : html`
+						<div class="player-name select-player game-cursor" @click=${select}>
+							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}<br>
+							<span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>
+						</div>`}
+					<div class="content">${Looting.viewActionContent(action)}</div>
+				</div>
+			</div>`;
 	},
 
 
 	/**
-	 * Render action content
+	 * Type specific part of a row
 	 *
 	 * @param action
-	 * @returns {string}
+	 * @returns {TemplateResult|string}
 	 */
-	RenderActionContent: (action) => {
-		const buildingName = (MainParser.CityEntities?.[action.buildId] || { name: '-' }).name;
+	viewActionContent: (action) => {
+		const { html } = litHtml,
+			t = (key) => i18n('Boxes.Looting.' + key),
+			buildingName = (MainParser.CityEntities?.[action.buildId] || { name: '-' }).name;
 
 		switch (action.type) {
 			case Looting.ACTION_TYPE_REPELLED:
-				return `<div class="loot-wrap">
-							<div class="name">
-								<img class="sabotage" src="${extUrl}css/images/plunderrepel.png" alt="" title="${i18n('Boxes.Looting.actionRepelled')}" />
-								${buildingName}
-							</div>
-						</div>`;
+				return html`
+					<div class="loot-wrap">
+						<div class="name">
+							<img class="sabotage" src="${extUrl}css/images/plunderrepel.png" alt="" title="${t('actionRepelled')}">
+							${buildingName}
+						</div>
+					</div>`;
 
 			case Looting.ACTION_TYPE_LOOTED: {
 				const resources = action.resources || {};
 
-				return `<div class="loot-wrap">
-							<div class="name">
-								<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="" title="${i18n('Boxes.Looting.actionLooted')}" />
-								${action.doubleLoot ? `<img class="doubleLoot" src="${extUrl}css/images/doubleloot.png" alt="" title="${i18n('Boxes.Looting.doubleLoot')}"/>` : ''}
-								${buildingName}
-							</div>
-							<div class="loot-items ${action.important ? 'text-warning' : ''}">
-								${Object.keys(resources).map(id => {
-									const str = `${resources[id]} ${(GoodsData[id] || { name: id }).name}`;
-									return `<div>${id === 'strategy_points' ? `<strong>${str}</strong>` : str}</div>`;
-								}).join('')}
-							</div>
-						</div>`;
+				return html`
+					<div class="loot-wrap">
+						<div class="name">
+							<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="" title="${t('actionLooted')}">
+							${action.doubleLoot ? html`<img class="doubleLoot" src="${extUrl}css/images/doubleloot.png" alt="" title="${t('doubleLoot')}">` : ''}
+							${buildingName}
+						</div>
+						<div class="loot-items ${action.important ? 'text-warning' : ''}">
+							${Object.keys(resources).map(id => {
+								const str = `${resources[id]} ${(GoodsData[id] || { name: id }).name}`;
+								return html`<div>${id === 'strategy_points' ? html`<strong>${str}</strong>` : str}</div>`;
+							})}
+						</div>
+					</div>`;
 			}
 
 			case Looting.ACTION_TYPE_BATTLE_LOSS:
@@ -750,23 +723,25 @@ let Looting = {
 			case Looting.ACTION_TYPE_BATTLE_SURRENDERED:
 				if (!action.battle) return '-';
 
-				return `<div class="battle">
-							<div><strong>${action.battle.auto ? i18n('Boxes.Looting.autoBattle') : `${i18n('Boxes.Looting.rounds')}: ${action.battle.round || 'N/A'}`}</strong></div>
-							<div class="army-overview">
-								<div class="army">${Looting.RenderArmy(action.battle.myArmy)}</div>
-								<div class="versus">VS</div>
-								<div class="army">${Looting.RenderArmy(action.battle.otherArmy)}</div>
-							</div>
-						</div>`;
+				return html`
+					<div class="battle">
+						<div><strong>${action.battle.auto ? t('autoBattle') : `${t('rounds')}: ${action.battle.round || 'N/A'}`}</strong></div>
+						<div class="army-overview">
+							<div class="army">${Looting.viewArmy(action.battle.myArmy)}</div>
+							<div class="versus">VS</div>
+							<div class="army">${Looting.viewArmy(action.battle.otherArmy)}</div>
+						</div>
+					</div>`;
 
 			case Looting.ACTION_TYPE_SHIELDED:
-				return `<div class="shield-wrap">
-							<div class="shield-explain">
-								<img src="${extUrl}css/images/shield.png" alt="">
-								${i18n('Boxes.Looting.shieldProtectetUntil')} ${moment(action.expireTime * 1000).format(i18n('DateTime'))}<br>
-								<em>${i18n('Boxes.Looting.shieldUntil')} ${moment().to(action.expireTime * 1000)}</em>
-							</div>
-						</div>`;
+				return html`
+					<div class="shield-wrap">
+						<div class="shield-explain">
+							<img src="${extUrl}css/images/shield.png" alt="">
+							${t('shieldProtectetUntil')} ${moment(action.expireTime * 1000).format(i18n('DateTime'))}<br>
+							<em>${t('shieldUntil')} ${moment().to(action.expireTime * 1000)}</em>
+						</div>
+					</div>`;
 
 			default:
 				return '-';
@@ -778,22 +753,24 @@ let Looting = {
 	 * Attack and defense boost of an army
 	 *
 	 * @param army
-	 * @returns {string}
+	 * @returns {TemplateResult|string}
 	 */
-	RenderArmy: (army) => {
+	viewArmy: (army) => {
 		if (!Array.isArray(army) || army.length === 0) return '';
 
-		const firstUnit = army[0];
-		const isSameStats = !army.some(it => ((it.attBoost || 0) !== (firstUnit.attBoost || 0) || (it.defBoost || 0) !== (firstUnit.defBoost || 0)));
-		const attBoost = firstUnit.attBoost || 0;
-		const defBoost = firstUnit.defBoost || 0;
+		const { html } = litHtml,
+			t = (key) => i18n('Boxes.Looting.' + key),
+			firstUnit = army[0],
+			isSameStats = !army.some(it => ((it.attBoost || 0) !== (firstUnit.attBoost || 0) || (it.defBoost || 0) !== (firstUnit.defBoost || 0))),
+			attBoost = firstUnit.attBoost || 0,
+			defBoost = firstUnit.defBoost || 0;
 
-		return `${!isSameStats ? '' : `
-					<div class="stats-same-for-all">
-						<span class="${attBoost ? 'text-success' : 'text-danger'}">${i18n('Boxes.Looting.Attack')}: ${attBoost}%</span> - <span class="${defBoost ? 'text-success' : 'text-danger'}">${i18n('Boxes.Looting.Defense')}: ${defBoost}%</span>
-					</div>
-				`}
-				<div class="unit-wrap">${army.map(unit => Looting.RenderUnit({ unit, showDetails: !isSameStats })).join('')}</div>`;
+		return html`
+			${!isSameStats ? '' : html`
+				<div class="stats-same-for-all">
+					<span class="${attBoost ? 'text-success' : 'text-danger'}">${t('Attack')}: ${attBoost}%</span> - <span class="${defBoost ? 'text-success' : 'text-danger'}">${t('Defense')}: ${defBoost}%</span>
+				</div>`}
+			<div class="unit-wrap">${army.map(unit => Looting.viewUnit(unit, !isSameStats))}</div>`;
 	},
 
 
@@ -802,30 +779,32 @@ let Looting = {
 	 *
 	 * @param unit
 	 * @param showDetails
-	 * @returns {string}
+	 * @returns {TemplateResult}
 	 */
-	RenderUnit: ({ unit, showDetails }) => {
-		const endHP = unit.endHp || 0;
-		const startHP = unit.startHP || 0;
-		const healthPerc = (startHP > 0 ? MainParser.round((1 - ((startHP - endHP) / startHP)) * 100) : 0);
-		const attBoost = unit.attBoost || 0;
-		const defBoost = unit.defBoost || 0;
-		const type = (Unit.Types || []).find(obj => obj['unitTypeId'] === unit.unitTypeId) || { name: unit.unitTypeId, unitClass: '' };
-		const era = Technologies.Eras[type.minEra];
-		const eraText = (era !== undefined ? ` (${i18n('Eras.' + era)})` : '');
+	viewUnit: (unit, showDetails) => {
+		const { html } = litHtml,
+			t = (key) => i18n('Boxes.Looting.' + key),
+			endHP = unit.endHp || 0,
+			startHP = unit.startHP || 0,
+			healthPerc = (startHP > 0 ? MainParser.round((1 - ((startHP - endHP) / startHP)) * 100) : 0),
+			attBoost = unit.attBoost || 0,
+			defBoost = unit.defBoost || 0,
+			type = (Unit.Types || []).find(obj => obj['unitTypeId'] === unit.unitTypeId) || { name: unit.unitTypeId, unitClass: '' },
+			era = Technologies.Eras[type.minEra],
+			eraText = (era !== undefined ? ` (${i18n('Eras.' + era)})` : '');
 
-		return `<div class="unit" title="${i18n('Boxes.Looting.Unit')}: ${type.name}${eraText}, HP: ${endHP}/${startHP}, ${i18n('Boxes.Looting.Attack')}: ${attBoost}, ${i18n('Boxes.Looting.Defense')}: ${defBoost}">
-					<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}"></div>
-					<div class="health">
-						<span style="width: ${healthPerc}%"></span>
-					</div>
-					${showDetails ? `
+		return html`
+			<div class="unit" title="${t('Unit')}: ${type.name}${eraText}, HP: ${endHP}/${startHP}, ${t('Attack')}: ${attBoost}, ${t('Defense')}: ${defBoost}">
+				<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}"></div>
+				<div class="health">
+					<span style="width: ${healthPerc}%"></span>
+				</div>
+				${showDetails ? html`
 					<div class="stats">
 						<div class="${!endHP ? 'text-danger' : ''}">${endHP}/${startHP}</div>
 						<div class="${attBoost ? 'text-success' : ''}">${attBoost}%</div>
 						<div class="${defBoost ? 'text-success' : ''}">${defBoost}%</div>
-					</div>
-					` : ''}
-				</div>`;
+					</div>` : ''}
+			</div>`;
 	}
 };
