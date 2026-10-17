@@ -168,6 +168,13 @@
 		"sort": 22
 	},
 	{
+		"name": "ShowPossibleInvestments",
+		"status": false,
+		"doubleoptin": true,
+		"group": "Boxes",
+		"sort": 23
+	},
+	{
 		"name": "SelectedMenu",
 		"callback": "MenuSelected",
 		"group": "Extension",
