@@ -632,7 +632,11 @@ let _menu = {
 			HiddenRewards.init();
 		})
 
-		return btn_RewardsBG.append(btn_Rewards, $('<span id="hidden-reward-count" class="hud-counter">0</span>'));
+		return btn_RewardsBG.append(
+			btn_Rewards,
+			$('<span id="hidden-reward-count" class="hud-counter">0</span>'),
+			$('<span id="hidden-future-reward-count" class="hud-counter hud-future-counter">0</span>') // Toolbox: future events
+		);
 	},
 
 	recurringQuests_Btn: () => {
