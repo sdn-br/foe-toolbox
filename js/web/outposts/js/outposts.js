@@ -665,6 +665,11 @@ let Outposts = {
 			return;
 		}
 
+		// Toolbox: double opt-in before sending the outpost to the server
+		if (!window.confirm(i18n('Boxes.CityMap.SendDoubleOptIn'))) {
+			return;
+		}
+
 		let currentDate = new Date(),
 			d = {
 				time: currentDate.toISOString().split('T')[0] + ' ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds(),
