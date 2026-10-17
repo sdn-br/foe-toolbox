@@ -52,15 +52,6 @@ Object.assign(Calculator, {
 
 
 	/**
-	 * Formats a rate in percent, '-' for 0
-	 *
-	 * @param {number} Kurs
-	 * @returns {string}
-	 */
-	FormatOverviewKurs: (Kurs) => (Kurs === 0 ? '-' : HTML.Format(Kurs) + '%'),
-
-
-	/**
 	 * Plays a sound when a possible investment was found
 	 */
 	PlayOverviewSound: () => {
@@ -202,7 +193,7 @@ Object.assign(Calculator, {
 			if (CurrentProgress === 0) {
 				StrongClass = ' class="warning"'; // possibly not unlocked
 				GewinnString = HTML.Format(MainParser.round(P1 * arc) - Math.ceil((MaxProgress - CurrentProgress) / 2));
-				KursString = Calculator.FormatOverviewKurs(MainParser.round(MaxProgress / P1 / 2 * 1000) / 10);
+				KursString = Calculator.FormatKurs(MainParser.round(MaxProgress / P1 / 2 * 1000) / 10);
 			}
 			else if (Gewinn === undefined) {
 				StrongClass = '';
@@ -214,7 +205,7 @@ Object.assign(Calculator, {
 				StrongClass = ' class="success"';
 				PlayAudio = true;
 				GewinnString = HTML.Format(Gewinn);
-				KursString = Calculator.FormatOverviewKurs(BestKurs);
+				KursString = Calculator.FormatKurs(BestKurs);
 			}
 
 			h.push('<tr>');

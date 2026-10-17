@@ -183,6 +183,36 @@
 }
 
 
+/* FoE Toolbox: FP in stock and the "Minimal Investition" column group */
+#gbCalc .header .fp-storage-line {
+	margin: 0 0 5px;
+}
+
+#gbCalc .foe-table .group-start {
+	border-left: 2px solid var(--text-dark);
+}
+
+#gbCalc tr.group-head th {
+	font-size: 90%;
+	font-weight: normal;
+}
+
+#gbCalc td.info-row {
+	background-color: var(--table-bg-info);
+}
+
+#gbCalc td.bg-green {
+	background-color: var(--table-bg-success);
+}
+
+#gbCalc td.bg-red {
+	background-color: var(--table-bg-error);
+}
+
+#gbCalc td.bg-yellow {
+	background-color: var(--table-bg-bright);
+}
+
 /* FoE Toolbox: pre-scan of the GB overview (parts/overview.js) */
 #LGInvestmentOverviewBox {
 	top: 30%;

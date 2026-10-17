@@ -12,7 +12,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
 - [x] 2 PvP Angriffe (`looting`)
 - [x] 3 Snipehilfe: Vorab-Scan der LG-Übersicht
-- [ ] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
+- [x] 4 Kostenrechner: Minimal-Investition, BP/Medaillen-Tabelle, FP im Lager
 - [ ] 5 Kostenrechner schreibt LGs in IndexedDB
 - [ ] 7 Verhandlungsassistent in Gildengefechten (GbG)
 - [ ] 8 Fenster fixieren
@@ -86,6 +86,14 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Bugfixes: `BestKursNettoFP`/`BestKursEinsatz` waren implizite globale Variablen; fehlender PlayerDict-Eintrag warf einen TypeError.
 - Offen: die Übersichtszeilen werden über `city_entity_id` gelesen (alter Feldname, in 4.8.3-Code nicht verwendet, dort nur `entity_id`); im Spiel prüfen. Die LG-Stufen (Kupfer/Silber/Gold) gehen nicht in P1 ein (wie alt). Wiederöffnen der geschlossenen Box geht nur über erneutes Öffnen der LG-Liste im Spiel (kein Menüknopf).
 - Menüknopf `possibleInvestments` (Icon `calculator.png`, wie `sabotage`): öffnet die Box mit dem letzten Scan erneut; rot/Warnung bis ein Scan vorliegt; bei ausgeschalteter Einstellung `ShowPossibleInvestments` Toast-Hinweis. Ohne Einstellung wird kein Scan gespeichert, der Knopf bleibt dann rot. Im Spiel zu prüfen.
+
+**Notizen 4**
+- Upstream hat den Kostenrechner umgebaut (`MainParser.CurrentGB`, kombinierte Box `OwnPartBox` oder eigene Box `CalculatorBox` in der geteilten Ansicht, BP nach Stufen, Schweinchen-Spalte). Die Toolbox-Teile sitzen jetzt in `BuildTable`/`ShowBody` von `calculator.js`, Upstream-Logik unverändert.
+- "FP im Lager": Zeile "Verfügbare Forgepunkte" im Kopf (`StrategyPoints.AvailableFP`, Text `Boxes.Calculator.AvailableFP` gab es upstream schon).
+- Anpassung BP/Medaillen-Tabelle: statt drei nebeneinander liegender Tabellen (`costTableFordern`, `costTableBPMeds`, `costTableAggressiveInvestment`) eine Tabelle mit drei Spaltengruppen (Fördern | BP/Medaillen/Schweinchen | Minimal Investition), getrennt durch eine Linie, mit Gruppenkopf "Fördern mit: x%" und "Minimal Investition". Grund: die BP-Zelle hat in 4.8.3 Stufen-Icons und kann höher werden, getrennte Tabellen würden die Zeilen verschieben.
+- "Minimal Investition" (`Calculator.AggressiveInvestmentCells`): Einsatz zum Absichern, Differenz, Kurs, Farben und Tooltips wie alt (rot bei zu wenig FP im Lager, eigener Platz blau mit Kurs). Die Farbe gilt nur für die Zellen der Gruppe, nicht für die ganze Zeile. Neu: der Einsatz lässt sich wie die Fördern-Spalte per Klick in das Spiel übernehmen (`copy-fp`).
+- Texte: `Boxes.Calculator.Profit` heißt in 4.8.3 "Differenz" (alt "Gewinn"), übernommen. Neu in `de.json`: `AggressiveInvestment`, `Rate`, `TTRate`, `TTAggressiveInvestmentFPStockLow`. `Calculator.FormatKurs` ersetzt das `FormatOverviewKurs` aus 3.
+- "Spieler-Aktivität" (Delta-Tabelle) stand alt nur in der Übersicht (Feature 3, erledigt). Im Kostenrechner zeigt Upstream inzwischen selbst ein Aktivitäts-Icon (`activity_*`); nichts übernommen.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
