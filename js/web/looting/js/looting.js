@@ -46,7 +46,14 @@ FoEproxy.addHandler('OtherPlayerService', 'getCityProtections', (data, postData)
 });
 
 
-FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData, responseData) => {
+// Raw handlers run synchronously right before the service handlers of the same XHR, so the
+// BattlefieldService handler below sees its own response here (it needs the other entries)
+FoEproxy.addRawHandler((xhr, requestData) => {
+	if (requestData.url?.indexOf('game/json?h=') > -1) Looting.lastJsonXhr = xhr;
+});
+
+
+FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 	const isAutoBattle = data.responseData?.isAutoBattle; // isAutoBattle is part of BattleRealm only
 	const state = data.responseData?.__class__ === 'BattleRealm' ? data.responseData.state : data.responseData;
 
@@ -63,7 +70,7 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData, response
 
 	const myUnits = unitsOrder.filter(it => it.teamFlag === 1).map(Looting.adaptUnit(true));
 	const otherUnits = unitsOrder.filter(it => it.teamFlag === 2).map(Looting.adaptUnit(false));
-	const requests = (Array.isArray(responseData) ? responseData : []);
+	const requests = Looting.getResponseEntries();
 	const isPvpArena = requests.some(e => e.requestClass === 'PVPArenaService');
 	let defenderPlayerId = data.responseData.defenderPlayerId || otherUnits[0]?.ownerId || 0;
 
@@ -222,6 +229,8 @@ let Looting = {
 	lastVisitedPlayer: null,
 	// Cached last known opponents of the PvP arena
 	lastPvPArenaOpponents: [],
+	// XHR of the game json request currently being handled, set by the raw handler
+	lastJsonXhr: null,
 
 	// Enum for action type
 	ACTION_TYPE_LOOTED: 1,
@@ -232,6 +241,21 @@ let Looting = {
 	ACTION_TYPE_REPELLED: 6,
 
 	UnimportantProds: ['supplies', 'money'],
+
+
+	/**
+	 * All entries of the response currently being handled (empty if unavailable)
+	 *
+	 * @returns {FoE_NETWORK_TYPE[]}
+	 */
+	getResponseEntries: () => {
+		try {
+			const entries = JSON.parse(Looting.lastJsonXhr?.responseText);
+			return Array.isArray(entries) ? entries : [];
+		} catch (e) {
+			return [];
+		}
+	},
 
 
 	/**
