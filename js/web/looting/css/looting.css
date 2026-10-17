@@ -1,6 +1,10 @@
+#looting {
+	width: 670px;
+	height: 600px;
+	min-width: 480px;
+}
+
 #lootingBody {
-    max-height: 600px;
-    width: 670px;
     margin-top: 2px;
     overflow: auto;
 }
@@ -51,15 +55,15 @@
 }
 
 #looting .select-player:hover {
-	  background-color: rgba(255, 255, 255, .2);
+	  background-color: var(--table-bg-hover);
 }
 
 #looting .action-row {
     display: flex;
     flex-direction: row;
     padding: 2px;
-    border-top: 1px solid #7F5A34;
-    border-bottom: 1px solid #3D250F;
+    border-top: 1px solid var(--border-table-top);
+    border-bottom: 1px solid var(--border-table-bottom);
     min-height: 90px;
 }
 
@@ -79,15 +83,15 @@
 
 #looting img.player-avatar {
 	max-width: 70px;
-	border: 1px solid black;
+	border: 1px solid var(--black);
 }
 
 #looting .type-1 {
-    color: #1e1;
+    color: var(--limegreen);
 }
 
 #looting .type-3 {
-    color: #ff5026;
+    color: var(--danger-red);
 }
 
 #looting div.filter {
@@ -111,23 +115,24 @@
 }    
 
 #looting .action-row-type-1, #looting .action-row-type-2 {
-    background-color: rgba(128, 255, 128, .1);
+    background-color: var(--table-bg-success);
 }
 
 #looting .action-row-type-3, #looting .action-row-type-6 {
-    background-color: rgba(255, 128, 128, .1);
+    background-color: var(--table-bg-error);
 }
 
 #looting .action-row-type-4 {
-    background-color: rgba(255, 255, 128, .1);
+    background-color: var(--table-bg-bright);
 }
 
 #looting .action-row-type-5 {
-    background-color: rgba(128, 128, 255, .1);
+    background-color: var(--table-bg-info);
 }
 
-#looting .action-content .content {
-
+#looting .action-content {
+	flex: 1;
+	min-width: 0;
 }
 
 #looting .info-column {
@@ -144,12 +149,12 @@
 #looting .info-column .era {
 	white-space: nowrap;
 	font-size: 10px;
-	color: #b39690;
+	color: var(--dark-beige);
 }
 
 #looting .info-column .discovered {
 	  font-size: 10px;
-	  color: #b39690;
+	  color: var(--dark-beige);
 }
 
 #looting .loot-wrap {
@@ -181,7 +186,7 @@
 
 #looting .player-name {
     font-weight: bold;
-    color: #FFB539;
+    color: var(--sunflower);
 }
 
 #looting .versus {
@@ -191,6 +196,7 @@
 
 #looting .unit-wrap {
 	display: flex;
+	flex-wrap: wrap;
 }
 
 #looting .unit {
@@ -212,16 +218,16 @@
 }
 
 #looting .green {
-    color: #1e1;
+    color: var(--limegreen);
 }
 
 #looting .red {
-    color: #ff5026;
+    color: var(--danger-red);
 }
 
 #looting .health {
 	  display: block;
-	  background-color: #ff5026;
+	  background-color: var(--danger-red);
 	  height: 5px;
 	  position: relative;
 	  margin-top: 2px;
@@ -229,7 +235,7 @@
 
 #looting .health span {
 	  position: relative;
-	  background-color: #1e7e34;
+	  background-color: var(--success);
 	  height: 5px;
 	  display: block;
 }

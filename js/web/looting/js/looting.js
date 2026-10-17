@@ -396,6 +396,7 @@ let Looting = {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
+				resize: true,
 				popout: () => MainParser.PopOut('looting')
 			});
 
@@ -516,7 +517,7 @@ let Looting = {
 			const noArena = (Looting.lastPvPArenaOpponents.length === 0);
 
 			$('#lootingBody').html(`
-				<div class="dark-bg" style="padding:5px 0 3px;">
+				<div class="dark-bg toolbox-head">
 					<div class="header">
 						<div class="strategy-points"></div>
 						<div class="filter">
@@ -599,7 +600,7 @@ let Looting = {
 			fpTitle = HTML.i18nTooltip(i18n('Boxes.Looting.TotalFP'));
 
 		$('#lootingBody .strategy-points').html(`
-			<table>
+			<table class="foe-table">
 				<thead>
 					<tr>
 						<th colspan="2"><strong>${i18n('Boxes.Looting.collectedToday')}</strong></th>
