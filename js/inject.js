@@ -199,6 +199,7 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 			// start loading both script-lists
 			const vendorListPromise = loadJsonResource(`${extUrl}js/vendor.json`);
 			const scriptListPromise = loadJsonResource(`${extUrl}js/internal.json`);
+			const toolboxListPromise = loadJsonResource(`${extUrl}js/toolbox.json`).catch(() => []); // TOOLBOX: own modules after internal.json, a missing list (beta loader) adds none
 			// load main
 			await promisedLoadCode(`${extUrl}js/web/_main/js/_main.js`,"main");
 			scriptLoaded("primed", "main");
@@ -218,7 +219,7 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 			scriptLoaded("primed", "vendor");
 
 			// load scripts (parallel, execution order is preserved)
-			const internalScriptsToLoad = await scriptListPromise;
+			const internalScriptsToLoad = (await scriptListPromise).concat(await toolboxListPromise); // TOOLBOX: same mechanism and order guarantee
 			const internalPromises = [];
 
 			for (let i = 0; i < internalScriptsToLoad.length; i++){

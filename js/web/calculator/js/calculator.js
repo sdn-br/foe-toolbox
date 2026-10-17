@@ -729,7 +729,7 @@ let Calculator = {
 
 	/**
 	 * Toolbox: stores a GB in the IndexedDB table greatbuildings (one row per player and GB),
-	 * read by the snipe helper (parts/overview.js) to recognise GBs with a known rate.
+	 * read by the snipe helper (calculator-overview.js) to recognise GBs with a known rate.
 	 *
 	 * @param {{playerId: number, name: string, level: number, currentFp: number, bestRateNettoFp: number, bestRateCosts: number}} GreatBuilding
 	 * @returns {Promise<void>}
