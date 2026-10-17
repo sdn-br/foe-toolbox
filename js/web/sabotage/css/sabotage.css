@@ -1,0 +1,89 @@
+/*
+ * **************************************************************************************
+ *
+ * Dateiname:                 sabotage.css (Original Name: read-buildings.css)
+ * Projekt:                   foe-chrome
+ *
+ * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
+ * erstellt am:	              27.12.19, 12:14 Uhr
+ *
+ * Copyright © 2019
+ *
+ * **************************************************************************************
+ */
+
+#sabotageInfo {
+	left: calc(50vw - 250px);
+	top: calc(50vh - 220px);
+	min-width: 550px;
+	max-width: 600px;
+}
+
+#sabotageInfo #sabotageInfoBody {
+	overflow-x: hidden;
+	overflow-y: auto;
+	max-height: 440px;
+	margin-top: 2px;
+}
+
+#sabotageInfo #sabotageInfoBody .show-entity {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+#sabotageInfo #sabotageInfoBody .show-entity img {
+	width: 20px;
+	height: 20px;
+}
+
+#sabotageInfo #sabotageInfoBody p.header .player-name {
+	display: block;
+	white-space: nowrap;
+	color: var(--beige);
+	margin: 0 10px;
+}
+
+#sabotageInfo #sabotageInfoBody .army,
+#sabotageInfo #sabotageInfoBody .army-boost,
+#sabotageInfo #sabotageInfoBody .production-headline {
+	color: var(--beige);
+}
+
+#sabotageInfo #sabotageInfoBody #attdeftab {
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+#sabotageInfo #sabotageInfoBody #attdeftab td {
+	padding: 0 1px;
+}
+
+#sabotageInfo #sabotageInfoBody .foe-table {
+	margin: 2px 0 5px;
+}
+
+#sabotageInfo #sabotageInfoBody .foe-table td,
+#sabotageInfo #sabotageInfoBody table tr td:first-child {
+	white-space: nowrap;
+}
+
+#sabotageInfo #sabotageInfoBody tr.bg-red {
+	background-color: rgba(121, 8, 8, 0.3);
+}
+
+#sabotageInfo #sabotageInfoBody p.error,
+#sabotageInfo #sabotageInfoBody p .error,
+#sabotageInfo #sabotageInfoBody td.error,
+#sabotageInfo #sabotageInfoBody td .error {
+	color: var(--danger-red);
+}
+
+#sabotageInfo #sabotageInfoBody p.success {
+	color: var(--success);
+}
+
+#sabotageInfo .btn {
+	padding: 0.2rem 0.4rem;
+	margin: 0 2px;
+}
