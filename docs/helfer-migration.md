@@ -34,7 +34,7 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - `background.js`: Upstream hatte den Update-Tab auskommentiert. Toolbox-Logik wieder drin: bei `onInstalled` Reload-Abfrage per `scripting.executeScript` in allen offenen Spiel-Tabs und Wiki-Changelog im neuen Tab. Zusätzlich verlinkt der neue Upstream-Toast "Neue Version installiert" (`_main.js`) auf das Toolbox-Changelog statt foe-helper.com.
 - Nur Deutsch: `inject.js` fällt auf `de` statt `en` zurück. Ein `user-language` im localStorage des Spiels, das die Toolbox nicht kennt (z. B. vom Helfer gesetzt), wird ignoriert, aber nicht überschrieben. `popup.js`/`alerts.js`: Wörterbuch und Übersetzungsschleife entfernt, das HTML ist der Text (die alte Toolbox lief für Nicht-Deutsch in einen TypeError). Settings: `Help` und `LoadBeta2` (Download der Helfer-Beta) entfernt, Weblate-Link entfernt.
 - Branding analog erweitert auf Stellen, die es in 3.1.0.1 noch nicht gab: `Menu.NewVersion.Title`, `Menu.MetaLoader.*`, Präfixe "FoE-Helfer:"/"FoE-Helper:" in `Boxes.MergerGame.KeysLeft.*`, `StrategyPoints.*` und im Quest-Tooltip (`quests.js`). Bewusst wie in der alten Toolbox belassen: Box-Titel-Suffix " - FoE Helper" (`_helper.js`), Discord-Webhook-Name, generische "Helfer"-Texte. Ebenso Upstream belassen: Titel " - FoE Helper" der neuen Pop-up-Fenster (`popup/js/popup.js`).
-- IndexedDB: alle DBs haben eigene Namen, Haupt-DB `FoEToolbox2DB_<id>`, Modul-DBs `FoEToolbox2DB_<Modul>_<id>` (Events, GexStat, GuildFights, GuildMemberStat, FPCollector, Qi). Grund: 1.24 (Dexie 2.0.4) öffnet keine DB mit höherer Version als deklariert; die neue Version hob `FoEToolboxDB_` (v2 -> v3), `FoeHelperDB_GuildFights_` (v1 -> v21) und `FoeHelperDB_GuildMemberStat_` (v1 -> v2) an. Die übrigen Modul-DBs haben gleiche Store-Deklarationen, kollidieren aber mit einem parallel installierten Helfer.
+- IndexedDB: alle DBs haben eigene Namen, Haupt-DB `FoEToolbox2DB_<id>`, Modul-DBs `FoEToolbox2DB_<Modul>_<id>` (Events, GexStat, GuildFights, GuildMemberStat, FPCollector, Qi, GBG, Notice). Grund: 1.24 (Dexie 2.0.4) öffnet keine DB mit höherer Version als deklariert; die neue Version hob `FoEToolboxDB_` (v2 -> v3), `FoeHelperDB_GuildFights_` (v1 -> v21) und `FoeHelperDB_GuildMemberStat_` (v1 -> v2) an. Die übrigen Modul-DBs haben gleiche Store-Deklarationen, kollidieren aber mit einem parallel installierten Helfer.
 - Einmalige Kopie beim ersten Start (neue DB existiert noch nicht, vor dem Öffnen geprüft): `IndexDB.copyFromLegacyDB` öffnet die Alt-DB ohne Schema (Dexie dynamic mode: kein Upgrade, kein Schreiben), kopiert alle Tabellen, die im neuen Schema existieren, und schließt sie. Alt-DBs werden nie beschrieben, angehoben oder gelöscht (auch `FoeHelperPrivateDB_<id>` nicht mehr). Quellen Haupt-DB in dieser Reihenfolge, die erste mit Daten gewinnt: `FoEToolboxDB_<id>`, `FoeHelperPrivateDB_<id>`, `FoeHelperDB_<id>`; "gefüllt" heißt irgendeine zu kopierende Tabelle hat Zeilen (Helfer 4.x leert `players` bei jedem Start). Quelle Modul-DB: gleichnamige `FoeHelperDB_<Modul>_<id>`. Upstream-Migration aus `FoeHelper_<id>`/`PlayerDB`/`StatsDb` entfällt wie in der alten Toolbox.
 - Nicht kopiert: der Cache `buildingMeta`. Zeilenformat: keines der Schemas hat `upgrade()`-Funktionen. GuildFights: 1.24 speicherte keine `attrition`, beim Kopieren wird sie in `snapshots` und in `history.participation` mit 0 ergänzt (die Anzeige rechnet damit). GuildMemberStat: `gex`-Zeilen aus v1 haben kein `trial`, die Leser setzen 0 ein, Kopie unverändert. `FoeHelperDB_UnitsGEX_` (Modul entfallen) wird nicht kopiert.
 - Protokoll in `localStorage` `FH_IndexDBLastMigraion`: je Kopie eine Zeile mit Zeit, Quelle (mit Version) und Ziel, darunter die Zeilenzahl je Tabelle; wird nicht mehr geleert, auf 200 Zeilen begrenzt.
@@ -153,8 +153,8 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 - Versand über den Background wie alt: neuer Nachrichtentyp `send2Server` in `background.js` (POST mit `fetch`, Antwort `{status, statusText, body}`), Fehler gehen an den Fehler-Callback. Anders als alt: nur die URL `https://api.foe-rechner.de/` und Endpunkte aus `[A-Za-z0-9/_-]` erlaubt (die Nachricht ist auch von der Spielseite aus erreichbar), Parameter per `URLSearchParams`.
 - Timeout von `sendExtMessage` 1 s -> 5 s wie alt (Server-Anfragen laufen jetzt durch den Background).
 - Neu gegenüber alt, gleiche Absicht ("ohne GlobalSend wird nichts gesendet"): Upstream 4.8.3 schickt zusätzlich ungefragt die Weltenliste (`Worlds`), eigene LG-Daten (`OwnLGData`, `SendLGData`) und die Gebäudeliste (`BuildingList`, `srcLinks.js`) an die API. Diese drei laufen jetzt nur noch mit `GlobalSend`, wie `SelfPlayer` schon alt. S. offene Fragen.
-- Notizen (`notice.js`): ohne `GlobalSend` wird nichts geladen, die Box zeigt den Hinweis `Boxes.Notice.GlobalSendRequired`. Ban-Erkennung wie alt: Antwort ohne Fehler, aber ohne `notice` -> `Notice.Banned`, die Box zeigt `Boxes.Notice.BannedFromApi` statt der Notizen. 4.8.3 verlangt für die Notizen zusätzlich den API-Token.
-- Entfällt: der alte Guard in `Notice.SaveContent` (`if (GlobalSend === true) return`) war verdreht und hätte das Speichern bei aktiver Übermittlung verhindert; ohne `GlobalSend` öffnet die Box ohnehin keine Notizen. Das alte Debug-`console.log` im Background entfällt.
+- Notizen (`notice.js`): inzwischen lokal, ohne `GlobalSend` und ohne API-Token, s. "Notizen lokal". Die Ban-Erkennung (Antwort ohne Fehler, aber ohne `notice` -> `Boxes.Notice.BannedFromApi`) gilt nur noch für den Import vom Helfer-Server.
+- Entfällt: der alte Guard in `Notice.SaveContent` (`if (GlobalSend === true) return`) war verdreht und hätte das Speichern bei aktiver Übermittlung verhindert. Das alte Debug-`console.log` im Background entfällt.
 - Achtung: die Einstellungen liegen im `localStorage` der Spielseite. Läuft parallel der FoE Helfer, teilen sich beide den Schlüssel `GlobalSend`.
 
 **Notizen Bugfix Resize**
@@ -337,6 +337,19 @@ Quelle: `forge-hammer` `js/web/gbg-actionlog` ("Copyright (C) 2026 Forge Hammer 
 - Texte: `Boxes.GBGActionLog.*` und `General.Total` neu in `de.json`, nach der Forge-Hammer-`de.json`; dort halb englische oder falsche Texte (`RangeCap*`, `Toast.PrevLoadTime`, `Toast.CurrLoadTime`, `RedAfterHoursHint`) neu übersetzt.
 - Kein neuer Netzwerkzugriff; Icons der Spalten kommen wie sonst über `srcLinks` vom Spiel-CDN.
 
+## Notizen lokal
+
+Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sort|del`), also nur mit `GlobalSend` und API-Token. Die Toolbox speichert sie lokal.
+
+- IndexedDB `FoEToolbox2DB_Notice_<id>` (v1: `groups` `++id,sort`, `items` `++id,groupId,sort`). Keine Alt-DB, nichts zu kopieren. Öffnen per `Notice.Store.checkForDB` aus `_main.js`.
+- Neuer Teil `js/web/notice/js/parts/store.js` (`internal.json`: `notice` mit `parts: ["store"]`). `Notice.Store.send(data, ep, callback)` ersetzt die 8 Aufrufe `MainParser.send2Server(..., 'Notice/...')` in `notice.js` und liefert dieselbe Antwortform wie die API, die Callbacks bleiben unverändert. Fehler kommen als `{status: 'ERROR', msg}` und landen im vorhandenen Fehler-Toast.
+- Antworten: `Notice/get`, `Notice/set` (Gruppe, Seite, Spieler), `Notice/sort` und `Notice/del` -> `{status: 'OK', notice}`. `notice` ist das Array der Gruppen `{id, group_name, player_group, sort, items: [{id, tab, title, content, player_data, sort}]}`, sortiert nach `sort`, bei Gleichstand nach `id`; ohne Gruppen `null` (dann zeigt die Box den Hinweis "Lege zuerst eine Gruppe an"). `Notice/set` mit `type: 'cnt'` (Überschrift und Text) -> nur `{status: 'OK'}`, der Callback pflegt seinen Cache selbst.
+- Ids vergibt die DB (Zahlen). Ids aus dem DOM kommen teils als Text, der Store wandelt sie um. Neue Spieler-Seiten kommen ohne Sortierwert und werden hinten angehängt. Beim Umbenennen ändert sich nur der Name, nicht Sortierung oder Spieler-Gruppe.
+- `notice.js` bleibt nah am Upstream: weg sind nur der `GlobalSend`-Guard, die Prüfung auf den API-Token, `Notice.Banned` und der Hinweis in `buildBox`. Dazu der Aufruf des Import-Knopfs in `BuildSettingButtons` und dessen Entfernen beim Verlassen des Bearbeitungsmodus. `Notice.ApiToken` und `apiToken` in den Daten bleiben stehen (immer `null`, der Store ignoriert sie), damit der Diff klein bleibt.
+- Import: im Bearbeitungsmodus (Zahnrad) Knopf "Notizen von FoE-Helfer importieren" oben rechts, nur mit `GlobalSend` und API-Token. Bestätigung im selben Modal wie Gruppe/Seite bearbeiten (kein `confirm()`), Text `Boxes.Notice.ImportConfirm`. Danach genau eine Anfrage `Notice/get` über `MainParser.send2Server` (Background). Antwort ohne `notice` = gesperrt: Modal zeigt `Boxes.Notice.BannedFromApi`, lokale Daten bleiben. Erfolg: in einer Transaktion `groups` und `items` leeren und den Server-Stand schreiben (neue lokale Ids, Reihenfolge des Servers als `sort`), Box neu aufbauen, Toast. Fehler: lokale Daten bleiben, Fehler-Toast.
+- Das ist der einzige Netzwerkzugriff des Moduls. Kein Hochladen, kein Abgleich.
+- Texte: `Boxes.Notice.Import*` neu, `Boxes.Notice.GlobalSendRequired` entfernt. Die CSS-Klassen `global-send-required*` in `notice.css` sind Upstream und bleiben, obwohl ungenutzt.
+
 ## Entscheidungen
 
 - Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
@@ -346,6 +359,7 @@ Quelle: `forge-hammer` `js/web/gbg-actionlog` ("Copyright (C) 2026 Forge Hammer 
 - `ShowPlayersAttDeffValues` ist default aus (Bann-Warnung), der Menüknopf weist ohne aktive Einstellung darauf hin.
 - Alerts-Link im Popup bleibt ausgeblendet wie im Helfer.
 - Firefox wird vorerst nicht unterstützt.
+- Notizen nur lokal (`FoEToolbox2DB_Notice_<id>`), ohne `GlobalSend` und API-Token. Einziger Netzwerkzugriff: manueller Import vom Helfer-Server, der den lokalen Stand ersetzt.
 - Eigene IndexedDB-Namen (`FoEToolbox2DB_*`), die DBs von 1.24 und Helfer werden nur gelesen (einmalige Kopie beim ersten Start), nie beschrieben oder gelöscht. Damit können Tester jederzeit zu 1.24 zurück; was in der Testphase neu entstand, sieht 1.24 nicht.
 
 ## Browser-Tests
@@ -448,9 +462,17 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 **15 Datenschutz**
 - Neues Profil: "Übermittlung an foe-helper.com" ist aus.
 - Einschalten: Double-Opt-In-Abfrage; abbrechen -> bleibt aus. Dasselbe für "Angriff/Verteidigung bei Spielern anzeigen", "Nachbarschafts-Ernte", "Vorab-Scan der LG-Übersicht", "Verhandlungsassistent für Gildengefechte". Ausschalten ohne Abfrage.
-- `GlobalSend` aus: im Netzwerk-Tab (Spielseite und Background-Service-Worker) keine Anfragen an `api.foe-rechner.de` beim Start (`SelfPlayer`), beim Öffnen eigener LGs (`OwnLGData`), in der Weltenauswahl (`Worlds`). Notizen-Knopf zeigt den Hinweis "nur mit eingeschalteter Option ...".
-- `GlobalSend` an (mit API-Token): Notizen laden; die Anfrage `Notice/get` erscheint im Background-Service-Worker, nicht im Spiel-Tab.
-- Ban-Erkennung (nur wenn ein gesperrtes Konto verfügbar ist, oder Antwort in DevTools überschreiben): Antwort ohne `notice` -> Notizen-Box zeigt "Du bist gesperrt!".
+- `GlobalSend` aus: im Netzwerk-Tab (Spielseite und Background-Service-Worker) keine Anfragen an `api.foe-rechner.de` beim Start (`SelfPlayer`), beim Öffnen eigener LGs (`OwnLGData`), in der Weltenauswahl (`Worlds`). Auch Notizen öffnen und bearbeiten sendet nichts (s. "Notizen lokal").
+- `GlobalSend` an (mit API-Token): der Notizen-Import schickt `Notice/get` über den Background-Service-Worker, nicht über den Spiel-Tab.
+
+**Notizen lokal**
+- `GlobalSend` aus, kein API-Token: Notizen öffnen, Hinweis "Lege zuerst eine Gruppe an". Im Netzwerk-Tab (Spiel-Tab und Background-Service-Worker) keine Anfragen an `api.foe-rechner.de`, auch nicht bei den folgenden Schritten.
+- Gruppe anlegen, darin eine Seite; Überschrift und Text schreiben, in ein anderes Feld klicken. Spieler-Gruppe (z. B. Gildenmitglieder) anlegen, über "+ Spieler" einen Spieler wählen, Text schreiben. Derselbe Spieler ein zweites Mal wird nicht angelegt.
+- In Application -> IndexedDB -> `FoEToolbox2DB_Notice_<id>` stehen die Gruppen in `groups`, die Seiten in `items` (Spieler-Seite mit `player_data`).
+- Zahnrad: Reiter und Seiten per Ziehen umsortieren, Gruppe und Seite umbenennen, eine Seite und eine Gruppe löschen (Rückfrage). Box schließen und öffnen, Spiel-Tab neu laden: Reihenfolge, Namen, Texte und Löschungen sind erhalten.
+- Zahnrad ohne `GlobalSend` oder ohne API-Token: kein Knopf "Notizen von FoE-Helfer importieren". Mit beidem: Knopf oben rechts.
+- Knopf: Modal "Dies löscht deinen lokalen Stand und ersetzt ihn durch den Inhalt vom FoE-Helfer-Server." mit "Importieren" und "Abbrechen". Abbrechen: nichts passiert, keine Anfrage. Importieren: eine Anfrage `Notice/get` im Background-Service-Worker, danach zeigt die Box genau den Stand vom Server, die lokalen Notizen sind weg (auch in der IndexedDB), Erfolgs-Toast.
+- Ban (Antwort in DevTools überschreiben, `{"status":"OK"}` ohne `notice`): Modal zeigt "Du bist gesperrt!", lokale Notizen unverändert. Fehler (z. B. offline oder HTTP-Fehler): Fehler-Toast, lokale Notizen unverändert.
 
 **Bugfix Resize**
 - Burg-Box (`#Castle`, `min-width: 360px`) am Griff kleiner ziehen: hält bei 360 px Breite an. Eine Box ohne CSS-Mindestgröße hält bei 220 x 100 px an. Box-Menü lässt sich weiter bis ca. 101 x 87 px verkleinern.
@@ -474,4 +496,5 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - 11: Diamanten kommen als `resources.premium`; Diamanten in `genericReward` werden nicht erkannt; Verdopplung durch die Galaxie angenommen.
 - 12: `startTime` künftiger Ereignisse kommt schon in `HiddenRewardService.getOverview`.
 - 14: keine Upstream-Box liest den Namen aus dem Link-`<a>`.
-- 15: Antwort von `Notice/get` ohne Fehler und ohne `notice` bedeutet Sperre (alte Regel); `api.foe-rechner.de` akzeptiert die Anfragen aus dem Background (Host-Permission vorhanden).
+- 15: Antwort von `Notice/get` ohne Fehler und ohne `notice` bedeutet Sperre (alte Regel, gilt nur noch für den Notizen-Import); `api.foe-rechner.de` akzeptiert die Anfragen aus dem Background (Host-Permission vorhanden).
+- Notizen lokal: die Antwortform der API (`group_name`, `player_group`, `items` mit `tab`, `title`, `content`, `player_data`) ist aus der Nutzung in `notice.js` abgeleitet, nicht aus einer API-Doku; der Import übernimmt nur diese Felder. Wie der Server bei gleichem `sort` ordnet, ist unbekannt (lokal: danach `id`).

@@ -62,7 +62,10 @@
 	"hidden-rewards",
 	"greatbuildings",
 	"gbbonus",
-	"notice",
+	{
+		"name": "notice",
+		"parts": ["store"]
+	},
 	"treasury",
 	"market",
 	"marketoffers",
