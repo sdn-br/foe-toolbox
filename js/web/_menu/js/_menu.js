@@ -68,9 +68,6 @@ let _menu = {
 		'discord',
 		'findGB',
 		'playerProfile',
-		'sabotage',
-		'possibleInvestments',
-		'looting',
 		'unit',
 		'shopAssist',
 		'allies',
@@ -317,9 +314,6 @@ let _menu = {
 		{ id: 'shopAssist', title: i18n('Menu.ShopAssist.Title'), description: i18n('Menu.ShopAssist.Desc'), warning: '<i id="shopAssist-Btn-closed" class="tooltip-error">' + i18n('Menu.ShopAssist.DescWarning') + '</i>' },
 		{ id: 'productionsRating', title: i18n('Menu.ProductionsRating.Title'), description: i18n('Menu.ProductionsRating.Desc') },
 		{ id: 'negotiation', title: i18n('Menu.Negotiation.Title'), description: i18n('Menu.Negotiation.Desc'), warning: '<em id="negotiation-Btn-closed" class="tooltip-error">' + i18n('Menu.Negotiation.Warning') + '<br></em>' },
-		{ id: 'looting', title: i18n('Menu.Looting.Title'), description: i18n('Menu.Looting.Desc') },
-		{ id: 'sabotage', title: i18n('Menu.Sabotage.Title'), description: i18n('Menu.Sabotage.Desc'), warning: '<em id="sabotage-Btn-closed" class="tooltip-error">' + i18n('Menu.Sabotage.Warning') + '<br></em>' },
-		{ id: 'possibleInvestments', title: i18n('Menu.PossibleInvestments.Title'), description: i18n('Menu.PossibleInvestments.Desc'), warning: '<em id="possibleInvestments-Btn-closed" class="tooltip-error">' + i18n('Menu.PossibleInvestments.Warning') + '<br></em>' },
 		{ id: 'playerProfile', title: i18n('Menu.PlayerProfile.Title'), description: i18n('Menu.PlayerProfile.Desc'), warning: '<em id="PlayerProfile-Btn-closed" class="tooltip-error">' + i18n('Menu.PlayerProfile.Warning') + '<br></em>' },
 		{ id: 'guildMemberstat', title: i18n('Menu.GuildMemberStat.Title'), description: i18n('Menu.GuildMemberStat.Desc'), warning: '<em id="guildmemberstat-Btn-closed" class="tooltip-error">' + i18n('Menu.GuildMemberStat.Warning') + '<br></em>' },
 		{ id: 'gildFight', title: i18n('Menu.Gildfight.Title'), description: i18n('Menu.Gildfight.Desc'), warning: i18n('Menu.Gildfight.Warning') },
@@ -515,71 +509,6 @@ let _menu = {
 	},
 
 	/**
-	 * Toolbox: city information / plunder helper of the visited player
-	 */
-	sabotage_Btn: () => {
-		let btn = _menu.MakeButton('sabotage', true);
-
-		let btnEl = $('<span />').on('click', function () {
-			// without one of these settings visitPlayer never unlocks the button
-			if (!Settings.GetSetting('ShowPlayersAttDeffValues') && !Settings.GetSetting('ShowNeighborsLootables')) {
-				HTML.ShowToastMsg({
-					head: i18n('Menu.Sabotage.Title'),
-					text: i18n('Menu.Sabotage.SettingOff'),
-					type: 'warning',
-					hideAfter: 4000
-				});
-				return;
-			}
-
-			if (Sabotage.OtherPlayer !== undefined) {
-				Sabotage.showResult();
-			}
-		});
-
-		return btn.append(btnEl);
-	},
-
-	/**
-	 * Toolbox: PvP history (neighbourhood and PvP arena battles, plunder)
-	 */
-	looting_Btn: () => {
-		let btn = _menu.MakeButton('looting');
-
-		let btnEl = $('<span />').on('click', function () {
-			Looting.page = 1;
-			Looting.Show();
-		});
-
-		return btn.append(btnEl);
-	},
-
-	/**
-	 * Toolbox: reopens the snipe helper box ("Mögliche Investitionen") with the last scanned GB overview
-	 */
-	possibleInvestments_Btn: () => {
-		let btn = _menu.MakeButton('possibleInvestments', true);
-
-		let btnEl = $('<span />').on('click', function () {
-			if (!Settings.GetSetting('ShowPossibleInvestments')) {
-				HTML.ShowToastMsg({
-					head: i18n('Menu.PossibleInvestments.Title'),
-					text: i18n('Menu.PossibleInvestments.SettingOff'),
-					type: 'warning',
-					hideAfter: 4000
-				});
-				return;
-			}
-
-			if (Calculator.Overview === undefined) return;
-
-			Calculator.ShowPossibleInvestments(true);
-		});
-
-		return btn.append(btnEl);
-	},
-
-	/**
 	 * InfoBox
 	 */
 	infobox_Btn: () => {
@@ -643,11 +572,7 @@ let _menu = {
 			HiddenRewards.init();
 		})
 
-		return btn_RewardsBG.append(
-			btn_Rewards,
-			$('<span id="hidden-reward-count" class="hud-counter">0</span>'),
-			$('<span id="hidden-future-reward-count" class="hud-counter hud-future-counter">0</span>') // Toolbox: future events
-		);
+		return btn_RewardsBG.append(btn_Rewards, $('<span id="hidden-reward-count" class="hud-counter">0</span>'));
 	},
 
 	recurringQuests_Btn: () => {
