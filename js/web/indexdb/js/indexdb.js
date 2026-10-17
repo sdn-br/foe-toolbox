@@ -460,8 +460,8 @@ let IndexDB = {
 
 
     /**
-     * Add user from PlayerDict if not added, otherwise update the
-     * toolbox fields (era, score, won battles and their dates)
+     * Add user from PlayerDict if not added, otherwise update name, guild,
+     * avatar and the toolbox fields (era, score, won battles and their dates)
      *
      * @param playerId
      * @param updateDate update an existing player as well
@@ -473,6 +473,10 @@ let IndexDB = {
         if (!player) return;
 
         const fields = {
+            name: player.PlayerName,
+            clanId: player.ClanId,
+            clanName: player.ClanName,
+            avatar: player.Avatar,
             era: player.Era,
             score: player.Score,
             lastScoreChangeDate: player.ScoreDate,
@@ -485,15 +489,14 @@ let IndexDB = {
         for (const key of Object.keys(fields)) {
             if (fields[key] === undefined) delete fields[key];
         }
+        // clanId 0 = known to have no guild, a stored guild name is outdated
+        if (fields.clanId === 0) fields.clanName = undefined;
 
         if (!playerFromDB) {
             // put instead of add: parallel updates of the same player must not fail
             await IndexDB.db.players.put(Object.assign({
                 id: playerId,
-                name: player.PlayerName,
-                clanId: player.ClanId || 0,
-                clanName: player.ClanName,
-                avatar: player.Avatar,
+                clanId: 0,
                 era: 'unknown', // Era can be discovered when user is visited
             }, fields, {
                 date: MainParser.getCurrentDate(),
