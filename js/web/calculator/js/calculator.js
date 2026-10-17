@@ -351,6 +351,8 @@ let Calculator = {
 		let h = [];
 
 		let BestKurs = 999999,
+			BestKursNettoFP = 0, // Toolbox: rank with the best rate, stored for the snipe helper
+			BestKursEinsatz = 999999,
 			arc = 1 + (MainParser.ArkBonus / 100),
 			ForderArc = 1 + (Calculator.ForderBonus / 100),
 			ShowBoost = Calculator.ShowBoostColumn();
@@ -564,8 +566,8 @@ let Calculator = {
 			if (SaveStates[Rank] !== 'Self' && Kurs > 0) {
 				if (Kurs < BestKurs) {
 					BestKurs = Kurs;
-					let BestKursNettoFP = FPNettoRewards[Rank],
-						BestKursEinsatz = SaveRankCosts[Rank];
+					BestKursNettoFP = FPNettoRewards[Rank];
+					BestKursEinsatz = SaveRankCosts[Rank];
 				}
 			}
 
@@ -704,10 +706,61 @@ let Calculator = {
 
 		$('#' + Calculator.BoxId()).find('#costTableFordern').html(h.join(''));
 
+		// Toolbox: remember level, invested FP and best rate for the snipe helper ("Wiedererkannt").
+		// While scrolling to another level the rankings do not belong to the current level.
+		if (!Parts.IsPreviousLevel) {
+			Calculator.RefreshGreatBuildingsDB({
+				playerId: MainParser.CurrentGB.Entity['player_id'],
+				name: MainParser.CurrentGB.Entity['cityentity_id'],
+				level: MainParser.CurrentGB.Entity['level'],
+				currentFp: MainParser.CurrentGB.Entity['state']['invested_forge_points'] || 0,
+				bestRateNettoFp: BestKursNettoFP,
+				bestRateCosts: BestKursEinsatz
+			});
+		}
+
 		$('[data-original-title]').tooltip({
 			html: true,
 			container: 'body'
 		});
+	},
+
+
+	/**
+	 * Toolbox: stores a GB in the IndexedDB table greatbuildings (one row per player and GB),
+	 * read by the snipe helper (parts/overview.js) to recognise GBs with a known rate.
+	 *
+	 * @param {{playerId: number, name: string, level: number, currentFp: number, bestRateNettoFp: number, bestRateCosts: number}} GreatBuilding
+	 * @returns {Promise<void>}
+	 */
+	RefreshGreatBuildingsDB: async (GreatBuilding) => {
+		try {
+			await IndexDB.getDB();
+			await IndexDB.addUserFromPlayerDictIfNotExists(GreatBuilding['playerId'], true);
+
+			const Values = {
+				level: GreatBuilding['level'],
+				currentFp: GreatBuilding['currentFp'],
+				bestRateNettoFp: GreatBuilding['bestRateNettoFp'],
+				bestRateCosts: GreatBuilding['bestRateCosts'],
+				date: new Date()
+			};
+
+			const CurrentGB = await IndexDB.db.greatbuildings
+				.where({ playerId: GreatBuilding['playerId'], name: GreatBuilding['name'] })
+				.first();
+
+			if (CurrentGB === undefined) {
+				await IndexDB.db.greatbuildings.add(Object.assign({ playerId: GreatBuilding['playerId'], name: GreatBuilding['name'] }, Values));
+			}
+			else {
+				await IndexDB.db.greatbuildings.update(CurrentGB.id, Values);
+			}
+		}
+		catch (e) {
+			// e.g. ConstraintError when the table is rendered twice in a row, the next render stores it again
+			console.error('RefreshGreatBuildingsDB', e);
+		}
 	},
 
 
