@@ -735,9 +735,20 @@ GetFights = () =>{
 					gbCityMapEntity = { responseData: [{ ...MainParser.CityMapData[requestedEntityId], player_id: ExtPlayerID }] };
 				}
 				else if (gbCityMapEntity?.responseData?.[0]?.id !== requestedEntityId) {
-					// Entity belongs to a different GB → discard and wait for getOtherPlayerCityMapEntity or updateEntity
-					gbCityMapEntity = null;
-					if (gbUpdateData) gbUpdateData.CityMapEntity = null;
+					const visitedEntity = CityMap.OtherPlayer.mapData[requestedEntityId];
+
+					if (visitedEntity?.player_id === requestedPlayerId) {
+						// Toolbox: GB clicked in a visited city, no getOtherPlayerCityMapEntity follows.
+						// Take the entity from the visitPlayer data (like the game client does) and
+						// prepare it like that handler would, so bonus and era are kept below
+						gbCityMapEntity = { responseData: [visitedEntity] };
+						gbUpdateData = { Rankings: null, CityMapEntity: gbCityMapEntity };
+					}
+					else {
+						// Entity belongs to a different GB → discard and wait for getOtherPlayerCityMapEntity or updateEntity
+						gbCityMapEntity = null;
+						if (gbUpdateData) gbUpdateData.CityMapEntity = null;
+					}
 				}
 			}
 		}
@@ -783,6 +794,13 @@ GetFights = () =>{
 		} else {
 			gbUpdateData.CityMapEntity = data;
 			lgUpdate();
+		}
+
+		// Toolbox: keep the visited city current (e.g. after a contribution), a GB clicked there again reads it
+		for (const entity of data.responseData) {
+			if (CityMap.OtherPlayer.mapData[entity?.id]?.player_id === entity.player_id) {
+				CityMap.OtherPlayer.mapData[entity.id] = entity;
+			}
 		}
 
 		if (data.responseData[0]?.player_id === ExtPlayerID) {
