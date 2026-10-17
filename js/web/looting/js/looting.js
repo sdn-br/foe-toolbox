@@ -214,6 +214,18 @@ FoEproxy.addHandler('PVPArenaService', 'updateOpponents', (data, postData) => {
 	Looting.setPvPArenaOpponents(data.responseData);
 });
 
+// the game reports a finished arena fight only as a new log entry: add it to the Helfer PvP arena box, which
+// otherwise reads the fights when the arena is opened (newest first, as in getOverview)
+FoEproxy.addHandler('PVPArenaService', 'addLog', (data, postData) => {
+	const entry = data.responseData,
+		overview = (typeof PvPArena !== 'undefined' ? PvPArena.StartPvPArenaBackupData : undefined);
+
+	if (!entry?.otherPlayer?.player || !Array.isArray(overview?.actions)) return;
+
+	overview.actions.unshift(entry);
+	PvPArena.StartPvPArena(overview, true);
+});
+
 
 let Looting = {
 
