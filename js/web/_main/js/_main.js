@@ -186,6 +186,8 @@ GetFights = () =>{
 
 	// the world select window is opened, get world list update
 	FoEproxy.addHandler('WorldService', 'getWorlds', (data, postData) => {
+		if (!MainParser.IsGlobalSendEnabled()) return; // Toolbox: nothing is sent without GlobalSend
+
 		MainParser.sendExtMessage({
 			type: 'send2Api',
 			url: `${ApiURL}Worlds/?world=${ExtWorld}`,
@@ -1481,7 +1483,8 @@ let MainParser = {
 
 		const response = await new Promise((resolve, reject) => {
 			responsePromise.then(resolve, reject);
-			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 1000)
+			// Toolbox: 5 s instead of 1 s, server requests (send2Server) run through the background script
+			setTimeout(() => resolve({ ok: false, error: "response timeout for: " + JSON.stringify(data) }), 5000)
 		});
 
 		if (typeof response !== 'object' || typeof response.ok !== 'boolean') {
@@ -1724,39 +1727,54 @@ let MainParser = {
 
 
 	/**
+	 * Toolbox: whether data may be sent to the foe-helper API (setting GlobalSend, default off).
+	 * Reads localStorage directly, some handlers run before the settings (config.json) are loaded.
+	 *
+	 * @returns {boolean}
+	 */
+	IsGlobalSendEnabled: () => (localStorage.getItem('GlobalSend') === 'true'),
+
+
+	/**
 	 * Sending data "home"
 	 *
 	 * @param data
 	 * @param ep
 	 * @param successCallback
 	 * @param errorCallback optional - receives a readable message when the request itself fails (network, HTTP != 200, invalid JSON)
+	 * @param forceSend Toolbox: send even if GlobalSend is off (only for confirmed user actions)
 	 */
-	send2Server: (data, ep, successCallback, errorCallback) => {
+	send2Server: (data, ep, successCallback, errorCallback, forceSend = false) => {
+		// Toolbox: only with the setting GlobalSend (default off) or an explicit, confirmed user action (forceSend)
+		if (!MainParser.IsGlobalSendEnabled() && !forceSend) {
+			return;
+		}
 
-		let req = fetch(
-			ApiURL + ep + '/?player_id=' + ExtPlayerID + '&guild_id=' + ExtGuildID + '&world=' + ExtWorld,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ data })
-			}
-		);
+		// Toolbox: the request runs in the background script, not in the game page
+		let req = MainParser.sendExtMessage({
+			type: 'send2Server',
+			url: ApiURL,
+			endpoint: ep,
+			playerId: ExtPlayerID,
+			guildId: ExtGuildID,
+			world: ExtWorld,
+			data: data
+		});
 
 		if (successCallback !== undefined) {
 			req
 				.then(response => {
-					if (response.status === 200) {
-						response
-							.json()
-							.then(successCallback)
-							.catch(err => {
-								if (errorCallback) errorCallback('The server sent an invalid response: ' + err.message);
-							});
+					if (!response) {
+						if (errorCallback) errorCallback('The server could not be reached');
 					}
-					else if (errorCallback) {
-						errorCallback('The server responded with HTTP ' + response.status + ' (' + response.statusText + ')');
+					else if (response.status !== 200) {
+						if (errorCallback) errorCallback('The server responded with HTTP ' + response.status + ' (' + response.statusText + ')');
+					}
+					else if (response.body === null) {
+						if (errorCallback) errorCallback('The server sent an invalid response: ' + response.error);
+					}
+					else {
+						successCallback(response.body);
 					}
 				})
 				.catch(err => {
@@ -1860,7 +1878,7 @@ let MainParser = {
 	 */
 	SelfPlayer: (d) => {
 
-		if (Settings.GetSetting('GlobalSend') === false) {
+		if (!MainParser.IsGlobalSendEnabled()) {
 			return;
 		}
 
@@ -1945,6 +1963,7 @@ let MainParser = {
 
 
 	SendLGData: (d)=> {
+		if (!MainParser.IsGlobalSendEnabled()) return; // Toolbox: nothing is sent without GlobalSend
 
 		const dataEntity = d['CityMapEntity']['responseData'][0],
 			meta = MainParser.CityEntities?.[dataEntity['cityentity_id']],

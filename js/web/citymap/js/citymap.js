@@ -1360,7 +1360,7 @@ let CityMap = {
 			$('#CityMapSubmit').fadeToggle(function () {
 				$(this).remove();
 			});
-		});
+		}, true); // Toolbox: forceSend, confirmed by the double opt-in above
 	},
 
 
