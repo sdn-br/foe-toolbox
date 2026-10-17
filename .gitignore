@@ -1,9 +1,9 @@
 /.idea
 /.vs
 /js/web/negotiationtables/Test
-response province.json
 bug.PNG
-*.ini
+desktop.ini
 .DS_Store
 Icon?
-desktop.ini
+/foe-v*.zip
+/manifests

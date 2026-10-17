@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -52,6 +52,8 @@ FoEproxy.addHandler('CityProductionService', 'pickupProduction', (data, postData
 
 let Unit = {
 
+	CoordsRaw: [],
+
 	Types: null,
 	Attack : null,
 	Defense: null,
@@ -77,6 +79,8 @@ let Unit = {
 	 */
 	Show: ()=> {
 
+		Unit.PrepareCoords();
+
 		if ($('#UnitOverview').length === 0) {
 			HTML.AddCssFile('unit');
 
@@ -87,17 +91,51 @@ let Unit = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
-				settings: 'Unit.ShowSettings()'
+				settings: () => Unit.ShowSettings()
 			};
 
 			HTML.Box(args);
-			moment.locale(i18n('Local'));
+			//moment.locale(18n('Local'));
 
 		} else {
 			HTML.CloseOpenBox('UnitOverview');
 		}
 
 		Unit.BuildBox();
+	},
+
+
+	PrepareCoords: ()=> {
+		if( $('#unit-css-block').length > 0){
+			return;
+		}
+
+		if(Object.keys(Unit.CoordsRaw).length === 0){
+			return;
+		}
+
+		let s = [],
+			r = Unit.CoordsRaw.image.slice(0, Unit.CoordsRaw.image.lastIndexOf('_')) + '_';
+
+		s.push(`:root {--unit_scale: 3/5;}.unit_icon{background: transparent url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}') top left no-repeat;background-size:calc(${Unit.CoordsRaw.size.w}px*var(--unit_scale)) calc(${Unit.CoordsRaw.size.h}px*var(--unit_scale));display:inline-block;width:calc(50px*var(--unit_scale));height:calc(50px*var(--unit_scale));zoom:0.75}`);
+
+		for(let i in Unit.CoordsRaw.frames)
+		{
+			if(!Unit.CoordsRaw.frames.hasOwnProperty(i)){
+				continue;
+			}
+
+			let n = Unit.CoordsRaw.frames[i][0].replace(r,''), // cut of "armyuniticons_50x50_"
+				l = (Unit.CoordsRaw.frames[i][1] === 1 ? '0' : (parseInt(Unit.CoordsRaw.frames[i][1]) * -1)),
+				t = (Unit.CoordsRaw.frames[i][2] === 1 ? '0' : (parseInt(Unit.CoordsRaw.frames[i][2]) * -1));
+
+			s.push(`.unit_icon.${n}{background-position: calc(${l}px*var(--unit_scale)) calc(${t}px*var(--unit_scale))}`);
+		}
+
+		let sheet = document.createElement('style')
+		sheet.id = 'unit-css-block';
+		sheet.textContent = s.join('');
+		document.head.appendChild(sheet);
 	},
 
 
@@ -168,7 +206,7 @@ let Unit = {
 
 			attack.push('<tr data-era="' + era + '">');
 
-			attack.push(`<td><span class="unit_icon ${Unit.Attack[i]['unitTypeId']} unit_skill ${type['unitClass']}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></span></td>`);
+			attack.push(`<td><span class="unit_icon ${Unit.Attack[i]['unitTypeId']} unit_skill ${type['unitClass']}"></span></td>`);
 			attack.push('<td>' + type['name'] + '</td>');
 
 			let status = cache['currentHitpoints'] * 10;
@@ -178,7 +216,7 @@ let Unit = {
 
 			let AttackBoost = Boosts['AttackAttackBoost'],
 				DefenseBoost = Boosts['AttackDefenseBoost']
-			
+
 			let Attack = MainParser.round(type['baseDamage'] * (AttackBoost / 100)) + type['baseDamage'],
 				Defense = MainParser.round(type['baseArmor'] * (DefenseBoost / 100)) + type['baseArmor'];
 
@@ -236,7 +274,7 @@ let Unit = {
 				cache = Unit.Cache['units'].find(obj => (obj['unitId'] === Unit.Defense[i]['unitId'])),
 				era = Technologies.Eras[type['minEra']];
 
-			defense.push(`<td><span class="unit_icon ${Unit.Defense[i]['unitTypeId']} unit_skill ${type['unitClass']}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></span></td>`);
+			defense.push(`<td><span class="unit_icon ${Unit.Defense[i]['unitTypeId']} unit_skill ${type['unitClass']}"></span></td>`);
 			defense.push('<td>' + type['name'] + '</td>');
 
 			let status = cache['currentHitpoints'] * 10;
@@ -303,7 +341,7 @@ let Unit = {
 				cache = Unit.Cache['units'].find(obj => (obj['unitId'] === Unit.ArenaDefense[i]['unitId'])),
 				era = Technologies.Eras[type['minEra']];
 
-			arenaDefense.push(`<td><span class="unit_icon ${Unit.ArenaDefense[i]['unitTypeId']} unit_skill ${type['unitClass']}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></span></td>`);
+			arenaDefense.push(`<td><span class="unit_icon ${Unit.ArenaDefense[i]['unitTypeId']} unit_skill ${type['unitClass']}"></span></td>`);
 			arenaDefense.push('<td>' + type['name'] + '</td>');
 
 			let status = cache['currentHitpoints'] * 10;
@@ -354,7 +392,7 @@ let Unit = {
 			if(eras[era] === undefined){
 				eras[era] = [];
 			}
-						
+
 			eras[era].push({
 				id: c[i]['unitTypeId'],
 				name: d['name'],
@@ -397,7 +435,7 @@ let Unit = {
 				}
 
 				pool.push('<tr>');
-					pool.push(`<td><span class="unit_icon ${eras[era][i]['id']} unit_skill ${eras[era][i]['unitClass']}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></span></td>`);
+					pool.push(`<td><span class="unit_icon ${eras[era][i]['id']} unit_skill ${eras[era][i]['unitClass']}"></span></td>`);
 					pool.push('<td>' + eras[era][i]['name'] + '</td>');
 					pool.push('<td class="text-center">' + eras[era][i]['attached'] + '</td>');
 					pool.push('<td class="text-center">' + eras[era][i]['unattached'] + '</td>');
@@ -424,7 +462,7 @@ let Unit = {
 		h.push( Unit.GetTabs() );
 		h.push( Unit.GetTabContent() );
 		h.push('</div>');
-		
+
 
 		$('#UnitOverview').find('#UnitOverviewBody').html( h.join('') ).promise().done(function(){
 			Unit.BuildTimer();
@@ -560,7 +598,7 @@ let Unit = {
 
 	/**
 	 * Updates the display for the Alcatraz production
-	 * 
+	 *
 	 */
 	UpdateAlcaLable:(countDownDate, intervalID)=>{
 		if(countDownDate.isValid())
@@ -754,7 +792,7 @@ let Unit = {
 
 			last.push('<tr data-era="' + LastAlca[i]['era'] + '">');
 
-				last.push(`<td><span class="unit_icon ${LastAlca[i]['id']} unit_skill ${LastAlca[i]['unitClass']}" style="background-image:url('${srcLinks.get("/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_0.png", true)}')"></span></td>`);
+				last.push(`<td><span class="unit_icon ${LastAlca[i]['id']} unit_skill ${LastAlca[i]['unitClass']}"></span></td>`);
 				last.push('<td>' + LastAlca[i]['name'] + '</td>');
 
 				last.push('<td class="text-center">' + LastAlca[i]['count'] + 'x</td>');
@@ -787,15 +825,15 @@ let Unit = {
 		let h = [];
 
 		h.push(`<p>${i18n('Boxes.Units.PictogramScalingTitle')}
-					<button class="btn btn-default btn-tight btn-set-value" data-value="-1">&lt;</button>
+					<button class="btn btn-slim btn-set-value" data-value="-1">&lt;</button>
 					<input type="number" id="pictogramScaling" step="1" min="1" max="4" placeholder="1-4" required value="${Unit.Settings.pictogramScaling}" title="${HTML.i18nTooltip(i18n('Boxes.Units.PictogramScalingDesc'))}">
-					<button class="btn btn-default btn-tight btn-set-value" data-value="1">&gt;</button>
+					<button class="btn btn-slim btn-set-value" data-value="1">&gt;</button>
 					<span class="validity"></span>
 				</p>`);
-		h.push(`<p><button onclick="Unit.SaveSettings()" id="unit-save-settings" class="btn btn-default" style="width:100%">${i18n('Boxes.Settings.Save')}</button></p>`);
+		h.push(`<p><button onclick="Unit.SaveSettings()" id="unit-save-settings" class="btn" style="width:100%">${i18n('Boxes.Settings.Save')}</button></p>`);
 
 		$('#UnitOverviewSettingsBox').html(h.join(''));
-		
+
 		$('#UnitOverviewSettingsBox').on('click', '.btn-set-value', function () {
 			let value = parseFloat($('#pictogramScaling').val()) + parseFloat($(this).data('value'));
 			if (value !== value) value = 1; //NaN => 1

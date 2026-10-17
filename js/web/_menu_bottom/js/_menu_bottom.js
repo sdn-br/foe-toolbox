@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -13,7 +13,7 @@
 
 let _menu_bottom = {
 
-	btnSize: 45,
+	btnSize: 42,
 
 	/**
 	 * Create the div holders and put them to the DOM
@@ -35,17 +35,17 @@ let _menu_bottom = {
 		hud.append(btnUp);
 		hud.append(hudWrapper)
 		hud.append(btnDown);
-		
+
 		// If the window size changes, recalculate
 		window.onresize = function(event) {
 			if (event.target == window) _menu_bottom.SetMenuWidth(true);
 		};
-		
-		$('body').append(hud).promise().done(function(){
+
+		$('body').append(hud).promise().done(async function(){
 
 			// Insert buttons
 			_menu.ListLinks(_menu_bottom.InsertMenuItem);
-			_menu_bottom.CheckButtons();
+			await _menu_bottom.CheckButtons();
 
 			// Determine the correct place for the menu
 			_menu_bottom.SetMenuWidth();
@@ -66,6 +66,17 @@ let _menu_bottom = {
 
 
 	/**
+	* Fügt ein MenüItem ein
+	*
+	* @param MenuItem
+	*/
+	InsertMenuItem: (MenuItem) => {
+		$('#foe-helper-hud-slider').append(MenuItem);
+	},
+
+
+
+	/**
 	 * Sammelfunktion
 	 *
 	 * @param reset
@@ -76,7 +87,7 @@ let _menu_bottom = {
 
 		if (reset) {
 			// Slider nach links resetten
-			$('#foe-helper-hud-slider').css({ 
+			$('#foe-helper-hud-slider').css({
 				left: 0
 			});
 
@@ -110,8 +121,8 @@ let _menu_bottom = {
 			window.onresize = function(){};
 			_menu.CallSelectedMenu('Box');
 			return;
-		} 
-			
+		}
+
 		// hat der Spieler eine Länge vorgebeben?
 		let MenuLength = localStorage.getItem('MenuLength');
 
@@ -127,14 +138,15 @@ let _menu_bottom = {
 		$('#foe-helper-hud-wrapper').width(_menu.HudWidth);
 		$('#foe-helper-hud-slider').width( ($("#foe-helper-hud-slider").children().length * _menu_bottom.btnSize));
 	},
-	
+
 
 	/**
 	 * Panel scrollbar machen
 	 *
 	 */
-	CheckButtons: () => {
+	CheckButtons: async () => {
 		let activeIdx = 0;
+		await ExistenceConfirmed(() => jQuery._data($('body').get(0), 'events').click != null && $('.hud-btn').length > 0);
 		$('.hud-btn').click(function () {
 			activeIdx = $(this).index('.hud-btn');
 		});
@@ -172,7 +184,7 @@ let _menu_bottom = {
 		$('#foe-helper-hud-slider').sortable({
 			placeholder: 'menu-placeholder',
 			axis: 'x',
-			distance: 15,
+			distance: 22,
 			start: function () {
 				$('#foe-helper-hud').addClass('is--sorting');
 			},
@@ -268,8 +280,8 @@ let _menu_bottom = {
 		$('.hud-btn-left').removeClass('hasFocus');
 
 		_menu.ActiveSlide--;
-		
-		if (_menu.ActiveSlide == 1) 
+
+		if (_menu.ActiveSlide == 1)
 			_menu.MenuScrollLeft = 0;
 		else
 			_menu.MenuScrollLeft += _menu.HudWidth;

@@ -1,0 +1,1718 @@
+## Extension Changelog
+
+##### 4.8.3.0
+**Update**
+
+- Blue Galaxy: goods ratings moved to the settings menu — more room for the table
+- Blue Galaxy: settings apply instantly, no save button
+- Blue Galaxy: available attempts show in the title bar when scrolling
+
+**Bugfixes**
+
+- Firefox: the extension can be installed again on older Firefox versions (e.g. Firefox 115 on Windows 7 and 8.1) — until now it was rejected there as "corrupt"
+
+---
+
+##### 4.8.2.4
+**Bugfixes**
+
+- Production overview: the automatic refresh after collecting, moving or motivating discarded the search term — the search term, sort order, list/group view and scroll position are now kept, so several identical buildings can be collected in a row again
+
+---
+
+##### 4.8.2.3
+**Bugfixes**
+
+- Production overview & Blue Galaxy: buildings with a random production show the result already fixed for the next collection again (now marked with 🎲) instead of the average of all possible rewards — so Blue Galaxy can be aimed at the best roll again; the average stays in the general view
+
+---
+
+##### 4.8.2.2
+**Bugfixes**
+
+- Older browsers: the extension installs and starts again from Chrome/Edge 109 and Firefox 115 (e.g. on Windows 7 and 8.1) — since version 4.4.1.0 it was rejected there or stayed without function
+- Building tooltip: line breaks and the alignment of multi-line entries (chain descriptions, historical allies, inhabitants, limited buildings) now also work in older browsers
+
+---
+
+##### 4.8.2.1
+**Update**
+
+- Guild battlegrounds: new option in the live box settings (tab "Time & Alarm") to set an alert automatically for every sector in the upcoming list — off by default; an alert you remove by hand is not set again until the next reload
+
+**Bugfixes**
+
+- Beta worlds: Building Efficiency Rating, Shop Assistant, Town Overview, city map, kits, inventory and ascended buildings stayed at the loading spinner (or the empty grid) on zz1 — the beta game client no longer loads a part of the building data at startup, the extension now requests it itself. Live worlds were not affected
+- Recurring quests: after advancing to a new era the list mixed old and new quests, then most of them vanished and the box stopped updating — the quests of the new era are now assigned correctly, and an already broken list repairs itself as the quests come around again
+- Production overview & Blue Galaxy: buildings with a random production (e.g. Yukitomo Imperial: 20 % 10× Self-Aid Kit, 80 % 1×) showed a placeholder as if it were the fixed production — the possible rewards are now listed with their average per collection, like the general view already did
+- Production overview: the box updates itself after collecting, moving or motivating — collected productions stayed listed with an outdated timer until the box was reopened; the selected tab is kept, also after saving the settings
+
+---
+
+##### 4.8.2.0
+**Update**
+
+- PvP arena: new notes column in the log — a short remark can be stored for every opponent (e.g. their defense army after a lost fight), shown in all tabs and still there the next time you face that player
+- GB calculator & GB cost calc: in split view each box has its own "Open automatically" option in its settings, labeled with the box name — e.g. only the GB calculator can open automatically without the cost calc coming along
+
+**Bugfixes**
+
+- Research costs: paging into the Stellar Age works again — the box went silent on switching as soon as the decision points of the new research tree were in range. The technologies of the decision branches are now included (the chosen branch, the first one before deciding), and the new resources of the era (Stellar Points, Stellar Capacity, Encoded Tablets, Synthetic Intelligence Remnant) show up in the table as well
+- Market: the "needed for research" filter also takes the Stellar Age decision branches into account
+- Guild battlegrounds: when the guild leadership places another crosshair on the map, the sectors already marked stay visible in the box — previously all older markers vanished and only the last one placed was shown
+
+---
+
+##### 4.8.1.0
+**Update**
+
+- Building search: buildings can now also be found by size — the dropdown next to the name field lists every footprint (width × length in tiles) that exists in your city and marks all buildings of that size
+- Message checklist: single threads can now be hidden from the list with the ✕ next to the thread — hidden threads can be restored in the settings
+- GB calculator & power leveling: the patron value tables of all eras have been extended considerably from globally collected live data (up to level 500 depending on the era) — power leveling can now be planned for much higher levels
+- GB calculator & shop assistant: automatic opening is now enabled by default — it can be switched off in the settings of the respective box
+- First start: while the building database is being built (only after installation or big game updates) an indicator in the bottom right shows the progress — reloading in between no longer discards what was already loaded
+
+**Bugfixes**
+
+- Message checklist: changes in the settings (e.g. disabling the automatic opening) take effect immediately and no longer get lost without a click on save
+- Power leveling: the box stayed empty for the new Stellar Age great building — its patron values are now included up to level 251, higher levels and future eras are calculated automatically (accurate to ±5 FP, with a note in the box), and the display also works while no level is unlocked
+
+---
+
+##### 4.8.0.0
+**New**
+
+- Building search: new module — search buildings by name (with autocomplete based on your own city) and mark every match with golden arrows on the map
+- Message checklist: new module — turns an ingame message into a checklist to tick off line by line (e.g. guild instructions), with progress display
+
+**Update**
+
+- Shop assistant:
+    - The amount in your inventory is now highlighted in bold yellow
+    - Fragments show in brackets how many items could already be assembled, with a progress bar towards the next item below
+    - Sold out offers keep their position and are only slightly faded
+- Inventory overview: buildings can now also be filtered by coin boost and supply boost
+- PvP Arena: entries in the "lost Attacks" tab can now be removed individually or the whole list can be cleared — handy after defeats with accidentally wrong troops
+- Tech tree: new option "Group goods by era" — with era headings, sorting stays within each era
+- GB bonus overview: data can now be exported as CSV or JSON
+
+**Bugfixes**
+
+- Player profile: unit production (helmet icon) and critical hit chance (sword icon) now show a tooltip explaining the value
+- Own part calculator: when other players invest into your currently open GB, the box now updates immediately (progress, patron FP and remaining amount) — previously the display stayed frozen until the GB was reopened. The game does not reveal who took which spot; briefly reopen the GB for that
+- GB calculators: negative % boosts can be entered again — both directly and as custom percent buttons in the settings
+- Efficiency rating & inventory overview: FP and goods boost of set buildings now include the connection bonuses — previously only the first boost source was counted
+- Notes: reopening the notes and creating a new page now shows the last used page again instead of always the first one
+- Tech tree: window no longer opens blank since the Stellar Age
+- Player profile: daily goods production is summed up again after advancing to the Stellar Age
+- Other player profiles: values no longer depend on which fields are enabled in the efficiency rating — no more "NaN" displays
+
+---
+
+##### 4.7.2.1
+**Bugfixes**
+
+- Negotiation helper:
+    - No longer suggests a good the same person has already refused as long as an equally good move without that repeat exists
+    - Deliberate test offers — goods that cannot be the right one for that person, but whose answer narrows down the remaining options — are now marked with a dashed border and a tooltip
+
+---
+
+##### 4.7.2.0
+**Update**
+
+- GB Investment Overview:
+    - Completely new, simpler box: pick your investment target first (FP, goods, supplies, combat boosts and more) — the list only shows GBs really offering it, with real values from the game data and the gain of the next level
+    - Plus your FP share of the next level (adjustable patron bonus) and the new "Harvests" column: how many daily city harvests the level costs
+    - On worlds with the GB update a switch also shows the new tier bonuses; the old rating options are gone
+
+- Merge game (event assistant): each color now shows how much progress is still locked in it — i.e. how many points unlocking all its locked pieces (e.g. with a rainbow/prismatic essence) would earn; the most valuable color is highlighted
+
+- GB Cost Calculator & Own Part Calculator:
+    - The percent buttons are now much easier to manage in the settings: add new values directly via input and Enter, remove each value with a single click — no more stacked input rows
+    - Removing all values brings the default buttons back
+
+**Bugfixes**
+
+- The Arc bonus entry in the calculator settings could not be deleted — players without an Arc saw a mysterious, unremovable "0%" button there; it can now be deleted and re-added at any time
+
+- Bonuses of placed Great Buildings (military, population, contribution boost) were no longer detected on some worlds, because the game already ships an empty new data field — the GB Cost Calculator therefore showed profits without the contribution boost (often wrongly negative)
+
+- After the game's GB update, the Own Part Calculator and Power Leveling browse future levels with the correct level costs again — exact across all prestige tiers (copper/silver/gold)
+
+---
+
+##### 4.7.1.0
+**New**
+
+- GB Bonus Overview:
+    - New module: every great building with its bonuses per prestige tier (copper/silver/gold) and the bonus values at the level breakpoints in one box — filterable by name, built/not built and bonus type
+    - Your own GBs additionally show the current level, the unlocked levels with a progress bar and the currently active bonus values
+
+**Update**
+
+- GB Cost Calculator:
+    - New piggy bank column shows the extra FP granted by your contribution boost, just like in the game; the icon matches the building's tier (copper/silver/gold) and the column can be hidden in the settings
+
+- Blue Galaxy:
+    - New sortable column for goods from the next age (icon with the green arrow); with its own adjustable rating that feeds into the default sorting — if you don't need it, hide it in the settings
+    - Productions like “random good of the next age” or goods chests are now counted as well — such buildings previously did not always show up in the list at all
+
+- Negotiation Helper:
+    - Deviating from the suggestion no longer ends with ‘Wrong goods selected’ — the helper understands every move and keeps calculating exactly
+    - More than 5 rounds (e.g. extra turns from the tavern) are now fully supported instead of capped; even after the planned rounds are used up, the helper keeps suggesting the most likely assignment for extra turns
+    - Negotiations with more than 10 goods now work as well (previously an error message)
+    - In some endgames the negotiation helper provably plays better than before; the displayed win chance always matches the strategy actually played
+
+- General:
+    - The browser tab now shows the world abbreviation in its title (e.g. “de11 - Forge of Empires”) — with several worlds open you can instantly tell which tab belongs to which world
+    - Goods graphics now come straight from the game and update automatically with new eras — new goods instantly show up with the correct icon
+    - New eras are now detected automatically from the game — era list, names and special goods are correct the moment a new era launches, without waiting for an update
+    - On the beta server the goods graphics did not load (wrong server requested) — fixed
+
+- Event assistants:
+    - The merge game task warning (“Collect task!” overlay and sound) now has its own toggle in the settings and works even without the merge game box
+    - Overlay and sound can be toggled individually right there (previously in the merge game box's gear menu)
+    - The event assistant list is now grouped per event and easier to read
+
+**Bugfixes**
+
+- After the game's GB update, the bonuses of your own great buildings are taken into account everywhere again (efficiency rating, boost overview, happiness/population, contribution boost)
+
+- Blue Galaxy:
+    - A manually opened box no longer closes itself while collecting — only an automatically opened box still closes once all double collections are used up
+
+- Building Marker: The golden arrows now also appear for buildings right at the map edge
+
+---
+
+##### 4.6.0.0
+
+**New**
+- Majestic Buildings:
+	- New module containing all the city’s time-limited (majestic) buildings in a single box
+
+- Building Marker:
+	- New internal module that marks buildings in the city with floating golden arrows — the arrows follow the map in real time as you zoom and pan; clicking on a marked building removes its arrow, whilst the close cross beneath the diamonds removes all
+	- The eye buttons in ‘Productions’, ‘Efficiency Rating’, ‘Blue Galaxy’ and ‘Historical Allies’ now highlight the building directly in the city rather than in the city map box; if highlighting is not available (e.g. in Firefox), the city map opens as before
+
+- Guild Battles:
+	- New arrow button in the sector rows of the Live Box (can be disabled in the settings) — marks the sector with a floating arrow directly on the battleground map; the same button, a click on the sector or the close cross removes it again
+	- The Live Box settings are now organised in tabs (Display, Copy, Time & Alarm, Send)
+
+**Update**
+- Blue Galaxy:
+	- The fragment column is now split in two — allowing sorting by fragment amount or fragment name separately
+
+- City Builder:
+	- Buildings for which no space could be found no longer disappear silently from the map — they are now listed in their own movable box
+	- New loading display with background panel, progress bar and percentage while the layout is being calculated
+	- Road balance in the top left corner of the map: road tiles of the current city, road tiles of the plan and the savings in per cent
+	- New "Names" option: shows the building names directly on the map — aligned with the building direction, wrapped onto several lines on larger buildings and readable at any zoom level
+	- New "Tooltips" option: the building tooltips shown when hovering over the map can be switched off temporarily
+	- New remove mode: enable it and click buildings on the map to take them out of the plan — they move into the unplaced buildings box and can be restored there for the next calculation
+	- New "Recalculate" button: plans the city again without planning the removed buildings back in — like all features it also works in the pop-out window
+	- New variant picker: the calculation keeps up to 9 distinct city layouts — guaranteed to include the best variant of every building strategy (bands, vertical bands, organic) — and ‹ › switches between them instantly; the label names the strategy and the road balance shows the numbers per variant
+
+- Guild battles:
+	- The automatic Discord notification feature now excludes sectors with an excessively high chance of attrition — the threshold can be selected in the settings (default: 100 per cent); this is checked at the time of sending
+
+- Inventory Overview:
+	- Selection kits now reveal their contents — the tooltip lists all contained buildings, and searching for a building also surfaces the kits it can be taken from
+	- New kind filter: buildings, fragments, kits or other items
+	- With an active property filter, selection kits show the best value among their contained buildings
+
+**Bugfix**
+- City Builder:
+	- Some individual roads were created in duplicate — the generously planned two-lane dual carriageways and routes are now being scaled back to the necessary minimum; the rest will be single-lane and redundant roads will be removed; if only a single building requires a two-lane road, exactly one 2x2 section right next to the town hall remains
+	- Two-lane roads are now planned as complete 2x2 sections and drawn with a visible grid pattern so that they can be distinguished from parallel single-lane roads; corridors of odd lengths are filled in so that the plan can be recreated in the game using whole sections
+	- The map in the pop-out window can now be panned with the mouse; the opacity slider, useless there, is hidden in the pop-out
+	- Great Buildings could end up walled in without a street connection — the town hall and regular buildings now never occupy the last free neighbouring tile of a still unconnected Great Building; buildings that cannot get a connection at all appear in the unplaced buildings box instead of standing on the map as an unbuildable plan
+	- Whole road sections could lose their connection to the town hall — the cleanup pass wrongly removed the anchor tile of a branch at the town hall; every road tile is now guaranteed to reach the town hall through the network
+	- Buildings without a street requirement now stand as one solid block: rows of uniform height, small notches may be sacrificed instead of leaving stripes, and a compaction pass slides everything flush against the city
+
+- Guild Battles:
+	- Sector alerts were triggered too late if the computer’s clock differed from the server time — the lead time is now correctly converted to the local clock, as are the countdowns in the Live Box and the sector and antiquities dealer templates in the Alert Module
+	- When the game tab is open, sector alerts are now triggered to the nearest second — the background process’s alerts only wake the browser at minute intervals, which was too late when there were only a few seconds’ lead time; for the closed tab, they remain in place as a fallback
+
+---
+
+##### 4.5.0.0
+
+**New**
+- Inventory Overview:
+  - New module: browse your complete inventory in one box — with a property filter for buildings (Forge Points, unit boosts, goods, units, happiness, Quantum Incursion and more)
+  - With an active filter every tile shows the value of the selected property, sortable ascending/descending; building fragments show their progress and are rated like their assembled building
+  - Building tooltips like in the efficiency rating, automatic refresh on inventory changes; Historical Allies stay in their own box
+  - "Recently added" sort: shows with a timestamp what last entered the inventory (e.g. from collecting the city) — opening the game's inventory log takes over its exact history, in addition every stock increase is tracked live
+
+- Web Requests:
+  - New module: send battleground sector data to your own server — as GET with URL parameters or as POST with a JSON or form body ($_GET/$_POST)
+  - Freely configurable profiles with placeholders (#name, #time, #attrition, #guild, #vp, #neighbors and more), preview and test requests with sample data
+  - Requests are fire-and-forget: sent without waiting for a response, no CORS setup needed on the server
+  - Selectable in the Guild Battlegrounds settings: send single sectors or the whole selection next to the Discord buttons
+
+**Update**
+- Discord Webhooks:
+  - Webhook URLs can optionally carry a thread ID — the message is then posted into a specific thread or forum post of the channel, including the Guild Battlegrounds buttons
+  - Automatic sending (dropped with the webhook rework in 4.3.0.0) is back — now time-based instead of on the first attack: enable it in the Guild Battlegrounds settings, adjacent enemy sectors are sent once to the selected webhook with a configurable lead time before they open (with template, as long as the window is open)
+  - Help question mark in the title bar and in the Guild Battlegrounds settings; placeholder overview in the template form in monospace, now including #player and #world
+  - The box reloads its data on opening (important with multiple game tabs) and open Guild Battlegrounds settings refresh immediately as soon as webhooks or templates are created or deleted next to them
+- Blue Galaxy:
+	- You can set the length of the list yourself, so it is no longer fixed at 50
+	- When you hover over the name, the building graphic is displayed to help you identify the building more easily
+	- The ‘Fragments’ column, when displayed, can now be sorted by name
+- Market Filter:
+  - New filter "Needed for research": only shows offers whose good is still needed for your unresearched technologies and where your current stock is insufficient — many thanks to [wolf128058](https://github.com/wolf128058) for contributing this!
+- Tech Tree Research Costs:
+  - Goods you can produce yourself are highlighted in green; goods currently in active production are additionally shown in italics — many thanks to [wolf128058](https://github.com/wolf128058) for contributing this!
+- Building tooltip:
+  - Forge Point, goods, coin and supply productions now show the amount you actually collect with your active production boosts; the base value and boost percentage follow in small print in parentheses with the matching boost icon (e.g. in the efficiency rating, Inventory Overview and city map)
+
+**Bugfix**
+- Guild Battlegrounds: Expired sectors no longer linger in the live box — they are filtered against the current time on rebuild, and an internal timer additionally cleans up old rows when no map updates arrive
+
+---
+
+##### 4.4.4.0
+
+**New**
+- Building efficiency rating:
+  - New option "Replacement suggestions": inventory buildings get a ⇄ icon that suggests on hover up to three combinations of the worst rated city buildings whose footprints exactly tile the area of the new building — orientation is respected (3x2 ≠ 2x3); Great Buildings and limited buildings are never suggested
+
+- Shop Assistant:
+  - Building tooltips now show the building image below the header
+
+**Update**
+- Building efficiency rating:
+  - The display options of the header bar moved into a clean "Options" dropdown with labels
+  - The size filter shows the selected values directly on the button and is highlighted while a filter is active
+  - Inventory tooltip: if an ascended kit is in stock and the building is its direct base, the ascended step is shown as the first option with the feasible amount; the "0x" kit stock badge is gone
+
+- Historical Allies:
+  - The list now shows the allies' portraits — including unassigned allies and fragments
+  - Hovering a portrait shows the ally's large artwork as a tooltip
+  - The list rows are now vertically centered
+
+- Shop Assistant:
+  - Code reworked and documented
+
+**Bugfix**
+- City Builder:
+  - Buildings requiring a two-lane street now sit along double-width road strips (2x2 blocks) leading all the way to the town hall — drawn darker on the map
+  - Chain buildings now stand side by side in chain order (left to right), only the chain head needs the street connection
+- City map:
+  - "Show on map" now correctly centers the view on the building — even at the city edge and in the cavalier perspective; with multiple buildings it centers on the middle of the group
+- Inventory:
+  - Store purchases now update the inventory stock immediately in all boxes (e.g. Shop Assistant, Sets and Chains)
+- Shop Assistant:
+  - The "Only unlocked" setting now survives a reload
+  - Unlock conditions with a rarity requirement show the icon of the actual rarity instead of always "common"
+- Forge points:
+  - FP Collector: rewards in the new format of game update 1.340 (without a "context" field) are recorded again
+
+---
+
+##### 4.4.3.1
+
+**Bugfix**
+- GB - Player Overview:
+	- Version discrepancies led to errors
+
+---
+
+##### 4.4.3.0
+
+**New**
+- GB Calculator:
+  - New button in the title bar to split the view: "GB Cost Calc" and "GB Calculator" are shown as separate windows at the same time again
+  - In the split view the GB Calculator keeps the last opened own GB when a foreign GB is opened, and only auto-opens for own GBs (unless "Use current view for GBs of other players" is enabled); foreign GBs go to the "GB Cost Calc" window
+  - The setting is saved; without the split view the box keeps switching automatically between the two calculators as before
+
+- Building efficiency rating:
+  - New toggle in the header row to show only the highest obtainable stage of each upgradeable building chain (lower stages from city and inventory are hidden)
+
+- GBG:
+  - Copying the sector timers can now also include attrition, the guild's focus target (🎯) and victory points — selectable via a new submenu in the settings
+
+**Update**
+- Sets and Chains: the set list is now generated from the game data instead of a bundled list, so new sets and chains show up without an extension update
+
+**Bugfix**
+- Building efficiency rating:
+  - Typing in the search field now hides all rows that do not match (previously they were only highlighted)
+  - Tooltips no longer stay behind when the table is rebuilt (e.g. after clicking one of the checkboxes)
+
+- Sets and Chains:
+  - Kits stored as fragment bundles are counted correctly when assembling buildings from the inventory
+  - Era based selection kits no longer break the inventory matching
+  - The kit count in the inventory tooltip no longer includes kits from discarded combinations
+
+- GB Cost Calc:
+  - The hints "level not unlocked" and "no street connection" are shown again
+
+- GBG:
+  - Countdown tab: sectors whose connection is secured until they unlock are underlined again (the marking got lost with the last update)
+
+- City Planner:
+  - If submitting the city data fails, the error is now always shown as a message (including server and network errors) instead of silently doing nothing
+  - The server now reports save errors with a readable cause; non-critical problems (e.g. cache files) are shown as a warning while the city is still saved
+
+---
+
+##### 4.4.2.0
+
+**New**
+- GBG:
+  - New attrition column in the countdown tab (can be disabled in the settings): color coded (20% light blue, 40/60% orange, 80%+ red)
+  - The guild's blocking hand marker is now shown in the tables just like the crosshair
+  - Hovering a table row outlines the sector on the province map in the guild's colour
+  - Building slots tab: sectors with empty slots get a subtle red highlight as long as the 20% attrition minimum has not been reached yet
+  - Guild overview: new column showing the number of provinces each guild currently holds
+
+- City Builder:
+  - New "City Builder" button in the city overview (own main city only): computes a compact layout suggestion for your city
+  - Several algorithms and build orders compete for a few seconds, the best result wins: every building placed, with as few roads as possible
+  - Great buildings are nested right against the map border and connected by single road tiles; buildings that need no road plug the gaps away from the roads, and the remaining free space stays in one contiguous piece
+  - The map can be dragged around; in the pop-out window it is centered and fitted automatically
+
+**Update**
+- Technologies:
+  - The resource table can now be sorted by clicking the column headers
+
+- GBG:
+  - The attrition column now sits right next to the province column; without saved settings it is shown by default while the VP column starts hidden
+  - Victory points, attrition and building slots update live in all tabs; the guild ranking picks up new victory points right away as well
+  - Conquered sectors instantly switch to the correct tab and show the new guild name
+  - The "Show VP column" setting now also applies to the building slots tab
+
+**Bugfix**
+- GBG:
+  - Removed sector markers (crosshair/blocking hand) now disappear from the box instead of getting stuck
+- City overview:
+  - The building filter, "Copy data" and "City planner" buttons were missing when the box was opened from another map (e.g. GBG or GE); they now show up whenever your own main city is displayed
+
+---
+
+##### 4.4.1.1
+
+**Bugfix**
+- Notes:
+  - When creating a new sub page, the group assignment could silently get lost (the page was then not saved). This mainly happened when creating a new group and adding a page right away; the active tab was also lost after renaming a group or deleting the last group
+  - When opening the box, a valid group (tab) is now always activated; should no tab be active anyway, the new page is assigned to the first group instead of being discarded
+  - The sorting input when creating a page was previously ignored and works now
+
+---
+
+##### 4.4.1.0
+
+**New**
+- Infobox:
+  - New "Reset filters" button in the settings (gear icon in the title bar). Resets the category filters, "Favorites only" and the text filter to their defaults — helpful when the box appears empty because of old filter settings
+
+
+- Building efficiency rating:
+  - The CSV/JSON export now contains the column "Built in city" (1 = built, 0 = in inventory)
+  - Great Buildings in the table can now be recognized at a glance by the GB icon in front of their name
+
+
+- GBG:
+  - The lead time of the sector alert can now be adjusted in the settings of the countdown window (5-3600 seconds, default still 30)
+
+- GB Tracker:
+  - New column showing the tier (Copper, Silver, Gold) of the multi-tier Great Buildings — visible as soon as the player's data has been loaded
+
+**Update**
+- GB Tracker:
+  - When the window is opened before the building list has finished loading, the selection is now populated afterwards instead of staying empty
+
+
+- Building efficiency rating:
+  - Several city or inventory changes in quick succession now trigger only one recalculation of the rating instead of one per event
+
+
+- Code structure:
+  - The building efficiency rating and the table generation of the production overview have been split out of the productions module into their own files (no functional change)
+
+
+- Building metadata:
+  - The internal building cache is more robust: failed downloads fall back to the last stored version, corrupt cache entries are re-downloaded, and if the browser database (IndexedDB) is blocked the extension fetches all metadata fresh instead of starting with empty building data
+
+**Bugfix**
+- Alerts:
+  - Alerts based on timestamps from game data (expiring limited buildings, GBG sector alarm) were silently never created because of fractional values (console error `"data.expires" needs to be a integer`). Timestamps are now rounded
+
+
+- Technology tree:
+  - The "Still missing" column now calculates against the cumulative demand (current up to the selected era) for future eras instead of only the selected era
+  - Goods that are only needed in eras in between are now listed in the table as well
+  - The option "Ignore researches of previous eras" works again: when unchecked, open researches of earlier eras are included in the cumulative demand; the setting was also lost when reopening the box
+
+
+- Building efficiency rating (CSV/JSON export):
+  - Army boost columns now carry unique names with a context suffix (GE, GBG, QI). Previously the QI boost values overwrote the base boost values in the export, and the GE/GBG columns for attack and defense were indistinguishable
+  - Both the building value and the value per tile are exported again, clearly labelled via the "(per tile)" suffix — the export matches the display again
+
+---
+
+##### 4.4.0.0
+
+**New**
+- PopOut:
+	- Larger boxes can be moved into their own window (picture-in-picture in Chrome / popup in Firefox) while keeping all of their functionality. Many boxes already support this, more will follow quickly
+      - Closing the popup window moves the box back to its old place in the game (DOM)
+      - Closing the box inside the popup hides it until it is opened again
+      - If popups are blocked in general, a hint is shown
+      - These popups always stay on top of the game and never disappear behind it, but they can be minimized
+      - Closing the game automatically closes all popups
+
+**Update**
+- Building tooltips:
+	- Module reworked. Removed the permanent mouse position calculation, which eases the load on smaller CPUs
+    - Removed the dangerous eval() function
+    - Improved start/stop handling for PopOut
+
+
+- Historical Allies:
+  - Now shows how much the next level provides
+  - Fragment stocks are colored
+  - Toggle for compact and boost view
+
+
+- City overview:
+  - Data transfer to the CityPlanner v2 (foe-helper.com)
+    - Added a modal with a spinner for the impatient
+    - Added additional data for information shown in the CityPlanner
+
+
+- GB Calculator (support for the new multi-tier Great Buildings):
+  - When opening a GB, its current status is now shown in the window header: level / max level, invested FP of the current level
+  - Additionally the tier (Copper, Silver, Gold) is shown as a prestige icon – for own and other players' GBs alike
+  - Blueprint rewards in the table are now split by tier (e.g. 40× Copper + 11× Silver), including the contribution boost per tier
+  - The blueprint icon in the table header adapts to the tier of the building (Copper, Silver, Gold)
+  - The "Open automatically" option is now also available in the settings of the view for other players' GBs
+
+
+- General code cleanup following [JSDoc](https://jsdoc.fyi) started:
+  - Improves the readability of the whole extension for external developers
+  - Docstrings with parameters/returns
+  - Formatting following "visual paragraphs" in favor of readability
+  - Fixed many small formatting issues
+  - Started migrating to ES6
+
+**BugFix**
+- GB Calculator:
+  - Opening an own GB right after another player's GB mixed the data of both buildings (wrong name, wrong FP costs). The data matching now follows the new game logic, which no longer transfers building data when opening an own GB
+  - Clicking the cogwheel without an opened GB caused an error and the settings stayed empty permanently afterwards
+  - Without a loaded GB the box now shows a hint instead of an empty window
+
+
+---
+
+
+##### 4.3.1.0
+
+**Update**
+
+- Research Tree:
+	- The module has been revised, and a new column has been added. From the next unexplored ZA onwards, this column displays a summary of all missing elements.
+
+---
+
+##### 4.3.0.1
+
+**BugFix**
+
+- Research Tree:
+	- A structural change in the Inno data caused an error in Helfer
+
+---
+
+
+##### 4.3.0.0
+
+**New**
+- Calculators: There is now only one calculator, but we did not remove any functionality. Check out the Calculator window settings if you want to use the "removed one" for other peoples GBs
+- GBG: You can now add a Discord Webhook in the settings of the countdown window
+- GBG: Added a tab for owned provinces to easily see which ones still need buildings
+- Discord Webhooks: Create templates for personalized GBG messages and add them to the GBG countdown window
+
+**Update**
+- Allies: Boosts are now displayed per category and can be sorted
+- Infobox: Added QI Actions and an option to select stuff as favorite. The window received a slight facelift
+- GB Calculator: The arrow on the side of the window is now a cogwheel in the bottom left corner instead
+- Efficiency Rating: Buildings that can be upgraded to their ascended version now show an arrow next to their name
+- Guild Member Overview: Member details are now opened in their own window and include more data
+- Continent Map Overview has been removed! Negotiating on the map is a very niche play style and goods much easier to come by these days
+- UI: Various small changes in multiple areas
+- Building efficiency calculation: The view opens by default sorted in descending order and is updated immediately whenever a building is removed, added or updated
+
+---
+
+
+##### 4.2.1.1
+
+**Hotfix**
+- Calculators were broken after game update to version 1.332
+
+---
+
+##### 4.2.1.0
+
+**Update**
+- Discord Webhooks: Reworked the module - send custom messages instantly via webhook.
+- Stats: Added a quick select for next era goods.
+- repeated building: removed for the reconstruction mode, as there now is an ingame implementation.
+
+**Bugfix**
+- Merger Minigame: Works now as intended.
+
+---
+
+##### 4.2.0.0
+
+**Update**
+- Cost Calculator: Added setting to open it automatically
+- Calculators: Changed default buttons from 80, 85, 90 to 80, 90, 100
+- Efficiency: Added FP and goods boost + presets were added so you can have different evaluation settings
+- Merger Minigame: reduced table content + added warnings for completed tasks
+
+**Bugfix**
+- Calculators: a game update moved the GB window so that the new copy function was not working anymore
+- Own Part Calculator: already paid FP are now deducted when copying (another player GB)
+- Auto opening: Some windows didn't open on default anymore if you never changed the settings before. It's back to normal, but also: look at the settings, they are nice!
+
+---
+
+##### 4.1.1.0
+
+**Update**
+- Efficiency: You can now evaluate buildings without the ally boosts
+- Productions: Added a list for special productions
+- Settings: Removed some "open automatically" settings if they are already available in the modules windows settings
+- QI city: The title changes with the difficulty level now
+- Ownpart Calculator/GB Cost Calculator: the FP values can now be clicked - the value is written directly to the input field or at least copied to the clipboard
+- Ownpart Calculator: added an Option to in-/exclude initial FP in given sum values
+
+**Bugfix**
+- Copy city data: data format was slightly off by accident, works like before now
+- Allies:
+	- The sums weren't correct and boosts were *slightly* off after leveling allies
+	- A freshly assembled Ally was listed twice, when the amount of fragments was exactly 0 after assembly
+	- the Box did not close when already open upon menu click
+- Productions: Rattlebone Raveyards goods productions weren't calculated correctly
+
+
+##### 4.1.0.0
+
+**New**
+- Collect-All-Blocker: used 5 diamonds to collect and the FP bar was already full? Activate the new blocker in the settings and have it never happen again
+- Reconstruction mode: there is now a map that updates live. You can access it via a button in the reconstruction list
+
+**Update**
+- City Map:
+	- Sidebar stats have been reworked: more interesting facts about buildings in the city were added
+	- Filters have been revamped and are now in the bottom area of the sidebar (you will find them if you look hard enough)
+	- Available area for other players cities has been added
+- Profile:
+	- QI capacity added
+	- The mini icon on the top left corner blocked the ingame research button, so it was moved a bit
+	- Main part can now be selected and copied, so you can share your most impartant stats ingame more easily
+- Changed menu icon for sets and chains
+- Allies: added sums at the bottom of the list
+- GBG List: added seconds to the "in" column
+- Reworked the window setting UI a tiny bit
+- Removed the recurring FP quest sound setting from the calculators. Let us know if you want them back on discord, please
+
+**Bugfix**
+- Productions: Guild goods for LB were sometimes too high, because we added guild goods boost to them
+- QI Map: Sums weren't rounded correctly
+- Increased QI max capacity to 200,000
+- Profile: goods of other players were worng when you weren't in the same age
+
+
+---
+
+##### 4.0.2.0
+
+**Update**
+- Efficiency:
+	- Changed default values
+	- When the option "show ascended/limited buildings" is active, lines with such buildings in your city will not show the inventory checkmark anymore
+- Ally Boosts: Adapted to changed data transmission
+
+**Bugfix**
+- Efficiency Settings: Reset to default-button was broken
+- Productions: Item tab would not open if you had new train pieces producing mass self-aid kits fragments
+- decayed buildings were not checked on game start (zz1)
+- legacy browsers could not load the helper anymore
+
+---
+
+##### 4.0.1.0
+
+**Bugfix**
+- GBG
+	- as the server time is not transmitted consistently, server offset can now be set manually
+- General
+	- further improvements for loading behavior
+
+---
+
+##### 4.0.0.0
+
+**Update**
+- General
+	- Improved loading behavior of the Helper
+- QI Map
+	- Added number of expansions
+	- Added townhall production
+	- Highlight for productions to finish soon changed
+- GBG
+ 	- Unlock times are now converted to server time when copied
+	- To also display the unlock-times in server time, check the settings
+- Player Links
+	- you can now select between foestats.com and scoredb.io in the main settings
+- Shop Assistant
+	- Column "Missing" now always gives the amount until the next complete set
+- Settlements
+	- Added goods for pirate settlement
+- Player profiles:
+	- Now available for other players: visit them and click in the top left corner
+
+**Bugfix**
+- Shop Assistant
+	- Alert for old shop versions was not pruned correctly
+- QI Action Calculation
+	- Capacity Boost was not applied correctly
+- Efficiency
+	- Did not show properly when only a single type of boost (attack or defense) was selected
+
+---
+
+##### 3.13.1.0
+
+**Update**
+
+- General
+	- Adjusted helper to match the game's new loading behavior
+	- Made Some HUD elements "non-selectable"
+	- Added handling for chain buildings with special production
+- Power Leveling
+	- Added many new levels for the Atomium
+- FP Collector
+	- Added translations
+- Efficiency Overview
+	- Adjusted styling in the search
+- Shop Assistant
+	- Added filter for shop currencies – to ignore a currency, simply click on it
+	- Removed the "Full" column – this value is now shown when hovering over the "Missing" column
+	- Added "Max" column – shows how much can be purchased with the available currency
+	- When hovering over the "Max" column, the "All" value is displayed – indicating how much currency is needed to buy out the entire stock
+	- Added tooltip for allies
+- QI City Overview
+	- Added highlight for euphoria level
+	- Added highlight for buildings that will soon be ready for harvest
+- FP Bar
+	- Adjusted position in GE to match the changed game UI
+- Menu
+	- Added entries for the shop assist and the allies overview
+
+**Bugfix**
+- Efficiency Overview
+	- QI goods evaluation did not work
+- Negotiation Window
+	- Closed when a tavern update occurred
+- City Overview
+	- Corrected the order of dimensions in the tooltip
+	- QI: fixed sum calculation
+---
+
+##### 3.13.0.0
+**New**
+- GE Goods Use
+	- A threshold can be given
+	- If upon opening the GE unlock dialogue the percentual goods use is higher than the threshold, a box is generated listing the percentual goods use in relation to the treasury stock.
+	- Activate in settings!
+
+**Update**
+- Efficiency
+	- Added filters for GBs and limited buildings
+- Citymap
+	- Added building list to outposts and settlements
+	- adapted to upcoming changes to QI
+- Shop Assist
+	- Added rarity of offer
+	- Added current stock of shop ressources
+	- When no favourites are selected yet, the favourites filter is deactivated
+- Blue Galaxy
+	- Now accounts for large FP Packages
+- Building Tooltip
+	- if fragments are produced the amount of needed fragments is now displayed as well
+- GBG Building Recommendation
+	- now closes automatically when battle/negotiation is started
+
+**Bugfix**
+- OwnPart Calculator
+	- Reverted a calculation change
+
+---
+
+##### 3.12.0.1
+
+**Update**
+- Shop Assist
+	- added unlock condition "Offers of rarity X accepted."
+
+**Bugfix**
+- Efficiency Overview
+	- Fixed boosts
+
+---
+
+##### 3.12.0.0
+**New**
+- Shop Assist
+	- can be activated in settings
+	- lists, how much of the offer already is in inventory
+	- lists, how many fragments are needed to complete an item and how much that would cost
+	- items can be set as favourites and the view can be limited to the favourites
+	- locked offers can be hidden from the list
+	- an alert can be set for offers - it will go off when enough currency is available to buy the offer
+
+**Update**
+- Helper design was reworked in some places
+	- boxes are now limited in size to browser window size
+
+- Efficiency overview
+	- processing of chain buildings adapted to updated data structure
+	- added QI bonuses
+	- inventory items will not be displayed when opening the efficiency overview for another player's city
+
+- Profile
+	- added guild goods boost
+	- profil theme can be changed by clicking the avatar
+	- added menu entry to display the profile
+
+- Idle Game
+	- updated processing to changed data structure
+
+- Settings
+	- Event Assistants can now be de-/activated separately
+
+- Units module
+	- reactivated
+
+- Army Advice
+	- can now be used as well in PvP Arena
+
+**Bugfix**
+- Popgame
+	- Adapted to changed Event Window
+
+- Efficiency Overview
+	- corrected goods assessment
+
+---
+
+##### 3.11.7.0
+
+**Update**
+- Efficiency Overview:
+	- in the production /tile settings, hovering on the input field will now provide a tooltip with comparison values from your city
+		- highest value
+		- fifth-highest value
+		- top 10%
+		- Note: is a production more important than others, the entered value should correspond to the lowest of the given values or an even lower one. Is a production not as important to you, the entered value should correspond to the highest value or an even higher one.
+	- added calculator for determining the production/tile value for "finish special production" fragments
+		- click on the Abakus/Calculator-Icon in the FSP row opens the calculator
+		- here you can enter the expected production collected per use of an FSP (production of the building, the FSP is used on doesn't forget the BG-factor if applicable)
+		- the calculator determines the production/tile value for the FSP depending on the corresponding production/tile values of the respective resources
+
+- Building tooltips:
+	- it now shows for limited buildings, what the efficiency of the decayed building will be
+	- it now shows for building that can be upgraded to limited/ascended buildings what the efficiency of the limited building will be
+	- it now shows what kits are needed for the building
+	- Chain buildings with Era-dependent values are now properly evaluated
+
+- QI action points calculator:
+	- capacity increase should now be handled
+
+- Guild member overview:
+	- added guild goods production to export
+
+**Removed**
+- Units-Modul
+
+- Marketplace-Offers
+	- functionality was transferred to the Market-Overview
+
+**BugFix**
+- Efficiency Overview: Sorting by value/tile was broken, and we fixed a small display issue in the table head
+
+---
+
+##### 3.11.6.0
+
+**Update**
+- Efficiency Overview:
+	- If the option "Inventory" is active, now also assemble Buildings will be listed. The tooltip for the inventory icon of the respective building will show:
+	- how many buildings of this type could be placed, which upgrades are necessary for that and which upgrade paths are available? Therein the following will be considered:
+		- complete buildings in inventory
+		- buildings in the city that may be improved by using items (kits) from inventory
+		- inventory items that can be assembled to a complete building
+		- fragments that may be assembled
+	- ascended buildings will additionally be listed in their non-ascended form
+	- how many ascended kits are in store for that building
+	- if there is a higher level building, it is shown what is required to get there
+	- building size filter: added multi select
+
+- Kits
+	- reduced to sets and chains
+
+**Removed**
+- Boost-Inventory
+	- was replaced by the above-mentioned change to the efficiency overview
+
+**BugFix**
+
+- Efficiency Overview:
+	- Changes in the settings values were not applied immediately
+---
+
+##### 3.11.5.0
+
+**Update**
+- Manifest file corrected
+
+- Guild treasury
+	- Spelling mistake fixed
+
+---
+
+##### 3.11.4.0
+
+**Update**
+- Resource Management adapted to changed server transmission
+
+---
+
+##### 3.11.3.0
+
+**Update**
+- Negotiation assistant
+	- adapted to the changed server transmission schedule
+
+---
+
+##### 3.11.2.0
+
+**Removed**
+- Chest selection assistant (No Event really needs it anymore)
+
+**Update**
+- Negotiation assistant
+	- now supports 5 turns
+
+- Player Profile
+	- more data was added
+
+- Rewards stream
+	- now also in GE
+
+- Boxes
+	- GBG province list is not closed automatically anymore
+	- added setting to disable automatic box closing
+
+- Recurring Quests (diamond checklist)
+	- State (?/✓) can now be toggled by long click (5 sec)
+	- shortening of the quest texts will now happen dynamically depending on available space
+
+- Efficiency Rating:
+	- Some boosts are now shown as one value. They are still calculated seperately, the score did not change. We just need more space to add more stats to evaluate.
+	- Added QI Actions to the evaluation
+
+- City Overview:
+	- You can now highlight less efficient buildings
+	- The tooltip was exchanged for the one showing all building information
+
+**BugFix**
+- Recurring Quests (diamond checklist)
+	- counter in menu was shown when starting the game even if it was 0 or the setting was disabled
+- Treasury Export
+	- year was parsed incorrectly in some languages (4025 instead of 2025)
+
+---
+
+##### 3.11.1.0
+
+**New**
+- GBG Rewards stream
+	- above the rewards bar the actually received reward is displayed
+
+**Update**
+- Boxes now close automatically when entering a game feature the box is not intended for
+
+**BugFix**
+- Scroll bars appeared, when a Box crossed window borders
+- boxes could not be moved when opened for the first time
+- Menu stays in boxed mode after window resize
+
+---
+
+##### 3.11.0.0
+
+**New**
+- Player Profile
+	- After opening the profile, an icon to show the player profile will appear next to your city name
+- Settings
+	- Disable QI and GBG pop ups
+- Ally Overview
+	- Opens when entering the "Historical Allies" building
+	- Displays a list of your Allies and your buildings with rooms - empty rooms and unassigned allies will show up in the top
+- QI-Action Points Calculator
+	- In QI, at the right end of the action points bar, am hour glass is displayed
+	- The tooltip of the hourglass displays the time, when the bar is expected to be full
+
+**Update**
+- Efficiency
+	- Added buildings from your inventory (not all of them just yet)
+	- Added a building size filter
+- Own Part Calculator
+	- Added a setting to open automatically
+	- Added setting to disable most features that are hardly used
+- FoE Helper Version updates no longer open a new browser tab with the changelog
+- Production overview (units)
+	- added icon to indicate next era units
+- Box positions are now saved in relation to the center of the page instead of the top left corner
+
+**BugFix**
+- Fixed overlaps in some places
+- Fixed date parsing for the treasury export
+
+##### 3.10.1.0
+
+**Update**
+- Tooltip
+	- added 'Unique Building' trait
+
+**BugFix**
+- Alerts still did not work
+- Efficiency
+	- fix count for buildings with allies
+- Market Overview
+	- filter overlapped by table header
+- Treasury
+	- export did not parse date correctly
+- Blue Galaxy and Building Efficiency
+	- sometimes Boxes did not open or were empty (still under Observation if the fix worked)
+- Tooltip
+	- "motivate"/"polish" traits were mixed up for buildings of the new generation
+
+##### 3.10.0.1
+
+**BugFix**
+- Alerts did not work
+
+##### 3.10.0.0
+
+**New**
+- QI Progress Overview added (opens automatically when opening the QI player ranking)
+- Item Sources: Production Overview for Items/Fragments now offers an option to display a list of buildings that produce a certain item (even if not currently build)
+- Production Overview: Added Tables for resources boosts (FP, coins, supplies)
+- Efficiency rating: Added FSP Fragments to the evaluation
+- City Overview: Highlight option for ascendable and decayed buildings
+- Repeat Building Selection:
+	- !!! ATTENTION !!! Although the feature was green-lit by Inno, it might happen that the bot detection triggers. Use at your own risk!!!
+	- Can be activated in the settings
+	- When a building is built from the build menu or placed from the reconstruction storage, the same building is selected again automatically.
+
+**Update**
+- Tooltip: made design similar to original FoE tooltips
+- Building Efficiency:
+	- Added building tooltips
+	- Results will now be shown first
+	- Item list hidden to make the table less crowded
+- Menu: Moved it back to the right (default was bottom), because of a game update and y'all do not look at settings
+- GBG:
+	- Added symbols for the battle type (red/blue) to the countdown list
+	- Added attack colors to the map
+	- Added map view to highlight attack colors better
+- GBG active players:
+	- removed the module on Innos request
+
+**BugFix**
+- Tooltip:
+	- Some browsers did not use the correct design
+	- Did sometimes not vanish when a box was closed
+- Reconstruction List:
+	- Set a default height
+	- Moving buildings reduced counter
+- Building Efficiency:
+	- Other players ratings were based on your age instead of theirs
+
+##### 3.9.0.0
+
+**New**
+- In reconstruction mode a building list, sortable by building size is offered
+- GE-Results: Menu icon now shows the current number of attempts
+- Tooltips: some modules now show the building information as a tooltip:
+	- Efficiency module - in the "add building" dialogue
+	- Boost Inventory
+	- Reconstruction size-list
+	- let us know on discord where else you would like to see that info
+
+**Update**
+- Statistics: Dark Matter added to Special Goods
+- Changed settings entry "Load current beta"
+
+**BugFix**
+- Building efficiency:
+	- Broke for some players due to a game update
+	- Same buildings with/without allies were not counted correctly
+- Porduction Overview:
+	- Fragment amount was not correct for some buildings
+	- Not all buildings were listed in fragments overview
+
+##### 3.8.1.0
+
+**New**
+- Production Overview:
+	- Added QI productions and boosts view
+	- Added setting for times: relative time, AM/PM, 24 hour clock
+	- Merged Collection and Done column: when a production is ready, done will be shown, otherwise the selected time will be visible
+
+**Update**
+- Idle Game Mechanic:
+	- The cost reduction to finish a round is now pulled from the game data and should auto-update with changes
+- Great Biuldings Calculator - powerlevel values added for SASH levels 1-68
+
+**BugFix**
+- Production Overview was broken after a game update
+- Production Overview did not show the Space Carrier
+- Negotiations: Goods were not shown if you had an old operation system
+- GB Investments: Fixed the window. BG is still missing, but you should level it to 91 anyways
+- Castle System: Window was broken after a game update
+
+##### 3.8.0.0
+
+**New**
+- Production Overview Update:
+	- Bugfixes, added missing buildings
+	- Removed some information to improve readability
+	- Overhauled goods view
+	- Added all fragments and items incl. sum accross all building
+	- Added filter
+	- Categorized army boosts
+	- Added sum table for unit production according to unit types
+
+- Buildings Efficiency Rating Update:
+	- New Categories
+	- New overview with more details
+	- New: Search and filter for easier comparison
+	- New: Show values per tile
+	- New: Add any building to the list for comparison
+
+- Boost-Inventory
+	- Lists all Buildings in your Inventory that provide boosts (e.g. for battle)
+	- Fragmented buildings are not considered!!
+
+- Active Members of other Guilds
+	- When within 5 minutes, the same guild (HQ in GBG) is inspected twice and at least one member of that guild was active, a list of the active guild members is displayed
+
+**Update**
+- Battle-Assist:
+	- There will be no warning message anymore, if higher age units die in battle as they can now be revived in the hospital
+
+- Kits:
+	- Added Efficiency Score of the respective buildings
+
+- Technologies:
+	- Added Space Age Space Hub assets
+
+- Settings:
+	- Reorganized the menu
+	- Bigger and moveable window
+
+- QI City Map:
+	- Buildings are now grouped by type
+	- Coin, supply and quantum action boosts from your main city are now included - thx Juber!
+
+**BugFix**
+- Boxes:
+	- can not be draged anymore when the mouse is on of the buttons of the box
+
+##### 3.7.0.0
+
+**New**
+- added potion overview icon in the top right corner to
+	- display the runtime of the potion with the shortest runtime left (potions are ignored when not relevant for currently selected game feature)
+	- display all currently active potions upon mouse over
+	- display inventory stock of all potions upon mouse over
+
+**Update**
+- Kits updated till Fall Event 2024
+
+- Mergergame updated for Care Event
+
+---
+
+##### 3.6.5.0
+
+**New**
+- Summer Event:
+	- Added a list of currently hidden rewards to the event chest helper
+
+**Update**
+- City Map:
+	- Added QI Action Points in production overview when in QI Settlement
+	- Added highlighting for buildings without street requirements for all players
+
+- Cultural Settlements Overview:
+	- Changed to 5-hour production cycle
+
+- Close/hide all buttons now also close/hide minigame blockers
+
+- Blue Galaxy:
+	- Current era goods and other goods are now handled separately
+
+- Kits:
+	- Updated 'til Summer Event 2024
+	- Images are now lazy-loaded to improve loading time
+	- Ascended upgrades added to overview
+
+- Limited buildings expired warning:
+	- Now with a setting to ignore selected buildings after they expire
+
+- Statistics:
+	- Incidents and shards are now properly tracked again
+
+**BugFix**
+- GBG Building Recommendation:
+	- Some combinations were ignored in 3-slot provinces
+
+- (QI) pass rewards were not processed correctly if more than one was collected at once
+
+- City Map:
+	- certain buildings caused the city map to not load properly
+
+- FP Collection:
+	- QI rewards were way too high
+
+- Recurring quest list did not show proper images
+
+---
+
+##### 3.6.4.0
+
+**Update**
+- Website Communication:
+	- Transmitting data (Notes + City planner) to the website now needs a token
+	- the token will be generated on the website after registration and needs to be entered in the helper settings
+
+- City Overview:
+	- in QI gives a production overview
+- Cardgame:
+	- the low health blocker now closes together with the helper box
+- Kits:
+	- Favourites can be selected and filtered for
+
+**BugFix**
+- Statistics:
+	- some goods rewards were not combined
+
+---
+
+##### 3.6.3.0
+
+**Update**
+- City Overview:
+	- new: City Overview for Settlements, Space Colonies and Quantum Incursions
+- Card Game:
+	- adapted to History 2024 changes
+- Quests:
+	- when a rival quest is done, a sound will alert the player of that (can be deactivated in the settings)
+- FP Collector:
+	- added sources "QI and "Event pass"
+- Statistics:
+	- added rewards from QI
+	- goods rewards and units rewards will now be grouped instead of beeing listed individually for every type
+- Settlements:
+	- added images for polynesia
+- GvG:
+	removed the module
+- FP Bar:
+	- moved it to the left in QI
+	- now also shows in the main city when more than 999 FP in bar
+- GBG Building suggestion:
+	- removed some suggestions
+	- added some highlighting
+- Music:
+	- added new tracks (polynesia and history)
+	- removed category GvG
+- Kits:
+	- added items up to history event 2024
+	- added a way to make items favourites and a highlight Option for that
+- idle-game:
+	- now has a separate timer for 6.3Q (25% Discount)
+- Battle Advisor:
+	- updated styling
+
+**BugFix**
+- St Patrick:
+	- it was possible that the strategy could not be edited
+- Titan GBs:
+	- some boosts were wrong
+- Kits:
+	- wrong image data was used in some cases
+- Production:
+	- townhall space requirement assumed the needs for a road
+- Battle Advisor:
+	- corrected army images for QI
+- Merger-Game:
+	- corrected key values
+- Recurring Quests (diamonds tracker):
+	- it was possible for 1 or 2 quests of the previous era to show up in the next era - this should no longer happen as soon as the player enters the next era
+
+---
+
+##### 3.6.2.0
+
+**Update**
+- Mergergame:
+	- adapted to event changes
+
+- Kits/Sets Module:
+	- now shows the amount of items needed for a full building
+
+**BugFix**
+- Settlements:
+	- fix 4x chance for first run
+
+- Statistics:
+	- improved datepicker (thanks Linnun!)
+
+---
+
+##### 3.6.1.1
+
+**BugFix**
+- FP Bar:
+	- The animation of the full FP bar lead to issues for many users, we removed it
+
+---
+
+##### 3.6.1.0
+
+**Update**
+- FP-Bar:
+	- new design
+
+- Kits/Sets:
+	- new design
+	- League rewards are now listed
+	- added new buildings (up to Anniversary 2024)
+
+- Mergergame (Anniversary-Event):
+	- prepared for Changes
+	- removed simulation and expected rewards
+
+- Blue Galaxy:
+	- sorting is now saved
+	- sorting may be switched between combined value and individual values (FP/Goods/Guild-Goods/Fragments)
+
+- Efficiency:
+	- Values 0 and below are now also shown
+
+- Gild Member Overview
+	- Guild-goods production of certain buildings added
+
+- GB Calculator:
+	- New settings: deactivate BP and medals
+
+**BugFix**
+- GB Calculator:
+	- Settings are nor saved/evaluated properly
+
+---
+
+##### 3.5.0.2
+
+**BugFix**
+- Export-Function:
+	- Typo in code fixed
+
+---
+
+##### 3.5.0.1
+**Update**
+- City Map
+	- Better visibility for highlighted buildings
+	- Added highlighting for buildings that do not require streets
+    - Added a global sorting layout
+
+**BugFix**
+- BG Helper:
+	- List did not always refresh
+
+---
+
+##### 3.5.0.0
+**New**
+- PvP Arena Protocol (Dank an dersiedler1)
+	- no need to click though protocol pages
+	- categorized protocol entries
+	- can be activated in the settings to pop-up when opening the Arena
+
+- Army Advisor
+	- was added some time ago, but never was mentioned in a changelog
+	- activate in the settings
+	- tracks the most recent battles
+	- gives a pop-up whenever a battle was unfavourable to the player (e.g. lost two or more units)
+	- player can set advice for specific opponent armies and bonuses that will then be shown in the army selection dialogue
+
+**Update**
+- Blue Galaxy:
+	- now always available
+	- included fragments and guildgoods in list
+	- reworked the building production evaluation (e.g. added Aegean Resort)
+
+- Popgame:
+	- adjusted layout for next Event
+
+- Building Efficiency:
+	- now lists GBs
+
+- GB Tracker:
+	- updated to accomodate changed serverdata
+
+- GB/Own Part Calculator:
+	- added player activity indicator
+
+**BugFix**
+- Moppelhelper:
+	- fix era sorting
+
+- GBG
+	- some own provinces were not shown in the "locked" list
+
+---
+##### 3.4.0.0
+**New**
+- GBG Buildings optimizer:
+	- provides a list of suitable combinations of province buildings that have the least impact on treasury
+
+**Update**
+- Card Game:
+	- couple data collection added (teeth spent in run, current level, current health, keys gotten)
+
+- GBG contribution table:
+	- added Attrition Column
+
+**BugFix**
+- GBG province list and map:
+	- code adapted to changed data structure received from server (thanks Arklur!)
+
+---
+
+##### 3.3.0.0
+**New**
+- Card Game (Halloween Event):
+	- provides a table of the remaining cards
+	- warns, when continuing would be the end of the round
+
+---
+
+##### 3.2.9.0
+**Update**
+- Sets/Kits:
+	- added buildings until Halloween 2023
+
+- General:
+	- when a limited building expires, an Alert is triggert
+
+---
+
+##### 3.2.8.0
+**Update**
+- Productions (cutesy of bencptest/apophis):
+	- added fragments tab - all fragments are shown here that are currently produced (non-motivated producitons are ignored)
+
+- Idle Game:
+	- when the market (festival or banquet) is bottlenecked by the other buildings, hovering over the time for producing the upgrade costs will now give a time assuming no bottlenecks (i.e. for cases when there is a backlog at the intermediate storage sites)
+
+- Popgame:
+	- changes in regards to fall event
+
+**BugFix**
+- Idle Game:
+	- it was possible that times like "1h:60min" were given - this is now corrected
+
+---
+
+##### 3.2.7.0
+**Update**
+- Recurring Quests
+	- it can now be switched between displaying the title and tasks of the quests (click the shuffle arrows in the column header)
+
+**BugFix**
+- Fixed small bugs (mainly Titan related)
+
+---
+
+##### 3.2.6.0
+
+**Update**
+- GvG Overview: you can now click on the button in the GvG Overview to see the realtime GvG power of all guilds including their ranking on all maps. Please visit all maps once to load the power data from each map.
+
+- Merger Game:
+	- added a daily overview - you can switch between current game status and daily status by clicking the second column head
+	- fixed blocker position
+	- An optioon was added to set a specific reset cost to be used instead of the correct one
+		- you should enter the average of the epected reset costs here (e.g.: 3 games per day --> 20, 4 games per day --> 35)
+		- this should help to improve the efficiency evaluation as they are not influenced by the reset costs anymore
+
+- Wildlife Preview --> Popgame Preview
+	- made some preparations for the Fall event
+
+- Kits/Sets
+	- added some missing pieces
+
+**BugFix**
+- Discord Invite links were broken, so we replaced them
+-
+---
+##### 3.2.5.0
+
+**Update**
+- Space Age Titan:
+	- updated various components to accomodate for SAT
+
+- Castle System:
+	- updated display for GE5
+
+- Building Kits:
+	- updated possible contents
+
+- Idle Game:
+	- added condition type W(ait till task is active or completed):
+		- similar to type T, but also completes when the task is active
+		- e.g.: "await task 100 upgrades #W-26"
+
+- Merger Game:
+	- now compatible with the Soccer Event
+	- the table now shows the number of free pieces in the top row
+	- in column "Sim" it can be seen how much progress/players/keys can be reached with the current configuration and how efficient that is
+	- In the column "next Spawn" it is shown, how much progress/players/keys can be generated by spawning an extra piece and how efficient that would be: Min - Max (Average)
+
+**BugFix**
+- Production Overview:
+	- FP Boost was applied to Great Buildings
+
+- Idle Game:
+	- setting timers now works properly - limited to times below 24 hours
+
+---
+##### 3.2.4.0
+
+**Update**
+- Idle Game:
+	- now also works with Fellowship event
+	- added Strategy-Tasklist
+		- if you like mooing cats strategy guides, this will help you to implement them without the need to permanently check the guide from another source
+		- the guide tasks can be added manually within the dialogue body and will be saved independently for every variation of run through. Format:
+			- ...Description Text...#condition1#condition2#condition3
+			- there can be arbitrarily many conditions per task
+			- Condition types: L(evel) M(anager) T(ask)
+			- Building types: T(ransport - Ship, Carriage), F(estival), 1, 2, 3, 4, 5 (Workshops 1-5)
+			- e.g.:
+				- Festival Manager 3 + Ship Manager 3  #MT-3#MF-3
+				- Hats Manager 3, Level 10  #M1-3#L1-10
+				- Wait for 50B Flowers#T-67
+			- the conditions are optional and only needed if you want the helper to automatically check the tasks when they are done
+			- tasks can be checked and unchecked manually
+
+- Production Overview and Production Efficiency:
+	- the new combination boosts (attack+defense) and the FP boost are now properly processed
+
+- GB Tracker
+	- can now be minimized
+
+- Guild Battegrounds
+	- when in the province overview no line is selected, there now will be a "select all" button
+
+- Mo/Po helper
+	- column "guild" added
+	- columns guild, era and points can now be selected to be shown/hidden
+
+- power leveling
+	- a start level can now be selected
+
+- compare friends with threads
+	- now display the player activity
+
+**BugFix**
+- Recurring quests (diamonds tracker)
+	- the quest list now properly resets when changing Era
+
+- Guild Expedition Stats
+	- fixed occasionally shown NaN in member Stats
+	- corrected participation % for GE since addition for GE5
+	- correct icon for GE5
+
+---
+
+##### 3.2.3.0
+
+**Update**
+- Infobox:
+	- it can now be configured that instead of the full GBG Province name only the shortname is displayed
+
+**BugFix**
+- external images:
+	- when the game file was not in cache, it could happen that images from Innogames were not loaded properly
+
+- GB-Calculator:
+	- if the Infobox was open before the GB Calculator, it could happen that by clicking the filter in the Infobox, the settings of the GB Calculator were opened
+---
+
+##### 3.2.2.0
+
+**Update**
+- Merger Game:
+	- The parameter determining the color of the efficiency may now be changed in the settings
+		- Progress per key (Key value): A key is worth about this much progress (from buying chests - default: 1.3)
+		- Target Progress: this far you want to get into the grand prizes (default: 3750 for the golden kit)
+		- Available Currency/Energy: this much Energy is available during the whole event (default: 11000 - 10500 for Quests and about  500 from incidents)
+			- if you buy currency, you should add that amount here
+		- Efficiency is red when 5% below the target value
+		- Efficiency is green when 15% above the target value
+		- Efficiency is yellow when just about enough to reach the target progress
+	- when pointing at the Efficiency, a Tooltip will show, how much total progress is possible with that efficiency value (current progress not taken into account)
+	- when pointing at the used energy, a Tooltip will show, how much progress you should make on the current board in relation to the spent energy to reach the target
+	- if you do (not) want the reset-blocker to vanish when the box is minimized, this can now be configured
+
+- Statistics:
+	- rewards may now be filtered by their name
+
+- Negotiation Assistant:
+	- Tooltip added for the keyboard hint
+
+- Sets and Kits:
+	- added missing pieces
+
+- Boxes:
+	- may no longer be resized beyond the window borders
+
+**BugFix**
+- Quest counter:
+	- [#2541](https://github.com/mainIine/foe-helfer-extension/issues/2541) if multiple recurring quests were abondoned in quick succession, only one was counted
+
+---
+
+##### 3.2.1.0
+
+**Update**
+- Merger Game:
+	- changes values (Inno Update) - should now be more robust against future changes
+
+- FP-Collector:
+	- added Anniversary-Event
+
+---
+
+##### 3.2.0.0
+
+**New**
+- Merger Game (Anniversary Event Mini game)
+	- gives an overview about the key pieces present on the board
+
+**Update**
+- Music-Modul:
+	- added new Track (will be available on live latest with the anniversary event, currently only available on beta)
+
+- Event cost calculator:
+	- second cost column added to the right side of table
+	- highlighting of the most efficient option now also is in the respective cost column
+
+- Kits:
+	- The list may now be filtered - for name of item or set
+
+**BugFix**
+- General:
+	- Player-Portraits were not loaded when modules were opened too soon after loading the game
+
+---
+
+##### 3.1.0.1
+
+**Update**
+- Player-ID added to the export of:
+	- GE Data
+	- BGB Data
+	- Guild-member-Data
+
+**BugFix**
+- Alerts:
+	- Alerts were deleted prematurely
+
+- General:
+	- Changelogs were not opened anymore after an update was installed
+
+---
+
+##### 3.1.0.0
+
+**New**
+- GB Tracker:
+	- helps you find specific GBs - e.g. for BP hunting
+	- while you click through the GB ranking or view GB Lists of other Players (e.g. neighbours, friends, guild) the tracker will record all GB that match your criteria
+	- choose the desired GB, enter a level range you are interested in and go hunting
+	- "resetting" will clear the list and reset the filter
+
+**Update**
+- GB Calculator:
+	- new formatting
+
+- GvG:
+	- Costs for the next siege have been added to the list
+	- Ranking bonus for the first three guilds on a map has been added
+
+**BugFix**
+- Menu:
+	- tooltips could be left behind when the menu mode was force-changed due to zooming or the like
+
+- StPatrick:
+	- did not update anymore properly
+
+- GBG:
+	- X1 (and A1 on the volcano map) was not tracked properly
+
+---
+
+##### 3.0.0.1
+
+**BugFix**
+- Statistics:
+	- Script was not always included locally, this is now changed
+
+---
+
+##### 3.0.0.0
+
+**New**
+- Extension:
+	- Compatibility created for new Manifest V3 requirements for Chromium browsers, Firefox will follow only in Q1 2023
+	- several CSS adjustments
+
+**Update**
+- Discord Webhooks:
+	- Copy button added
+	- maximum height for many entries added
+	- test button integrated
+	- as many webhook urls as you like can be added
+	- new functions will follow...
+
+**BugFix**
+- Note function:
+	- Box was not displayed because of a faulty avatar on the left side
