@@ -358,6 +358,15 @@ Upstream `popup.js` verschiebt die Box per `adoptNode` in ein eigenes Fenster un
 - Pop-out-Knopf neu (`popout:` in `HTML.Box`, ohne Größe, also aktuelle Boxgröße, danach die gemerkte): PvP Angriffe (`looting`), Stadtinformationen (`sabotageInfo`), Mögliche Investitionen (`LGInvestmentOverviewBox`), LG Fördern (`CalculatorBox`), LG Rechner (`OwnPartBox`), Investitionen (`Investment`), Notizen (`notices`), Gefechts-Logbuch (`GBGActionLog`). LG Investitionen (`greatbuildings`) hatte ihn schon.
 - Bekannte Grenzen: Handler, die per `$('body').on(...)` oder `$(document).on(...)` am Spieldokument hängen, sehen Klicks im Pop-out nicht. Betrifft "beim Schließen speichern" der Notizen (das `blur` des Textfelds speichert vorher schon, bleibt so). Dialoge der Notizen (Gruppe, Seite, Spieler) öffnen im Spielfenster.
 - Gefechts-Logbuch: Aktions-Auswahl und Spaltenfilter schließen bei Klick daneben über `$(document).on('click.gbgal')`. Die Logik steht jetzt in `GBGActionLog.closeOnOutsideClick`, ein zweiter Handler an der Box ruft sie auf, wenn die Box im Pop-out liegt (`ownerDocument !== document`). Im Spielfenster läuft weiter nur der Handler am Dokument.
+- Stadtinformationen: `Sabotage.OtherPlayersBuildings` entfernt die Box bei jedem Besuch und baut sie neu auf, das schloss das Pop-out. Solange `Popup.IsOpen('sabotageInfo')`, bleibt die Box stehen und wird neu gefüllt (der Aufbau nutzt eine vorhandene Box ohnehin).
+
+## LG-Daten bei Klick in einer besuchten Stadt
+
+Upstream-Fehler (seit Helfer 4.4.0.0, in 4.8.3 nicht behoben): Ein fremdes LG, direkt in der besuchten Stadt angeklickt, füllt `MainParser.CurrentGB` nicht, LG Rechner und LG Fördern bleiben bei "Deaktiviert: Öffne zuerst das LG eines anderen Spielers!". Das Spiel schickt dann nur `GreatBuildingsService.getConstruction` und nimmt die Entity aus den Besuchsdaten, `getOtherPlayerCityMapEntity` kommt nur beim Öffnen aus der LG-Übersicht. Upstream nimmt die lokale Entity nur für eigene LGs.
+
+- `_main.js`, Handler `GreatBuildingsService`: passt keine Entity zur Anfrage, kommt sie aus `CityMap.OtherPlayer.mapData` (aus `visitPlayer`), wenn Id und Spieler stimmen. `gbUpdateData` wird wie im Handler `getOtherPlayerCityMapEntity` vorbereitet, damit Bonus und Zeitalter aus `getConstruction` übernommen werden. Der Weg über die LG-Übersicht bleibt unverändert (frische Entity vom Server).
+- `getConstruction` enthält keinen Fortschritt, das Spiel zeigt ihn ebenfalls aus den Besuchsdaten. Damit ein zweites Öffnen nach einer Einzahlung stimmt, übernimmt der Handler `CityMapService.updateEntity` die Entity in `mapData`, wenn sie dort schon steht.
+- Forge Hammer löst es anders (eigener LG-Speicher `FH.GBCalc.getGB`), nicht übernommen.
 
 ## Entscheidungen
 
@@ -501,6 +510,12 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Gefechts-Logbuch im Pop-out: Aktions-Auswahl (Spieler-Report) bzw. einen Spaltenfilter öffnen, daneben ins Fenster klicken, beides schließt. Im Spielfenster genauso, dort auch bei Klick ins Spiel.
 - Alle Pop-outs geschlossen: `document.getElementById` ist wieder die native Funktion (`Object.hasOwn(document, 'getElementById') === false`).
 - Die 16 Upstream-Pop-outs funktionieren weiter.
+- Stadtinformationen im Pop-out, dann einen anderen Spieler besuchen: das Pop-out bleibt offen und zeigt den neuen Spieler.
+
+**LG-Daten bei Klick in einer besuchten Stadt**
+- Fremde Stadt besuchen, ein LG direkt in der Stadt anklicken: LG Rechner (bzw. LG Fördern in der geteilten Ansicht) rechnet statt "Deaktiviert".
+- Dasselbe LG über die LG-Übersicht des Spielers öffnen: rechnet weiter.
+- In ein fremdes LG einzahlen, schließen und in der Stadt erneut anklicken: Fortschritt zeigt den neuen Stand.
 
 ### Ungeprüfte Annahmen (aus den Notizen)
 - 16: `is_plunderable` für generische Gebäude folgt der alten Regel aus `abilities`, kein Plünderschutz-Component bekannt.
