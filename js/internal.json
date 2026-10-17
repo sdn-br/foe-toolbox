@@ -20,7 +20,7 @@
 	"unit",
 	{
 		"name": "calculator",
-		"parts": ["settings", "overview"]
+		"parts": ["settings"]
 	},
 	"infoboard",
 	{
@@ -46,8 +46,6 @@
 	"eventchests",
 	"settings",
 	"investment",
-	"sabotage",
-	"looting",
 	"strategy-points",
 	"battle-assist",
 	{
@@ -62,10 +60,7 @@
 	"hidden-rewards",
 	"greatbuildings",
 	"gbbonus",
-	{
-		"name": "notice",
-		"parts": ["store"]
-	},
+	"notice",
 	"treasury",
 	"market",
 	"marketoffers",
@@ -102,7 +97,5 @@
 	"reconstruction",
 	"boosts",
 	"shopAssist",
-	"cablocker",
-	"fh-compat",
-	"gbg-actionlog"
+	"cablocker"
 ]
