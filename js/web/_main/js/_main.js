@@ -17,6 +17,7 @@ const extID = ExtbaseData.extID,
 	extUrl = ExtbaseData.extUrl,
 	GuiLng = ExtbaseData.GuiLng,
 	extVersion = ExtbaseData.extVersion,
+	extBaseVersion = ExtbaseData.extBaseVersion,
 	isRelease = ExtbaseData.isRelease,
 	devMode = ExtbaseData.devMode,
 	loadBeta = ExtbaseData.loadBeta;
@@ -116,9 +117,9 @@ const i18n_loadPromise = (async () => {
 	try {
 		let languages = [];
 
-		// Englisches Fallback laden
-		if (GuiLng !== 'en') {
-			languages.push('en');
+		// Deutsches Fallback laden (die Toolbox liefert nur Deutsch aus)
+		if (GuiLng !== 'de') {
+			languages.push('de');
 		}
 
 		languages.push(GuiLng);
@@ -1097,7 +1098,7 @@ let MainParser = {
 			HTML.ShowToastMsg({
 				show: true,
 				head: i18n('Menu.NewVersion.Title'),
-				text: i18n('Menu.NewVersion.Desc') + ' <a href="https://foe-helper.com/extension/update?lang=en" target="_blank">ChangeLog</a>',
+				text: i18n('Menu.NewVersion.Desc') + ' <a href="https://github.com/sdn-br/foe-toolbox/wiki/Changelog#' + extVersion.replaceAll('.', '') + '" target="_blank">ChangeLog</a>',
 				type: 'success',
 				allowToastClose: true,
 				hideAfter: 30000,
@@ -1313,7 +1314,7 @@ let MainParser = {
 			el.className = 'menu-' + menu;
 			el.innerHTML = `<div class="loadericon"></div>
 				<div class="text">
-					<strong>${t('Menu.MetaLoader.Title', 'Preparing FoE Helper')}</strong>
+					<strong>${t('Menu.MetaLoader.Title', 'Preparing FoE Toolbox')}</strong>
 					<span>${t('Menu.MetaLoader.Desc', 'The building database is being built. This is only needed on the first start or after game updates – the helper starts automatically afterwards.')}</span>
 					<div class="bar"><div class="fill"></div></div>
 					<span class="count"></span>
@@ -1788,7 +1789,7 @@ let MainParser = {
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
-			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extVersion}`,
+			url: `${ApiURL}SelfPlayer/?player_id=${ExtPlayerID}&guild_id=${ExtGuildID}&world=${ExtWorld}&v=${extBaseVersion}`,
 			data: JSON.stringify(data)
 		});
 	},
@@ -1888,7 +1889,7 @@ let MainParser = {
 
 		MainParser.sendExtMessage({
 			type: 'send2Api',
-			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extVersion}`,
+			url: `${ApiURL}OwnLGData/?world=${ExtWorld}${MainParser.DebugMode ? '&debug' : ''}&v=${extBaseVersion}`,
 			data: JSON.stringify(realData)
 		});
 	},
@@ -2492,5 +2493,5 @@ if (window.foeHelperBgApiHandler !== undefined && window.foeHelperBgApiHandler i
 	delete window.foeHelperBgApiHandler;
 }
 
-console.log('FOE Helper version ' + extVersion + ' started' + (extVersion.indexOf("beta") > -1 ? ' in Beta Mode': '') + '. ID: ' + extID);
+console.log('FOE Toolbox version ' + extVersion + ' started. ID: ' + extID);
 console.log(navigator.userAgent);

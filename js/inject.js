@@ -89,6 +89,11 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 
 	const v = chrome.runtime.getManifest().version + (loadBeta ? '-beta-'+ betaDate:'');
 
+	// base version of the FoE Helfer this toolbox is built on, taken from version_name "x.x.x.x (y.y.y.y)"
+	let bv = chrome.runtime.getManifest().version_name || '';
+	bv = bv.match(/\((\d+\.\d+\.\d+\.\d+)\)/);
+	bv = bv !== null ? bv[1] : '';
+
 	let   lng = chrome.i18n.getUILanguage();
 	const uLng = localStorage.getItem('user-language');
 
@@ -97,13 +102,17 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 		lng = lng.split('-')[0];
 	}
 
-	// is there a translation?
+	// is there a translation? The toolbox only ships German
 	if (Languages.PossibleLanguages[lng] === undefined) {
-		lng = 'en';
+		lng = 'de';
 	}
 
+	// "user-language" lives in the game's localStorage and may have been set by another extension
+	// (e.g. the FoE Helfer), so an unsupported value is ignored but not overwritten
 	if (uLng !== null){
-		lng = uLng;
+		if (Languages.PossibleLanguages[uLng] !== undefined) {
+			lng = uLng;
+		}
 	} else {
 		// so that the language can be read out without having to change it once via the settings
 		localStorage.setItem('user-language', lng);
@@ -151,6 +160,7 @@ function inject (loadBeta = false, extUrl = chrome.runtime.getURL(''), betaDate=
 				extUrl: extUrl,
 				GuiLng: lng,
 				extVersion: v,
+				extBaseVersion: bv,
 				isRelease: true,
 				devMode: `${!('update_url' in chrome.runtime.getManifest())}`,
 				loadBeta: loadBeta

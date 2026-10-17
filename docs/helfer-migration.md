@@ -6,7 +6,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 ## Fortschritt
 
 - [x] Import Helfer 4.8.3.0
-- [ ] 17 Branding, nur Deutsch, Update-/Reload-Logik, DB-Migration
+- [x] 17 Branding, nur Deutsch, Update-/Reload-Logik, DB-Migration
 - [ ] 16 Datenmodell-Unterbau
 - [ ] 1 Plünderhilfe / Stadtinformationen (`sabotage`)
 - [ ] 2 PvP Angriffe (`looting`)
@@ -25,6 +25,18 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [ ] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
 
 Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 entfernt).
+
+**Notizen 17**
+- Version `2.0.0.0`, `version_name` `2.0.0.0 (4.8.3.0)`; `inject.js` liest die Basisversion daraus (`extBaseVersion`). Settings zeigt "Basis: FoE Helfer 4.8.3.0".
+- API-Parameter `&v=` mit Basisversion statt Toolbox-Version: wie bisher bei `SelfPlayer`, analog jetzt auch bei den neuen Aufrufen `OwnLGData` (`_main.js`) und `BuildingList` (`srcLinks.js`).
+- Manifest: Upstream hat die Permission `tabs` entfernt; nur `scripting` ergänzt. `tabs.query` mit URL-Filter reicht die Host-Permission für `*.forgeofempires.com`. Die Firefox-ID des Helfers (`browser_specific_settings.gecko`) entfernt, sie gehört dem Helfer.
+- `background.js`: Upstream hatte den Update-Tab auskommentiert. Toolbox-Logik wieder drin: bei `onInstalled` Reload-Abfrage per `scripting.executeScript` in allen offenen Spiel-Tabs und Wiki-Changelog im neuen Tab. Zusätzlich verlinkt der neue Upstream-Toast "Neue Version installiert" (`_main.js`) auf das Toolbox-Changelog statt foe-helper.com.
+- Nur Deutsch: `inject.js` fällt auf `de` statt `en` zurück. Ein `user-language` im localStorage des Spiels, das die Toolbox nicht kennt (z. B. vom Helfer gesetzt), wird ignoriert, aber nicht überschrieben. `popup.js`/`alerts.js`: Wörterbuch und Übersetzungsschleife entfernt, das HTML ist der Text (die alte Toolbox lief für Nicht-Deutsch in einen TypeError). Settings: `Help` und `LoadBeta2` (Download der Helfer-Beta) entfernt, Weblate-Link entfernt.
+- Branding analog erweitert auf Stellen, die es in 3.1.0.1 noch nicht gab: `Menu.NewVersion.Title`, `Menu.MetaLoader.*`, Präfixe "FoE-Helfer:"/"FoE-Helper:" in `Boxes.MergerGame.KeysLeft.*`, `StrategyPoints.*` und im Quest-Tooltip (`quests.js`). Bewusst wie in der alten Toolbox belassen: Box-Titel-Suffix " - FoE Helper" (`_helper.js`), Discord-Webhook-Name, generische "Helfer"-Texte. Ebenso Upstream belassen: Titel " - FoE Helper" der neuen Pop-up-Fenster (`popup/js/popup.js`).
+- IndexedDB: Haupt-DB heißt `FoEToolboxDB_<id>`, Modul-DBs bleiben `FoeHelperDB_*_<id>` (wie in der alten Toolbox). Migration nur bei neuer Toolbox-DB: Quelle `FoeHelperPrivateDB_<id>`, sonst `FoeHelperDB_<id>`. Anders als alt: Quell-DBs werden ohne Schema geöffnet (Dexie dynamic mode; die alte Version mit fest `version(1)` scheiterte an neueren Helfer-DBs), kopiert werden alle gleichnamigen Tabellen außer dem Cache `buildingMeta`, "gefüllt" heißt irgendeine Tabelle hat Zeilen (Helfer 4.x leert `players` bei jedem Start). Upstream-Migration aus `FoeHelper_<id>`/`PlayerDB`/`StatsDb` entfällt wie in der alten Toolbox.
+- Anders als alt: `FoeHelperDB_<id>` wird nach dem Kopieren **nicht** gelöscht (liegt im selben Origin, ein parallel installierter Helfer würde seine Daten verlieren). `FoeHelperPrivateDB_<id>` wird weiter gelöscht.
+- Schema `version(3)` deklariert zusätzlich `neighborhoodAttacks`, damit ein Upgrade einer bestehenden `FoEToolboxDB_` (v2 aus 1.24) die Tabelle nicht verwirft (Dexie löscht nicht deklarierte Tabellen beim Upgrade). `pvpActions` legt Dexie dabei neu an. Achtung Zwischenstand: der Upstream-`GarbageCollector` leert weiter `players`/`greatbuildings`/`pvpActions` bei jedem Start; das gehört zu 2/16.
+- `.gitignore`: nur `*.ini` aus der Toolbox übernommen, die Upstream-Einträge bleiben. README und `changelog.md` aus Toolbox `master`, `changelog-de/en.md` entfernt.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 

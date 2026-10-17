@@ -12,50 +12,10 @@
  * *************************************************************************************
  */
 
-let lng = window.navigator.language.split('-')[0];
-
-let i18n = {
-	'de' : {
-		'title' : 'FoE Helfer',
-		'intro' : "Eine inoffizielle Browser-Erweiterung für Forge of Empires.",
-		'donate' : 'Spenden',
-		'desc' : "Dir gefällt diese kostenlose Extension?<br> Jede kleine Spende ist immer gern gesehen.",
-		'thanks' : 'Vielen Dank!'
-	},
-	'en' : {
-		'title' : 'FoE Helper',
-		'intro' : "A thirdparty browser extension for Forge of Empires.",
-		'donate' : 'Donate',
-		'desc' : "Like this free extension? Every little donation is always welcome.",
-		'thanks' : 'Thank you so much!'
-	},
-	'fr' : {
-		'title' : 'FoE Helper',
-		'intro' : "Une extension de navigateur tierce pour Forge of Empires.",
-		'donate' : 'Donate',
-		'desc' : "Vous aimez cette petite extension? Chaque petite donation est toujours la bienvenue.",
-		'thanks' : 'Merci beaucoup!'
-	},
-	'ru' : {
-		'title' : 'FoE Helper',
-		'intro' : "A thirdparty browser extension for Forge of Empires.",
-		'donate' : 'Donate',
-		'desc' : "Вам нравится это маленькое бесплатное расширение и вы хотите поддержать его, чтобы оно оставалось таким же? <br> Тогда каждое маленькое пожертвование в поддержку проекта всегда приветствуется.",
-		'thanks' : 'Большое спасибо!'
-	},
-	'sv' : {
-		'title' : 'FoE Helper',
-		'intro' : "Ett webbläsartillägg från tredje part för Forge of Empires.",
-		'donate' : 'Donate',
-		'desc' : "Du kommer tycka om detta lilla gratis tillägg och stöd det så det kan fortsätta så? <br> Varje liten donation för support är välkommet.",
-		'thanks' : 'Tack så mucket!'
-	},
-};
-
 $(function(){
 	// Open external links in new tab
 	$('body').on('click', '.foe-link', ()=> {
-		chrome.tabs.create({url: "https://foe-helper.com/"});
+		chrome.tabs.create({url: "https://foe-rechner.de/"});
 	});
 
 	$('body').on('click', '.paypal-link', ()=> {
@@ -68,16 +28,4 @@ $(function(){
 		yearEl.textContent = String(new Date().getFullYear());
 	}
 
-	// Handle translations
-	if(lng !== 'de'){
-		$('[data-translate]').each(function(){
-			let txt = $(this).data('translate');
-
-			if( i18n[lng] && i18n[lng][txt] !== undefined ){
-				$(this).html( i18n[lng][txt]);
-			} else {
-				$(this).html( i18n['en'][txt]);
-			}
-		});
-	}
 });
