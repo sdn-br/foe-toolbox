@@ -83,7 +83,13 @@ let Popup = {
 		} catch (e) { /* No entry/invalid entry */ }
 
 		const width  = (size && size.w) || options.width  || Math.max(box.offsetWidth, 320),
-			height = (size && size.h) || options.height || Math.max(box.offsetHeight, 220);
+			// TOOLBOX-BEGIN: tall enough for the content (a saved height or the box may be smaller), and
+			// a PiP window counts its own title bar into the requested height (offset measured in _adopt)
+			boxBody = box.querySelector('.window-body'),
+			contentHeight = box.offsetHeight + (boxBody ? Math.max(0, boxBody.scrollHeight - boxBody.clientHeight) : 0),
+			height = Math.min(Math.max((size && size.h) || options.height || 0, contentHeight, 220), Math.round(screen.availHeight * 0.8))
+				+ (parseInt(localStorage.getItem('PopupHeightOffset')) || 0);
+			// TOOLBOX-END
 
 		const boxTitle = box.querySelector('.window-head .title');
 		// TOOLBOX: branding
@@ -214,6 +220,18 @@ let Popup = {
 		if (header) {
 			header.onpointerdown = null;
 		}
+
+		// TOOLBOX-BEGIN: remember how much of the requested height the window itself takes, save the content size
+		// (a new PiP window first reports the requested size, its real inner size follows a moment later)
+		setTimeout(() => {
+			if (win.closed) return;
+			const heightOffset = height - win.innerHeight;
+			if (window.documentPictureInPicture?.window === win && heightOffset >= 0 && heightOffset < 150) {
+				localStorage.setItem('PopupHeightOffset', String(heightOffset));
+			}
+			entry.lastSize = {w: win.innerWidth, h: win.innerHeight};
+		}, 500);
+		// TOOLBOX-END
 
 		// Move the box, along with all its event bindings, to the pop-up
 		box.classList.add('popup-mode');
