@@ -665,7 +665,7 @@ let Outposts = {
 			return;
 		}
 
-		// Toolbox: double opt-in before sending the outpost to the server
+		// TOOLBOX: double opt-in before sending the outpost to the server
 		if (!window.confirm(i18n('Boxes.CityMap.SendDoubleOptIn'))) {
 			return;
 		}
@@ -730,7 +730,7 @@ let Outposts = {
 				type: 'error',
 				hideAfter: 10000,
 			});
-		}, true); // Toolbox: forceSend, confirmed by the double opt-in above
+		}, true); // TOOLBOX: forceSend, confirmed by the double opt-in above
 	},
 
 

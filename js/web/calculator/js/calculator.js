@@ -97,7 +97,7 @@ let Calculator = {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
-				popout: () => MainParser.PopOut('CalculatorBox'),
+				popout: () => MainParser.PopOut('CalculatorBox'), // TOOLBOX: pop-out window
 				settings: () => Calculator.ShowCalculatorSettings(),
 				active_maps: "main"
 			});
@@ -286,7 +286,7 @@ let Calculator = {
 			h.push('</span></strong>');
 		}
 
-		// Toolbox: FP in stock
+		// TOOLBOX: FP in stock
 		h.push('<p class="fp-storage-line">' + i18n('Boxes.Calculator.AvailableFP') + ': <strong class="fp-storage">' + HTML.Format(StrategyPoints.AvailableFP) + '</strong></p>');
 
 		// different arc bonus-buttons, the own arc bonus is always one of them
@@ -345,14 +345,14 @@ let Calculator = {
 	 * costs to demand ("fordern") and to safely take the spot, the resulting
 	 * profit and the blueprint/medal rewards, colour coded by state
 	 * (profit, negative profit, level warning, taken, own contribution).
-	 * Toolbox: three column groups (demand | blueprints/medals | minimal investment),
+	 * TOOLBOX: three column groups (demand | blueprints/medals | minimal investment),
 	 * the minimal investment group shows the costs to just secure the spot, its profit and rate.
 	 */
 	BuildTable: ()=> {
 		let h = [];
 
 		let BestKurs = 999999,
-			BestKursNettoFP = 0, // Toolbox: rank with the best rate, stored for the snipe helper
+			BestKursNettoFP = 0, // TOOLBOX: rank with the best rate, stored for the snipe helper
 			BestKursEinsatz = 999999,
 			arc = 1 + (MainParser.ArkBonus / 100),
 			ForderArc = 1 + (Calculator.ForderBonus / 100),
@@ -535,7 +535,7 @@ let Calculator = {
 			}
 		}
 
-		// Toolbox: group header (demand | rewards | minimal investment)
+		// TOOLBOX-BEGIN: group header (demand | rewards | minimal investment)
 		h.push('<thead>' +
 			'<tr class="group-head">' +
 				'<th colspan="3">' + i18n('Boxes.Calculator.FriendlyInvestment') + ' ' + HTML.Format(Calculator.ForderBonus) + '%</th>' +
@@ -554,6 +554,7 @@ let Calculator = {
 			h.push('<th>' + i18n('Boxes.Calculator.Profit') + '</th>');
 			h.push('<th>' + i18n('Boxes.Calculator.Rate') + '</th>');
 		h.push('</tr></thead>');
+		// TOOLBOX-END
 
 		for (let Rank = 0; Rank < ForderRankCosts.length; Rank++) {
 			let ForderCosts = (ForderStates[Rank] === 'Self' ? Einzahlungen[Rank] : ForderFPRewards[Rank]),
@@ -567,7 +568,7 @@ let Calculator = {
 			if (SaveStates[Rank] !== 'Self' && Kurs > 0) {
 				if (Kurs < BestKurs) {
 					BestKurs = Kurs;
-					BestKursNettoFP = FPNettoRewards[Rank];
+					BestKursNettoFP = FPNettoRewards[Rank]; // TOOLBOX: no new let, the outer variables are stored for the snipe helper
 					BestKursEinsatz = SaveRankCosts[Rank];
 				}
 			}
@@ -688,6 +689,7 @@ let Calculator = {
 			else if (ForderStates[Rank] === 'LevelWarning' && SaveStates[Rank] === 'LevelWarning')
 				RowClass = 'bg-yellow';
 
+			// TOOLBOX-BEGIN: group-start borders and the minimal investment cells
 			h.push(`<tr class="text-center ${RowClass}">
 				<td>
 					<strong class="${RankClass} td-tooltip" data-original-title="${HTML.i18nTooltip(RankTooltip.join('<br>'))}">${RankText}</strong>
@@ -703,11 +705,12 @@ let Calculator = {
 				${ShowBoost ? `<td> <small> ${HTML.Format(BoostRewards[Rank])} </small> </td>` : ''}
 				${Calculator.AggressiveInvestmentCells(SaveStates[Rank], SaveRankCosts[Rank], SaveCosts, SaveGewinn, Kurs, Einzahlungen[Rank], FPNettoRewards[Rank], FPRewards[Rank])}
 			</tr>`);
+			// TOOLBOX-END
 		}
 
 		$('#' + Calculator.BoxId()).find('#costTableFordern').html(h.join(''));
 
-		// Toolbox: remember level, invested FP and best rate for the snipe helper ("Wiedererkannt").
+		// TOOLBOX: remember level, invested FP and best rate for the snipe helper ("Wiedererkannt").
 		// While scrolling to another level the rankings do not belong to the current level.
 		if (!Parts.IsPreviousLevel) {
 			Calculator.RefreshGreatBuildingsDB({
@@ -728,7 +731,7 @@ let Calculator = {
 
 
 	/**
-	 * Toolbox: stores a GB in the IndexedDB table greatbuildings (one row per player and GB),
+	 * TOOLBOX: stores a GB in the IndexedDB table greatbuildings (one row per player and GB),
 	 * read by the snipe helper (calculator-overview.js) to recognise GBs with a known rate.
 	 *
 	 * @param {{playerId: number, name: string, level: number, currentFp: number, bestRateNettoFp: number, bestRateCosts: number}} GreatBuilding
@@ -766,7 +769,7 @@ let Calculator = {
 
 
 	/**
-	 * Toolbox: cells of the "Minimal Investition" column group for one rank:
+	 * TOOLBOX: cells of the "Minimal Investition" column group for one rank:
 	 * the costs to just secure the spot, the resulting profit and the rate
 	 * (costs / netto reward), coloured by the state of the spot.
 	 *

@@ -194,7 +194,7 @@ let HTML = {
 	 * @param {boolean|Function} [args.popout=false] - Whether the box includes a popout button. Can also accept a callback function for custom behavior.
 	 * @param {boolean|Function} [args.map=false] - Whether the box includes a map button. Can also accept a callback function for custom behavior.
 	 * @param {boolean|Function} [args.dragdrop=false] - Whether the box is draggable. Can include a callback function to save the box's new position.
-	 * @param {boolean} [args.fixdragdrop=true] - Toolbox: show the button to pin/unpin a draggable box (state in localStorage '<id>Draggable').
+	 * @param {boolean} [args.fixdragdrop=true] - TOOLBOX: show the button to pin/unpin a draggable box (state in localStorage '<id>Draggable').
 	 * @param {boolean} [args.saveCords=false] - Whether the box's position should be saved and restored on reload.
 	 * @param {boolean} [args.resize=false] - Whether the box should be resizable.
 	 * @param {boolean} [args.keepRatio=false] - Whether resizing should maintain the original aspect ratio.
@@ -206,7 +206,7 @@ let HTML = {
 	Box: (args) => {
 		const titleHtml = args.onlyTitle === true
 			? args.title
-			: (extVersion.indexOf('beta') > -1 ? '(Beta) ' : '') + args.title + ' <small><em> - FoE Toolbox</em></small>';
+			: (extVersion.indexOf('beta') > -1 ? '(Beta) ' : '') + args.title + ' <small><em> - FoE Toolbox</em></small>'; // TOOLBOX: branding
 
 		const title = $('<span />').addClass('title').html(titleHtml);
 		title.attr('title', title[0].textContent);
@@ -254,7 +254,7 @@ let HTML = {
 			buttons.prepend($('<span />').addClass('window-speaker').attr('id', args.speaker));
 		}
 
-		// Toolbox: pin/unpin a draggable box
+		// TOOLBOX: pin/unpin a draggable box
 		if (args.dragdrop && args.fixdragdrop !== false) {
 			const dragToggle = $('<span />')
 				.addClass('window-dragtoggle')
@@ -471,7 +471,7 @@ let HTML = {
 
 
 	/**
-	 * Toolbox: whether a box may be dragged (pinned boxes are not), default true
+	 * TOOLBOX: whether a box may be dragged (pinned boxes are not), default true
 	 *
 	 * @param {string} id Box element ID
 	 * @returns {boolean}
@@ -487,13 +487,13 @@ let HTML = {
 
 	/**
 	 * Makes an HTML box draggable
-	 * Toolbox: a pinned box (see HTML.IsDraggable) gets its drag handler removed instead.
+	 * TOOLBOX: a pinned box (see HTML.IsDraggable) gets its drag handler removed instead.
 	 *
 	 * @param {HTMLElement} el Box element
 	 * @param {boolean} [save=true] Whether to persist the position in localStorage
 	 */
 	DragBox: (el, save = true) => {
-		if (!el) return;
+		if (!el) return; // TOOLBOX: the pin button calls this with boxes that may be gone
 
 		const id = el.id,
 			header = document.getElementById(id + 'Header');
@@ -502,7 +502,7 @@ let HTML = {
 
 		header?.removeEventListener('pointerdown', dragMouseDown);
 
-		// pinned, or moved to a pop-up window (popup.js removes the handler itself and rebinds it on return)
+		// TOOLBOX-BEGIN: pinned, or moved to a pop-up window (popup.js removes the handler itself and rebinds it on return)
 		if (!HTML.IsDraggable(id) || el.classList.contains('popup-mode')) {
 			if (header) {
 				header.onpointerdown = null;
@@ -511,6 +511,7 @@ let HTML = {
 			}
 			return;
 		}
+		// TOOLBOX-END
 
 		if (header) {
 			header.onpointerdown = dragMouseDown;
@@ -588,7 +589,7 @@ let HTML = {
 
 		box.append(grip);
 
-		// Toolbox: the minimum size follows the CSS of the box (min-width -> minWidth, min-height -> minHeight),
+		// TOOLBOX: the minimum size follows the CSS of the box (min-width -> minWidth, min-height -> minHeight),
 		// otherwise the grip can make a box smaller than its CSS allows. Only px values, else the defaults.
 		const cssMinSize = (prop, fallback) => {
 			const value = box.css(prop);
@@ -602,7 +603,7 @@ let HTML = {
 				sw: '.window-grippy',
 				nw: '.window-grippy'
 			},
-			minHeight: cssMinSize('min-height', 100),
+			minHeight: cssMinSize('min-height', 100), // TOOLBOX: see cssMinSize
 			minWidth: cssMinSize('min-width', 220),
 			stop: (e, $el) => {
 				let w = $el.element.width(),
