@@ -365,7 +365,7 @@ Upstream `popup.js` verschiebt die Box per `adoptNode` in ein eigenes Fenster un
 Upstream-Fehler (seit Helfer 4.4.0.0, in 4.8.3 nicht behoben): Ein fremdes LG, direkt in der besuchten Stadt angeklickt, füllt `MainParser.CurrentGB` nicht, LG Rechner und LG Fördern bleiben bei "Deaktiviert: Öffne zuerst das LG eines anderen Spielers!". Das Spiel schickt dann nur `GreatBuildingsService.getConstruction` und nimmt die Entity aus den Besuchsdaten, `getOtherPlayerCityMapEntity` kommt nur beim Öffnen aus der LG-Übersicht. Upstream nimmt die lokale Entity nur für eigene LGs.
 
 - `_main.js`, Handler `GreatBuildingsService`: passt keine Entity zur Anfrage, kommt sie aus `CityMap.OtherPlayer.mapData` (aus `visitPlayer`), wenn Id und Spieler stimmen. `gbUpdateData` wird wie im Handler `getOtherPlayerCityMapEntity` vorbereitet, damit Bonus und Zeitalter aus `getConstruction` übernommen werden. Der Weg über die LG-Übersicht bleibt unverändert (frische Entity vom Server).
-- `getConstruction` enthält keinen Fortschritt, das Spiel zeigt ihn ebenfalls aus den Besuchsdaten. Damit ein zweites Öffnen nach einer Einzahlung stimmt, übernimmt der Handler `CityMapService.updateEntity` die Entity in `mapData`, wenn sie dort schon steht.
+- `getConstruction` enthält keinen Fortschritt, das Spiel zeigt ihn ebenfalls aus den Besuchsdaten. Nach einer Einzahlung antwortet das Spiel mit `CityMapService.reset` (früher `updateEntity`). `updateVisitedCity` übernimmt die Entity aus beiden in `mapData`, wenn sie dort schon steht, und ersetzt auch die gemerkte Entity (`gbCityMapEntity`, `gbUpdateData`), weil ein erneutes Öffnen desselben LGs `mapData` nicht noch einmal liest.
 - Forge Hammer löst es anders (eigener LG-Speicher `FH.GBCalc.getGB`), nicht übernommen.
 
 ## Entscheidungen
