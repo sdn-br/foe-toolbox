@@ -7,6 +7,21 @@
  #GBGActionLog {
 	width: 800px;
 	height: 400px;
+
+	/* domain colours: heatmap levels, building types and action types */
+	--gbgal-heat-1: rgba(254, 220, 0, .25);
+	--gbgal-heat-2: rgba(254, 220, 0, .55);
+	--gbgal-heat-3: rgba(247, 148, 29, .80);
+	--gbgal-heat-4: rgba(199, 44, 44, .88);
+	--gbgal-heat-5: rgba(147, 9, 9, .95);
+	--gbgal-bld-barracks: #be1a1a;
+	--gbgal-bld-outpost: #6b3f16;
+	--gbgal-bld-camp: #36a983;
+	--gbgal-act-bld-placed: #25cc25;
+	--gbgal-act-bld-dstr: #eed21e;
+	--gbgal-act-prov-conq: #dfdfdf;
+	--gbgal-act-prov-lost: #111111;
+	--gbgal-act-att-ign: #c00f0f;
 }
 
 #GBGActionLogBody {
@@ -225,11 +240,11 @@
 }
 
 /* Per-cell intensity scale (5 buckets, faint yellow -> deep red); td wins over foe-table row striping */
-#GBGActionLogBody td.gbgal-heat-1 { background-color: rgba(254, 220, 0, .25); color: var(--text-dark); }
-#GBGActionLogBody td.gbgal-heat-2 { background-color: rgba(254, 220, 0, .55); color: var(--text-dark); }
-#GBGActionLogBody td.gbgal-heat-3 { background-color: rgba(247, 148, 29, .80); color: var(--text-dark); }
-#GBGActionLogBody td.gbgal-heat-4 { background-color: rgba(199, 44, 44, .88); color: #fff; }
-#GBGActionLogBody td.gbgal-heat-5 { background-color: rgba(147, 9, 9, .95); color: #fff; }
+#GBGActionLogBody td.gbgal-heat-1 { background-color: var(--gbgal-heat-1); color: var(--text-dark); }
+#GBGActionLogBody td.gbgal-heat-2 { background-color: var(--gbgal-heat-2); color: var(--text-dark); }
+#GBGActionLogBody td.gbgal-heat-3 { background-color: var(--gbgal-heat-3); color: var(--text-dark); }
+#GBGActionLogBody td.gbgal-heat-4 { background-color: var(--gbgal-heat-4); color: var(--white); }
+#GBGActionLogBody td.gbgal-heat-5 { background-color: var(--gbgal-heat-5); color: var(--white); }
 
 /* Activity tab: guild-total footer row, held at the bottom (tableSorter only sorts tbody) */
 #GBGActionLogBody .gbgal-activity-total td {
@@ -265,14 +280,14 @@
 	margin-right: 5px;
 	border-radius: 2px;
 }
-#GBGActionLogBody .gbgal-bld-barracks { background-color: #be1a1a; }
-#GBGActionLogBody .gbgal-bld-outpost  { background-color: #6b3f16; }
-#GBGActionLogBody .gbgal-bld-camp     { background-color: #36a983; }
+#GBGActionLogBody .gbgal-bld-barracks { background-color: var(--gbgal-bld-barracks); }
+#GBGActionLogBody .gbgal-bld-outpost  { background-color: var(--gbgal-bld-outpost); }
+#GBGActionLogBody .gbgal-bld-camp     { background-color: var(--gbgal-bld-camp); }
 #GBGActionLogBody .gbgal-bld-other    { background-color: var(--beige); }
 
-#GBGActionLogBody .gbgal-act-bld-placed { background-color: #25cc25; }
-#GBGActionLogBody .gbgal-act-bld-dstr   { background-color: #eed21e; }
-#GBGActionLogBody .gbgal-act-prov-conq  { background-color: #dfdfdf; }
-#GBGActionLogBody .gbgal-act-prov-lost  { background-color: #111111; }
-#GBGActionLogBody .gbgal-act-att-ign    { background-color: #c00f0f }
+#GBGActionLogBody .gbgal-act-bld-placed { background-color: var(--gbgal-act-bld-placed); }
+#GBGActionLogBody .gbgal-act-bld-dstr   { background-color: var(--gbgal-act-bld-dstr); }
+#GBGActionLogBody .gbgal-act-prov-conq  { background-color: var(--gbgal-act-prov-conq); }
+#GBGActionLogBody .gbgal-act-prov-lost  { background-color: var(--gbgal-act-prov-lost); }
+#GBGActionLogBody .gbgal-act-att-ign    { background-color: var(--gbgal-act-att-ign); }
 #GBGActionLogBody .gbgal-act-other      { background-color: var(--beige); }
