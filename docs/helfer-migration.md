@@ -321,3 +321,119 @@ Empfehlung zum Lesen: 1-3 und 7 sind die Features, die laut Wiki "auf Drängen v
 - "Upstream HEAD: teilweise" bei 2, 5, 13, 15 beruht auf Stichproben per `git grep`, nicht auf vollständigem Code-Vergleich.
 - Zeilenzahlen sind Diff-Zeilen (`diff -w`, `>`/`<`) bzw. Dateigröße, nur Richtwerte.
 - Prüfung "Spiel-Feature noch vorhanden" nur aus dem Code, nicht aus dem Spiel. Nur GvG ist durch den Upstream-Commit "RIP GvG" belegt.
+
+## Browser-Tests
+
+Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt laden" auf den Worktree. Spiel in einem Tab offen, DevTools (Konsole, Application -> IndexedDB) griffbereit. Nach jeder Code-Änderung Erweiterung neu laden und Spiel-Tab neu laden.
+
+**17 Branding, Update, DB-Migration**
+- Erweiterung entpackt laden, während ein Spiel-Tab offen ist: im Spiel-Tab erscheint die Reload-Abfrage, es öffnet sich kein Changelog-Tab.
+- Popup und Einstellungen sind Deutsch, auch mit englischer Browsersprache.
+- Migration aus einem Profil mit `FoeHelperDB_<id>`: nach dem ersten Start enthält `FoEToolboxDB_<id>` die Daten, `FoeHelperDB_<id>` existiert weiter.
+- Upgrade über eine bestehende 1.24-`FoEToolboxDB_`: die Tabelle `neighborhoodAttacks` bleibt mit ihren Einträgen erhalten.
+
+**16 Datenmodell**
+- Spiel neu laden, 10 s warten: Tabelle `players` ist gefüllt und bleibt über Neustarts gefüllt, Einträge haben `score`, `wonBattles` und die Datumsfelder.
+- Konsole: `Object.values(MainParser.CityEntities).filter(e=>e.is_plunderable).length` > 0.
+
+**16a Bekannte Spieler**
+- Einen bekannten Spieler besuchen, der Name, Avatar oder Gilde geändert hat; in `FoEToolboxDB_<id>`, Tabelle `players`, stehen die neuen Werte.
+- Ein Spieler ohne Gilde hat `clanId` 0 und kein `clanName`.
+
+**1 Stadtinformationen (Plünderhilfe)**
+- Vor dem ersten Besuch ist der Knopf "Stadtinformationen" rot mit Warnung.
+- "Angriff/Verteidigung bei Spielern anzeigen" einschalten (jetzt default aus, Double-Opt-In-Abfrage erscheint), Nachbarn besuchen: Box zeigt Angriff, Verteidigung, Plünderabwehr.
+- "Nachbarschafts-Ernte" einschalten: fertige Produktionen und ein plausibler nächster Angriffszeitpunkt erscheinen.
+- "Alarm" legt einen Alarm an. Das Auge hebt das Gebäude auf der Stadtkarte hervor.
+- Ein Gildenmitglied zeigt "nicht plünderbar".
+
+**2 PvP Angriffe**
+- Nachbarn angreifen: Kampf erscheint unter "PvP Angriffe" mit Armeen, Icons, Boosts.
+- Plündern (auch ein generisches Gebäude): Eintrag mit Ressourcen, die FP-Summe steigt.
+- PvP-Arena öffnen: Filter "PvP-Arena Gegner" ist aktiv. "nächste Seite" springt genau eine Seite weiter.
+- "Angriffe anzeigen" in der Stadtinfo-Box filtert auf den Spieler.
+
+**3 Snipehilfe (Vorab-Scan)**
+- Vorab-Scan einschalten, LG-Liste eines fremden Spielers öffnen: Box "Mögliche Investitionen" mit Farben und Aktivitätshinweis.
+- Ton-Schalter an: bei einem Treffer kommt ein Ton.
+- LG eines anderen Spielers öffnen: die Box schließt sich.
+- Einstellung aus: keine Box.
+
+**Menüknopf "Mögliche Investitionen"**
+- Einstellung aus: Klick zeigt einen Hinweis-Toast.
+- Einstellung an, scannen, Box schließen, Knopf klicken: die Box kommt mit dem letzten Scan zurück.
+
+**4 Kostenrechner**
+- Fremdes LG öffnen (Kostenrechner sichtbar, kombinierte Box oder geteilte Ansicht): im Kopf steht "Verfügbare Forgepunkte: <Wert>", der Wert entspricht dem FP-Vorrat im Spiel.
+- Tabelle hat drei Spaltengruppen mit Trennlinien: "Fördern mit: x%" (#, Einsatz, Differenz), BP/Medaillen (ggf. Schweinchen), "Minimal Investition" (Einsatz, Differenz, Kurs).
+- Freier Platz mit Gewinn: Zellen der Minimal-Investition grün, Kurs in %, Tooltip "Kurs = ...". Platz nicht belegbar: "-" in grau. Platz, der das LG leveln würde: gelb mit Warn-Tooltip.
+- Mehr Einsatz als FP im Lager: Einsatz rot, Tooltip "FP Vorrat ist zu niedrig".
+- Eigener Platz: blaue Zellen mit eingezahltem Betrag und Kurs.
+- Klick auf den Einsatz der Minimal-Investition übernimmt den Wert in das Einzahlungsfeld des Spiels.
+- Arche-Prozent umschalten: Gruppenkopf "Fördern mit" zeigt den neuen Wert.
+
+**5 LGs in IndexedDB**
+- Fremdes LG mit sichtbarem Kostenrechner öffnen: in `FoEToolboxDB_<id>`, Tabelle `greatbuildings`, steht ein Eintrag mit `playerId`, `name` (= `cityentity_id`), `level`, `currentFp`, `bestRateNettoFp`, `bestRateCosts`, `date`; der Spieler steht in `players`.
+- Danach die LG-Liste desselben Spielers öffnen (Vorab-Scan an): das LG erscheint grün ("Wiedererkannt") mit Gewinn und Kurs statt "???", solange niemand eingezahlt hat.
+- LG-Stufen durchscrollen (Pfeile im Spiel): der Eintrag bleibt bei der aktuellen Stufe.
+- Spiel neu laden: der Eintrag bleibt erhalten.
+
+**7 Verhandlungsassistent in Gildengefechten**
+- Ohne Einstellung: Verhandlung auf einer GbG-Provinz starten, kein Assistent, Menüknopf "Verhandlung" wird rot (Upstream-Verhalten).
+- Einstellung "Verhandlungsassistent für Gildengefechte" einschalten: Double-Opt-In-Abfrage; abbrechen lässt sie aus.
+- Bestätigt: GbG-Verhandlung startet, der Assistent öffnet sich und rechnet wie bei einer normalen Verhandlung; Züge werden ausgewertet.
+- Normale Verhandlung (z. B. Kontinentkarte) funktioniert weiter.
+
+**8 Fenster fixieren**
+- In der Kopfzeile einer verschiebbaren Box (z. B. Einstellungen, Kostenrechner, Box-Menü) gibt es den Knopf mit den Verschiebe-Pfeilen und Tooltip "Fenster fixieren/lösen".
+- Klick: Pfeile werden gelb, die Box lässt sich nicht mehr ziehen. Box schließen und neu öffnen bzw. Spiel neu laden: bleibt fixiert (`localStorage` `<id>Draggable` = `false`). Erneuter Klick: wieder verschiebbar.
+- "Alle schließen"-Box hat keinen Fixier-Knopf und keinen " - FoE Toolbox"-Zusatz im Titel. "Alle ausblenden" und "Alle schließen" lassen das Box-Menü stehen.
+- Fixierte Box als Pop-up öffnen und zurückholen: der Knopf ist im Pop-up nicht sichtbar, nach der Rückkehr ist die Box weiter fixiert.
+
+**9 Alarme**
+- Alarm mit "dauerhaft" anlegen und auslösen lassen: die Benachrichtigung bleibt (unter Windows) stehen, bis man sie schließt.
+
+**10 Eigenanteilsrechner**
+- Einstellungen des Eigenanteilsrechners: zwei neue Optionen "1 FP für Plätze ohne FP berechnen" und "Bonuseinstellung pro LG speichern".
+- LG mit einem Platz ohne FP-Belohnung (z. B. hohe Stufe, P5 nur Medaillen/BP): Option aus -> der Platz zählt 0 FP, Option an -> 1 FP (Mäzen-Anteil ändert sich entsprechend).
+- "pro LG speichern" an: bei LG A Arche-Prozente ändern, LG B öffnen -> B zeigt die globalen Werte; B ändern, zurück zu A -> A zeigt seine eigenen Werte. Option aus: alle LGs teilen dieselben Werte.
+
+**11 Blaue Galaxie**
+- Blaue Galaxie einsammeln, Helfer öffnet sich: Spalte mit Diamanten-Icon nach FP. Gebäude mit Diamanten-Produktion zeigen die Menge, sind sortierbar und stehen auch ohne FP/Güter in der Liste.
+
+**12 Versteckte Ereignisse**
+- Mit einem Ereignis, das erst in der Zukunft erscheint (`startTime` > jetzt, z. B. nach dem Spielstart angekündigte Ereignisse): oranger Zähler unten rechts am Menüknopf, blauer Zähler zählt nur aktive.
+- Box öffnen: zukünftige Ereignisse stehen nach den aktiven mit "Erscheint in ..." (orange).
+- Zum Startzeitpunkt wandert das Ereignis in die aktive Liste, beide Zähler passen sich an.
+- Einstellung "Zählen" (alle / nur sichtbare / ohne GE) wirkt auf beide Zähler.
+
+**13 Stadtübersicht**
+- Stadtkarte öffnen, auf ein Außenpostengebäude/QI-Gebäude klicken: der Tooltip verschwindet beim Wegbewegen der Maus (kein Hängenbleiben nach Klick).
+- Produktionen -> "auf Karte zeigen": die Karte zentriert das hervorgehobene Gebäude (Upstream).
+- Stadtplaner -> "Abschicken" (mit API-Token): Rückfrage "Bist du wirklich sicher ...". Abbrechen sendet nichts (Netzwerk-Tab des Background-Service-Workers bleibt leer), bestätigen sendet auch bei ausgeschaltetem `GlobalSend`.
+- Dasselbe beim Außenposten ("Außenposten senden").
+
+**14 Spielerlinks**
+- "Links anzeigen" an: in Kostenrechner, Snipehilfe, Gildenmitgliederstatistik o. ä. ist nur das Link-Icon klickbar, ein Klick auf den Namen öffnet nichts. Das Icon öffnet die Spieler-/Gilden-/Gebäudeseite (auch mit Linkquelle ForgeDB).
+
+**15 Datenschutz**
+- Neues Profil: "Übermittlung an foe-helper.com" ist aus.
+- Einschalten: Double-Opt-In-Abfrage; abbrechen -> bleibt aus. Dasselbe für "Angriff/Verteidigung bei Spielern anzeigen", "Nachbarschafts-Ernte", "Vorab-Scan der LG-Übersicht", "Verhandlungsassistent für Gildengefechte". Ausschalten ohne Abfrage.
+- `GlobalSend` aus: im Netzwerk-Tab (Spielseite und Background-Service-Worker) keine Anfragen an `api.foe-rechner.de` beim Start (`SelfPlayer`), beim Öffnen eigener LGs (`OwnLGData`), in der Weltenauswahl (`Worlds`). Notizen-Knopf zeigt den Hinweis "nur mit eingeschalteter Option ...".
+- `GlobalSend` an (mit API-Token): Notizen laden; die Anfrage `Notice/get` erscheint im Background-Service-Worker, nicht im Spiel-Tab.
+- Ban-Erkennung (nur wenn ein gesperrtes Konto verfügbar ist, oder Antwort in DevTools überschreiben): Antwort ohne `notice` -> Notizen-Box zeigt "Du bist gesperrt!".
+
+**Bugfix Resize**
+- Burg-Box (`#Castle`, `min-width: 360px`) am Griff kleiner ziehen: hält bei 360 px Breite an. Eine Box ohne CSS-Mindestgröße hält bei 220 x 100 px an. Box-Menü lässt sich weiter bis ca. 101 x 87 px verkleinern.
+
+### Ungeprüfte Annahmen (aus den Notizen)
+- 16: `is_plunderable` für generische Gebäude folgt der alten Regel aus `abilities`, kein Plünderschutz-Component bekannt.
+- 1: Abwehr-"max" (+60 %) und Angriff-"max" (+50 %) sind alte feste Aufschläge; Kettenboni zählen ohne Prüfung der Verknüpfung.
+- 2: `BattlefieldService`-Antwort (`defenderPlayerId`, `PVPArenaService.addLog`) und `CityMapService.reset` mit `LootedState`/`PlunderedState` stammen aus dem alten Code.
+- 3: Übersichtszeilen von `getOtherPlayerOverview` haben noch `city_entity_id` (4.8.3 nutzt sonst `entity_id`); LG-Stufen gehen nicht in P1 ein.
+- 5: `state.invested_forge_points` des LGs entspricht `current_progress` der Übersicht (sonst kein "Wiedererkannt").
+- 7: GbG-Verhandlungen haben dasselbe Format wie normale (`NegotiationGameService.startNegotiation`, `context = guildBattleground`).
+- 11: Diamanten kommen als `resources.premium`; Diamanten in `genericReward` werden nicht erkannt; Verdopplung durch die Galaxie angenommen.
+- 12: `startTime` künftiger Ereignisse kommt schon in `HiddenRewardService.getOverview`.
+- 14: keine Upstream-Box liest den Namen aus dem Link-`<a>`.
+- 15: Antwort von `Notice/get` ohne Fehler und ohne `notice` bedeutet Sperre (alte Regel); `api.foe-rechner.de` akzeptiert die Anfragen aus dem Background (Host-Permission vorhanden).
