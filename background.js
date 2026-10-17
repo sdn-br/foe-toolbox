@@ -663,6 +663,9 @@ alertsDB.version(1).stores({
 			}
 
 			case 'send2Api': { // type
+				// Toolbox: only the foe-helper API, the message also arrives from the game page
+				if (typeof request.url !== 'string' || !request.url.startsWith('https://api.foe-rechner.de/')) return APIerror('send2Api: url not allowed');
+
 				fetch(request.url, {
 					method: 'POST',
 					headers: {
