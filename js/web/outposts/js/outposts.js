@@ -730,7 +730,7 @@ let Outposts = {
 				type: 'error',
 				hideAfter: 10000,
 			});
-		});
+		}, true); // Toolbox: forceSend, confirmed by the double opt-in above
 	},
 
 

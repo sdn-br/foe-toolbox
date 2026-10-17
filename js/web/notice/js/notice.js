@@ -35,12 +35,21 @@ let Notice = {
 
 	ApiToken: null,
 
+	// Toolbox: the API answered without notes, i.e. the player is blocked there
+	Banned: false,
+
 	initDone:false,
 
 	/**
 	 * On init get the content
 	 */
 	init: ()=> {
+
+		// Toolbox: without GlobalSend nothing is loaded, the box shows the hint
+		if (!MainParser.IsGlobalSendEnabled()) {
+			Notice.buildBox(false);
+			return;
+		}
 
 		let apiToken = localStorage.getItem('ApiToken');
 
@@ -69,6 +78,12 @@ let Notice = {
 						type: 'error',
 						hideAfter: 10000,
 					});
+				}
+				// Toolbox: status OK without notes = blocked on the API
+				else if (resp['notice'] === undefined) {
+					Notice.Banned = true;
+
+					Notice.buildBox(false);
 				}
 				else {
 					Notice.notes = resp['notice'];
@@ -113,13 +128,13 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		if(Settings.GetSetting('GlobalSend')){
+		if(MainParser.IsGlobalSendEnabled() && !Notice.Banned && Notice.notes !== null){
 			Notice.prepareContent();
 		}
 
-		// global send is deactivated
+		// global send is deactivated (Toolbox: or blocked on the API)
 		else {
-			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(i18n('Boxes.Notice.GlobalSendRequired')) );
+			$('#noticesBody').empty().addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(Notice.Banned ? i18n('Boxes.Notice.BannedFromApi') : i18n('Boxes.Notice.GlobalSendRequired')) );
 		}
 	},
 

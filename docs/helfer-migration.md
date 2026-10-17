@@ -22,7 +22,7 @@ Vorherige Basis: FoE Helfer 3.1.0.1 (`86f9439d`), Toolbox 1.24.0.0.
 - [x] 12 Versteckte Ereignisse: Zukunft + eigener Zähler
 - [x] 13 Stadtübersicht: Scroll, Tooltips, Double-Opt-In
 - [x] 14 Spielerlinks nur auf dem Icon
-- [ ] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
+- [x] 15 Datenschutz: `GlobalSend` default aus, Double-Opt-In, Ban-Erkennung
 - [ ] Bugfix: `minWidth`/`minHeight` beim Resize vertauscht (`_helper.js`)
 
 Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 entfernt).
@@ -143,6 +143,17 @@ Entfällt: 6 GvG Angriffshilfe (GvG wurde im Spiel und upstream am 2024-03-18 en
 **Notizen 14**
 - Wie alt: `MainParser.GetPlayerLink`, `GetGuildLink` und `GetBuildingLink` setzen den Link nur auf das Icon, der Name steht davor als Text. Gilt auch für die neue Upstream-Linkquelle ForgeDB (`linkSite = siteForgedb`), die Ziel-URLs sind unverändert.
 - Nicht geprüft: ob eine Upstream-Box den Namen über das `<a>` ausliest oder stylt (z. B. Farbe des Namens über `.external-link`). Im Code keine Stelle gefunden, die den Linktext liest.
+
+**Notizen 15**
+- `GlobalSend` default aus und mit `doubleoptin` (Gruppe bleibt wie Upstream "About", alt eigene Gruppe "Sending"). Beschreibung um den alten Bann-Hinweis ergänzt, neuer Text `Settings.GlobalSend.DoubleOptIn`.
+- Double-Opt-In jetzt ausgewertet (`settings.js`): Einträge mit `"doubleoptin": true` bekommen die Klasse `doubleoptin`, beim **Einschalten** fragt `window.confirm(Settings.<Name>.DoubleOptIn)`, bei Abbruch bleibt der Schalter aus und nichts wird gespeichert (wie alt). Betrifft `ShowNeighborsLootables`, `ShowPlayersAttDeffValues`, `ShowPossibleInvestments`, `AutomaticNegotiationForGbG`, `GlobalSend`. Ausschalten geht ohne Rückfrage.
+- `MainParser.send2Server(data, ep, success, error, forceSend = false)`: sendet nur mit `GlobalSend` oder `forceSend` (alt 4. Parameter, in 4.8.3 ist der 4. der neue Fehler-Callback). `forceSend` setzen nur Stadtplaner und Außenposten (nach dem Double-Opt-In aus 13). Neu `MainParser.IsGlobalSendEnabled()` liest `localStorage` direkt, weil manche Handler vor dem Laden der `config.json` laufen.
+- Versand über den Background wie alt: neuer Nachrichtentyp `send2Server` in `background.js` (POST mit `fetch`, Antwort `{status, statusText, body}`), Fehler gehen an den Fehler-Callback. Anders als alt: nur die URL `https://api.foe-rechner.de/` und Endpunkte aus `[A-Za-z0-9/_-]` erlaubt (die Nachricht ist auch von der Spielseite aus erreichbar), Parameter per `URLSearchParams`.
+- Timeout von `sendExtMessage` 1 s -> 5 s wie alt (Server-Anfragen laufen jetzt durch den Background).
+- Neu gegenüber alt, gleiche Absicht ("ohne GlobalSend wird nichts gesendet"): Upstream 4.8.3 schickt zusätzlich ungefragt die Weltenliste (`Worlds`), eigene LG-Daten (`OwnLGData`, `SendLGData`) und die Gebäudeliste (`BuildingList`, `srcLinks.js`) an die API. Diese drei laufen jetzt nur noch mit `GlobalSend`, wie `SelfPlayer` schon alt. S. offene Fragen.
+- Notizen (`notice.js`): ohne `GlobalSend` wird nichts geladen, die Box zeigt den Hinweis `Boxes.Notice.GlobalSendRequired`. Ban-Erkennung wie alt: Antwort ohne Fehler, aber ohne `notice` -> `Notice.Banned`, die Box zeigt `Boxes.Notice.BannedFromApi` statt der Notizen. 4.8.3 verlangt für die Notizen zusätzlich den API-Token.
+- Entfällt: der alte Guard in `Notice.SaveContent` (`if (GlobalSend === true) return`) war verdreht und hätte das Speichern bei aktiver Übermittlung verhindert; ohne `GlobalSend` öffnet die Box ohnehin keine Notizen. Das alte Debug-`console.log` im Background entfällt.
+- Achtung: die Einstellungen liegen im `localStorage` der Spielseite. Läuft parallel der FoE Helfer, teilen sich beide den Schlüssel `GlobalSend`.
 
 ### Delta-Analyse (Toolbox 1.24.0.0 gegen Helfer 3.1.0.1)
 
