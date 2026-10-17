@@ -210,7 +210,14 @@
 #LGInvestmentOverviewBox {
 	top: 30%;
 	right: 15%;
-	width: 500px;
+	width: 620px;
+}
+
+/* the longest GB name ("Leuchtturm von Alexandria") fits on one line */
+#LGInvestmentOverviewBox #OverviewTable th:first-child,
+#LGInvestmentOverviewBox #OverviewTable td:first-child {
+	width: 45%;
+	white-space: nowrap;
 }
 
 #LGInvestmentOverviewBox .head-bar {
