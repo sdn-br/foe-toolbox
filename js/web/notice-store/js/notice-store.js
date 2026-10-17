@@ -204,12 +204,18 @@ Notice.Store = {
 	/**
 	 * Import button in the edit mode, only with GlobalSend and an API token
 	 */
+	/**
+	 * The import needs GlobalSend and an API token of the FoE Helfer server
+	 *
+	 * @returns {boolean}
+	 */
+	CanImport: () => MainParser.IsGlobalSendEnabled() && !!localStorage.getItem('ApiToken'),
+
+
 	BuildImportButton: () => {
 		$('.notice-import-btn').remove();
 
-		const apiToken = localStorage.getItem('ApiToken');
-
-		if (!MainParser.IsGlobalSendEnabled() || !apiToken) {
+		if (!Notice.Store.CanImport()) {
 			return;
 		}
 

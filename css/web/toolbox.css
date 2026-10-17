@@ -67,6 +67,13 @@
 	color: var(--text-medium);
 }
 
+/* a box button without function in the current state (e.g. notes edit mode without groups) */
+.window-box .box-buttons span.disabled {
+	opacity: 0.4;
+	filter: grayscale(1);
+	cursor: default;
+}
+
 /* menu icons */
 [id$=sabotage-Btn] span {
 	background-image: url('../images/menu/sabotage.png');
