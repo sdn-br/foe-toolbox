@@ -356,7 +356,8 @@ Upstream `popup.js` verschiebt die Box per `adoptNode` in ein eigenes Fenster un
 
 - `popup.js`: `document.getElementById`, `querySelector`, `querySelectorAll` und `jQuery.find` suchen im Pop-out weiter, wenn das Spieldokument keinen Treffer hat. Nach Forge Hammer (`js/web/popout/js/popout.js`, `installShims`). Aktiv nur, solange mindestens ein Pop-out offen ist. `PopupAwareInit` bleibt unverändert (Upstream).
 - Pop-out-Knopf neu (`popout:` in `HTML.Box`, ohne Größe, also aktuelle Boxgröße, danach die gemerkte): PvP Angriffe (`looting`), Stadtinformationen (`sabotageInfo`), Mögliche Investitionen (`LGInvestmentOverviewBox`), LG Fördern (`CalculatorBox`), LG Rechner (`OwnPartBox`), Investitionen (`Investment`), Notizen (`notices`), Gefechts-Logbuch (`GBGActionLog`). LG Investitionen (`greatbuildings`) hatte ihn schon.
-- Bekannte Grenzen: Handler, die per `$('body').on(...)` oder `$(document).on(...)` am Spieldokument hängen, sehen Klicks im Pop-out nicht. Betrifft "beim Schließen speichern" der Notizen (das `blur` des Textfelds speichert vorher schon) und das Zuklappen der Aktions-Auswahl im Gefechts-Logbuch bei Klick daneben. Dialoge der Notizen (Gruppe, Seite, Spieler) öffnen im Spielfenster.
+- Bekannte Grenzen: Handler, die per `$('body').on(...)` oder `$(document).on(...)` am Spieldokument hängen, sehen Klicks im Pop-out nicht. Betrifft "beim Schließen speichern" der Notizen (das `blur` des Textfelds speichert vorher schon, bleibt so). Dialoge der Notizen (Gruppe, Seite, Spieler) öffnen im Spielfenster.
+- Gefechts-Logbuch: Aktions-Auswahl und Spaltenfilter schließen bei Klick daneben über `$(document).on('click.gbgal')`. Die Logik steht jetzt in `GBGActionLog.closeOnOutsideClick`, ein zweiter Handler an der Box ruft sie auf, wenn die Box im Pop-out liegt (`ownerDocument !== document`). Im Spielfenster läuft weiter nur der Handler am Dokument.
 
 ## Entscheidungen
 
@@ -497,6 +498,7 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 **Pop-out**
 - Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.
 - Inhalt aktualisiert sich im Pop-out: PvP Angriffe und Stadtinformationen beim Besuch einer anderen Stadt, LG Fördern und LG Rechner beim Öffnen eines LGs, Mögliche Investitionen beim Öffnen einer Stadtübersicht, Investitionen nach dem Laden, Notizen beim Bearbeiten, Gefechts-Logbuch beim Wechsel des Reiters.
+- Gefechts-Logbuch im Pop-out: Aktions-Auswahl (Spieler-Report) bzw. einen Spaltenfilter öffnen, daneben ins Fenster klicken, beides schließt. Im Spielfenster genauso, dort auch bei Klick ins Spiel.
 - Alle Pop-outs geschlossen: `document.getElementById` ist wieder die native Funktion (`Object.hasOwn(document, 'getElementById') === false`).
 - Die 16 Upstream-Pop-outs funktionieren weiter.
 
