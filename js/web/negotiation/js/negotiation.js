@@ -398,12 +398,13 @@ let Negotiation = {
 	 * @param {number} [forcedTryCount]
 	 */
 	StartNegotiation: (responseData, forcedTryCount) => {
-		if (responseData.context === Negotiation.CONST_Context_GBG) {
+		// Toolbox: opt-in setting AutomaticNegotiationForGbG also starts the assistant in guild battlegrounds
+		if (responseData.context === Negotiation.CONST_Context_GBG && !Settings.GetSetting('AutomaticNegotiationForGbG')) {
 			if (!$('#negotiation-Btn').hasClass('hud-btn-red')) {
 				$('#negotiation-Btn').addClass('hud-btn-red');
 				_menu.toolTipp('#negotiation-Btn', i18n('Menu.Negotiation.Title'), `<em id="negotiation-Btn-closed" class="tooltip-error">${i18n('Menu.Negotiation.Warning')}<br></em>${i18n('Menu.Negotiation.Desc')}`);
 			}
-			return; // no negotiation helper for GBG
+			return; // no negotiation helper for GBG (unless enabled in the toolbox settings)
 		}
 
 		Negotiation.StartNegotiationBackupData = responseData;
