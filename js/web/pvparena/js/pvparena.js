@@ -154,7 +154,7 @@ const PvPArena = {
        *
        * @param {FoE_Class_PvPArena|{__class__: "Error"}} responseData
        */
-    StartPvPArena: responseData => {
+    StartPvPArena: (responseData, refreshOnly = false) => { // TOOLBOX: refreshOnly redraws an open box (Show would close it)
         PvPArena.StartPvPArenaBackupData = responseData;
 
         if (responseData.__class__ === "Error") return;
@@ -178,6 +178,7 @@ const PvPArena = {
 
         PvPArena.LostAttackFights = PvPArena.AllLostAttackFights.filter(fight => !hidden.includes(fight.playerName));
 
+        if (refreshOnly) return PvPArena.RefreshBox(); // TOOLBOX: see refreshOnly
         PvPArena.Show();
     },
 
