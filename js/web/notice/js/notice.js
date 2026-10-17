@@ -221,6 +221,11 @@ let Notice = {
 				Notice.ActiveTab = 1;
 			}
 
+			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups or the import
+			const canEdit = (grpCount > 0 || Notice.Store.CanImport());
+			$('#notices-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notice.Edit' : 'Boxes.Notice.EditDisabled'));
+			if (!canEdit) Notice.EditMode = false;
+
 			// init Tabslet
 			$('.notices').tabslet({
 				active: Notice.ActiveTab
@@ -285,6 +290,8 @@ let Notice = {
 
 		// toggle edit buttons
 		$('#notices').on('click', '#notices-settings', function(){
+			if($(this).hasClass('disabled')) return; // TOOLBOX: nothing to edit yet
+
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {

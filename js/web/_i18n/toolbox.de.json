@@ -156,6 +156,7 @@
     "Boxes.MergerGame.KeysLeft.soccer": "FoE Toolbox: Es sind noch Abzeichen auf dem Spielfeld!",
     "Boxes.MergerGame.KeysLeft.care": "FoE Toolbox: Es sind noch Schlüssel auf dem Spielfeld!",
     "Boxes.Notice.BannedFromApi": "<h1>Du bist gesperrt!</h1><br>Die Antwort der foe-rechner.de Schnittstelle lässt darauf schließen, dass du gesperrt worden bist.<br>Wenn du dieses Feature nutzen möchtest, musst du die Sperre durch das FoE Helfer Team aufheben lassen.<br><br><b>Achtung: foe-rechner.de bzw. foe-helper.com hat der Nutzung der APIs durch diese Extension nicht zugestimmt!</b>",
+    "Boxes.Notice.EditDisabled": "Bearbeiten: lege zuerst eine Gruppe an",
     "Boxes.Notice.Import": "Notizen von FoE-Helfer importieren",
     "Boxes.Notice.ImportConfirm": "Dies löscht deinen lokalen Stand und ersetzt ihn durch den Inhalt vom FoE-Helfer-Server.",
     "Boxes.Notice.ImportError": "Import fehlgeschlagen, deine lokalen Notizen sind unverändert",
