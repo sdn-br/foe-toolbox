@@ -350,6 +350,14 @@ Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sor
 - Das ist der einzige Netzwerkzugriff des Moduls. Kein Hochladen, kein Abgleich.
 - Texte: `Boxes.Notice.Import*` neu, `Boxes.Notice.GlobalSendRequired` entfernt. Die CSS-Klassen `global-send-required*` in `notice.css` sind Upstream und bleiben, obwohl ungenutzt.
 
+## Pop-out für weitere Fenster
+
+Upstream `popup.js` verschiebt die Box per `adoptNode` in ein eigenes Fenster und leitet nur `$('…')` dorthin um (`PopupAwareInit`). Module, die ihre Elemente nativ suchen, finden sie im Pop-out nicht.
+
+- `popup.js`: `document.getElementById`, `querySelector`, `querySelectorAll` und `jQuery.find` suchen im Pop-out weiter, wenn das Spieldokument keinen Treffer hat. Nach Forge Hammer (`js/web/popout/js/popout.js`, `installShims`). Aktiv nur, solange mindestens ein Pop-out offen ist. `PopupAwareInit` bleibt unverändert (Upstream).
+- Pop-out-Knopf neu (`popout:` in `HTML.Box`, ohne Größe, also aktuelle Boxgröße, danach die gemerkte): PvP Angriffe (`looting`), Stadtinformationen (`sabotageInfo`), Mögliche Investitionen (`LGInvestmentOverviewBox`), LG Fördern (`CalculatorBox`), LG Rechner (`OwnPartBox`), Investitionen (`Investment`), Notizen (`notices`), Gefechts-Logbuch (`GBGActionLog`). LG Investitionen (`greatbuildings`) hatte ihn schon.
+- Bekannte Grenzen: Handler, die per `$('body').on(...)` oder `$(document).on(...)` am Spieldokument hängen, sehen Klicks im Pop-out nicht. Betrifft "beim Schließen speichern" der Notizen (das `blur` des Textfelds speichert vorher schon) und das Zuklappen der Aktions-Auswahl im Gefechts-Logbuch bei Klick daneben. Dialoge der Notizen (Gruppe, Seite, Spieler) öffnen im Spielfenster.
+
 ## Entscheidungen
 
 - Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
@@ -485,6 +493,12 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Zähler: nach dem ersten Sammeln, nach mindestens einer Stunde die GbG-Karte erneut öffnen: links auf der Karte erscheint eine Zahl (Stunden seit dem letzten Sammeln). Ab der eingestellten Stundenzahl (Standard 8) ist sie rot. Gefechts-Log öffnen setzt sie zurück, Karte verlassen entfernt sie.
 - Einstellungen: Anzeigedauer 0 -> keine Meldung mehr. Im Netzwerk-Tab keine neuen Anfragen außer Bildern vom Spiel-CDN.
 - Migration: Profil mit Forge-Hammer-Daten (`FoeHelperDB_GBG_<id>`), erster Start: die Daten stehen in `FoEToolbox2DB_GBG_<id>`, die Alt-DB ist unverändert, `FH_IndexDBLastMigraion` nennt die Kopie.
+
+**Pop-out**
+- Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.
+- Inhalt aktualisiert sich im Pop-out: PvP Angriffe und Stadtinformationen beim Besuch einer anderen Stadt, LG Fördern und LG Rechner beim Öffnen eines LGs, Mögliche Investitionen beim Öffnen einer Stadtübersicht, Investitionen nach dem Laden, Notizen beim Bearbeiten, Gefechts-Logbuch beim Wechsel des Reiters.
+- Alle Pop-outs geschlossen: `document.getElementById` ist wieder die native Funktion (`Object.hasOwn(document, 'getElementById') === false`).
+- Die 16 Upstream-Pop-outs funktionieren weiter.
 
 ### Ungeprüfte Annahmen (aus den Notizen)
 - 16: `is_plunderable` für generische Gebäude folgt der alten Regel aus `abilities`, kein Plünderschutz-Component bekannt.

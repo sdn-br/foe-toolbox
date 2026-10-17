@@ -197,6 +197,7 @@ let Parts = {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('OwnPartBox'),
 				//speaker: 'PartsTone',
 				settings: () => Parts.ShowCalculatorSettings(),
 			    active_maps:"main"

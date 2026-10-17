@@ -97,6 +97,7 @@ let Calculator = {
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('CalculatorBox'),
 				settings: () => Calculator.ShowCalculatorSettings(),
 				active_maps: "main"
 			});

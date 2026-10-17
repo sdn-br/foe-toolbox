@@ -229,6 +229,9 @@ let Popup = {
 		// inline handlers (onclick="...") must run in the main window's scope
 		Popup._rebindInlineHandlers(box);
 
+		// module code that looks up its elements natively must find them in the pop-up
+		Popup._installLookupShims();
+
 		// close the window when the module removes its own box (e.g.
 		// HTML.CloseOpenBox); rebind inline handlers of re-rendered content
 		entry.observer = new MutationObserver((mutations) => {
@@ -343,6 +346,110 @@ let Popup = {
 
 
 	/**
+	 * jQuery.find before _installLookupShims replaced it, null while no shims are installed
+	 */
+	_nativeFind: null,
+
+
+	/**
+	 * Documents of all open pop-up windows
+	 *
+	 * @returns {Document[]}
+	 */
+	_documents: () => {
+		const docs = [];
+		for (const id in Popup.windows) {
+			try {
+				const win = Popup.windows[id].win;
+				if (win && !win.closed) {
+					docs.push(win.document);
+				}
+			} catch (e) { /* The pop-up is currently closing */ }
+		}
+		return docs;
+	},
+
+
+	/**
+	 * A box in a pop-up is no longer part of the game document. Let
+	 * document.getElementById/querySelector/querySelectorAll and jQuery.find
+	 * fall back to the pop-up documents when the game document has no match,
+	 * so modules that look up their elements natively keep working.
+	 * Installed with the first pop-up and removed with the last one, so the
+	 * game itself is not affected while no pop-up is open.
+	 * Adapted from Forge Hammer (js/web/popout/js/popout.js).
+	 */
+	_installLookupShims: () => {
+		if (Popup._nativeFind) return;
+
+		const nativeGetById = Document.prototype.getElementById,
+			nativeQuery = Document.prototype.querySelector,
+			nativeQueryAll = Document.prototype.querySelectorAll;
+
+		const shim = (name, value) => Object.defineProperty(document, name, {configurable: true, writable: true, value: value});
+
+		shim('getElementById', function (id) {
+			let el = nativeGetById.call(this, id);
+			for (const doc of Popup._documents()) {
+				if (el) break;
+				el = nativeGetById.call(doc, id);
+			}
+			return el;
+		});
+
+		shim('querySelector', function (selector) {
+			let el = nativeQuery.call(this, selector);
+			for (const doc of Popup._documents()) {
+				if (el) break;
+				el = nativeQuery.call(doc, selector);
+			}
+			return el;
+		});
+
+		shim('querySelectorAll', function (selector) {
+			const list = nativeQueryAll.call(this, selector);
+			if (list.length) return list;
+
+			for (const doc of Popup._documents()) {
+				const popupList = nativeQueryAll.call(doc, selector);
+				if (popupList.length) return popupList;
+			}
+			return list;
+		});
+
+		// $('#id') already goes through document.getElementById, everything else
+		// through jQuery.find(selector, document, results)
+		Popup._nativeFind = jQuery.find;
+		jQuery.find = Object.assign(function (selector, context, results, seed) {
+			const start = results ? results.length : 0,
+				found = Popup._nativeFind(selector, context, results, seed);
+
+			if (context === document && found.length === start) {
+				for (const doc of Popup._documents()) {
+					Popup._nativeFind(selector, doc, found, seed);
+				}
+			}
+			return found;
+		}, Popup._nativeFind);
+	},
+
+
+	/**
+	 * Restores the native lookups replaced by _installLookupShims
+	 */
+	_removeLookupShims: () => {
+		if (!Popup._nativeFind) return;
+
+		delete document.getElementById;
+		delete document.querySelector;
+		delete document.querySelectorAll;
+
+		jQuery.find = Popup._nativeFind;
+		Popup._nativeFind = null;
+	},
+
+
+	/**
 	 * Cleaning up when closing the pop-up: return the box to the main page,
 	 * save the window size, execute callbacks
 	 *
@@ -355,6 +462,9 @@ let Popup = {
 		if (!entry) return;
 
 		delete Popup.windows[id];
+		if (Object.keys(Popup.windows).length === 0) {
+			Popup._removeLookupShims();
+		}
 		clearInterval(entry.watchdog);
 		if (entry.observer) {
 			entry.observer.disconnect();
