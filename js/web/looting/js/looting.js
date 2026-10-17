@@ -401,10 +401,6 @@ let Looting = {
 			});
 
 			HTML.AddCssFile('looting');
-			HTML.AddCssFile('unit');
-			Unit.PrepareCoords();
-
-			$('#looting')[0].style.setProperty('--unit_scale', '5/5');
 		}
 
 		Looting.Render();
@@ -420,7 +416,7 @@ let Looting = {
 		if (Looting.loading) return;
 		change();
 		Looting.Show();
-		$('#lootingBody').animate({ scrollTop: 0 }, 'fast');
+		$('#lootingBody .action-list').animate({ scrollTop: 0 }, 'fast');
 	},
 
 
@@ -588,19 +584,19 @@ let Looting = {
 		return html`
 			<div class="dark-bg toolbox-head">
 				<div class="header">
-					<div class="strategy-points">
-						<table class="foe-table">
-							<thead>
-								<tr>${periods.map(([key]) => html`<th colspan="2"><strong>${t(key)}</strong></th>`)}</tr>
-								<tr>${periods.map(() => html`
-									<th><span class="doubleloot" title="${t('DoubleLootPartFP')}"></span></th>
-									<th><span class="forgepoints" title="${t('TotalFP')}"></span></th>`)}
-								</tr>
-							</thead>
-							<tbody>
-								<tr>${periods.map(([, sp]) => html`<td><strong>${sp.double}</strong></td><td><strong>${sp.all}</strong></td>`)}</tr>
-							</tbody>
-						</table>
+					<div class="toolbox-cards">
+						${periods.map(([key, sp]) => html`
+							<div class="toolbox-card">
+								<h4>${t(key)}</h4>
+								<div class="toolbox-card-line">
+									<span class="toolbox-card-label"><span class="toolbox-card-icon forgepoints"></span>${t('ForgePoints')}</span>
+									<span class="toolbox-card-value">${sp.all}</span>
+								</div>
+								<div class="toolbox-card-line">
+									<span class="toolbox-card-label"><span class="toolbox-card-icon doubleloot"></span>${t('DoubleLootPartFP')}</span>
+									<span class="toolbox-card-value">${sp.double}</span>
+								</div>
+							</div>`)}
 					</div>
 					<div class="filter">
 						<div class="filterd-by"><b>${t('filteredByUser')}:</b><br>
@@ -621,7 +617,9 @@ let Looting = {
 					</div>
 				</div>
 			</div>
-			${vm.actions.length === 0 ? html`<div class="no-data"> - ${t('noData')} - </div>` : vm.actions.map(Looting.viewAction)}
+			<div class="action-list">
+				${vm.actions.length === 0 ? html`<div class="no-data"> - ${t('noData')} - </div>` : vm.actions.map(Looting.viewAction)}
+			</div>
 			<div class="pagination">
 				${vm.page > 1 ? html`<button class="btn load-1st-page" @click=${() => Looting.Reload(() => Looting.page = 1)}>${t('goto1stPage')}</button>` : ''}
 				${t('Page')} ${vm.page}/${vm.pages}
@@ -791,14 +789,24 @@ let Looting = {
 			defBoost = unit.defBoost || 0,
 			type = (Unit.Types || []).find(obj => obj['unitTypeId'] === unit.unitTypeId) || { name: unit.unitTypeId, unitClass: '' },
 			era = Technologies.Eras[type.minEra],
-			eraText = (era !== undefined ? ` (${i18n('Eras.' + era)})` : '');
+			eraText = (era !== undefined ? ` (${i18n('Eras.' + era)})` : ''),
+			// short era below the unit, coloured against the own era: older, same or newer
+			hasEra = (era !== undefined && era > 0),
+			eraShortKey = 'Boxes.Looting.EraShort.' + type.minEra,
+			eraShort = !hasEra ? '–' : (i18n(eraShortKey) !== eraShortKey ? i18n(eraShortKey) : i18n('Eras.' + era)),
+			ownEra = Technologies.Eras[CurrentEra],
+			eraClass = (!hasEra || ownEra === undefined ? 'none' : era < ownEra ? 'older' : era === ownEra ? 'same' : 'newer');
 
 		return html`
 			<div class="unit" title="${t('Unit')}: ${type.name}${eraText}, HP: ${endHP}/${startHP}, ${t('Attack')}: ${attBoost}, ${t('Defense')}: ${defBoost}">
-				<div class="unit_icon ${unit.unitTypeId} unit_skill ${type.unitClass}"></div>
+				<div class="unit-portrait">
+					<img src="${srcLinks.get(`/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_${unit.unitTypeId}.jpg`, true, true)}" alt="">
+					<span class="unit_skill ${type.unitClass}"></span>
+				</div>
 				<div class="health">
 					<span style="width: ${healthPerc}%"></span>
 				</div>
+				<div class="unit-era ${eraClass}">${eraShort}</div>
 				${showDetails ? html`
 					<div class="stats">
 						<div class="${!endHP ? 'text-danger' : ''}">${endHP}/${startHP}</div>

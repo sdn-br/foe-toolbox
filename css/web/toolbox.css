@@ -12,6 +12,61 @@
 	padding: 5px 0 3px;
 }
 
+/* side by side info cards with a title and label/value lines (city information, PvP attacks) */
+.window-body .toolbox-cards {
+	display: flex;
+	gap: 8px;
+	margin: 5px 5px 0;
+}
+
+.window-body .toolbox-card {
+	flex: 1;
+	border: 1px solid var(--text-dark);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.window-body .toolbox-card h4 {
+	margin: 0;
+	padding: 3px 0;
+	font-size: 100%;
+	font-weight: bold;
+	text-align: center;
+	background: var(--black-30);
+	color: var(--beige);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.window-body .toolbox-card-line {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 4px 8px;
+	border-top: 1px solid var(--black-30);
+	text-align: left;
+}
+
+.window-body .toolbox-card-label {
+	color: var(--dark-beige);
+}
+
+.window-body .toolbox-card-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 3px;
+}
+
+.window-body .toolbox-card-value {
+	font-weight: bold;
+	font-size: 110%;
+	color: var(--beige);
+}
+
+.window-body .toolbox-card-sub {
+	color: var(--text-medium);
+}
+
 /* menu icons */
 [id$=sabotage-Btn] span {
 	background-image: url('../images/menu/sabotage.png');
