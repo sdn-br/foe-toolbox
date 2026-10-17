@@ -102,7 +102,10 @@ let Sabotage = {
 		Sabotage.ClanId = Player['ClanId'];
 		Sabotage.PlayerEra = Player['Era'] || dp.other_player.era || dp.other_player_era;
 
-		$('#sabotageInfo').remove();
+		// a popped-out box is re-rendered in place, removing it would close its pop-up window
+		if (!Popup.IsOpen('sabotageInfo')) {
+			$('#sabotageInfo').remove();
+		}
 
 		// the building rating (part of createBuilding) reads the era of the visited city
 		if (ActiveMap === 'OtherPlayer' && !CityMap.OtherPlayer.eraName && Sabotage.PlayerEra) {
