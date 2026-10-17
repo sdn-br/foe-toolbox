@@ -342,6 +342,17 @@ let Sabotage = {
 		const productionLine = (l) => l.strong ? html`<strong>${l.amount} ${l.name}</strong>`
 			: html`${l.amount} ${l.name}${l.stock !== undefined ? ` (${l.stock ? HTML.Format(l.stock) : 0})` : ''}`;
 
+		// one box per army, a line per boost: [icon class, label key, value, max value]
+		const armyCard = (titleKey, lines) => html`
+			<div class="army-card">
+				<h4>${t(titleKey)}</h4>
+				${lines.map(([icon, labelKey, value, max]) => html`
+					<div class="army-line">
+						<span class="army-label"><span class="resicon ${icon}"></span>${t(labelKey)}</span>
+						<span class="text-right"><span class="boost-value">${fmt(value)}%</span>${max !== undefined ? html`<br><small class="boost-max">max ${fmt(max)}%</small>` : ''}</span>
+					</div>`)}
+			</div>`;
+
 		const productionRow = (entry) => html`
 			<tr class="${p.notLootable ? 'bg-red' : 'success'}">
 				<td class="${p.notLootable ? 'error' : ''} ${entry.isImportant ? '' : 'unimportant'}">${entry.name}</td>
@@ -361,22 +372,17 @@ let Sabotage = {
 					${vm.showLoot ? html`<span class="btn button-showloot" @click=${() => Sabotage.ShowLoot(vm.playerId)}>${t('ShowLoot')}</span>` : ''}
 				</p>` : ''}
 				${!b ? '' : html`
-					<table id="attdeftab"><tbody>
-						<tr>
-							<td colspan="2" class="text-center army"><strong>${t('AttackingArmy')}</strong></td>
-							<td colspan="3" class="text-center army"><strong>${t('DefendingArmy')}</strong></td>
-						</tr>
-						<tr>
-							${['Attack', 'Defense', 'Attack', 'Defense', 'PlunderRepel'].map(k => html`<td class="text-center army"><strong>${t(k)}</strong></td>`)}
-						</tr>
-						<tr>
-							<td class="text-center army-boost"><strong>${fmt(b.AttackAttackBoost)}% (max ${fmt(b.AttackAttackBoost + 50)}%)</strong></td>
-							<td class="text-center army-boost"><strong>${fmt(b.AttackDefenseBoost)}%</strong></td>
-							<td class="text-center army-boost"><strong>${fmt(b.DefenseAttackBoost)}%</strong></td>
-							<td class="text-center army-boost"><strong>${fmt(b.DefenseDefenseBoost)}% (max ${fmt(b.DefenseDefenseBoost + 60)}%)</strong></td>
-							<td class="text-center army-boost"><strong>${fmt(b.PlunderRepel)}%</strong></td>
-						</tr>
-					</tbody></table>`}
+					<div class="army-cards">
+						${armyCard('AttackingArmy', [
+							['att_boost_attacker-all', 'Attack', b.AttackAttackBoost, b.AttackAttackBoost + 50],
+							['def_boost_attacker-all', 'Defense', b.AttackDefenseBoost],
+						])}
+						${armyCard('DefendingArmy', [
+							['att_boost_defender-all', 'Attack', b.DefenseAttackBoost],
+							['def_boost_defender-all', 'Defense', b.DefenseDefenseBoost, b.DefenseDefenseBoost + 60],
+						])}
+					</div>
+					<p class="plunder-repel">${t('PlunderRepel')}: <span class="boost-value">${fmt(b.PlunderRepel)}%</span></p>`}
 			</div>
 			${!p ? '' : html`
 				<table class="foe-table">

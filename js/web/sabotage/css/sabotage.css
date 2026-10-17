@@ -44,19 +44,64 @@
 	margin: 0 10px;
 }
 
-#sabotageInfo #sabotageInfoBody .army,
-#sabotageInfo #sabotageInfoBody .army-boost,
 #sabotageInfo #sabotageInfoBody .production-headline {
 	color: var(--beige);
 }
 
-#sabotageInfo #sabotageInfoBody #attdeftab {
-	width: 100%;
-	margin-bottom: 5px;
+#sabotageInfo #sabotageInfoBody .army-cards {
+	display: flex;
+	gap: 8px;
+	margin: 5px 5px 0;
 }
 
-#sabotageInfo #sabotageInfoBody #attdeftab td {
-	padding: 0 1px;
+#sabotageInfo #sabotageInfoBody .army-card {
+	flex: 1;
+	border: 1px solid var(--text-dark);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+#sabotageInfo #sabotageInfoBody .army-card h4 {
+	margin: 0;
+	padding: 3px 0;
+	font-size: 100%;
+	background: var(--black-30);
+	color: var(--beige);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+#sabotageInfo #sabotageInfoBody .army-line {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 4px 8px;
+	border-top: 1px solid var(--black-30);
+	text-align: left;
+}
+
+#sabotageInfo #sabotageInfoBody .army-label {
+	color: var(--dark-beige);
+}
+
+#sabotageInfo #sabotageInfoBody .army-label .resicon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 3px;
+}
+
+#sabotageInfo #sabotageInfoBody .boost-value {
+	font-weight: bold;
+	font-size: 110%;
+	color: var(--beige);
+}
+
+#sabotageInfo #sabotageInfoBody .boost-max {
+	color: var(--text-medium);
+}
+
+#sabotageInfo #sabotageInfoBody p.plunder-repel {
+	margin: 6px 0 5px;
 }
 
 #sabotageInfo #sabotageInfoBody .foe-table {
