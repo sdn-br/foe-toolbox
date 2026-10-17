@@ -588,6 +588,13 @@ let HTML = {
 
 		box.append(grip);
 
+		// Toolbox: the minimum size follows the CSS of the box (min-width -> minWidth, min-height -> minHeight),
+		// otherwise the grip can make a box smaller than its CSS allows. Only px values, else the defaults.
+		const cssMinSize = (prop, fallback) => {
+			const value = box.css(prop);
+			return (typeof value === 'string' && /^\d+(\.\d+)?px$/.test(value) && parseFloat(value) > 0) ? parseFloat(value) : fallback;
+		};
+
 		const options = {
 			handles: {
 				ne: '.window-grippy',
@@ -595,8 +602,8 @@ let HTML = {
 				sw: '.window-grippy',
 				nw: '.window-grippy'
 			},
-			minHeight: 100,
-			minWidth: 220,
+			minHeight: cssMinSize('min-height', 100),
+			minWidth: cssMinSize('min-width', 220),
 			stop: (e, $el) => {
 				let w = $el.element.width(),
 					h = $el.element.height();
