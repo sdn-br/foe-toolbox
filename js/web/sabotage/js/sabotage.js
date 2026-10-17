@@ -65,6 +65,9 @@ let Sabotage = {
 	IsLootable: false,
 	IsSabotageable: false,
 
+	/** players with an alarm set in this session */
+	AlertsSet: new Set(),
+
 
 	/**
 	 * Reads the interaction state of the visited player
@@ -191,7 +194,7 @@ let Sabotage = {
 		if (!ProductionList || Building.state.name === 'idle') return;
 
 		const BaseWeightFactor = 1000000000;
-		let g = [],
+		let lines = [],
 			IsImportant = false,
 			WeightedAmount = 0;
 
@@ -202,11 +205,11 @@ let Sabotage = {
 				for (let k of Object.keys(Resources)) {
 					let Amount = Resources[k],
 						WeightFactor = 1,
-						Name = GoodsData[k]?.name || k;
+						Unimportant = Sabotage.UnimportantProds.includes(k);
 
 					if (typeof Amount !== 'number') continue;
 
-					if (!Sabotage.UnimportantProds.includes(k)) {
+					if (!Unimportant) {
 						IsImportant = true;
 					}
 					else {
@@ -216,32 +219,27 @@ let Sabotage = {
 
 					WeightedAmount += Amount * WeightFactor;
 
-					if (k === 'strategy_points') {
-						g.push('<strong>' + Amount + ' ' + Name + '</strong>');
-					}
-					else if (!Sabotage.UnimportantProds.includes(k)) {
-						g.push(Amount + ' ' + Name + ' (' + (ResourceStock[k] ? HTML.Format(ResourceStock[k]) : 0) + ')');
-					}
-					else {
-						g.push(Amount + ' ' + Name);
-					}
+					lines.push({
+						amount: Amount,
+						name: GoodsData[k]?.name || k,
+						strong: (k === 'strategy_points'),
+						// own stock, shown for goods worth plundering
+						stock: (k !== 'strategy_points' && !Unimportant ? (ResourceStock[k] || 0) : undefined),
+					});
 				}
 			}
 			// Hall of Fame and similar
 			else if (Production.type === 'guildResources' && Resources['clan_power'] !== undefined) {
 				IsImportant = true;
-				g.push(Resources['clan_power'] + ' ' + i18n('Boxes.Neighbors.GuildPower'));
+				lines.push({ amount: Resources['clan_power'], name: i18n('Boxes.Neighbors.GuildPower') });
 			}
 		}
 
-		if (g.length === 0) return;
-
-		let Name = MainParser.CityEntities[Entity['cityentity_id']]['name'],
-			Amount = g.join('<br>');
+		if (lines.length === 0) return;
 
 		let entry = {
-			name: (IsImportant ? Name : '<span style="color:grey;">' + Name + '</span>'),
-			amount: (IsImportant ? Amount : '<span style="color:grey;">' + Amount + '</span>'),
+			name: MainParser.CityEntities[Entity['cityentity_id']]['name'],
+			lines: lines,
 			weightedAmount: WeightedAmount,
 			state: (Building.state.name === 'collectable'),
 			id: Entity['id'],
@@ -258,11 +256,9 @@ let Sabotage = {
 
 
 	/**
-	 * Shows the box
+	 * Shows the box: data and markup are separate steps, getViewModel collects, view renders
 	 */
 	showResult: async () => {
-		let rd = helper.arr.multisort(Sabotage.data.ready, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']);
-
 		if ($('#sabotageInfo').length === 0) {
 			HTML.Box({
 				id: 'sabotageInfo',
@@ -274,145 +270,129 @@ let Sabotage = {
 			});
 
 			HTML.AddCssFile('sabotage');
-
-			// delegated once on the box, only the body content is replaced on render
-			const box = $('#sabotageInfo');
-			box.on('click', '#sabotageInfoBody .show-entity', function () {
-				Sabotage.ShowFunction($(this).data('id'));
-			});
-			box.on('click', '#sabotageInfoBody .button-showcity', function () {
-				Sabotage.ShowFunction();
-			});
-			box.on('click', '#sabotageInfoBody .button-showloot', function () {
-				Looting.filterByPlayerId = Sabotage.PlayerId;
-				Looting.page = 1;
-				Looting.Show();
-			});
 		}
 
-		let div = $('#sabotageInfo'),
-			h = [];
-		const boosts = Sabotage.ArmyBoosts;
+		let vm = await Sabotage.getViewModel(),
+			div = $('#sabotageInfo');
 
-		h.push('<div class="text-center dark-bg" style="padding:5px 0 3px;">');
-		h.push('<p class="header"><strong>');
-		h.push('<span class="player-name">' + MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName));
+		// lit-html updates only what changed, the body element keeps its state across renders and pop-out moves
+		litHtml.render(Sabotage.view(vm), div.find('#sabotageInfoBody')[0]);
+		div.show();
+	},
 
-		if (Sabotage.ClanName) {
-			h.push(`<br>[${MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName)}]`);
-		}
 
-		h.push('</span>');
-		h.push('</strong></p>');
-		if (Sabotage.PlayerEra && Technologies.Eras[Sabotage.PlayerEra] !== undefined) {
-			h.push(`<p><strong>${i18n('Boxes.Sabotage.PlayerEra')}: ${i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra])}</strong></p>`);
-		}
-
-		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId);
-		let isShielded = (shieldTime !== undefined);
+	/**
+	 * Everything the box shows, as plain data
+	 *
+	 * @returns {Promise<Object>}
+	 */
+	getViewModel: async () => {
+		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId),
+			isShielded = (shieldTime !== undefined),
+			showCity = (ActiveMap === 'OtherPlayer' && LastMapPlayerID === Sabotage.PlayerId),
+			attack;
 
 		if ((!Sabotage.IsLootable || isShielded || Sabotage.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables')) {
 			if (Sabotage.IsGuildMember || Sabotage.IsFriend || !Sabotage.IsNeighbor) {
-				let MsgType = (Sabotage.IsGuildMember ? 'NoAttackGuildMember' : (Sabotage.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'));
-				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.' + MsgType)}</strong></p>`);
+				attack = { blocked: (Sabotage.IsGuildMember ? 'NoAttackGuildMember' : (Sabotage.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor')) };
 			}
 			else {
-				let nextInteractionTime,
-					textClass,
-					i18nId;
-
 				// getCurrentDateTime is in milliseconds
 				let nextAttackTime = moment(MainParser.getCurrentDateTime()).add(Sabotage.OtherPlayer.next_interaction_in || 0, 'seconds');
-				let alertAvailable = (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
-				let buttonI18nId = (!alertAvailable ? 'Boxes.Sabotage.SetAlarm' : 'Boxes.Sabotage.AlreadySetAlarm');
 
-				if (Sabotage.IsSabotageable) {
-					textClass = 'success';
-					i18nId = 'Boxes.Sabotage.CanSabotage';
-					nextInteractionTime = nextAttackTime;
-				}
-				else if (isShielded) {
-					textClass = 'error';
-					i18nId = 'Boxes.Sabotage.NextAttackTimeInfoShielded';
-					nextInteractionTime = shieldTime;
-				}
-				else {
-					textClass = 'error';
-					i18nId = 'Boxes.Sabotage.NextAttackTimeInfo';
-					nextInteractionTime = nextAttackTime;
-				}
+				attack = Sabotage.IsSabotageable ? { textClass: 'success', i18nId: 'CanSabotage', time: nextAttackTime }
+					: isShielded ? { textClass: 'error', i18nId: 'NextAttackTimeInfoShielded', time: shieldTime }
+					: { textClass: 'error', i18nId: 'NextAttackTimeInfo', time: nextAttackTime };
 
-				let buttonAction = (!alertAvailable ? ` onclick="Sabotage.SetAlert(${Sabotage.PlayerId}, ${nextInteractionTime.unix()})"` : '');
-
-				h.push(`<p class="${textClass}"><strong>${HTML.i18nReplacer(i18n(i18nId), {
-					nextattacktime: nextInteractionTime.format('DD.MM.YYYY HH:mm:ss')
-				})}</strong> <button${alertAvailable ? ' disabled' : ''} class="btn btn-sabotage-alarm" id="alert-sabotage-${Sabotage.PlayerId}"${buttonAction}>${i18n(buttonI18nId)}</button></p>`);
+				attack.alertSet = Sabotage.AlertsSet.has(Sabotage.PlayerId) || (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
 			}
 		}
 
-		let ShowCity = (ActiveMap === 'OtherPlayer' && LastMapPlayerID === Sabotage.PlayerId),
-			ShowLoot = (!Sabotage.IsGuildMember && typeof Looting !== 'undefined');
+		return {
+			playerId: Sabotage.PlayerId,
+			playerLink: MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName),
+			guildLink: (Sabotage.ClanName ? MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName) : undefined),
+			era: (Sabotage.PlayerEra && Technologies.Eras[Sabotage.PlayerEra] !== undefined ? i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra]) : undefined),
+			attack: attack,
+			showCity: showCity,
+			showLoot: (!Sabotage.IsGuildMember && typeof Looting !== 'undefined'),
+			boosts: (Settings.GetSetting('ShowPlayersAttDeffValues') ? Object.assign({ PlunderRepel: Sabotage.PlunderRepel }, Sabotage.ArmyBoosts) : undefined),
+			productions: (Settings.GetSetting('ShowNeighborsLootables') ? {
+				notLootable: (!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded)),
+				ready: helper.arr.multisort(Sabotage.data.ready, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']),
+			} : undefined),
+		};
+	},
 
-		if (ShowCity || ShowLoot) {
-			h.push('<p>');
-			if (ShowCity) h.push(`<span class="btn button-showcity">${i18n('Boxes.Sabotage.ShowCity')}</span>`);
-			if (ShowLoot) h.push(`<span class="btn button-showloot">${i18n('Boxes.Sabotage.ShowLoot')}</span>`);
-			h.push('</p>');
-		}
 
-		if (Settings.GetSetting('ShowPlayersAttDeffValues')) {
-			let fmt = (v) => Math.round(v * 100) / 100;
+	/**
+	 * Markup of the box body, a pure function of the view model
+	 *
+	 * @param vm result of getViewModel
+	 * @returns {TemplateResult}
+	 */
+	view: (vm) => {
+		const { html, unsafeHTML } = litHtml,
+			t = (key) => i18n('Boxes.Sabotage.' + key),
+			fmt = (v) => Math.round(v * 100) / 100,
+			a = vm.attack,
+			b = vm.boosts,
+			p = vm.productions;
 
-			h.push('<table id="attdeftab"><tbody><tr>');
-			h.push(`<td colspan="2" class="text-center army"><strong>${i18n('Boxes.Sabotage.AttackingArmy')}</strong></td>`);
-			h.push(`<td colspan="3" class="text-center army"><strong>${i18n('Boxes.Sabotage.DefendingArmy')}</strong></td>`);
-			h.push('</tr><tr>');
-			h.push(`<td class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></td>`);
-			h.push(`<td class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></td>`);
-			h.push(`<td class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></td>`);
-			h.push(`<td class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></td>`);
-			h.push(`<td class="text-center army"><strong>${i18n('Boxes.Sabotage.PlunderRepel')}</strong></td>`);
-			h.push('</tr><tr>');
-			h.push(`<td class="text-center army-boost"><strong>${fmt(boosts.AttackAttackBoost)}% (max ${fmt(boosts.AttackAttackBoost + 50)}%)</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${fmt(boosts.AttackDefenseBoost)}%</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${fmt(boosts.DefenseAttackBoost)}%</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${fmt(boosts.DefenseDefenseBoost)}% (max ${fmt(boosts.DefenseDefenseBoost + 60)}%)</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${fmt(Sabotage.PlunderRepel)}%</strong></td>`);
-			h.push('</tr></tbody></table>');
-		}
-		h.push('</div>');
+		const productionLine = (l) => l.strong ? html`<strong>${l.amount} ${l.name}</strong>`
+			: html`${l.amount} ${l.name}${l.stock !== undefined ? ` (${l.stock ? HTML.Format(l.stock) : 0})` : ''}`;
 
-		if (Settings.GetSetting('ShowNeighborsLootables')) {
-			let NotLootable = (!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded));
+		const productionRow = (entry) => html`
+			<tr class="${p.notLootable ? 'bg-red' : 'success'}">
+				<td class="${p.notLootable ? 'error' : ''} ${entry.isImportant ? '' : 'unimportant'}">${entry.name}</td>
+				<td class="${p.notLootable ? 'error' : ''} ${entry.isImportant ? '' : 'unimportant'}">${entry.lines.map((l, i) => html`${i > 0 ? html`<br>` : ''}${productionLine(l)}`)}</td>
+				<td>${vm.showCity ? html`<span class="show-entity game-cursor" @click=${() => Sabotage.ShowFunction(entry.id)}><img src="${extUrl}css/images/hud/open-eye.png"></span>` : ''}</td>
+			</tr>`;
 
-			h.push('<table class="foe-table">');
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push(`<th${rd.length > 0 ? ' colspan="3"' : ''} class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th>`);
-			h.push('</tr>');
-			h.push('</thead>');
-			h.push('<tbody>');
+		return html`
+			<div class="text-center dark-bg toolbox-head">
+				<p class="header"><strong><span class="player-name">${unsafeHTML(vm.playerLink)}${vm.guildLink ? html`<br>[${unsafeHTML(vm.guildLink)}]` : ''}</span></strong></p>
+				${vm.era ? html`<p><strong>${t('PlayerEra')}: ${vm.era}</strong></p>` : ''}
+				${!a ? '' : a.blocked ? html`<p class="error"><strong>${t(a.blocked)}</strong></p>` : html`
+					<p class="${a.textClass}"><strong>${HTML.i18nReplacer(t(a.i18nId), { nextattacktime: a.time.format('DD.MM.YYYY HH:mm:ss') })}</strong>
+						<button class="btn btn-sabotage-alarm" ?disabled=${a.alertSet} @click=${() => Sabotage.SetAlert(vm.playerId, a.time.unix())}>${t(a.alertSet ? 'AlreadySetAlarm' : 'SetAlarm')}</button></p>`}
+				${vm.showCity || vm.showLoot ? html`<p>
+					${vm.showCity ? html`<span class="btn button-showcity" @click=${() => Sabotage.ShowFunction()}>${t('ShowCity')}</span>` : ''}
+					${vm.showLoot ? html`<span class="btn button-showloot" @click=${() => Sabotage.ShowLoot(vm.playerId)}>${t('ShowLoot')}</span>` : ''}
+				</p>` : ''}
+				${!b ? '' : html`
+					<table id="attdeftab"><tbody>
+						<tr>
+							<td colspan="2" class="text-center army"><strong>${t('AttackingArmy')}</strong></td>
+							<td colspan="3" class="text-center army"><strong>${t('DefendingArmy')}</strong></td>
+						</tr>
+						<tr>
+							${['Attack', 'Defense', 'Attack', 'Defense', 'PlunderRepel'].map(k => html`<td class="text-center army"><strong>${t(k)}</strong></td>`)}
+						</tr>
+						<tr>
+							<td class="text-center army-boost"><strong>${fmt(b.AttackAttackBoost)}% (max ${fmt(b.AttackAttackBoost + 50)}%)</strong></td>
+							<td class="text-center army-boost"><strong>${fmt(b.AttackDefenseBoost)}%</strong></td>
+							<td class="text-center army-boost"><strong>${fmt(b.DefenseAttackBoost)}%</strong></td>
+							<td class="text-center army-boost"><strong>${fmt(b.DefenseDefenseBoost)}% (max ${fmt(b.DefenseDefenseBoost + 60)}%)</strong></td>
+							<td class="text-center army-boost"><strong>${fmt(b.PlunderRepel)}%</strong></td>
+						</tr>
+					</tbody></table>`}
+			</div>
+			${!p ? '' : html`
+				<table class="foe-table">
+					<thead><tr><th colspan="${p.ready.length > 0 ? 3 : 1}" class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th></tr></thead>
+					<tbody>
+						${p.ready.length > 0 ? p.ready.map(productionRow) : html`
+							<tr class="${p.notLootable ? 'bg-red' : ''}"><td class="text-center">${t('NoProductionsAvailable')}</td></tr>`}
+					</tbody>
+				</table>`}`;
+	},
 
-			for (let entry of rd) {
-				h.push(`<tr class="${NotLootable ? 'bg-red' : 'success'}">`);
-				h.push(`<td${NotLootable ? ' class="error"' : ''}>${entry['name']}</td>`);
-				h.push(`<td${NotLootable ? ' class="error"' : ''}>${entry['amount']}</td>`);
-				h.push(ShowCity ? `<td><span class="show-entity game-cursor" data-id="${entry['id']}"><img src="${extUrl}css/images/hud/open-eye.png"></span></td>` : '<td></td>');
-				h.push('</tr>');
-			}
 
-			if (rd.length === 0) {
-				h.push(`<tr class="${NotLootable ? 'bg-red' : ''}">`);
-				h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
-				h.push('</tr>');
-			}
-
-			h.push('</tbody>');
-			h.push('</table>');
-		}
-
-		div.find('#sabotageInfoBody').html(h.join(''));
-		div.show();
+	ShowLoot: (PlayerId) => {
+		Looting.filterByPlayerId = PlayerId;
+		Looting.page = 1;
+		Looting.Show();
 	},
 
 
@@ -529,9 +509,9 @@ let Sabotage = {
 			hideAfter: 5000
 		});
 
-		let btn = $(`#alert-sabotage-${PlayerId}`);
-		btn.html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
-		btn.prop('onclick', null).off('click');
-		btn.attr('disabled', '');
+		Sabotage.AlertsSet.add(PlayerId);
+		if ($('#sabotageInfo').is(':visible')) {
+			Sabotage.showResult();
+		}
 	},
 };
