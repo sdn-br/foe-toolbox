@@ -52,8 +52,23 @@
 	white-space: nowrap;
 }
 
-#toolboxNotesBody .tabs ul.horizontal {
-	padding-left: 120px;
+/* "+" behind the last group tab, like a new tab button in a browser */
+#toolboxNotesBody .tabs ul.horizontal .notes-add-grp {
+	display: inline-block;
+	width: 26px;
+	line-height: 26px;
+	margin-left: 2px;
+	text-align: center;
+	vertical-align: bottom;
+	font-size: 18px;
+	color: var(--text-tab);
+	border-radius: 4px 4px 0 0;
+	cursor: pointer;
+}
+
+#toolboxNotesBody .tabs ul.horizontal .notes-add-grp:hover {
+	color: var(--text-tab-active);
+	background: var(--black-30);
 }
 
 #toolboxNotesBody .toolboxNotes ul.vertical {
