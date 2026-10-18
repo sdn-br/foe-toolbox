@@ -202,14 +202,15 @@ Notice.Store = {
 
 
 	/**
-	 * Import button in the edit mode, only with GlobalSend and an API token
+	 * Import button in the edit mode, only with an API token
 	 */
 	/**
-	 * The import needs GlobalSend and an API token of the FoE Helfer server
+	 * The import needs an API token of the FoE Helfer server. It is an explicit, confirmed
+	 * user action (like the city planner), so it does not depend on GlobalSend.
 	 *
 	 * @returns {boolean}
 	 */
-	CanImport: () => MainParser.IsGlobalSendEnabled() && !!localStorage.getItem('ApiToken'),
+	CanImport: () => !!localStorage.getItem('ApiToken'),
 
 
 	BuildImportButton: () => {
@@ -269,7 +270,7 @@ Notice.Store = {
 
 		$('#notices-modalBody .btn').remove();
 
-		if (!MainParser.IsGlobalSendEnabled() || !apiToken) {
+		if (!apiToken) {
 			Notice.Store.ImportFailed(i18n('Boxes.Notice.ImportNotPossible'));
 			return;
 		}
@@ -311,7 +312,7 @@ Notice.Store = {
 					show: true,
 				});
 			}
-		}, (msg) => Notice.Store.ImportFailed(msg));
+		}, (msg) => Notice.Store.ImportFailed(msg), true);
 	},
 
 
