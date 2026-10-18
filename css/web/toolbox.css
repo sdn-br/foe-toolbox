@@ -140,14 +140,15 @@
 	font-style: italic;
 }
 
-/* tooltip of the note tabs (customTooltip, #TooltipContainer also exists in pop-out windows) */
-#TooltipContainer .notes-tt {
+/* toolbox tooltips (customTooltip via ToolboxTT, #TooltipContainer also exists in pop-out windows) */
+#TooltipContainer .toolbox-tt {
 	font-size: 12px;
 	font-weight: normal;
 	line-height: 1.3;
+	white-space: pre-line;
 }
 
-#TooltipContainer .notes-tt small {
+#TooltipContainer .toolbox-tt small {
 	display: block;
 	font-size: 11px;
 	color: var(--text-medium);
