@@ -12,14 +12,23 @@
  */
 
 #toolboxNotes {
-	left: calc(50% - 200px);
+	left: calc(50% - 310px);
 	top: 30%;
-	min-width: 500px;
+	min-width: 620px;
 }
 
 #toolboxNotesBody {
 	min-height: 200px;
-	min-width: 500px;
+	min-width: 620px;
+}
+
+/* wider page list than the Helfer default (120px), names are cut later */
+#toolboxNotesBody .tabs ul.vertical {
+	width: 160px;
+}
+
+#toolboxNotesBody .tabs .sub-tab {
+	margin-left: 160px;
 }
 
 .window-body .toolboxNotes {
@@ -34,7 +43,7 @@
 	left: 0;
 	z-index: 10;
 	box-sizing: border-box;
-	width: 120px;
+	width: 160px;
 	margin: 0;
 	padding: 0 8px;
 	line-height: 30px;
@@ -70,7 +79,18 @@
 	flex-wrap: nowrap;
 	overflow-x: auto;
 	overflow-y: hidden;
-	scrollbar-width: thin;
+	/* no visible scrollbar, it covered the tabs; the wheel scrolls (Notes.EnableTabScrolling) */
+	scrollbar-width: none;
+	margin-right: 34px;
+}
+
+#toolboxNotesBody .tabs ul.horizontal::-webkit-scrollbar {
+	display: none;
+}
+
+#toolboxNotesBody .tabs ul.horizontal.notes-tabs-more {
+	-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
 }
 
 #toolboxNotesBody .tabs ul.horizontal li {
@@ -93,25 +113,20 @@
 }
 
 /* "+" behind the last group tab, like a new tab button in a browser */
-#toolboxNotesBody .tabs ul.horizontal .notes-add-grp {
-	position: sticky;
-	right: 0;
-	z-index: 30;
-	flex: none;
-	align-self: stretch;
+#toolboxNotesBody .toolboxNotes > .notes-add-grp {
+	position: absolute;
+	top: 5px;
+	right: 2px;
 	width: 30px;
 	line-height: 34px;
 	text-align: center;
-	/* the row's own background covers the tabs scrolled below it, the shadow hints at them */
-	background: inherit;
-	box-shadow: -10px 0 8px -6px rgba(0, 0, 0, 0.8);
 	font-size: 18px;
 	color: var(--text-tab);
 	border-radius: 4px 4px 0 0;
 	cursor: pointer;
 }
 
-#toolboxNotesBody .tabs ul.horizontal .notes-add-grp:hover {
+#toolboxNotesBody .toolboxNotes > .notes-add-grp:hover {
 	color: var(--text-tab-active);
 }
 

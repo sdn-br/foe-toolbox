@@ -194,8 +194,9 @@ let Notes = {
 
 			content = `<div class='tabs toolboxNotes'>`;
 
-			// "+" behind the last tab like in a browser. A span, not a li: Tabslet and the sorting only see li
-			content += `<ul class='horizontal dark-bg'>${tab.join('')}<span class="notes-add-grp fh-tooltip" role="button" ${ToolboxTT.attrs(i18n('Boxes.Notes.NewGroupHint'))}>+</span></ul>`;
+			// "+" right of the tabs like in a browser, outside the scrolling tab row so it never covers a tab.
+			// A span, not a div: Tabslet treats every direct div as a page
+			content += `<ul class='horizontal dark-bg'>${tab.join('')}</ul><span class="notes-add-grp fh-tooltip" role="button" ${ToolboxTT.attrs(i18n('Boxes.Notes.NewGroupHint'))}>+</span>`;
 			content += 		div.join('');
 			content += `</div>`;
 
@@ -203,7 +204,7 @@ let Notes = {
 
 		// no groups (the players group is created on opening, so only before the db is ready)
 		else {
-			content = `<div class='tabs toolboxNotes'><ul class='horizontal dark-bg'><span class="notes-add-grp" role="button">+</span></ul></div>`;
+			content = `<div class='tabs toolboxNotes'><ul class='horizontal dark-bg'></ul><span class="notes-add-grp" role="button">+</span></div>`;
 		}
 
 
@@ -250,6 +251,7 @@ let Notes = {
 			}
 
 			Notes.EnableSorting();
+			Notes.EnableTabScrolling();
 
 			// a page created in place continues in its text
 			if (Notes.FocusText) {
@@ -374,7 +376,7 @@ let Notes = {
 			return;
 		}
 
-		const li = $('<li class="notes-fixed notes-new" />').insertBefore(ul.children('.notes-add-grp'));
+		const li = $('<li class="notes-fixed notes-new" />').appendTo(ul);
 
 		Notes.EditNewName(li, i18n('Boxes.Notes.GroupName'), (name) => {
 			Notes.Store.send({id: 'new', type: 'grp', name: name}, 'Notes/set', (resp)=>{
@@ -390,6 +392,7 @@ let Notes = {
 		});
 
 		ul.scrollLeft(ul[0].scrollWidth);
+		ul.removeClass('notes-tabs-more');
 	},
 
 
@@ -719,6 +722,36 @@ let Notes = {
 				Notes.ActiveSubTab = $(this).children('li').index($(this).children('li.active')) + 1;
 			}
 		});
+	},
+
+
+	/**
+	 * The tab row has no visible scrollbar (it covered the tabs), the mouse wheel scrolls it
+	 * sideways like browser tab strips, and the open tab is scrolled into view.
+	 */
+	EnableTabScrolling: ()=> {
+		const ul = $('#toolboxNotesBody ul.horizontal'),
+			// fade out the right edge while more tabs follow, instead of a hard cut
+			markMore = () => ul.each(function(){ $(this).toggleClass('notes-tabs-more', this.scrollLeft + this.clientWidth < this.scrollWidth - 1); });
+
+		ul.off('scroll.notes').on('scroll.notes', markMore);
+
+		ul.off('wheel.notes').on('wheel.notes', function(e){
+			const ev = e.originalEvent,
+				delta = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+
+			if (this.scrollWidth <= this.clientWidth || delta === 0) return;
+
+			this.scrollLeft += delta;
+			e.preventDefault();
+		});
+
+		const active = ul.children('li.active')[0];
+		if (active) {
+			active.scrollIntoView({block: 'nearest', inline: 'nearest'});
+		}
+
+		markMore();
 	},
 
 
