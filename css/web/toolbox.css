@@ -112,11 +112,6 @@
 	margin: 0 0 6px 125px;
 }
 
-/* the "+ player" button is absolute without a top and would land below the filter bar */
-#toolboxNotesBody .tabs-sub > .itm-btn {
-	top: 0;
-}
-
 #toolboxNotesBody .player-filter-chip,
 #toolboxNotes-modal-players .player-filter-chip {
 	padding: 1px 8px;

@@ -121,8 +121,7 @@ Notes.Store = {
 
 		if (data.type === 'grp') {
 			if (isNew) {
-				// an empty sort field means "append", which is also what SaveModal assumes when it
-				// selects the last tab; Number('') would be 0 and put the group first
+				// without a sort value a new group is appended (Number('') would be 0 and put it first)
 				const last = await db.groups.orderBy('sort').last();
 				await db.groups.add({
 					group_name: data.name || '',

@@ -18,7 +18,7 @@
 // own ids (toolboxNotes) and texts (Boxes.Notes.*).
 
 /**
- * @type {{ActualGrp: number, init: Notes.init, notes: null, Listener: Notes.Listener, SetHeights: Notes.SetHeights, buildBox: Notes.buildBox, prepareContent: Notes.prepareContent, ActiveTab: number, ShowModal: Notes.ShowModal, SavePlayerToGroup: Notes.SavePlayerToGroup, SaveContent: Notes.SaveContent, ApiToken: null, SaveModal: Notes.SaveModal, SaveItemModal: Notes.SaveItemModal, DeleteElement: Notes.DeleteElement, ActiveSubTab: number, Players: {}}}
+ * @type {{ActualGrp: number, init: Notes.init, notes: null, Listener: Notes.Listener, SetHeights: Notes.SetHeights, buildBox: Notes.buildBox, prepareContent: Notes.prepareContent, ActiveTab: number, SavePlayerToGroup: Notes.SavePlayerToGroup, SaveContent: Notes.SaveContent, ApiToken: null, DeleteElement: Notes.DeleteElement, ActiveSubTab: number, Players: {}}}
  */
 let Notes = {
 
@@ -123,12 +123,9 @@ let Notes = {
 					subcontent,
 					tabName;
 
+				// one players group of type 'neighbor' (Notes.Store.mergePlayerGroups), shown as "players"
 				if(n['player_group']){
-					switch (n['player_group']){
-						case 'guild': tabName = `🛡 ${i18n('Boxes.Notes.SelectPlayerGroupGuild')}`; break;
-						case 'friend': tabName = `👩🏼🤝🧑 ${i18n('Boxes.Notes.SelectPlayerGroupFriend')}`; break;
-						case 'neighbor': tabName = `👤 ${i18n('Boxes.Notes.SelectPlayerGroupNeighbor')}`; break; // shown as "players", for any player, see player-note.js
-					}
+					tabName = `👤 ${i18n('Boxes.Notes.SelectPlayerGroupNeighbor')}`;
 
 				} else {
 					tabName = n['group_name'];
@@ -176,11 +173,13 @@ let Notes = {
 
 				subcontent = `<div class='tabs-sub'>`;
 
+				// "+" row on top of the page list like in browser sidebars, it does not scroll with the list.
+				// A p, not a div: Tabslet treats every direct div of the sub tabs as a page
 				if(n['player_group']){
 					subcontent += PlayerNote.filterBar(); // filter by neighbor/guild/friend
-					subcontent += 	`<span class="btn itm-btn" data-id="${n['player_group']}" data-group="${n['id']}">+ ${i18n('Boxes.Notes.NewPlayer')}</span>`;
+					subcontent += `<p class="notes-add-row" role="button" data-action="player" data-group="${n['id']}">+ ${i18n('Boxes.Notes.AddPlayer')}</p>`;
 				} else {
-					subcontent += 	`<span class="btn itm-btn" data-id="new">+ ${i18n('Boxes.Notes.NewSide')}</span>`;
+					subcontent += `<p class="notes-add-row" role="button" data-action="page" data-group="${n['id']}">+ ${i18n('Boxes.Notes.NewPage')}</p>`;
 				}
 
 				if(subtab.length > 0){
@@ -202,14 +201,9 @@ let Notes = {
 
 		}
 
-		// all empty
+		// no groups (the players group is created on opening, so only before the db is ready)
 		else {
-			content = `<div class='toolboxNotes'>
-							<span class="btn grp-btn" data-id="new">+ ${i18n('Boxes.Notes.NewGroup')}</span>
-						</div>
-						<div id='toolboxNotes_container'>
-							<div class="empty-notice">${i18n('Boxes.Notes.NewGroupDesc')}</div>
-						</div>`;
+			content = `<div class='tabs toolboxNotes'><ul class='horizontal dark-bg'><span class="notes-add-grp" role="button">+</span></ul></div>`;
 		}
 
 
@@ -256,6 +250,12 @@ let Notes = {
 			}
 
 			Notes.EnableSorting();
+
+			// a page created in place continues in its text
+			if (Notes.FocusText) {
+				$(`#toolboxNotesBody #subtab-${Notes.FocusText} .content-text`).trigger('focus');
+				Notes.FocusText = null;
+			}
 		});
 	},
 
@@ -269,18 +269,11 @@ let Notes = {
 
 		PlayerNote.bindFilter(); // player filter
 
-		$('#toolboxNotesBody').on('click', '.grp-btn', function(){
-			Notes.ShowModal('grp', $(this).data('id'));
-		});
-
-		$('#toolboxNotesBody').on('click', '.itm-btn', function(){
-			const id = $(this).data('id');
-
-			if(id !== 'new'){
+		$('#toolboxNotesBody').on('click', '.notes-add-row', function(){
+			if ($(this).data('action') === 'player') {
 				PlayerNote.showPicker($(this).data('group')); // picker with search and filter over all known players, see player-note.js
-
 			} else {
-				Notes.ShowModal('itm', id);
+				Notes.StartNewItem($(this).data('group'));
 			}
 		});
 
@@ -290,7 +283,7 @@ let Notes = {
 			if (e.target.closest('.notes-add-grp')) {
 				e.preventDefault();
 				e.stopPropagation();
-				Notes.ShowModal('grp', 'new');
+				Notes.StartNewGroup();
 				return;
 			}
 
@@ -365,181 +358,144 @@ let Notes = {
 
 
 	/**
-	 * Show a tiny modal to create a group or page (renaming is in place, deleting via the trash icons)
-	 *
-	 * @param type
-	 * @param id
-	 * @constructor
+	 * Page created in place by the "+ new page" row, see StartNewItem
 	 */
-	ShowModal:(type, id)=> {
-
-		let title = type === 'grp' ? i18n('Boxes.Notes.NewGroup') : i18n('Boxes.Notes.NewSide'),
-			txt = '';
-
-		HTML.Box({
-			id: 'toolboxNotes-modal',
-			title: title,
-			auto_close: true,
-		});
-
-		$('body').prepend( $('<div class="foe-helper-overlay" />') );
-
-
-		let inp = $('<input />'),
-			btn = $('<span />');
-
-		inp.attr({
-			type: 'text',
-			value: txt,
-			id: `${type}-input`,
-			placeholder: type === 'grp' ? i18n('Boxes.Notes.GroupName') : i18n('Boxes.Notes.SideName'),
-			class: `inp-${type}-name`,
-			'data-id': id
-		});
-
-		btn.attr({
-				role: 'button',
-				class: `btn save-${type}-name`,
-				'data-id': id,
-				'data-type': type,
-				onclick: (type === 'itm' ? `Notes.SaveItemModal('${(id === 'new' ? "new" : id)}')` : `Notes.SaveModal('${type}', '${(id === 'new' ? "new" : id)}')`)
-			})
-			.text(i18n('Boxes.Notes.Save'))
-			.wrap('<div class="text-right" />');
-
-
-		$('#toolboxNotes-modalBody').append(inp);
-
-
-		// no player group type selection, player pages live in the one "players" group (Notes.Store.mergePlayerGroups)
-
-		$('#toolboxNotes-modalBody').append(btn);
-
-		$(`.inp-${type}-name`).focus();
-	},
+	FocusText: null,
 
 
 	/**
-	 * Function to save a group
-	 *
-	 * @param type
-	 * @param id
-	 * @constructor
+	 * "+" behind the group tabs: a new tab with a name input right before it. Enter or leaving
+	 * creates the group and opens it, Escape or an empty name removes the tab again.
 	 */
-	SaveModal: (type, id)=> {
-		let nN = $(`.inp-${type}-name`).val(),
-			txt = MainParser.ClearText(nN.trim()), // filter <script> Tags
-			data = {
-				id: id,
-				type: type,
-				name: txt,
-				// no default, the local store appends a new group when the field is empty
-				sort: $(`.inp-grp-sort`).val(),
-				apiToken: Notes.ApiToken
-			},
-			grpSel = $('#player-grp option:selected');
+	StartNewGroup: ()=> {
+		const ul = $('#toolboxNotesBody ul.horizontal');
 
-		if( grpSel.length > 0 && grpSel.data('value') !== -1 ){ // the selection is gone, see ShowModal
-			data['player_group'] = grpSel.data('value');
-
-		} else if(txt === '') {
+		if (ul.find('.notes-new').length > 0) {
 			return;
-
-		} else {
-			data['name'] = txt;
 		}
 
-		Notes.Store.send(data, 'Notes/set', (resp)=>{ // local store (Notes.Store) instead of the server
-			if(resp['status'] === 'ERROR') {
-				HTML.ShowToastMsg({
-					head: 'Error',
-					text: resp['msg'],
-					type: 'error',
-					hideAfter: 10000,
-				});
-			}
-			else {
-				Notes.notes = resp['notice'];
+		const li = $('<li class="notes-fixed notes-new" />').insertBefore(ul.children('.notes-add-grp'));
 
-				if(id === 'new'){
-					// a new group may have been sorted in anywhere; local ids only grow, so the newest has the highest
+		Notes.EditNewName(li, i18n('Boxes.Notes.GroupName'), (name) => {
+			Notes.Store.send({id: 'new', type: 'grp', name: name}, 'Notes/set', (resp)=>{
+				if (!Notes.SaveFailed(resp)) {
+					Notes.notes = resp['notice'];
+					// local ids only grow, so the newest group has the highest
 					const newId = Math.max(...Notes.notes.map(g => g.id));
 					Notes.ActiveTab = Notes.notes.findIndex(g => g.id === newId) + 1;
-
-				} else {
-					// loose comparison, "id" comes from the DOM as a string
-					Notes.ActiveTab = Notes.notes.findIndex(idx => (idx.id == id)) +1;
+					Notes.ActiveSubTab = 1;
+					Notes.buildBox();
 				}
+			});
+		});
 
-				$('#toolboxNotes-modal').fadeToggle('fast', function(){
-					$(this).remove();
+		ul.scrollLeft(ul[0].scrollWidth);
+	},
 
-					$('.foe-helper-overlay').remove();
-				});
 
-				Notes.buildBox();
-			}
+	/**
+	 * "+ new page" row: a new entry with a name input on top of the page list. Enter or leaving
+	 * creates the page, opens it and puts the cursor into its text.
+	 *
+	 * @param groupId
+	 */
+	StartNewItem: (groupId)=> {
+		const tabs = $(`#toolboxNotesBody #tab-${groupId} .tabs-sub`);
+		let ul = tabs.children('ul.vertical');
+
+		if (ul.find('.notes-new').length > 0) {
+			return;
+		}
+
+		if (ul.length === 0) {
+			ul = $(`<ul class='vertical' />`).insertAfter(tabs.children('.notes-add-row'));
+		}
+
+		const li = $('<li class="notes-new" />').prependTo(ul),
+			group = (Notes.notes || []).find(g => g.id == groupId),
+			first = group && group.items.length > 0 ? Math.min(...group.items.map(i => i.sort)) : 1;
+
+		ul.scrollTop(0);
+
+		Notes.EditNewName(li, i18n('Boxes.Notes.SideName'), (name) => {
+			// on top of the list, where it was typed in
+			Notes.Store.send({id: 'new', type: 'itm', name: name, grp: groupId, sort: first - 1}, 'Notes/set', (resp)=>{
+				if (!Notes.SaveFailed(resp)) {
+					Notes.notes = resp['notice'];
+					const grpIdx = Notes.notes.findIndex(g => g.id == groupId),
+						items = Notes.notes[grpIdx].items,
+						newId = Math.max(...items.map(i => i.id));
+
+					Notes.ActiveTab = grpIdx + 1;
+					Notes.ActiveSubTab = items.findIndex(i => i.id === newId) + 1;
+					Notes.FocusText = newId;
+					Notes.buildBox();
+				}
+			});
+		}, () => {
+			if (ul.children('li').length === 0) ul.remove();
 		});
 	},
 
 
 	/**
-	 * Function to save a item
+	 * Name input in a new tab or list entry
 	 *
-	 * @param id
-	 * @constructor
+	 * @param li the new entry, removed again without a name
+	 * @param placeholder
+	 * @param onSave called with the cleaned name
+	 * @param onCancel optional, after the entry is removed
 	 */
-	SaveItemModal: (id)=> {
-		let nN = $('.inp-itm-name').val(),
-			txt = nN.trim(),
-			grp = $('ul.horizontal').find('li.active a').data('id');
+	EditNewName: (li, placeholder, onSave, onCancel)=> {
+		const input = $('<input type="text" class="notes-rename" />').attr('placeholder', placeholder);
+		let done = false;
 
-		if(txt === ''){
-			return;
+		const finish = (save) => {
+			if (done) return;
+			done = true;
+
+			const name = MainParser.ClearText(input.val().trim());
+
+			if (!save || name === '') {
+				li.remove();
+				if (onCancel) onCancel();
+				return;
+			}
+
+			input.prop('disabled', true);
+			onSave(name);
+		};
+
+		input
+			.on('keydown', (e) => {
+				e.stopPropagation();
+				if (e.key === 'Enter') finish(true);
+				if (e.key === 'Escape') finish(false);
+			})
+			.on('blur', () => finish(true))
+			.on('click mousedown', (e) => e.stopPropagation());
+
+		li.append($('<a />').append(input));
+		input.trigger('focus');
+	},
+
+
+	/**
+	 * @param resp answer of Notes.Store.send
+	 * @returns {boolean} true after showing the error
+	 */
+	SaveFailed: (resp)=> {
+		if (resp['status'] !== 'ERROR') {
+			return false;
 		}
 
-		// fallback: if no tab is marked as active use the first group, "grp" must never be empty
-		if(grp === undefined){
-			grp = $('ul.horizontal').find('li:first a').data('id');
-		}
-
-		let sortVal = $(`.inp-itm-sort`).val() || ($(`#tab-${grp}`).find('ul.vertical li').length +1);
-
-		txt = MainParser.ClearText(txt);
-
-		Notes.Store.send({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notes.ApiToken}, 'Notes/set', (resp)=>{ // local store (Notes.Store) instead of the server
-			if(resp['status'] === 'ERROR') {
-				HTML.ShowToastMsg({
-					head: 'Error',
-					text: resp['msg'],
-					type: 'error',
-					hideAfter: 10000,
-				});
-			}
-			else {
-				Notes.notes = resp['notice'];
-
-				// loose comparisons, ids may arrive as strings from the DOM
-				const group = Notes.notes.find(e => (e.id == grp));
-				Notes.ActiveTab = Notes.notes.findIndex(idx => (idx.id == grp)) +1;
-
-				if(id === 'new'){
-					// the response already contains the new item as the last one
-					Notes.ActiveSubTab = group.items.length;
-
-				} else {
-					Notes.ActiveSubTab = group.items.findIndex(i => (i.id == id)) +1;
-				}
-
-				$('#toolboxNotes-modal').fadeToggle('fast', function(){
-					$(this).remove();
-
-					$('.foe-helper-overlay').remove();
-				});
-
-				Notes.buildBox();
-			}
+		HTML.ShowToastMsg({
+			head: 'Error',
+			text: resp['msg'],
+			type: 'error',
+			hideAfter: 10000,
 		});
+		return true;
 	},
 
 
