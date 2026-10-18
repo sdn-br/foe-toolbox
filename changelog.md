@@ -4,7 +4,15 @@
 **FoE-Helfer**
 - Migration auf FoE Helfer 4.8.3.0 als neue Basis (vorher FoE Helfer 3.1.0.1)
 
+**Neu**
+- Gefechts-Logbuch für GbG (aus Forge Hammer)
+- Pop-out: Toolbox-Fenster lassen sich in ein eigenes Fenster lösen
+- PvP Angriffe: Filter nach Kampfart und Spieler, Einheiten mit Zeitalter, FP-Übersicht Heute/Woche/Gesamt
+
 **Update**
+- Notizen werden lokal gespeichert, ohne Übermittlung und ohne API-Token. Einmaliger Import vom FoE-Helfer-Server möglich
+- Übermittlung an foe-helper.com ist standardmäßig aus und muss bestätigt werden
+- Eigene Datenbanken: die Daten von 1.24 werden beim ersten Start kopiert und bleiben unverändert, eine Rückkehr zu 1.24 ist möglich
 - GvG
     - GvG Angriffshilfe entfernt, da GvG aus dem Spiel entfernt wurde
 
