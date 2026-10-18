@@ -638,6 +638,7 @@ let Notes = {
 
 		tabName.text(name);
 		tabName.closest('a').attr('title', `${name} (${i18n('Boxes.Notes.RenameHint')})`);
+		tabName.parents('a, li, ul').each(function(){ this.scrollLeft = 0; });
 
 		const head = $(`#toolboxNotesBody #subtab-${id} .content-head`);
 		if (!head.is(':focus')) {
@@ -803,6 +804,9 @@ let Notes = {
 		const finish = (save) => {
 			if (done) return;
 			done = true;
+
+			// the wider input scrolled the tab (overflow hidden) to the left, the name would stay shifted
+			name.parents('a, li, ul').each(function(){ this.scrollLeft = 0; });
 
 			const txt = MainParser.ClearText(input.val().trim());
 
