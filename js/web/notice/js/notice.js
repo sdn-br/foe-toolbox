@@ -142,7 +142,7 @@ let Notice = {
 
 					let itm = n['items'][x];
 
-					subtab.push(`<li><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`); // TOOLBOX: current neighbor/guild/friend icons
+					subtab.push(`<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`); // TOOLBOX: current neighbor/guild/friend icons, player id for the filter
 
 					subdiv.push(`<div id='subtab-${itm['id']}' class="sub-tab" spellcheck="false" data-parent="${n['id']}" data-id="${itm['id']}">`);
 
@@ -170,6 +170,7 @@ let Notice = {
 				subcontent = `<div class='tabs-sub'>`;
 
 				if(n['player_group']){
+					subcontent += PlayerNote.filterBar(); // TOOLBOX: filter by neighbor/guild/friend
 					subcontent += 	`<span class="btn itm-btn" data-id="${n['player_group']}" data-group="${n['id']}">+ ${i18n('Boxes.Notice.NewPlayer')}</span>`;
 				} else {
 					subcontent += 	`<span class="btn itm-btn" data-id="new">+ ${i18n('Boxes.Notice.NewSide')}</span>`;
@@ -251,6 +252,8 @@ let Notice = {
 				setTimeout(()=>{
 					Notice.SetHeights();
 				}, 150);
+
+				PlayerNote.applyFilter(); // TOOLBOX: keep the player filter across renders
 			}
 		});
 	},
@@ -262,6 +265,8 @@ let Notice = {
 	 * @constructor
 	 */
 	Listener: ()=> {
+
+		PlayerNote.bindFilter(); // TOOLBOX: player filter
 
 		$('#noticesBody').on('click', '.grp-btn', function(){
 			Notice.ShowModal('grp', $(this).data('id'));
@@ -427,29 +432,7 @@ let Notice = {
 			sort.wrap('<div />').insertAfter(`.inp-${type}-name`);
 		}
 
-		if(type === 'grp' && id === 'new'){
-			$('#notices-modalBody').append(
-				$('<p />').append(
-					$('<select />').attr({
-						id: 'player-grp',
-						style: 'display-none'
-					}).append(
-						$('<option />').attr({
-							'data-value': -1
-						}).text(i18n('Boxes.Notice.SelectPlayerGroupDefault')),
-						$('<option />').attr({
-							'data-value': 'guild'
-						}).text(i18n('Boxes.Notice.SelectPlayerGroupGuild')),
-						$('<option />').attr({
-							'data-value': 'friend'
-						}).text(i18n('Boxes.Notice.SelectPlayerGroupFriend')),
-						$('<option />').attr({
-							'data-value': 'neighbor'
-						}).text(i18n('Boxes.Notice.SelectPlayerGroupNeighbor')),
-					)
-				)
-			);
-		}
+		// TOOLBOX: no player group type selection, player pages live in the one "players" group (Notice.Store.mergePlayerGroups)
 
 		$('#notices-modalBody').append(btn);
 
@@ -477,7 +460,7 @@ let Notice = {
 			},
 			grpSel = $('#player-grp option:selected');
 
-		if( grpSel.data('value') !== -1 ){
+		if( grpSel.length > 0 && grpSel.data('value') !== -1 ){ // TOOLBOX: the selection is gone, see ShowModal
 			data['player_group'] = grpSel.data('value');
 
 		} else if(txt === '') {
