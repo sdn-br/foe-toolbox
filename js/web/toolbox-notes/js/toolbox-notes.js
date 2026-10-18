@@ -275,7 +275,7 @@ let Notes = {
 
 		$('#toolboxNotesBody').on('click', '.notes-add-row', function(){
 			if ($(this).data('action') === 'player') {
-				PlayerNote.showPicker($(this).data('group')); // picker with search and filter over all known players, see player-note.js
+				PlayerNote.showPicker($(this)); // search over all known players, see player-note.js
 			} else {
 				Notes.StartNewItem($(this).data('group'));
 			}
@@ -339,7 +339,7 @@ let Notes = {
 		});
 		if (Notes.initDone) return;
 
-		$('body').on('click', '#toolboxNotes-modalclose, #toolboxNotes-modal-playersclose', function(){
+		$('body').on('click', '#toolboxNotes-modalclose', function(){
 			$('.foe-helper-overlay').remove();
 		});
 
@@ -670,15 +670,7 @@ let Notes = {
 				Notes.ActiveSubTab = items.findIndex(i => i.id === newId) + 1;
 				Notes.FocusText = newId;
 
-				$('#toolboxNotes-modal-players').fadeToggle('fast', function(){
-					$(this).remove();
-
-					$('.foe-helper-overlay').remove();
-				});
-
 				Notes.buildBox();
-
-				$('.custom-option-noticePlayers').bind('click');
 			}
 		});
 	},

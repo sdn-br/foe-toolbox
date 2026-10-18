@@ -112,8 +112,7 @@
 	margin: 0 0 6px 165px;
 }
 
-#toolboxNotesBody .player-filter-chip,
-#toolboxNotes-modal-players .player-filter-chip {
+#toolboxNotesBody .player-filter-chip {
 	padding: 1px 8px;
 	border: 1px solid var(--text-dark);
 	border-radius: 10px;
@@ -121,8 +120,7 @@
 	cursor: pointer;
 }
 
-#toolboxNotesBody .player-filter-chip.active,
-#toolboxNotes-modal-players .player-filter-chip.active {
+#toolboxNotesBody .player-filter-chip.active {
 	background: var(--black-30);
 	color: var(--beige);
 	font-weight: bold;
@@ -175,29 +173,28 @@
 	color: var(--text-medium);
 }
 
-/* player picker of the notes: search, filter, at most PlayerNote.PickerLimit rows */
-#toolboxNotes-modal-players {
-	width: 380px;
-	left: calc(50% - 190px);
+/* player search of the notes ("+ player", PlayerNote.showPicker): a list over the open page,
+   wider than the page list, at most PlayerNote.PickerLimit players without a page */
+#toolboxNotesBody .player-picker {
+	position: absolute;
+	left: 0;
+	z-index: 30;
+	width: 360px;
+	max-width: 100%;
+	box-sizing: border-box;
+	padding: 4px;
+	background-image: url('../images/hud/box-bg.png');
+	border: 1px solid var(--text-dark);
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
-#toolboxNotes-modal-players .player-picker {
+#toolboxNotesBody .player-picker-search {
+	box-sizing: border-box;
 	width: 100%;
+	margin-bottom: 4px;
 }
 
-#toolboxNotes-modal-players .player-picker-search {
-	width: 100%;
-	margin-bottom: 6px;
-}
-
-#toolboxNotes-modal-players .player-filter {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
-	margin-bottom: 6px;
-}
-
-#toolboxNotes-modal-players .player-picker-list {
+#toolboxNotesBody .player-picker-list {
 	max-height: 300px;
 	overflow-y: auto;
 	margin: 0;
@@ -205,7 +202,7 @@
 	list-style: none;
 }
 
-#toolboxNotes-modal-players .player-picker-list li {
+#toolboxNotesBody .player-picker-list li {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -214,11 +211,21 @@
 	cursor: pointer;
 }
 
-#toolboxNotes-modal-players .player-picker-list li:hover {
+/* the row Enter takes */
+#toolboxNotesBody .player-picker-list li:hover,
+#toolboxNotesBody .player-picker-list li.first {
 	background: var(--black-30);
 }
 
-#toolboxNotes-modal-players .player-picker-list .avatar {
+/* between the players of the group and the other players */
+#toolboxNotesBody .player-picker-list li.player-picker-sep {
+	padding: 0;
+	border-top: 2px solid var(--text-dark);
+	cursor: default;
+	background: none;
+}
+
+#toolboxNotesBody .player-picker-list .avatar {
 	flex: none;
 	width: 30px;
 	height: 30px;
@@ -227,17 +234,29 @@
 	border-radius: 20%;
 }
 
-#toolboxNotes-modal-players .player-picker-name {
+#toolboxNotesBody .player-picker-name {
 	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	color: var(--beige);
 }
 
-#toolboxNotes-modal-players .player-picker-name small {
+#toolboxNotesBody .player-picker-name small {
 	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	color: var(--text-medium);
 }
 
-#toolboxNotes-modal-players .player-picker-hint {
+#toolboxNotesBody .player-picker-add {
+	flex: none;
+	font-weight: bold;
+	color: var(--orange);
+}
+
+#toolboxNotesBody .player-picker-hint {
 	margin: 6px 0 0;
 	color: var(--text-medium);
 	font-style: italic;
