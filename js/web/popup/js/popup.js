@@ -88,8 +88,11 @@ let Popup = {
 		const width  = Math.max((size && size.w) || options.width || 0, box.offsetWidth, 320),
 			boxBody = box.querySelector('.window-body'),
 			contentHeight = box.offsetHeight + (boxBody ? Math.max(0, boxBody.scrollHeight - boxBody.clientHeight) : 0),
-			height = Math.min(Math.max(contentHeight, 220), Math.round(screen.availHeight * 0.8))
-				+ (parseInt(localStorage.getItem('PopupHeightOffset')) || 0);
+			// Chrome shrinks a PiP window above roughly 30 % of the screen area, the width included (measured
+			// on 1512x874: about 390000 px^2), so the height gives way first, the box content scrolls
+			maxHeight = Math.floor(screen.availWidth * screen.availHeight * 0.28 / width),
+			height = Math.min(Math.max(contentHeight, 220) + (parseInt(localStorage.getItem('PopupHeightOffset')) || 0),
+				Math.round(screen.availHeight * 0.8), maxHeight);
 		// TOOLBOX-END
 
 		const boxTitle = box.querySelector('.window-head .title');
@@ -116,7 +119,7 @@ let Popup = {
 		Popup._pending[id] = true;
 
 		if (usePiP) {
-			documentPictureInPicture.requestWindow({width: width, height: height})
+			documentPictureInPicture.requestWindow({width: width, height: height, preferInitialWindowPlacement: true}) // TOOLBOX: the requested size, not the size the user last dragged a PiP window to
 				.then((win) => {
 					$(win.document.head).html(`<meta charset="utf-8"><title>${title}</title>${cssLinks.join('')}`);
 					win.document.body.className = 'foe-helper-popup';
@@ -227,7 +230,8 @@ let Popup = {
 		setTimeout(() => {
 			if (win.closed) return;
 			const heightOffset = height - win.innerHeight;
-			if (window.documentPictureInPicture?.window === win && heightOffset >= 0 && heightOffset < 150) {
+			// only a window Chrome did not shrink (same width) tells the title bar height
+			if (window.documentPictureInPicture?.window === win && win.innerWidth === width && heightOffset >= 0 && heightOffset < 150) {
 				localStorage.setItem('PopupHeightOffset', String(heightOffset));
 			}
 			entry.lastSize = {w: win.innerWidth, h: win.innerHeight};
