@@ -136,7 +136,7 @@ let Notes = {
 
 				// the players group always exists (Notes.Store.mergePlayerGroups), it is neither renamed nor deleted
 				tab.push(n['player_group']
-					? `<li><a href="#tab-${n['id']}" data-id="${n['id']}"><span>${tabName}</span></a></li>`
+					? `<li class="notes-fixed"><a href="#tab-${n['id']}" data-id="${n['id']}"><span>${tabName}</span></a></li>`
 					: `<li><a href="#tab-${n['id']}" data-id="${n['id']}" title="${i18n('Boxes.Notes.RenameHint')}"><span class="notes-name" data-type="grp" data-id="${n['id']}">${tabName}</span></a>${Notes.deleteButton('grp', n['id'])}</li>`);
 
 				for(let x in n['items']){
@@ -634,13 +634,16 @@ let Notes = {
 			});
 		};
 
-		const order = (ul) => ul.children('li').map((idx, li) => ({ id: $(li).find('a').data('id'), sort: idx })).get();
+		const order = (ul) => ul.children('li').not('.notes-fixed').map((idx, li) => ({ id: $(li).find('a').data('id'), sort: idx + 1 })).get();
 
+		// the players group stays first, only the own groups move
 		$('#toolboxNotesBody ul.horizontal').sortable({
 			axis: 'x',
 			distance: 5,
+			items: '> li:not(.notes-fixed)',
 			cancel: '.notes-del, input',
 			stop: function() {
+				$(this).prepend($(this).children('li.notes-fixed'));
 				save('grp', order($(this)));
 				// keep the dragged group open
 				Notes.ActiveTab = $(this).children('li').index($(this).children('li.active')) + 1;
