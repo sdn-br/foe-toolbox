@@ -67,6 +67,28 @@
 	color: var(--text-medium);
 }
 
+/* player note card (sabotage box), stored as a player page in the notes */
+.window-body .player-note-text {
+	min-height: 2.6em;
+	max-height: 10em;
+	overflow-y: auto;
+	padding: 4px 8px;
+	text-align: left;
+	color: var(--beige);
+	cursor: text;
+}
+
+.window-body .player-note-text:focus {
+	outline: none;
+	background: var(--black-30);
+}
+
+.window-body .player-note-text:empty::before {
+	content: attr(data-placeholder);
+	color: var(--text-medium);
+	font-style: italic;
+}
+
 /* a box button without function in the current state (e.g. notes edit mode without groups) */
 .window-box .box-buttons span.disabled {
 	opacity: 0.4;
