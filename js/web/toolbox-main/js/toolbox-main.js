@@ -316,5 +316,5 @@ FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
 // DBs of the toolbox modules, after the handler of _main.js has set ExtPlayerID
 FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 	GBGActionLog.checkForDB(ExtPlayerID);
-	Notice.Store.checkForDB(ExtPlayerID);
+	Notes.Store.checkForDB(ExtPlayerID);
 });

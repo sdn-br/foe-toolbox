@@ -12,11 +12,11 @@
  */
 
 // FoE Toolbox: the notes live in a local IndexedDB instead of the foe-rechner.de API.
-// Notice.Store.send answers the former "Notice/*" endpoints with the response shape the
-// callbacks in notice.js expect, so notice.js stays close to upstream for later merges.
+// Notes.Store.send answers the former API endpoints ("Notice/*" there, "Notes/*" here) with
+// the response shape the callbacks in toolbox-notes.js (a copy of the Helfer notice.js) expect.
 // The only remaining network use is the manual import from the FoE Helfer server.
 
-Notice.Store = {
+Notes.Store = {
 
 	db: null,
 
@@ -27,15 +27,15 @@ Notice.Store = {
 	checkForDB: async (playerID) => {
 		const DBName = `FoEToolbox2DB_Notice_${playerID}`;
 
-		Notice.Store.db = new Dexie(DBName);
+		Notes.Store.db = new Dexie(DBName);
 
-		Notice.Store.db.version(1).stores({
+		Notes.Store.db.version(1).stores({
 			groups: '++id,sort',
 			items: '++id,groupId,sort'
 		});
 
 		try {
-			await Notice.Store.db.open();
+			await Notes.Store.db.open();
 		} catch (e) {
 			console.error(e);
 		}
@@ -43,14 +43,14 @@ Notice.Store = {
 
 
 	/**
-	 * Local replacement for MainParser.send2Server(data, 'Notice/...', callback)
+	 * Local replacement for MainParser.send2Server(data, 'Notes/...', callback)
 	 *
 	 * @param data
-	 * @param ep 'Notice/get' | 'Notice/set' | 'Notice/sort' | 'Notice/del'
+	 * @param ep 'Notes/get' | 'Notes/set' | 'Notes/sort' | 'Notes/del'
 	 * @param callback
 	 */
 	send: (data, ep, callback) => {
-		Notice.Store.handle(data, ep)
+		Notes.Store.handle(data, ep)
 			.then(resp => callback(resp))
 			.catch(e => {
 				console.error(e);
@@ -60,27 +60,27 @@ Notice.Store = {
 
 
 	handle: async (data, ep) => {
-		const db = Notice.Store.db;
+		const db = Notes.Store.db;
 
 		if (db === null) {
-			throw new Error('Notice DB not ready');
+			throw new Error('Notes DB not ready');
 		}
 
 		switch (ep) {
-			case 'Notice/get':
-				await Notice.Store.mergePlayerGroups();
+			case 'Notes/get':
+				await Notes.Store.mergePlayerGroups();
 				break;
 
-			case 'Notice/set':
+			case 'Notes/set':
 				// content changes: the callback only checks the status and updates its own cache
 				if (data.type === 'cnt') {
-					await Notice.Store.setContent(data);
+					await Notes.Store.setContent(data);
 					return {status: 'OK'};
 				}
-				await db.transaction('rw', db.groups, db.items, () => Notice.Store.set(data));
+				await db.transaction('rw', db.groups, db.items, () => Notes.Store.set(data));
 				break;
 
-			case 'Notice/sort':
+			case 'Notes/sort':
 				await db.transaction('rw', db.groups, db.items, () => {
 					const table = data.type === 'grp' ? db.groups : db.items,
 						list = (data.type === 'grp' ? data.grps : data.itms) || [];
@@ -89,7 +89,7 @@ Notice.Store = {
 				});
 				break;
 
-			case 'Notice/del':
+			case 'Notes/del':
 				await db.transaction('rw', db.groups, db.items, async () => {
 					const id = Number(data.id);
 
@@ -106,7 +106,7 @@ Notice.Store = {
 				throw new Error('Unknown endpoint ' + ep);
 		}
 
-		return {status: 'OK', notice: await Notice.Store.read()};
+		return {status: 'OK', notice: await Notes.Store.read()};
 	},
 
 
@@ -114,7 +114,7 @@ Notice.Store = {
 	 * New or renamed group or item. Ids come from the DOM, partly as strings.
 	 */
 	set: async (data) => {
-		const db = Notice.Store.db,
+		const db = Notes.Store.db,
 			isNew = (data.id === 'new'),
 			sort = Number(data.sort);
 
@@ -166,7 +166,7 @@ Notice.Store = {
 			changes.title = data.head;
 		}
 
-		await Notice.Store.db.items.update(Number(data.id), changes);
+		await Notes.Store.db.items.update(Number(data.id), changes);
 	},
 
 
@@ -176,7 +176,7 @@ Notice.Store = {
 	 * @returns {Promise<Array|null>} null without groups, then notice.js shows the "create a group first" hint
 	 */
 	read: async () => {
-		const db = Notice.Store.db,
+		const db = Notes.Store.db,
 			bySort = (a, b) => (a.sort - b.sort) || (a.id - b.id),
 			groups = (await db.groups.toArray()).sort(bySort),
 			items = (await db.items.toArray()).sort(bySort);
@@ -206,28 +206,28 @@ Notice.Store = {
 	 * Confirmation in the same modal as group and item editing
 	 */
 	ShowImportModal: async () => {
-		const db = Notice.Store.db,
+		const db = Notes.Store.db,
 			groups = db ? await db.groups.count() : 0,
 			items = db ? await db.items.count() : 0;
 
 		HTML.Box({
-			id: 'notices-modal',
-			title: i18n('Boxes.Notice.Import'),
+			id: 'toolboxNotes-modal',
+			title: i18n('Boxes.Notes.Import'),
 			auto_close: true,
 		});
 
 		$('body').prepend( $('<div class="foe-helper-overlay" />') );
 
-		$('#notices-modalBody').append(
-			$('<p />').addClass('notice-import-text').text(HTML.i18nReplacer(i18n('Boxes.Notice.ImportConfirm'), {groups, items})),
-			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('Boxes.Notice.ImportStart')).on('click', Notice.Store.Import),
-			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('General.Cancel')).on('click', Notice.Store.CloseModal)
+		$('#toolboxNotes-modalBody').append(
+			$('<p />').addClass('notice-import-text').text(HTML.i18nReplacer(i18n('Boxes.Notes.ImportConfirm'), {groups, items})),
+			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('Boxes.Notes.ImportStart')).on('click', Notes.Store.Import),
+			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('General.Cancel')).on('click', Notes.Store.CloseModal)
 		);
 	},
 
 
 	CloseModal: () => {
-		$('#notices-modal').fadeToggle('fast', function(){
+		$('#toolboxNotes-modal').fadeToggle('fast', function(){
 			$(this).remove();
 
 			$('.foe-helper-overlay').remove();
@@ -241,59 +241,60 @@ Notice.Store = {
 	Import: () => {
 		const apiToken = localStorage.getItem('ApiToken');
 
-		$('#notices-modalBody .btn').remove();
+		$('#toolboxNotes-modalBody .btn').remove();
 
 		if (!apiToken) {
-			Notice.Store.ImportFailed(i18n('Boxes.Notice.ImportNotPossible'));
+			Notes.Store.ImportFailed(i18n('Boxes.Notes.ImportNotPossible'));
 			return;
 		}
 
+		// endpoint name of the FoE Helfer API
 		MainParser.send2Server({apiToken: apiToken}, 'Notice/get', async (resp) => {
 			if (resp['status'] === 'ERROR') {
-				Notice.Store.ImportFailed(resp['msg']);
+				Notes.Store.ImportFailed(resp['msg']);
 			}
 			// status OK without notes = blocked on the API, the local notes stay untouched
 			else if (resp['notice'] === undefined) {
-				$('#notices-modalBody').html( $('<div />').addClass('notice-import-text').html(i18n('Boxes.Notice.BannedFromApi')) );
+				$('#toolboxNotes-modalBody').html( $('<div />').addClass('notice-import-text').html(i18n('Boxes.Notes.BannedFromApi')) );
 			}
 			// nothing stored on the server: an empty answer must not wipe the local notes
 			else if (!resp['notice'] || Object.keys(resp['notice']).length === 0) {
-				$('#notices-modalBody').html( $('<p />').addClass('notice-import-text').text(i18n('Boxes.Notice.ImportEmpty')) );
+				$('#toolboxNotes-modalBody').html( $('<p />').addClass('notice-import-text').text(i18n('Boxes.Notes.ImportEmpty')) );
 			}
 			else {
 				try {
-					await Notice.Store.replaceAll(resp['notice']);
-					Notice.notes = await Notice.Store.read();
+					await Notes.Store.replaceAll(resp['notice']);
+					Notes.notes = await Notes.Store.read();
 				} catch (e) {
 					console.error(e);
-					Notice.Store.ImportFailed(e && e.message ? e.message : String(e));
+					Notes.Store.ImportFailed(e && e.message ? e.message : String(e));
 					return;
 				}
 
-				Notice.ActiveTab = 1;
-				Notice.ActiveSubTab = 1;
-				Notice.EditMode = false;
+				Notes.ActiveTab = 1;
+				Notes.ActiveSubTab = 1;
+				Notes.EditMode = false;
 
-				Notice.Store.CloseModal();
-				Notice.buildBox();
+				Notes.Store.CloseModal();
+				Notes.buildBox();
 
 				HTML.ShowToastMsg({
-					head: i18n('Boxes.Notice.Title'),
-					text: i18n('Boxes.Notice.ImportSuccess'),
+					head: i18n('Boxes.Notes.Title'),
+					text: i18n('Boxes.Notes.ImportSuccess'),
 					type: 'success',
 					hideAfter: 5000,
 					show: true,
 				});
 			}
-		}, (msg) => Notice.Store.ImportFailed(msg), true);
+		}, (msg) => Notes.Store.ImportFailed(msg), true);
 	},
 
 
 	ImportFailed: (msg) => {
-		Notice.Store.CloseModal();
+		Notes.Store.CloseModal();
 
 		HTML.ShowToastMsg({
-			head: i18n('Boxes.Notice.ImportError'),
+			head: i18n('Boxes.Notes.ImportError'),
 			text: msg || '',
 			type: 'error',
 			hideAfter: 10000,
@@ -309,11 +310,11 @@ Notice.Store = {
 	 * @param notice groups as sent by the API (array or object)
 	 */
 	replaceAll: async (notice) => {
-		const db = Notice.Store.db,
+		const db = Notes.Store.db,
 			groups = notice ? Object.values(notice) : [];
 
 		if (db === null) {
-			throw new Error('Notice DB not ready');
+			throw new Error('Notes DB not ready');
 		}
 
 		await db.transaction('rw', db.groups, db.items, async () => {
@@ -344,7 +345,7 @@ Notice.Store = {
 				}
 			}
 
-			await Notice.Store.mergePlayerGroups();
+			await Notes.Store.mergePlayerGroups();
 		});
 	},
 
@@ -359,7 +360,7 @@ Notice.Store = {
 	 * become one page with the texts one below the other. Nothing is lost but the grouping.
 	 */
 	mergePlayerGroups: async () => {
-		const db = Notice.Store.db,
+		const db = Notes.Store.db,
 			bySort = (a, b) => (a.sort - b.sort) || (a.id - b.id);
 
 		await db.transaction('rw', db.groups, db.items, async () => {
@@ -368,7 +369,7 @@ Notice.Store = {
 			if (groups.length === 0) {
 				const last = await db.groups.orderBy('sort').last();
 				await db.groups.add({
-					group_name: i18n('Boxes.Notice.SelectPlayerGroupNeighbor'),
+					group_name: i18n('Boxes.Notes.SelectPlayerGroupNeighbor'),
 					player_group: 'neighbor',
 					sort: last ? last.sort + 1 : 1
 				});
@@ -425,8 +426,8 @@ Notice.Store = {
 		$('<p />').append(
 			$('<span />')
 				.attr({role: 'button', class: 'btn notice-import-btn'})
-				.text(i18n('Boxes.Notice.Import'))
-				.on('click', Notice.Store.ShowImportModal)
+				.text(i18n('Boxes.Notes.Import'))
+				.on('click', Notes.Store.ShowImportModal)
 		)
 	);
 }
