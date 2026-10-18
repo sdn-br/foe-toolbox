@@ -463,3 +463,8 @@
 .notice-import-btn {
 	margin-top: 8px;
 }
+
+/* note of the PvP arena with several lines: read only there, a click opens it in the notes */
+#PvPArenaBody .player-note.player-note-multi {
+	cursor: pointer;
+}

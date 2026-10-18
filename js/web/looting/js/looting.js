@@ -561,6 +561,8 @@ let Looting = {
 		}
 		if (filterByPlayerId) await MainParser.loadPlayerIntoDict(filterByPlayerId);
 
+		const notes = await PlayerNote.loadTexts();
+
 		// enrich actions with player info, consecutive actions of one player show it only once
 		let lastPlayerId = null;
 		actions = actions.map(it => {
@@ -579,6 +581,7 @@ let Looting = {
 				clanName: player?.ClanName,
 				avatar: player?.Avatar && srcLinks.GetPortrait(player.Avatar),
 				eraName: (player?.Era && Technologies.Eras[player.Era] !== undefined ? i18n('Eras.' + Technologies.Eras[player.Era]) : undefined),
+				note: notes.get(it.playerId),
 			};
 		});
 
@@ -595,6 +598,8 @@ let Looting = {
 			count,
 			filterSource,
 			filterPlayer: (filterByPlayerId ? { id: filterByPlayerId, name: PlayerDict[filterByPlayerId]?.PlayerName || `#${filterByPlayerId}` } : undefined),
+			// the note of the filtered player, editable like in the sabotage box
+			note: (filterByPlayerId ? await PlayerNote.get(filterByPlayerId) : null),
 			players,
 			noArena: (Looting.lastPvPArenaOpponents.length === 0),
 			sp: await Looting.calculateSP(filterByPlayerId, filterSource),
@@ -732,6 +737,7 @@ let Looting = {
 						<span class="loot-filter-count">${t('Entries')}: ${vm.count}</span>
 					</div>
 				</div>
+				${vm.filterPlayer ? html`<div class="toolbox-cards loot-note">${PlayerNote.view(vm.filterPlayer.id, vm.note, () => Looting.Render())}</div>` : ''}
 			</div>
 			<div class="action-list">
 				${vm.actions.length === 0 ? html`<div class="no-data"> - ${t('noData')} - </div>` : vm.actions.map(Looting.viewAction)}
@@ -784,6 +790,7 @@ let Looting = {
 						<div class="player-name">
 							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}
 							${action.playerId ? html`<span class="row-filter game-cursor fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('OnlyThisPlayer')} @click=${() => Looting.SelectPlayer(action.playerId)}></span>` : ''}
+							${action.note ? html`<span class="loot-note-icon game-cursor fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${action.note} @click=${() => Looting.SelectPlayer(action.playerId)}>📝</span>` : ''}
 							${action.clanName ? html`<br><span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>` : ''}
 						</div>`}
 					<div class="content">${Looting.viewActionContent(action)}</div>
