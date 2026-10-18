@@ -6,30 +6,24 @@
  *
  * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
  * erstellt am:	              22.12.19, 14:31 Uhr
- * zuletzt bearbeitet:       22.12.19, 14:31 Uhr
  *
  * Copyright © 2019
+ *
+ * FoE Toolbox: city information / plunder helper, ported onto FoE Helfer 4.8.3.0.
+ * Boosts and productions are read via CityBuildings.createBuilding (4.8.3 building model).
  *
  * **************************************************************************************
  */
 
-// https://foede.innogamescdn.com/start/metadata?id=city_entities-xxxxxxx
-
-// grau darzustellende Produktionen
-let UnimportantProds = [
-	'supplies', // Vorräte
-	'money'     // Münzen
-];
-
 FoEproxy.addHandler('OtherPlayerService', 'updatePlayer', (data, postData) => {
-	Sabotage.UpdatePlayer(data.responseData[0]);	
+	Sabotage.UpdatePlayer(data.responseData?.[0]);
 });
 
 FoEproxy.addHandler('CityMapService', 'reset', (data, postData) => {
-	Sabotage.RemovePlunderedEntity(data.responseData[0]);
+	Sabotage.RemovePlunderedEntity(data.responseData?.[0]);
 });
 
-FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', async (data, postData) => {
+FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 	MainParser.UpdatePlayerDict(data.responseData, 'VisitPlayer').then(() => {
 		if (Settings.GetSetting('ShowPlayersAttDeffValues') || Settings.GetSetting('ShowNeighborsLootables')) {
 			Sabotage.OtherPlayersBuildings(data.responseData);
@@ -37,17 +31,20 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', async (data, postData) 
 			$('#sabotage-Btn-closed').remove();
 		}
 		else {
-			$('#sabotage-Btn').removeClass('hud-btn-red').addClass('hud-btn-red');
+			$('#sabotage-Btn').addClass('hud-btn-red');
 			$('#sabotageInfo').remove();
 		}
 	});
 });
 
-/**
- *
- * @type {{data: {}, CityEntities: [], ShowFunction: Sabotage.ShowFunction, OtherPlayersBuildings: Sabotage.OtherPlayersBuildings, player_name: string, showResult: Sabotage.showResult}}
- */
+
 let Sabotage = {
+
+	/** productions shown in grey (unimportant) */
+	UnimportantProds: ['supplies', 'money'],
+
+	/** Looting.ACTION_TYPE_SHIELDED, table neighborhoodAttacks */
+	ACTION_TYPE_SHIELDED: 5,
 
 	data: {
 		ready: [],
@@ -63,453 +60,440 @@ let Sabotage = {
 	IsGuildMember: false,
 	IsNeighbor: false,
 	CityEntities: [],
-	ArmyBoosts: [],
-	PlunderRepel :0,
+	ArmyBoosts: {},
+	PlunderRepel: 0,
 	IsLootable: false,
 	IsSabotageable: false,
-	
+
+	/** players with an alarm set in this session */
+	AlertsSet: new Set(),
+
+
 	/**
-	 * Die Gebäude ermitteln
+	 * Reads the interaction state of the visited player
 	 *
-	 * @param dp
+	 * @param OtherPlayer other_player of visitPlayer / updatePlayer
+	 */
+	SetPlayerState: (OtherPlayer) => {
+		Sabotage.OtherPlayer = OtherPlayer;
+		Sabotage.IsFriend = OtherPlayer.is_friend;
+		Sabotage.IsGuildMember = OtherPlayer.is_guild_member;
+		Sabotage.IsNeighbor = OtherPlayer.is_neighbor;
+		Sabotage.IsSabotageable = OtherPlayer.canSabotage;
+		Sabotage.IsLootable = (Sabotage.IsNeighbor && !Sabotage.IsFriend && !Sabotage.IsGuildMember && (OtherPlayer.next_interaction_in === undefined || OtherPlayer.canSabotage));
+	},
+
+
+	/**
+	 * Evaluates the buildings of the visited city
+	 *
+	 * @param dp responseData of OtherPlayerService.visitPlayer
 	 */
 	OtherPlayersBuildings: (dp) => {
-		
+		if (!dp?.other_player || !dp?.city_map?.entities) return;
+
 		Sabotage.data.ready = [];
 		Sabotage.data.work = [];
 
-		Sabotage.OtherPlayer = dp.other_player;
+		Sabotage.SetPlayerState(dp.other_player);
 
-		Sabotage.IsFriend = Sabotage.OtherPlayer.is_friend;
-		Sabotage.IsGuildMember = Sabotage.OtherPlayer.is_guild_member;
-		Sabotage.IsNeighbor = Sabotage.OtherPlayer.is_neighbor;
-		Sabotage.IsSabotageable = Sabotage.OtherPlayer.canSabotage;
-		Sabotage.IsLootable = (Sabotage.IsNeighbor && !Sabotage.IsFriend && !Sabotage.IsGuildMember && (Sabotage.OtherPlayer.next_interaction_in === undefined || Sabotage.OtherPlayer.canSabotage));
+		let PlayerId = Sabotage.PlayerId = dp.other_player.player_id,
+			Player = PlayerDict[PlayerId] || {};
 
-		// Werte des letzten Nachbarn löschen
-		CityMap.CityData = null;
-		Sabotage.PlayerId = Sabotage.OtherPlayer.player_id;
-		let PlayerId = Sabotage.PlayerId;
+		Sabotage.PlayerName = Player['PlayerName'] || dp.other_player.name;
+		Sabotage.ClanName = Player['ClanName'];
+		Sabotage.ClanId = Player['ClanId'];
+		Sabotage.PlayerEra = Player['Era'] || dp.other_player.era || dp.other_player_era;
 
-		Sabotage.PlayerName = PlayerDict[PlayerId]['PlayerName'];
-		Sabotage.ClanName = PlayerDict[PlayerId]['ClanName'];
-		Sabotage.ClanId = PlayerDict[PlayerId]['ClanId'];
-		Sabotage.PlayerEra = PlayerDict[PlayerId]['Era'];
+		// a popped-out box is re-rendered in place, removing it would close its pop-up window
+		if (!Popup.IsOpen('sabotageInfo')) {
+			$('#sabotageInfo').remove();
+		}
 
-		$('#sabotageInfo').remove();
+		// the building rating (part of createBuilding) reads the era of the visited city
+		if (ActiveMap === 'OtherPlayer' && !CityMap.OtherPlayer.eraName && Sabotage.PlayerEra) {
+			CityMap.OtherPlayer.eraName = Sabotage.PlayerEra;
+		}
 
-		let d = dp['city_map']['entities'];
+		let Entities = Sabotage.CityEntities = dp.city_map.entities,
+			Boosts = {
+				'att_boost_attacker-all': 0,
+				'def_boost_attacker-all': 0,
+				'att_boost_defender-all': 0,
+				'def_boost_defender-all': 0,
+			},
+			PlunderRepel = 0;
 
-        Sabotage.CityEntities = d;      
+		for (let Entity of Entities) {
+			let MetaData = MainParser.CityEntities[Entity['cityentity_id']];
+			if (!MetaData) continue;
 
-		let BoostDict = [];
-		
-		for (let i in d) {
-			if (d.hasOwnProperty(i)) {
-				let id = d[i]['cityentity_id'];
+			let StateClass = Entity['state']?.['__class__'];
+			// buildings under construction and unconnected buildings (except culture) give no boosts and produce nothing
+			if (StateClass === undefined || StateClass === 'ConstructionState') continue;
+			if (StateClass === 'UnconnectedState' && MetaData.type !== 'culture') continue;
 
-				if (d[i]['bonus'] !== undefined) {
-					let BoostType = d[i]['bonus']['type'];
-					let BoostValue = d[i]['bonus']['value'];
-					if (BoostType !== undefined && BoostValue !== undefined) {
-						BoostDict[BoostType] |= 0;
-						BoostDict[BoostType] += BoostValue;
-					}
-				}
+			let Building;
+			try {
+				let Era = Technologies.getEraName(Entity['cityentity_id'], Entity['level']);
+				// allies of other players are not known, so no ally boosts
+				Building = CityBuildings.createBuilding(MetaData, Era, Entity, false);
+			}
+			catch (e) {
+				console.error('Sabotage: building could not be read', Entity['cityentity_id'], e);
+				continue;
+			}
 
-				let BuildingData = MainParser.CityEntities[id];
+			for (let Type of Object.keys(Boosts)) {
+				Boosts[Type] += (Productions.getRatingValueForType(Building, Type) || 0);
+			}
+			PlunderRepel += Sabotage.GetPlunderRepel(Building);
 
-				if (d[i]['state'] !== undefined && d[i]['state']['__class__'] !== 'ConstructionState' && (d[i]['state']['__class__'] !== 'UnconnectedState' || BuildingData.type == 'culture')) {
-					if (BuildingData['abilities'] !== undefined) {
-						for (let ability in BuildingData['abilities']) {
-							if (!BuildingData['abilities'].hasOwnProperty(ability))  continue;
-							let CurrentAbility = BuildingData['abilities'][ability];
-							
-							if (CurrentAbility['boostHints'] !== undefined) {
-								for (let boostHint in CurrentAbility['boostHints']) {
-									if (!CurrentAbility['boostHints'].hasOwnProperty(boostHint)) continue;
-
-									let CurrentBoostHint = CurrentAbility['boostHints'][boostHint];
-									Sabotage.HandleBoostEraMap(BoostDict, CurrentBoostHint['boostHintEraMap'], d[i], BuildingData.bonus_multiplier);
-								}
-							}
-
-							if (CurrentAbility['bonuses'] !== undefined && CurrentAbility['bonusGiven'] === undefined) {
-								for (let bonus in CurrentAbility['bonuses']) {
-									if (!CurrentAbility['bonuses'].hasOwnProperty(bonus)) continue;
-									let CurrentBonus = CurrentAbility['bonuses'][bonus];
-									
-									Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i], BuildingData.bonus_multiplier);
-								}
-							}
-
-							if (CurrentAbility['bonusGiven'] !== undefined) {
-								let CurrentBonus = CurrentAbility['bonusGiven'];
-								Sabotage.HandleBoostEraMap(BoostDict, CurrentBonus['boost'], d[i], BuildingData.bonus_multiplier);
-							}
-						}
-					}
-					
-					if (BuildingData.is_plunderable) {
-						if (d[i]['state'] !== undefined && d[i]['state']['current_product'] !== undefined) {
-							if (!BuildingData.is_motivatable || (d[i]['state']['is_motivated'] === undefined || d[i]['state']['is_motivated'] === false)) {
-								GoodsParser.readType(d[i]);
-							}
-						}
-					}
-				}
+			if (MetaData.is_plunderable && !(MetaData.is_motivatable && Building.state.isPolivated === true)) {
+				Sabotage.ReadProduction(Entity, Building);
 			}
 		}
 
-		Sabotage.ArmyBoosts = Unit.GetBoostSums(BoostDict);
-		Sabotage.PlunderRepel = (BoostDict['plunder_repel'] !== undefined ? BoostDict['plunder_repel'] : 0 );
+		Sabotage.ArmyBoosts = {
+			AttackAttackBoost: Boosts['att_boost_attacker-all'],
+			AttackDefenseBoost: Boosts['def_boost_attacker-all'],
+			DefenseAttackBoost: Boosts['att_boost_defender-all'],
+			DefenseDefenseBoost: Boosts['def_boost_defender-all'],
+		};
+		Sabotage.PlunderRepel = PlunderRepel;
 
 		Sabotage.showResult();
 	},
 
-	ApplyChainDict: (ChainDict, BoostDict) => {
-		Object.keys(ChainDict).forEach(chainId => {
-			Object.keys(ChainDict[chainId]['boostDict']).forEach(boost => {
-				let multiplier = (DoubleChains.includes(chainId) === true && ChainDict[chainId]['mainBuildings'].length >=2 ? 2 : 1);
-				BoostDict[boost] += ChainDict[chainId]['boostDict'][boost] * multiplier;
-			})
-		});
+
+	/**
+	 * Plunder repel boost of a building (feature "all")
+	 *
+	 * @param Building building of CityBuildings.createBuilding
+	 * @returns {number}
+	 */
+	GetPlunderRepel: (Building) => {
+		let Sum = 0;
+		for (let Boost of (Building.boosts || [])) {
+			if (Boost.feature !== 'all' || !Boost.type.includes('plunder_repel')) continue;
+			if (Boost.needsLink && Building.setBuilding !== undefined && Boost.requiredLinks > (Building.setBuilding.uniqueAdjacentCount || 0)) continue;
+			Sum += (parseFloat(Boost.value) || 0);
+		}
+		return Sum;
 	},
 
 
 	/**
-	 * Boosts aus einer Era Map suchen und das BoostDict aktualisieren
-	 * */
-	HandleBoostEraMap: (BoostDict, BoostEraMap, Building, Multiplier) => {
-		if (BoostEraMap === undefined) return;
+	 * Collects the plunderable resources of a building
+	 *
+	 * @param Entity raw city map entity
+	 * @param Building building of CityBuildings.createBuilding
+	 */
+	ReadProduction: (Entity, Building) => {
+		let ProductionList = Building.state.production;
+		if (!ProductionList || Building.state.name === 'idle') return;
 
-		for (let EraName in BoostEraMap) {
-			if (!BoostEraMap.hasOwnProperty(EraName)) continue;
+		const BaseWeightFactor = 1000000000;
+		let lines = [],
+			IsImportant = false,
+			WeightedAmount = 0;
 
-			let EraBoosts = BoostEraMap[EraName];
-			let BuildingEraName = Building['level'] !== undefined ? Technologies.EraNames[Building['level'] + 1] : undefined;
+		for (let Production of ProductionList) {
+			let Resources = Production.resources || {};
 
-			if (EraName === 'AllAge' || EraName === BuildingEraName) {
-				let BoostType = EraBoosts['type'];
-				let BoostValue = EraBoosts['value'];
+			if (Production.type === 'resources' || Production.type === 'special_goods') {
+				for (let k of Object.keys(Resources)) {
+					let Amount = Resources[k],
+						WeightFactor = 1,
+						Unimportant = Sabotage.UnimportantProds.includes(k);
 
-				if (BoostType !== undefined && BoostValue !== undefined) {
-					BoostDict[BoostType] |= 0;
-					BoostDict[BoostType] += (BoostValue * Multiplier);
+					if (typeof Amount !== 'number') continue;
 
+					if (!Unimportant) {
+						IsImportant = true;
+					}
+					else {
+						WeightFactor /= BaseWeightFactor;
+					}
+					if (k === 'strategy_points') WeightFactor *= BaseWeightFactor;
+
+					WeightedAmount += Amount * WeightFactor;
+
+					lines.push({
+						amount: Amount,
+						name: GoodsData[k]?.name || k,
+						strong: (k === 'strategy_points'),
+						// own stock, shown for goods worth plundering
+						stock: (k !== 'strategy_points' && !Unimportant ? (ResourceStock[k] || 0) : undefined),
+					});
 				}
 			}
+			// Hall of Fame and similar
+			else if (Production.type === 'guildResources' && Resources['clan_power'] !== undefined) {
+				IsImportant = true;
+				lines.push({ amount: Resources['clan_power'], name: i18n('Boxes.Neighbors.GuildPower') });
+			}
 		}
-    },
+
+		if (lines.length === 0) return;
+
+		let entry = {
+			name: MainParser.CityEntities[Entity['cityentity_id']]['name'],
+			lines: lines,
+			weightedAmount: WeightedAmount,
+			state: (Building.state.name === 'collectable'),
+			id: Entity['id'],
+			isImportant: IsImportant
+		};
+
+		if (entry.state) {
+			Sabotage.data.ready.push(entry);
+		}
+		else {
+			Sabotage.data.work.push(entry);
+		}
+	},
 
 
 	/**
-	 *  HTML Box anzeigen
+	 * Shows the box: data and markup are separate steps, getViewModel collects, view renders
 	 */
-	showResult: async() => {
-		// let d = helper.arr.multisort(Sabotage.data, ['name'], ['ASC']);
-		let rd = helper.arr.multisort(Sabotage.data.ready, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']);
-		
-		let wk = helper.arr.multisort(Sabotage.data.work, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']);
-
-		// Wenn die Box noch nicht da ist, neu erzeugen und in den DOM packen
+	showResult: async () => {
 		if ($('#sabotageInfo').length === 0) {
-			
 			HTML.Box({
-				'id': 'sabotageInfo',
-				'title': i18n('Boxes.Sobotage.Title'),
-				'auto_close': true,
-				'dragdrop': true,
-				'minimize': true,
-				//'speaker': 'SabotageTone'
+				id: 'sabotageInfo',
+				title: i18n('Boxes.Sabotage.Title'),
+				auto_close: true,
+				dragdrop: true,
+				minimize: true,
+				popout: () => MainParser.PopOut('sabotageInfo'),
 			});
 
-			// CSS in den DOM prügeln
 			HTML.AddCssFile('sabotage');
 		}
 
-		let div = $('#sabotageInfo'),
-			h = [];
-        const boosts = Sabotage.ArmyBoosts;
-		h.push('<div class="text-center dark-bg" style="padding:5px 0 3px;">');
-		h.push('<p class="header"><strong>');
-        h.push('<span class="player-name">' + MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName));
+		let vm = await Sabotage.getViewModel(),
+			div = $('#sabotageInfo');
 
-		if (Sabotage.ClanName) {
-			h.push(`<br>[${MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName)}]`);
-		}
-
-		h.push('</span>');
-		h.push('</strong></p>');
-		h.push(`<p><strong>${i18n('Boxes.Sabotage.PlayerEra')}: ${i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra])}</strong></p>`);
-		
-		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId);
-		let isShielded = (shieldTime !== undefined);
-		
-		if ((!Sabotage.IsLootable || isShielded || Sabotage.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables'))
-		{
-			if (Sabotage.IsGuildMember || Sabotage.IsFriend || !Sabotage.IsNeighbor) {
-				let MsgType = (Sabotage.IsGuildMember ? 'NoAttackGuildMember' : (Sabotage.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor'))
-				h.push(`<p class="error"><strong>${i18n('Boxes.Sabotage.'+MsgType)}</strong></p>`);
-			} else {
-				let nextInteractionTime,
-					nextAttackTime,
-				    textClass,
-				    i18nId,
-					alertAvailable,
-					buttonAction,
-					buttonI18nId,
-					alertButtonDisabled;
-					
-				nextAttackTime = moment.unix(MainParser.getCurrentDateTime()).add(Sabotage.OtherPlayer.next_interaction_in, 'seconds');
-				alertAvailable = (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
-				alertButtonDisabled = (alertAvailable ? ' disabled' : ''); 
-				buttonI18nId = (!alertAvailable ? 'Boxes.Sabotage.SetAlarm' : 'Boxes.Sabotage.AlreadySetAlarm'); 
-				
-				if (Sabotage.IsSabotageable) {
-					textClass = 'success';
-					i18nId = 'Boxes.Sabotage.CanSabotage';
-					nextInteractionTime = nextAttackTime;
-				} else if (isShielded) {
-					textClass = 'error';
-					i18nId = 'Boxes.Sabotage.NextAttackTimeInfoShielded';
-					nextInteractionTime = shieldTime;
-				} else {
-					textClass = 'error';
-					i18nId = 'Boxes.Sabotage.NextAttackTimeInfo';
-					nextInteractionTime = nextAttackTime;
-				}
-				
-				buttonAction = (!alertAvailable ? ` onclick="Sabotage.SetAlert(${Sabotage.OtherPlayer.player_id}, ${nextInteractionTime.unix()})"` : ''); 
-				
-				h.push(`<p class="${textClass}"><strong>${HTML.i18nReplacer(i18n(i18nId), {
-					nextattacktime: nextInteractionTime.format('DD.MM.YYYY HH:mm:ss')
-				})}</strong> <button${alertButtonDisabled} class="btn btn-default btn-sabotage-alarm" id="alert-sabotage-${Sabotage.OtherPlayer.player_id}"${buttonAction}>${i18n(buttonI18nId)}</button></p>`);
-				
-			}
-		}
-		
-		h.push(`<p><span class="btn-default button-showcity">${i18n('Boxes.Sabotage.ShowCity')}</span>${!Sabotage.IsGuildMember ? `<span class="btn-default button-showloot">${i18n('Boxes.Sabotage.ShowLoot')}</span>` : ''}</p>`);
-        
-		h.push('</p>');
-		
-        if (Settings.GetSetting('ShowPlayersAttDeffValues'))
-		{
-			h.push('<table style="width: 100%; margin-bottom: 5px;" id="attdeftab"><tbody><tr><td>');		
-			h.push('<table style="width:100%">');
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.AttackingArmy')}</strong></th>`);
-			h.push('</tr>');
-			h.push('</thead>');
-			h.push('</table>');
-			
-			h.push('</td><td>');
-
-			h.push('<table style="width:100%">');
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.DefendingArmy')}</strong></th>`);
-			h.push('</tr>');
-			h.push('</thead>');
-			h.push('</table>');
-
-			h.push('</td></tr><tr><td>');
-
-			h.push('<table style="width:100%">');
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
-			h.push('</tr>');
-			h.push('</thead>');
-			h.push('<tbody>');
-			h.push('<tr>');
-			h.push(`<td class="text-center army-boost"><strong>${boosts.AttackAttackBoost}% (max ${boosts.AttackAttackBoost + 50}%)</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${boosts.AttackDefenseBoost}%</strong></td>`);
-			h.push('</tr>');
-			h.push('</tbody>');
-			h.push('</table>');
-			
-			h.push('</td><td>');
-
-			h.push('<table style="width:100%">');
-			h.push('<thead>');
-			h.push('<tr>');
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Attack')}</strong></th>`);
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.Defense')}</strong></th>`);
-			h.push(`<th class="text-center army"><strong>${i18n('Boxes.Sabotage.PlunderRepel')}</strong></th>`);
-			h.push('</tr>');
-			h.push('</thead>');
-			h.push('<tbody>');
-			h.push('<tr>');
-			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseAttackBoost}%</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${boosts.DefenseDefenseBoost}% (max ${boosts.DefenseDefenseBoost + 60}%)</strong></td>`);
-			h.push(`<td class="text-center army-boost"><strong>${Sabotage.PlunderRepel}%</strong></td>`);
-			h.push('</tr>');
-			h.push('</tbody>');
-			h.push('</table>');
-			
-			h.push('</td></tr></tbody></table>');
-		}
-		h.push('</div>');		
-
-		if (Settings.GetSetting('ShowNeighborsLootables'))
-		{
-			h.push('<table class="foe-table" style="margin-bottom: 5px; margin-top:2px;">');
-
-			h.push('<thead>');
-
-			h.push('<tr>');
-			h.push(`<th${rd.length > 0 ? ' colspan="3"' : ''} class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th>`);
-			h.push('</tr>');
-
-			h.push('</thead>');
-			h.push('<tbody>');
-
-			for (let i in rd) {
-				if (rd.hasOwnProperty(i)) {
-					h.push(`<tr class="${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? 'bg-red' : 'success'}">`);
-					h.push(`<td${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? ' class="error"' : ''}>${rd[i]['name']}</td>`);
-					h.push(`<td${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? ' class="error"' : ''}>${rd[i]['amount']}</td>`);
-					h.push('<td><span class="show-entity" data-id="' + rd[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
-					h.push('</tr>');
-				}
-			}
-
-			if (rd.length == 0) {
-				h.push(`<tr class="${!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded) ? 'bg-red' : ''}">`);
-				h.push(`<td class="text-center">${i18n('Boxes.Sabotage.NoProductionsAvailable')}</td>`);
-				h.push('</tr>');					
-			}
-
-			h.push('</tbody>');
-			h.push('</table>');
-		}
-
-		/*if (wk.length > 0) {
-
-			h.push('<table class="foe-table">');
-
-			h.push('<thead>');
-
-			h.push('<tr>');
-			h.push('<th colspan="3" class="production-headline"><strong>' + i18n('Boxes.Neighbors.OngoingProductions') + '</strong></th>');
-			h.push('</tr>');
-
-			h.push('</thead>');
-			h.push('<tbody>');
-
-			for (let i in wk) {
-				if (wk.hasOwnProperty(i)) {
-					h.push('<tr>');
-					h.push('<td>' + wk[i]['name'] + '</td>');
-					h.push('<td>' + wk[i]['amount'] + '</td>');
-					h.push('<td><span class="show-entity" data-id="' + wk[i]['id'] + '"><img class="game-cursor" src="' + extUrl + 'css/images/hud/open-eye.png"></span></td>');
-					h.push('</tr>');
-				}
-			}
-
-			h.push('</tbody>');
-			h.push('</table>');
-		}*/
-		
-		div.find('#sabotageInfoBody').html(h.join(''));
+		// lit-html updates only what changed, the body element keeps its state across renders and pop-out moves
+		litHtml.render(Sabotage.view(vm), div.find('#sabotageInfoBody')[0]);
 		div.show();
-
-		// Ein Gebäude soll auf der Karte dargestellt werden
-		$('body').on('click', '.foe-table .show-entity', function () {
-			Sabotage.ShowFunction($(this).data('id'));
-		});
-		
-		$('body').on('click', '.button-showcity', function () {
-			Sabotage.ShowFunction();
-		});
-
-		$('body').on('click', '.button-showloot', function () {
-			Looting.filterByPlayerId = Sabotage.PlayerId;
-			Looting.page = 1;
-			Looting.Show();
-		});
 	},
 
 
 	/**
-	 * Zeigt pulsierend ein Gebäude auf der Map
+	 * Everything the box shows, as plain data
 	 *
-	 * @param id
+	 * @returns {Promise<Object>}
+	 */
+	getViewModel: async () => {
+		let shieldTime = await Sabotage.GetActiveShield(Sabotage.PlayerId),
+			isShielded = (shieldTime !== undefined),
+			showCity = (ActiveMap === 'OtherPlayer' && LastMapPlayerID === Sabotage.PlayerId),
+			attack;
+
+		if ((!Sabotage.IsLootable || isShielded || Sabotage.IsSabotageable) && Settings.GetSetting('ShowNeighborsLootables')) {
+			if (Sabotage.IsGuildMember || Sabotage.IsFriend || !Sabotage.IsNeighbor) {
+				attack = { blocked: (Sabotage.IsGuildMember ? 'NoAttackGuildMember' : (Sabotage.IsFriend ? 'NoAttackFriend' : 'NoAttackNoNeighbor')) };
+			}
+			else {
+				// getCurrentDateTime is in milliseconds
+				let nextAttackTime = moment(MainParser.getCurrentDateTime()).add(Sabotage.OtherPlayer.next_interaction_in || 0, 'seconds');
+
+				attack = Sabotage.IsSabotageable ? { textClass: 'success', i18nId: 'CanSabotage', time: nextAttackTime }
+					: isShielded ? { textClass: 'error', i18nId: 'NextAttackTimeInfoShielded', time: shieldTime }
+					: { textClass: 'error', i18nId: 'NextAttackTimeInfo', time: nextAttackTime };
+
+				attack.alertSet = Sabotage.AlertsSet.has(Sabotage.PlayerId) || (await Sabotage.GetAlert(Sabotage.PlayerId) !== undefined);
+			}
+		}
+
+		return {
+			playerId: Sabotage.PlayerId,
+			playerLink: MainParser.GetPlayerLink(Sabotage.PlayerId, Sabotage.PlayerName),
+			guildLink: (Sabotage.ClanName ? MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName) : undefined),
+			era: (Sabotage.PlayerEra && Technologies.Eras[Sabotage.PlayerEra] !== undefined ? i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra]) : undefined),
+			attack: attack,
+			showCity: showCity,
+			showLoot: (!Sabotage.IsGuildMember && typeof Looting !== 'undefined'),
+			boosts: (Settings.GetSetting('ShowPlayersAttDeffValues') ? Object.assign({ PlunderRepel: Sabotage.PlunderRepel }, Sabotage.ArmyBoosts) : undefined),
+			productions: (Settings.GetSetting('ShowNeighborsLootables') ? {
+				notLootable: (!Sabotage.IsLootable || (!Sabotage.IsSabotageable && isShielded)),
+				ready: helper.arr.multisort(Sabotage.data.ready, ['isImportant', 'weightedAmount', 'name'], ['DESC', 'DESC', 'ASC']),
+			} : undefined),
+		};
+	},
+
+
+	/**
+	 * Markup of the box body, a pure function of the view model
+	 *
+	 * @param vm result of getViewModel
+	 * @returns {TemplateResult}
+	 */
+	view: (vm) => {
+		const { html, unsafeHTML } = litHtml,
+			t = (key) => i18n('Boxes.Sabotage.' + key),
+			fmt = (v) => Math.round(v * 100) / 100,
+			a = vm.attack,
+			b = vm.boosts,
+			p = vm.productions;
+
+		const productionLine = (l) => l.strong ? html`<strong>${l.amount} ${l.name}</strong>`
+			: html`${l.amount} ${l.name}${l.stock !== undefined ? ` (${l.stock ? HTML.Format(l.stock) : 0})` : ''}`;
+
+		// one box per army, a line per boost: [icon class, label key, value, max value]
+		const armyCard = (titleKey, lines) => html`
+			<div class="toolbox-card">
+				<h4>${t(titleKey)}</h4>
+				${lines.map(([icon, labelKey, value, max]) => html`
+					<div class="toolbox-card-line">
+						<span class="toolbox-card-label"><span class="toolbox-card-icon resicon ${icon}"></span>${t(labelKey)}</span>
+						<span class="text-right"><span class="toolbox-card-value">${fmt(value)}%</span>${max !== undefined ? html`<br><small class="toolbox-card-sub">max ${fmt(max)}%</small>` : ''}</span>
+					</div>`)}
+			</div>`;
+
+		const productionRow = (entry) => html`
+			<tr class="${p.notLootable ? 'bg-red' : 'success'}">
+				<td class="${p.notLootable ? 'error' : ''} ${entry.isImportant ? '' : 'unimportant'}">${entry.name}</td>
+				<td class="${p.notLootable ? 'error' : ''} ${entry.isImportant ? '' : 'unimportant'}">${entry.lines.map((l, i) => html`${i > 0 ? html`<br>` : ''}${productionLine(l)}`)}</td>
+				<td>${vm.showCity ? html`<span class="show-entity game-cursor" @click=${() => Sabotage.ShowFunction(entry.id)}><img src="${extUrl}css/images/hud/open-eye.png"></span>` : ''}</td>
+			</tr>`;
+
+		return html`
+			<div class="text-center dark-bg toolbox-head">
+				<p class="header"><strong><span class="player-name">${unsafeHTML(vm.playerLink)}${vm.guildLink ? html`<br>[${unsafeHTML(vm.guildLink)}]` : ''}</span></strong></p>
+				${vm.era ? html`<p><strong>${t('PlayerEra')}: ${vm.era}</strong></p>` : ''}
+				${!a ? '' : a.blocked ? html`<p class="error"><strong>${t(a.blocked)}</strong></p>` : html`
+					<p class="${a.textClass}"><strong>${HTML.i18nReplacer(t(a.i18nId), { nextattacktime: a.time.format('DD.MM.YYYY HH:mm:ss') })}</strong>
+						<button class="btn btn-sabotage-alarm" ?disabled=${a.alertSet} @click=${() => Sabotage.SetAlert(vm.playerId, a.time.unix())}>${t(a.alertSet ? 'AlreadySetAlarm' : 'SetAlarm')}</button></p>`}
+				${vm.showCity || vm.showLoot ? html`<p>
+					${vm.showCity ? html`<span class="btn button-showcity" @click=${() => Sabotage.ShowFunction()}>${t('ShowCity')}</span>` : ''}
+					${vm.showLoot ? html`<span class="btn button-showloot" @click=${() => Sabotage.ShowLoot(vm.playerId)}>${t('ShowLoot')}</span>` : ''}
+				</p>` : ''}
+				${!b ? '' : html`
+					<div class="toolbox-cards">
+						${armyCard('AttackingArmy', [
+							['att_boost_attacker-all', 'Attack', b.AttackAttackBoost, b.AttackAttackBoost + 50],
+							['def_boost_attacker-all', 'Defense', b.AttackDefenseBoost],
+						])}
+						${armyCard('DefendingArmy', [
+							['att_boost_defender-all', 'Attack', b.DefenseAttackBoost],
+							['def_boost_defender-all', 'Defense', b.DefenseDefenseBoost, b.DefenseDefenseBoost + 60],
+						])}
+					</div>
+					<p class="plunder-repel">${t('PlunderRepel')}: <span class="toolbox-card-value">${fmt(b.PlunderRepel)}%</span></p>`}
+			</div>
+			${!p ? '' : html`
+				<table class="foe-table">
+					<thead><tr><th colspan="${p.ready.length > 0 ? 3 : 1}" class="production-headline"><strong>${i18n('Boxes.Neighbors.ReadyProductions')}</strong></th></tr></thead>
+					<tbody>
+						${p.ready.length > 0 ? p.ready.map(productionRow) : html`
+							<tr class="${p.notLootable ? 'bg-red' : ''}"><td class="text-center">${t('NoProductionsAvailable')}</td></tr>`}
+					</tbody>
+				</table>`}`;
+	},
+
+
+	ShowLoot: (PlayerId) => {
+		Looting.filterByPlayerId = PlayerId;
+		Looting.filterSource = 'all';
+		Looting.page = 1;
+		Looting.Show();
+	},
+
+
+	/**
+	 * Opens the city map of the visited player, optionally highlighting a building
+	 *
+	 * @param id city map entity id
 	 */
 	ShowFunction: (id) => {
+		if (ActiveMap !== 'OtherPlayer' || LastMapPlayerID !== Sabotage.PlayerId) return;
 
-		let h = CityMap.hashCode(Sabotage.PlayerName);
+		CityMap.init(true);
 
-		// CSS in den DOM prügeln
-		HTML.AddCssFile('citymap');
+		if (id === undefined) return;
 
-		CityMap.init(true, Sabotage.CityEntities, Sabotage.PlayerName, id);
-	},
-	
-	UpdatePlayer: (ud) => {
-		if (ud.player_id == Sabotage.OtherPlayer.player_id) {
-		
-			Sabotage.OtherPlayer = ud;
-
-			Sabotage.IsFriend = Sabotage.OtherPlayer.is_friend;
-			Sabotage.IsGuildMember = Sabotage.OtherPlayer.is_guild_member;
-			Sabotage.IsNeighbor = Sabotage.OtherPlayer.is_neighbor;
-			Sabotage.IsSabotageable = Sabotage.OtherPlayer.canSabotage;
-
-			Sabotage.IsLootable = (Sabotage.IsNeighbor && !Sabotage.IsFriend && !Sabotage.IsGuildMember && (Sabotage.OtherPlayer.next_interaction_in === undefined || Sabotage.OtherPlayer.canSabotage));
-			
-			if ($('#sabotageInfo').is(':visible')) {
-					Sabotage.showResult();
+		// the map renders asynchronously (see CityMap.init)
+		let tries = 0;
+		let highlight = () => {
+			let entity = $(`#map-buildings .entity[data-id="${id}"]`);
+			if (entity.length === 0) {
+				if (++tries < 20) setTimeout(highlight, 150);
+				return;
 			}
+			$('#map-buildings .entity').removeClass('highlighted');
+			entity.addClass('highlighted');
+			CityMap.FocusEntities(entity.toArray());
+		};
+		setTimeout(highlight, 300);
+	},
+
+
+	UpdatePlayer: (ud) => {
+		if (!ud || !Sabotage.OtherPlayer || ud.player_id !== Sabotage.OtherPlayer.player_id) return;
+
+		Sabotage.SetPlayerState(ud);
+
+		if ($('#sabotageInfo').is(':visible')) {
+			Sabotage.showResult();
 		}
 	},
+
 
 	RemovePlunderedEntity: (pd) => {
-		if (pd.player_id === Sabotage.PlayerId) {
-			Sabotage.data.ready = Sabotage.data.ready.filter(e => e.id !== pd.id);
-			if ($('#sabotageInfo').is(':visible')) {
-					Sabotage.showResult();
-			}
+		if (!pd || pd.player_id !== Sabotage.PlayerId) return;
+
+		Sabotage.data.ready = Sabotage.data.ready.filter(e => e.id !== pd.id);
+		if ($('#sabotageInfo').is(':visible')) {
+			Sabotage.showResult();
 		}
-	},	
-	
-	GetActiveShield: async(PlayerId) => {
-		let lastShieldAction = await IndexDB.db.neighborhoodAttacks.where({playerId: PlayerId}).and(it => it.type === Looting.ACTION_TYPE_SHIELDED).last();
-		if (!lastShieldAction) { return; }
+	},
+
+
+	/**
+	 * End of the city shield, from the PvP history (table neighborhoodAttacks)
+	 *
+	 * @param PlayerId
+	 * @returns {Promise<moment|undefined>}
+	 */
+	GetActiveShield: async (PlayerId) => {
+		await IndexDB.getDB();
+		let lastShieldAction = await IndexDB.db.neighborhoodAttacks.where({ playerId: PlayerId }).and(it => it.type === Sabotage.ACTION_TYPE_SHIELDED).last();
+		if (!lastShieldAction) return;
+
 		let shieldTime = moment.unix(lastShieldAction.expireTime);
-		if (shieldTime.isBefore(moment())) {
-			return;
-		}
+		if (shieldTime.isBefore(moment())) return;
+
 		return shieldTime;
 	},
 
 
-	GetAlert: async(PlayerId) => {
+	GetAlert: async (PlayerId) => {
+		if (typeof Alerts === 'undefined') return;
 
-		// is alert.js included?
-		if(!Alerts){
-			return ;
-		}
+		let title = Sabotage.GetPlayerName(PlayerId);
 
-		// fetch all alerts and search the id
-		return Alerts.getAll().then((resp)=> {
-			if(resp.length === 0){
-				return ;
-			}
+		return Alerts.getAll().then((resp) => {
+			if (!resp || resp.length === 0) return;
 
-			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === PlayerDict[PlayerId]['PlayerName'] && alert['data']['expires'] > MainParser.getCurrentDateTime());
-		});
+			return resp.find(alert => alert['data']['category'] === 'sabotage' && alert['data']['title'] === title && alert['data']['expires'] > MainParser.getCurrentDateTime());
+		}).catch(() => undefined);
 	},
-	
-	SetAlert: (PlayerId, nextAttackTime)=> {
-		let title = PlayerDict[PlayerId]['PlayerName'];
+
+
+	GetPlayerName: (PlayerId) => {
+		return PlayerDict[PlayerId]?.['PlayerName'] || (PlayerId === Sabotage.PlayerId ? Sabotage.PlayerName : '') || '';
+	},
+
+
+	SetAlert: (PlayerId, nextAttackTime) => {
+		let title = Sabotage.GetPlayerName(PlayerId);
 		const data = {
 			title: title,
-			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), {playerName: title, nextattacktime: moment.unix(nextAttackTime).format('DD.MM.YYYY HH:mm:ss')}),
-			expires: (nextAttackTime - 30) * 1000, // -30s * Microtime
+			body: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveAlert'), { playerName: title, nextattacktime: moment.unix(nextAttackTime).format('DD.MM.YYYY HH:mm:ss') }),
+			expires: (nextAttackTime - 30) * 1000, // -30s, in milliseconds
 			repeat: -1,
 			persistent: true,
 			tag: '',
@@ -527,204 +511,14 @@ let Sabotage = {
 
 		HTML.ShowToastMsg({
 			head: i18n('Boxes.Sabotage.SaveMessage.Title'),
-			text: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveMessage.Desc'), {playerName: title}),
+			text: HTML.i18nReplacer(i18n('Boxes.Sabotage.SaveMessage.Desc'), { playerName: title }),
 			type: 'success',
 			hideAfter: 5000
 		});
 
-		$(`#alert-sabotage-${PlayerId}`).html(i18n('Boxes.Sabotage.AlreadySetAlarm'));
-		$(`#alert-sabotage-${PlayerId}`).prop('onclick', null);
-		$(`#alert-sabotage-${PlayerId}`).attr('disabled', '');
-	},
-};
-
-
-/**
- *
- * @type {
- * 		{
- * 		emptyGoods: GoodsParser.emptyGoods,
- * 		bazaarBuilding: GoodsParser.bazaarBuilding,
- * 		sumGoods: (function(*): number),
- * 		readType: GoodsParser.readType,
- * 		getProducts: (function(*): {amount: (string), state: boolean, isImportant: boolean})
- * 		}
- * 	}
- */
-let GoodsParser = {
-
-	/**
-	 * Ist es ein Produkt das man "mitzählen" kann?
-	 *
-	 * @param d
-	 */
-	readType: (d)=> {
-
-		// Ruhmeshallen ausgrenzen
-		/*
-		if(d['state']['current_product']['asset_name'] !== undefined && d['state']['current_product']['asset_name'].indexOf('bazaar_') > -1){
-			GoodsParser.bazaarBuilding(d);
-		}
-		*/
-
-		// produziert nix
-		//else
-			if(d['state']['current_product'] === undefined) {
-			GoodsParser.emptyGoods(d);
-		}
-
-		// alle anderen
-		else {
-
-			let p = GoodsParser.getProducts(d);
-
-			if(p['amount'] !== undefined){
-				let entry = {
-					name: MainParser.CityEntities[d['cityentity_id']]['name'],
-					amount: p['amount'],
-					weightedAmount: p['weightedAmount'],
-					state: p['state'],
-					id: d['id'],
-					isImportant: p['isImportant']
-				};
-				
-				if (p['isImportant'] === false ) {
-					entry.name = '<spark style="color:grey;">' + MainParser.CityEntities[d['cityentity_id']]['name'] + '</spark>';
-					entry.amount = '<spark style="color:grey;">' + p['amount'] + '</spark>';
-				}
-
-				if( entry['state'] === true ){
-					Sabotage.data.ready.push(entry);
-				} else {
-					Sabotage.data.work.push(entry);
-				}
-			}
+		Sabotage.AlertsSet.add(PlayerId);
+		if ($('#sabotageInfo').is(':visible')) {
+			Sabotage.showResult();
 		}
 	},
-
-
-	/**
-	 * ermittelt die Produktart
-	 *
-	 * @param d
-	 * @returns {{amount: number, name: (*|string), state: boolean, isImportant: boolean}}
-	 */
-	getProducts: (d) => {
-		const base_weight_factor = 1000000000;
-		let amount,
-			state = d['state']['__class__'] === 'ProductionFinishedState',
-			isFP = false,
-			isImportant = false,
-			weightedAmount = 0
-			
-		let g = [];
-
-		let a;
-		if (d['state']['current_product']['product'] !== undefined && d['state']['current_product']['product']['resources'] !== undefined) {
-			a = d['state']['current_product']['product']['resources'];
-
-			for (let k in a) {
-				if (a.hasOwnProperty(k)) {
-					let weightFactor = 1;
-					
-					if (!UnimportantProds.includes(k)) {
-						isImportant = true;
-					} else {
-						weightFactor /= base_weight_factor;
-					}
-					
-					if (GoodsData[k]['nameSingular'] == "Forge Point")
-						weightFactor *= base_weight_factor;
-					
-					weightedAmount += a[k] * weightFactor;
-					
-					if (!isFP)
-						isFP = GoodsData[k]['nameSingular'] == "Forge Point";
-
-					if (k === 'strategy_points') {
-						g.push('<strong>' + a[k] + ' ' + GoodsData[k]['name'] + '</strong>');
-
-					} else {
-						if (isImportant)
-							g.push(a[k] + ' ' + GoodsData[k]['name'] + ' (' + (ResourceStock[k] !== undefined && ResourceStock[k] !== 0 ? HTML.Format(ResourceStock[k]) : 0) + ')');
-						else
-							g.push(a[k] + ' ' + GoodsData[k]['name']);
-					}
-				}
-			}
-		}
-
-		if (d['state']['current_product']['clan_power'] !== undefined) {
-			isImportant = true;
-			g.push(d['state']['current_product']['clan_power'] + ' ' + i18n('Boxes.Neighbors.GuildPower'));
-		}
-
-		amount = g.join('<br>');
-		
-		return {
-			amount: amount,
-			weightedAmount: weightedAmount,
-			state: state,
-			isImportant: isImportant
-		};
-	},
-
-
-	/**
-	 * Gebäude mit "GuildPower"
-	 *
-	 * @param d
-	 */
-	bazaarBuilding: (d)=> {
-
-		let entry = {
-			name: d['state']['current_product']['name'],
-			weightedAmount: d['state']['current_product']['clan_power'],
-			amount: d['state']['current_product']['clan_power'] + ' ' + d['state']['current_product']['name'],
-			state: d['state']['__class__'] === 'ProductionFinishedState'
-		};
-
-		if( entry['state'] === true ){
-			Sabotage.data.ready.push(entry);
-		} else {
-			Sabotage.data.work.push(entry);
-		}
-	},
-
-	/**
-	 * Güter oder ggf. FPs zusammenrechnen
-	 *
-	 * @param d
-	 * @returns {number}
-	 */
-	sumGoods: (d)=> {
-
-		let sum = 0;
-
-		for( let el in d ) {
-			if( d.hasOwnProperty(el) ) {
-				sum += parseFloat( d[el] );
-			}
-		}
-
-		return sum;
-	},
-
-	/**
-	 * Fertiges Array wenn nix drin ist
-	 *
-	 * @param d
-	 */
-	emptyGoods: (d)=> {
-		let data = {
-			name: MainParser.CityEntities[d['cityentity_id']]['name'],
-			weightedAmount: 0,
-			fp: '-',
-			product: 'unbenutzt',
-			// cords: {x: d[i]['x'], y: d[i]['y']}
-		};
-
-		Sabotage.data.work.push(data);
-	}
-
 };

@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -21,11 +21,6 @@ FoEproxy.addHandler('CampaignService', 'start', (data, postData) => {
 	BonusService.InitBonus();
 });
 
-// GvG Map is opend
-FoEproxy.addHandler('ClanBattleService', 'getContinent', (data, postData) => {
-	BonusService.InitBonus();
-});
-
 // neihbor is visit
 FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 	let OtherPlayer = data.responseData.other_player;
@@ -40,7 +35,7 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 FoEproxy.addHandler('BonusService', 'getLimitedBonuses', (data, postData) => {
 	BonusService.Bonuses = data['responseData'];
 
-	FoEproxy.pushFoeHelperMessage('BonusUpdated');
+	FoEproxy.triggerFoeHelperHandler('BonusUpdated');
 
 	if ($('#bonus-hud').length > 0) {
 		BonusService.CalcBonusData();
@@ -48,9 +43,8 @@ FoEproxy.addHandler('BonusService', 'getLimitedBonuses', (data, postData) => {
 });
 
 FoEproxy.addFoeHelperHandler('QuestsUpdated', data => {
-	if ($('#bonus-hud').length > 0) {
+	if ($('#bonus-hud').length == 0) return;
 		BonusService.CalcBonusData();
-	}
 });
 
 // Guildfights enter
@@ -69,7 +63,7 @@ FoEproxy.addHandler('AnnouncementsService', 'fetchAllAnnouncements', (data, post
  * @type {{BonusTypes: [string, string, string, string, string], HideBonusSidebar: BonusService.HideBonusSidebar, SetBonusTypes: BonusService.SetBonusTypes, InitBonus: BonusService.InitBonus, Bonuses: [], CalcBonusData: BonusService.CalcBonusData, ShowBonusSidebar: BonusService.ShowBonusSidebar}}
  */
 let BonusService = {
-	
+
 	timeout:null,
 	Bonuses: [],
 	BonusTypes: [
@@ -184,7 +178,7 @@ let BonusService = {
 
 				sp.attr({
 					class: `hud-btn`,
-					title: 'FoE Toolbox: '+i18n('Boxes.BonusService.'+bt[i]),
+					title: 'FoE Toolbox: '+i18n('Boxes.BonusService.'+bt[i]), // TOOLBOX: branding
 				}).tooltip({
 					placement: 'left'
 				});
@@ -260,7 +254,7 @@ let BonusService = {
 					si.addClass('bonus-blink');
 
 					if (bt[i] === 'donequests') {
-						if (Settings.GetSetting('EnableSound')) Calculator.SoundFile.play();
+						helper.sounds.play("message");
 					}
 
 					setTimeout(()=>{
@@ -281,6 +275,7 @@ let BonusService = {
 		for (let i = 0; i < MainParser.Quests.length; i++) {
 			let Quest = MainParser.Quests[i];
 			if (Quest['category'] === 'outpost') continue;
+			if (Quest['type'] === 'ReplayableSeason_Allies_Milestone') continue;
 			if (Quest['state'] === 'collectReward') Ret += 1;
 		}
 		return Ret;

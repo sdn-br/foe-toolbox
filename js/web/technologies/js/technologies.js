@@ -1,6 +1,7 @@
 /*
- * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * *************************************************************************************
+ *
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -8,33 +9,47 @@
  * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
  * for full license details.
  *
- * **************************************************************************************
+ * *************************************************************************************
  */
 
 FoEproxy.addMetaHandler('research', (xhr, postData) => {
 	Technologies.AllTechnologies = JSON.parse(xhr.responseText);
-	$('#technologies-Btn').removeClass('hud-btn-red');
-	$('#technologies-Btn-closed').remove();
+	//$('#technologies-Btn').removeClass('hud-btn-red');
+	//$('#technologies-Btn-closed').remove();
+
+	//if ($('#PlayerProfileButton')) {
+    //    $('#PlayerProfileButton span').attr('class','technologies');
+    //}
 });
 
 FoEproxy.addHandler('ResearchService', 'getProgress', (data, postData) => {
 	Technologies.UnlockedTechnologies = data.responseData;
 });
 
+// pick up eras the game client already knows but the extension does not yet
+FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
+	Technologies.DetectGameEras();
+});
+
 FoEproxy.addHandler('ResearchService', 'payTechnology', (data, postData) => {
 	let era = data.responseData.technology.era;
+
     if (Technologies.Eras[era] > CurrentEraID) {
-        CurrentEraID = Technologies.EraNames[era];
+        CurrentEraID = Technologies.Eras[era];
         CurrentEra = era;
     }
 });
 
-FoEproxy.addHandler('ResearchService', 'spendForgePoints', (data, postData) => {
+// spendResearchResources is the Stellar Age variant of spendForgePoints (stellar points instead of forge points)
+const OnResearchProgress = (data, postData) => {
     let CurrentTech = data.responseData['technology'];
     if (CurrentTech === undefined) return;
 
     let ID = CurrentTech['id']
     if (ID === undefined) return;
+
+    if (!Technologies.UnlockedTechnologies) Technologies.UnlockedTechnologies = {};
+    if (!Array.isArray(Technologies.UnlockedTechnologies.inProgressTechnologies)) Technologies.UnlockedTechnologies.inProgressTechnologies = [];
 
     let TechFound = false;
     for (let i in Technologies.UnlockedTechnologies.inProgressTechnologies) {
@@ -56,6 +71,24 @@ FoEproxy.addHandler('ResearchService', 'spendForgePoints', (data, postData) => {
     if ($('#technologies').length !== 0) {
         Technologies.CalcBody();
     }
+};
+FoEproxy.addHandler('ResearchService', 'spendForgePoints', OnResearchProgress);
+FoEproxy.addHandler('ResearchService', 'spendResearchResources', OnResearchProgress);
+
+// branch choice of a Stellar Age decision point: the game only returns a success flag,
+// the chosen branch id is taken from the request
+FoEproxy.addHandler('ResearchService', 'chooseBranch', (data, postData) => {
+    let Request = (postData || []).find(post => post.requestClass === 'ResearchService' && post.requestMethod === 'chooseBranch'),
+        BranchID = Request?.requestData?.[0];
+    if (typeof BranchID !== 'string') return;
+
+    if (!Technologies.UnlockedTechnologies) Technologies.UnlockedTechnologies = {};
+    if (!Array.isArray(Technologies.UnlockedTechnologies.chosenBranches)) Technologies.UnlockedTechnologies.chosenBranches = [];
+    if (!Technologies.UnlockedTechnologies.chosenBranches.includes(BranchID)) Technologies.UnlockedTechnologies.chosenBranches.push(BranchID);
+
+    if ($('#technologies').length !== 0) {
+        Technologies.CalcBody();
+    }
 });
 
 FoEproxy.addHandler('ResearchService', 'payTechnology', (data, postData) => {
@@ -65,8 +98,10 @@ FoEproxy.addHandler('ResearchService', 'payTechnology', (data, postData) => {
     let ID = CurrentTech['id']
     if (ID === undefined) return;
 
-    let TechCount = Technologies.UnlockedTechnologies.unlockedTechnologies.length
-    Technologies.UnlockedTechnologies.unlockedTechnologies[TechCount] = ID;
+    // Inno verwaltet die erforschten Technologien jetzt in 'unlockedNodes' (vorher 'unlockedTechnologies').
+    if (!Technologies.UnlockedTechnologies) Technologies.UnlockedTechnologies = {};
+    if (!Array.isArray(Technologies.UnlockedTechnologies.unlockedNodes)) Technologies.UnlockedTechnologies.unlockedNodes = [];
+    Technologies.UnlockedTechnologies.unlockedNodes.push(ID);
 
     if ($('#technologies').length !== 0) {
         Technologies.CalcBody();
@@ -81,63 +116,265 @@ let Technologies = {
     IgnorePrevEra: null,
     IgnoreCurrentEraOptional: null,
 
-    Eras: {
-        AllAge: 0,
-        NoAge: 0,
-        StoneAge: 1,
-        BronzeAge: 2,
-        IronAge: 3,
-        EarlyMiddleAge: 4,
-        HighMiddleAge: 5,
-        LateMiddleAge: 6,
-        ColonialAge: 7,
-        IndustrialAge: 8,
-        ProgressiveEra: 9,
-        ModernEra: 10,
-        PostModernEra: 11,
-        ContemporaryEra: 12,
-        TomorrowEra: 13,
-        FutureEra: 14,
-        ArcticFuture: 15,
-        OceanicFuture: 16,
-        VirtualFuture: 17,
-        SpaceAgeMars: 18,
-        SpaceAgeAsteroidBelt: 19,
-        SpaceAgeVenus: 20,
-        SpaceAgeJupiterMoon: 21,
-        NextEra: 22,
+    /** @type {boolean} group the resource table by era with sorting inside each group */
+    GroupByEra: false,
+
+    /** @type {?number} sorted column index in grouped mode, null = default order */
+    SortColumn: null,
+
+    /** @type {number} sort direction in grouped mode: 1 ascending, -1 descending */
+    SortDirection: 1,
+
+    /**
+     * Ordered list of playable era ids, oldest first. Mirrors the game
+     * client's EraConstants.ERA_IDS and acts as the single source for all
+     * era lookup maps. DetectGameEras() extends it at runtime with eras the
+     * game client knows but this list does not yet.
+     * @type {string[]}
+     */
+    EraList: [
+        'StoneAge', 'BronzeAge', 'IronAge', 'EarlyMiddleAge', 'HighMiddleAge',
+        'LateMiddleAge', 'ColonialAge', 'IndustrialAge', 'ProgressiveEra',
+        'ModernEra', 'PostModernEra', 'ContemporaryEra', 'TomorrowEra',
+        'FutureEra', 'ArcticFuture', 'OceanicFuture', 'VirtualFuture',
+        'SpaceAgeMars', 'SpaceAgeAsteroidBelt', 'SpaceAgeVenus',
+        'SpaceAgeJupiterMoon', 'SpaceAgeTitan', 'SpaceAgeSpaceHub',
+        'StellarAgeDiscovery'
+    ],
+
+    /** @type {Object<string,number>} Era name -> era id (NoAge/AllAge = 0), built from EraList */
+    Eras: null,
+
+    /** @type {Object<string,number>} Era name -> Inno era id (StoneAge = 0), need this for identities */
+    InnoEras: null,
+
+    /** @type {Object<number,string>} Era id -> era name */
+    EraNames: null,
+
+    /** @type {Object<number,string>} Inno era id -> era name, need this for cityentities */
+    InnoEraNames: null,
+
+    maxEra:null,
+
+
+    /**
+     * Retrieves the maximum era based on the requirements of all great buildings in the city entities.
+     * If the maximum era has not been previously calculated, it computes the value by iterating
+     * through the city entities, filtering for great buildings, and mapping their minimum era requirements
+     * to a numerical value. The result is stored in `Technologies.maxEra` for caching and returned.
+     *
+     * @returns {number} The numerical value representing the maximum era.
+     */
+    getMaxEra:()=>{ // 1 more than "InnoEra"
+        if (!Technologies.maxEra) {
+            Technologies.maxEra = Math.max(...Object.values(MainParser.CityEntities).filter(x => x.type === "greatbuilding").map(x => Technologies.Eras[x.requirements.min_era]));
+        }
+        return Technologies.maxEra;
     },
 
 
-    EraNames: {
-        0: 'NoAge',
-        1: 'StoneAge',
-        2: 'BronzeAge',
-        3: 'IronAge',
-        4: 'EarlyMiddleAge',
-        5: 'HighMiddleAge',
-        6: 'LateMiddleAge',
-        7: 'ColonialAge',
-        8: 'IndustrialAge',
-        9: 'ProgressiveEra',
-        10: 'ModernEra',
-        11: 'PostModernEra',
-        12: 'ContemporaryEra',
-        13: 'TomorrowEra',
-        14: 'FutureEra',
-        15: 'ArcticFuture',
-        16: 'OceanicFuture',
-        17: 'VirtualFuture',
-        18: 'SpaceAgeMars',
-        19: 'SpaceAgeAsteroidBelt',
-        20: 'SpaceAgeVenus',
-        21: 'SpaceAgeJupiterMoon',
+    /**
+     * (Re)builds the four era lookup maps (Eras, InnoEras, EraNames,
+     * InnoEraNames) from the ordered EraList.
+     */
+    BuildEraMaps: () => {
+        const eras = { AllAge: 0, NoAge: 0 },
+            innoEras = {},
+            eraNames = { 0: 'NoAge' },
+            innoEraNames = {};
+
+        Technologies.EraList.forEach((name, i) => {
+            eras[name] = i + 1;
+            innoEras[name] = i;
+            eraNames[i + 1] = name;
+            innoEraNames[i] = name;
+        });
+
+        eras.NextEra = Technologies.EraList.length + 1;
+        innoEras.NextEra = Technologies.EraList.length;
+
+        Technologies.Eras = eras;
+        Technologies.InnoEras = innoEras;
+        Technologies.EraNames = eraNames;
+        Technologies.InnoEraNames = innoEraNames;
     },
 
 
-	/**
-	 * Zeigt
-	 */
+    /**
+     * Reads the era constants straight from the game client so new eras work
+     * without an extension update: fetches the ForgeHX client script (served
+     * from the browser cache, parsed once per client version) and extracts
+     * the ordered era id list plus the gettext key and short code of every
+     * era name. Newly discovered eras are appended to EraList, the lookup
+     * maps are rebuilt and i18n fallbacks are registered.
+     */
+    DetectGameEras: async (retries = 60) => {
+        try {
+            if (!i18n_loaded) { // translations must be loaded before missing era names can be detected
+                if (retries > 0) setTimeout(() => Technologies.DetectGameEras(retries - 1), 1000);
+                return;
+            }
+
+            const src = [...document.scripts].map(s => s.src).find(s => /ForgeHX.*\.js/.test(s));
+            if (!src) return;
+
+            let cache = JSON.parse(localStorage.getItem('TechnologiesGameEras') || 'null');
+
+            if (!cache || cache.src !== src) {
+                const js = await fetch(src).then(r => r.text());
+
+                // EraConstants.ERA_IDS, e.g. ERA_IDS="StoneAge BronzeAge ... SpaceAgeSpaceHub StellarAgeDiscovery"
+                const idsMatch = js.match(/\bERA_IDS="([A-Za-z ]+)"/);
+                if (!idsMatch) return;
+
+                // EraNames lookup entries, e.g. new xl(t.gettext("STEL|Stellar Age Discovery"),"stel",23);a.h.StellarAgeDiscovery=b
+                const names = {};
+                for (const m of js.matchAll(/new [\w$]+\([\w$]+\.gettext\("([^"]+)"\),\s*"([a-z]+)",\d+\);[\w$]+\.h\.(\w+)=/g)) {
+                    names[m[3]] = { key: m[1], code: m[2] };
+                }
+
+                cache = { src: src, eraIds: idsMatch[1].split(' '), names: names };
+                localStorage.setItem('TechnologiesGameEras', JSON.stringify(cache));
+            }
+
+            // accept the game's list only if it extends the known one (placeholder eras excluded)
+            const gameList = cache.eraIds.filter(id => id !== 'TheUnknownEra');
+            if (!Technologies.EraList.every((id, i) => gameList[i] === id)) return;
+
+            if (gameList.length > Technologies.EraList.length) {
+                Technologies.EraList = gameList;
+                Technologies.BuildEraMaps();
+
+                // StartUp resolves CurrentEraID synchronously and may have run before the
+                // maps knew this era (async detection) — refresh it from the extended maps
+                if (typeof CurrentEra === 'string' && Technologies.Eras[CurrentEra] !== undefined) {
+                    CurrentEraID = Technologies.Eras[CurrentEra];
+                }
+            }
+
+            Technologies.AddEraTranslations(cache.names || {});
+        }
+        catch (err) {
+            console.warn('DetectGameEras failed:', err);
+        }
+    },
+
+
+    /**
+     * Registers i18n fallbacks (full and short era name) for eras the
+     * extension's language files do not cover yet. Full names are resolved
+     * through the game's own translation catalog (window.gettextCatalog),
+     * so they appear in the game language.
+     * @param {Object<string,{key:string,code:string}>} names Era name data extracted from the client script
+     */
+    AddEraTranslations: (names) => {
+        const catalog = window.gettextCatalog?.strings,
+            strings = catalog?.h || catalog || {},
+            values = {};
+
+        for (const [eraName, data] of Object.entries(names)) {
+            const eraId = Technologies.Eras[eraName];
+            if (eraId === undefined) continue;
+
+            if (i18n('Eras.' + eraId) === 'Eras.' + eraId) {
+                let translated = strings[data.key];
+                translated = (Array.isArray(translated) ? translated[0] : translated) || data.key;
+                values['Eras.' + eraId] = String(translated).split('|').pop(); // cut off gettext context prefix
+            }
+
+            if (i18n('Eras.' + eraId + '.short') === 'Eras.' + eraId + '.short') {
+                values['Eras.' + eraId + '.short'] = data.code.toUpperCase();
+            }
+        }
+
+        if (Object.keys(values).length > 0) {
+            i18n.translator.add({ values: values });
+        }
+    },
+
+
+    /**
+     * Retrieves the era name associated with a given entityId and level.
+     * If the era name within the entityId is 'MultiAge', the era name is determined
+     * using the provided level and the Technologies.InnoEraNames mapping.
+     *
+     * @param {string} entityId - The identifier used to extract the era name. Typically formatted as parts separated by underscores with the era name in the second position.
+     * @param {number} level - The level used to determine the era name if the era is 'MultiAge'.
+     * @returns {string} The resolved era name based on the entityId and/or level.
+     */
+    getEraName: (entityId, level) => {
+        let eraName = entityId.split('_')[1]
+
+        if (eraName === 'MultiAge') {
+            return Technologies.InnoEraNames[level]
+        }
+
+        return eraName
+    },
+
+
+    /**
+     * Retrieves the ID of the previous era based on the name of the current era.
+     *
+     * @param {string} eraName - The name of the current era.
+     * @returns {number} The ID of the previous era. If the era ID cannot be determined,
+     * it defaults to 1.
+     */
+    getPreviousEraIdByCurrentEraName: (eraName) => {
+        return parseInt(Technologies.InnoEras[eraName]-1 || 1)
+    },
+
+
+    /**
+     * Retrieves the numeric ID associated with the provided era name.
+     *
+     * This function looks up the corresponding era ID for the given era name
+     * from the `Technologies.InnoEras` collection. If the era name does not
+     * exist in the collection, it defaults to returning 1.
+     *
+     * @param {string} eraName - The name of the current era to look up.
+     * @returns {number} The numeric ID for the specified era, or 1 if the era name is not found.
+     */
+    getEraIdByCurrentEraName: (eraName) => {
+        return parseInt(Technologies.InnoEras[eraName]||1)
+    },
+
+
+    /**
+     * Determines the next era ID based on the current era name.
+     * If the player is already in the highest era, the function returns the current era ID.
+     *
+     * @param {string} eraName - The name of the current era.
+     * @returns {number} The ID of the next era, or the current era ID if the player is in the highest era.
+     */
+    getNextEraIdByCurrentEraName: (eraName) => {
+        // if player is in the highest era, return current age number
+        return (Technologies.InnoEras[eraName] === Technologies.getMaxEra()-1) ? parseInt(Technologies.InnoEras[eraName]) : parseInt(Technologies.InnoEras[eraName]+1)
+    },
+
+
+    /**
+     * Displays or toggles the "technologies" box in the interface.
+     * If the box does not exist, it creates the box, adds relevant styling,
+     * and initializes event listeners. If the box already exists, it closes the
+     * open box.
+     *
+     * Functionality includes:
+     * - Adding a "technologies" box with various configuration options such as
+     *   auto-close, draggable, minimizable, resizable, and configurable settings.
+     * - Injecting the necessary CSS file for the technologies box.
+     * - Setting the initially selected era for displaying technologies.
+     * - Handling user interactions like toggling settings for ignoring previous
+     *   or current era optional technologies, and saving states in localStorage.
+     * - Switching between different eras based on user input, recalculating the
+     *   content of the box accordingly, and updating button states.
+     * - Building and rendering the UI for the "technologies" box.
+     *
+     * Event listeners:
+     * - `.ignoreprevera`: Toggles the ignore previous era flag for technologies.
+     * - `.ignorecurrenteraoptional`: Toggles the ignore current era optional flag for technologies.
+     * - `.btn-switchage`: Switches the selected era to the specified value and updates the box content.
+     */
     Show: ()=> {
 		if ($('#technologies').length === 0) {
 
@@ -148,7 +385,7 @@ let Technologies = {
 				dragdrop: true,
 				minimize: true,
                 resize: true,
-                settings: 'Technologies.ShowSettingsButton()'
+                settings: () => Technologies.ShowSettingsButton()
 			});
 
 			// CSS in den DOM prügeln
@@ -156,110 +393,294 @@ let Technologies = {
 
 			Technologies.SelectedEraID = CurrentEraID;
 
+            let $technologiesBox = $('#technologies');
+
+            $technologiesBox.on('click', '.ignoreprevera', function () {
+                let $this = $(this);
+
+                Technologies.IgnorePrevEra = $this.prop('checked');
+
+                localStorage.setItem('TechnologiesIgnorePrevEra', Technologies.IgnorePrevEra);
+
+                Technologies.CalcBody();
+            });
+
+            $technologiesBox.on('click', '.ignorecurrenteraoptional', function () {
+                let $this = $(this);
+
+                Technologies.IgnoreCurrentEraOptional = $this.prop('checked');
+
+                localStorage.setItem('TechnologiesIgnoreCurrentEraOptional', Technologies.IgnoreCurrentEraOptional);
+
+                Technologies.CalcBody();
+            });
+
+            $technologiesBox.on('click', '.groupbyera', function () {
+                Technologies.GroupByEra = $(this).prop('checked');
+
+                localStorage.setItem('TechnologiesGroupByEra', Technologies.GroupByEra);
+
+                Technologies.CalcBody();
+            });
+
+            // grouped mode: own sort handling, era blocks stay intact and are sorted internally
+            $technologiesBox.on('click', '.technologies-grouped .sorter-header th', function () {
+                let column = $(this).index();
+                if ($(this).hasClass('no-sort')) return;
+
+                Technologies.SortDirection = (Technologies.SortColumn === column ? -Technologies.SortDirection : 1);
+                Technologies.SortColumn = column;
+
+                Technologies.CalcBody();
+            });
+
+            // Zeitalter vor und zurück schalten
+            $technologiesBox.on('click', '.btn-switchage', function () {
+
+                $('.btn-switchage').removeClass('btn-active');
+
+                Technologies.SelectedEraID = $(this).data('value');
+                Technologies.CalcBody();
+
+                $(this).addClass('btn-active');
+            });
+
 		} else {
 			HTML.CloseOpenBox('technologies');
         }
-
-        $('#technologies').on('click', '.ignoreprevera', function () {
-            let $this = $(this),
-                v = $this.prop('checked');
-
-            Technologies.IgnorePrevEra = v;
-
-            localStorage.setItem('TechnologiesIgnorePrevEra', Technologies.IgnorePrevEra);
-
-            Technologies.CalcBody();
-        });
-
-        $('#technologies').on('click', '.ignorecurrenteraoptional', function () {
-            let $this = $(this),
-                v = $this.prop('checked');
-
-            Technologies.IgnoreCurrentEraOptional = v;
-
-            localStorage.setItem('TechnologiesIgnoreCurrentEraOptional', Technologies.IgnoreCurrentEraOptional);
-
-            Technologies.CalcBody();
-        });
-
-        // Zeitalter vor und zurück schalten
-        $('#technologies').on('click', '.btn-switchage', function () {
-
-            $('.btn-switchage').removeClass('btn-active');
-
-            Technologies.SelectedEraID = $(this).data('value');
-            Technologies.CalcBody();
-
-            $(this).addClass('btn-active');
-        });
 
 		Technologies.BuildBox();
     },
 
 
-	/**
-	 *
-	 */
+    /**
+     * Initializes and builds the technologies box configuration.
+     * This method sets up certain configuration flags for ignoring
+     * research of specific technologies based on the current era and
+     * previous era preferences stored in localStorage.
+     * After updating the configuration flags, it triggers the recalculation
+     * of the technologies display body.
+     *
+     * Flags:
+     * - `Technologies.IgnorePrevEra`: Determines whether to ignore technologies
+     *   from the previous era. This is retrieved from localStorage.
+     *   Defaults to 'true' if the value in localStorage is not 'false'.
+     * - `Technologies.IgnoreCurrentEraOptional`: Determines whether to ignore
+     *   optional technologies from the current era. This is retrieved from
+     *   localStorage. Defaults to 'true' if the value in localStorage is not 'false'.
+     *
+     * Dependencies:
+     * - `Technologies.CalcBody()`: Recalculates and updates the technologies display body.
+     */
     BuildBox: () => {
-        Technologies.IgnorePrevEra = (localStorage.getItem('TechnologiesIgnorePrevEra') !== 'false' ? 'true' : 'false')
-        Technologies.IgnoreCurrentEraOptional = (localStorage.getItem('TechnologiesIgnoreCurrentEraOptional') !== 'false' ? 'true' : 'false')
+        // real booleans — the string 'false' would be truthy in the checks below
+        Technologies.IgnorePrevEra = localStorage.getItem('TechnologiesIgnorePrevEra') !== 'false'
+        Technologies.IgnoreCurrentEraOptional = localStorage.getItem('TechnologiesIgnoreCurrentEraOptional') !== 'false'
+        Technologies.GroupByEra = localStorage.getItem('TechnologiesGroupByEra') === 'true'
 
         Technologies.CalcBody();
     },
 
 
-	/**
-	 *
-	 */
+    /**
+     * Returns the research resource of a technology (forge points or, in the
+     * Stellar Age, stellar points): the first entry of `researchCost.resources`,
+     * resolved exactly like the game client does it. The former `max_progress`
+     * field is kept as forge point fallback for older metadata.
+     *
+     * @param {Object} Tech - A technology entry of the research tree.
+     * @returns {{id: string, amount: number}} Resource id and total amount (strategy_points / 0 if none).
+     */
+    GetResearchCost: (Tech) => {
+        if (Tech['max_progress'] !== undefined) return { id: 'strategy_points', amount: Tech['max_progress'] || 0 };
+
+        const Resources = Tech['researchCost']?.['resources'],
+            ID = (Resources && typeof Resources === 'object') ? Object.keys(Resources)[0] : undefined;
+
+        return ID ? { id: ID, amount: Resources[ID] || 0 } : { id: 'strategy_points', amount: 0 };
+    },
+
+
+    /**
+     * Returns the open demand of a technology as resource id -> amount: the
+     * goods requirements (`requirements.resources`, or `cost.resources` for the
+     * branch decision points of the Stellar Age, which have no requirements)
+     * plus the still unpaid part of the research resource.
+     *
+     * @param {Object} Tech - A technology entry of the research tree.
+     * @returns {Object<string,number>}
+     */
+    GetTechDemand: (Tech) => {
+        const Demand = Object.assign({}, (Tech['requirements'] || Tech['cost'] || {})['resources'] || {}),
+            Research = Technologies.GetResearchCost(Tech);
+
+        if (Research.amount > 0) Demand[Research.id] = (Demand[Research.id] || 0) + Research.amount - (Tech['currentSP'] || 0);
+
+        return Demand;
+    },
+
+
+    /**
+     * Optional technologies are dead ends of the tree (no children). The
+     * technologies of a decision point branch are never optional, their last
+     * node has no children by design.
+     *
+     * @param {Object} Tech - A technology entry of the research tree.
+     * @returns {boolean}
+     */
+    IsOptionalTech: (Tech) => !Tech['branchOf'] && (Tech['children'] || []).length === 0,
+
+
+    /**
+     * Flattens the research tree into one list: all top level nodes (root
+     * excluded) plus the technologies of the Stellar Age branch decision
+     * points. Of each decision point only one branch is taken: the chosen one
+     * if the player already decided, otherwise the first one (both branches
+     * carry the same research costs, only the goods differ slightly). Branch
+     * technologies are marked with `branchOf` (id of their decision point).
+     *
+     * @returns {Object[]} Technology entries
+     */
+    GetTechList: () => {
+        const Chosen = new Set(Technologies.UnlockedTechnologies?.['chosenBranches'] || []),
+            List = [];
+
+        for (const Tech of Technologies.AllTechnologies.slice(1)) {
+            List.push(Tech);
+
+            const Branches = Tech['branches'];
+            if (!Array.isArray(Branches) || Branches.length === 0) continue;
+
+            const Branch = Branches.find(branch => Chosen.has(branch['id'])) || Branches[0];
+            for (const Node of (Branch['nodes'] || [])) {
+                Node['branchOf'] = Tech['id'];
+                List.push(Node);
+            }
+        }
+
+        return List;
+    },
+
+
+    /**
+     * Marks the researched (`isResearched`, fully paid) and partially
+     * researched (`currentSP`) technologies of a tech list from the game's
+     * research progress.
+     *
+     * @param {Object[]} TechList - Output of GetTechList()
+     */
+    MarkResearchState: (TechList) => {
+        const ByID = new Map(TechList.map(Tech => [Tech['id'], Tech])),
+            Progress = Technologies.UnlockedTechnologies || {},
+            Researched = Progress['unlockedNodes']?.length ? Progress['unlockedNodes'] : (Progress['unlockedTechnologies'] || []);
+
+        for (const Tech of TechList) {
+            if (Tech['currentSP'] === undefined) Tech['currentSP'] = 0;
+        }
+
+        for (const ID of Researched) {
+            const Tech = ByID.get(ID);
+            if (!Tech) continue;
+
+            Tech['isResearched'] = true;
+            Tech['currentSP'] = Technologies.GetResearchCost(Tech).amount;
+        }
+
+        for (const InProgress of (Progress['inProgressTechnologies'] || [])) {
+            const Tech = ByID.get(InProgress['tech_id']);
+            if (Tech) Tech['currentSP'] = InProgress['currentSP'];
+        }
+    },
+
+
+    /**
+     * Calculates and renders the body content for the technologies module.
+     * This includes processing researched and in-progress technologies,
+     * calculating required resources for unlocking further technologies,
+     * and dynamically generating HTML content to display relevant data.
+     *
+     * The function performs the following steps:
+     * 1. Flattens the research tree (GetTechList, decision point branches included)
+     *    and marks researched / partially researched technologies (MarkResearchState).
+     * 2. Computes the total resources required to unlock remaining technologies (GetTechDemand),
+     *    taking into account the user-defined filters such as ignoring previous or optional technologies.
+     * 3. Assembles a list of resources and their statuses (required, in stock, missing).
+     * 4. Generates HTML content, including era navigation, settings, and a table displaying resource requirements.
+     *
+     * Data sources:
+     * - `Technologies.AllTechnologies`: Array of all available technologies with their details.
+     * - `Technologies.UnlockedTechnologies`: Research progress (unlocked nodes, in-progress technologies, chosen branches).
+     * - `Technologies.Eras`: Mapping of era names to era IDs.
+     * - `GoodsList`: Array of all possible resources for the technologies.
+     * - `ResourceStock`: Object containing current user stock of resources.
+     * - `StrategyPoints.AvailableFP`: Number of available strategy points.
+     * - `GoodsData`: Object containing metadata for each resource (ID and name).
+     *
+     * Rendering:
+     * - Builds and populates the `#technologiesBody` DOM element with dynamically
+     *   generated HTML content, including tables, buttons, and options.
+     *
+     * Filters applied:
+     * - Technologies from previous eras are ignored if `Technologies.IgnorePrevEra` is true.
+     * - Optional technologies from the current or future eras are ignored if
+     *   `Technologies.IgnoreCurrentEraOptional` is true.
+     */
     CalcBody: ()=> {
         let h = [],
-            TechDict = [];
+            TechList = Technologies.GetTechList();
 
-        // Index aufbauen (Namen => Index)
-        for (let i = 1; i < Technologies.AllTechnologies.length; i++) {
-            TechDict[Technologies.AllTechnologies[i]['id']] = i;
-        }
+        Technologies.MarkResearchState(TechList);
 
-        // Suche erforschte Technologien
-        for (let i = 0; i < Technologies.UnlockedTechnologies['unlockedTechnologies'].length; i++) {
-            let TechName = Technologies.UnlockedTechnologies['unlockedTechnologies'][i];
-            let Index = TechDict[TechName];
-            Technologies.AllTechnologies[Index]['isResearched'] = true;
-            Technologies.AllTechnologies[Index]['currentSP'] = Technologies.AllTechnologies[Index]['maxSP'];
-        }
-
-        // Teilweise erforscht
-        for (let i = 0; i < Technologies.UnlockedTechnologies['inProgressTechnologies'].length; i++) {
-            let InProgTech = Technologies.UnlockedTechnologies['inProgressTechnologies'][i];
-            let Index = TechDict[InProgTech['tech_id']];
-            Technologies.AllTechnologies[Index]['currentSP'] = InProgTech['currentSP'];
-        }
-
-        // Güter zaehlen
-        let RequiredResources = [],
+        // Güter zählen
+        let RequiredResources = {},            // Bedarf NUR des gewählten Zeitalters
+            CumulativeResources = {},          // Bedarf kumulativ: aktuelles ZA bis gewähltes ZA
+            RelevantResources = { strategy_points: true, money: true, supplies: true },
             TechCount = 0;
-        for (let i = 1; i < Technologies.AllTechnologies.length; i++) {
-            let Tech = Technologies.AllTechnologies[i];
-            if (Tech['currentSP'] === undefined)
-            	Tech['currentSP'] = 0;
 
-            if (!Tech['isResearched'] && !Tech['isTeaser']) {
-                let EraID = Technologies.Eras[Tech['era']];
+        let SelEraID = Technologies.SelectedEraID;
+        // Lower bound of the cumulative range: the lower of current and selected era
+        // (i.e. the current era when browsing ahead). With "ignore previous eras"
+        // unchecked, open researches of earlier eras are included as well.
+        let CumLowerEraID = Technologies.IgnorePrevEra ? Math.min(CurrentEraID, SelEraID) : 1;
 
-                if (EraID < CurrentEraID && Technologies.IgnorePrevEra) continue; // Vorherige ZA ausblenden
-                if (EraID >= CurrentEraID && Tech['childTechnologies'].length === 0 && Technologies.IgnoreCurrentEraOptional) continue; // Aktuelles/zukünfiges ZA und optionale Technologie ausblenden
+        for (let Tech of TechList) {
+            if (Tech['isTeaser']) continue;
 
-                if (EraID >= CurrentEraID && EraID <= Technologies.SelectedEraID) { // Alle Technologien voriger ZA und optionale Technologien ausblenden
-                    if (RequiredResources['strategy_points'] === undefined)
-                    	RequiredResources['strategy_points'] = 0;
+            let EraID = Technologies.Eras[Tech['era']];
 
-                    RequiredResources['strategy_points'] += Tech['maxSP'] - Tech['currentSP'];
+            // Aktuelles/zukünftiges ZA und optionale Technologie ausblenden
+            if (EraID >= CurrentEraID && Technologies.IsOptionalTech(Tech) && Technologies.IgnoreCurrentEraOptional) {
+                continue;
+            }
 
-                    for (let ResourceName in Tech['requirements']['resources']) {
-                        if (RequiredResources[ResourceName] === undefined)
-                        	RequiredResources[ResourceName] = 0;
+            // Außerhalb des kumulativen Bereichs irrelevant
+            if (EraID < CumLowerEraID || EraID > SelEraID) {
+                continue;
+            }
 
-                        RequiredResources[ResourceName] += Tech['requirements']['resources'][ResourceName];
+            let Demand = Technologies.GetTechDemand(Tech);
+
+            // Kumulativ: gesamter Bereich [CumLowerEraID .. SelEraID]
+            if (!Tech['isResearched']) {
+                for (let ResourceName in Demand) {
+                    CumulativeResources[ResourceName] = (CumulativeResources[ResourceName] || 0) + Demand[ResourceName];
+
+                    // also list goods that are only needed in eras in between
+                    RelevantResources[ResourceName] = true;
+                }
+            }
+
+            // Pro gewähltem Zeitalter: nur Technologien genau dieses Zeitalters
+            if (EraID === SelEraID) {
+                // Alle vorkommenden Güter merken, damit sie immer gelistet werden
+                for (let ResourceName in Demand) {
+                    RelevantResources[ResourceName] = true;
+                }
+
+                // Nur noch nicht erforschte Technologien tragen zum Bedarf bei
+                if (!Tech['isResearched']) {
+                    for (let ResourceName in Demand) {
+                        RequiredResources[ResourceName] = (RequiredResources[ResourceName] || 0) + Demand[ResourceName];
                     }
 
                     TechCount++;
@@ -267,99 +688,504 @@ let Technologies = {
             }
         }
 
-        let PreviousEraID = Math.max(Technologies.SelectedEraID - 1, CurrentEraID),
-            NextEraID = Math.min(Technologies.SelectedEraID + 1, Technologies.Eras.NextEra - 1);
+        let PreviousEraID = Math.max(Technologies.SelectedEraID - 1, 1),
+            NextEraID = Math.min(Technologies.SelectedEraID + 1, Technologies.getMaxEra());
 
         h.push('<div class="dark-bg" style="margin-bottom: 3px">');
 	        h.push('<div class="techno-head">');
-				h.push('<button class="btn btn-default btn-switchage" data-value="' + PreviousEraID + '">' + i18n('Eras.'+PreviousEraID) + '</button>');
+				h.push('<button class="btn btn-switchage" style="' + (Technologies.SelectedEraID === 1 ? 'visibility:hidden' : '') + '" data-value="' + PreviousEraID + '">' + i18n('Eras.'+PreviousEraID) + '</button>');
 				h.push('<div class="text-center"><strong>' + i18n('Eras.'+Technologies.SelectedEraID) + '</strong></div>');
-				h.push('<button class="btn btn-default btn-switchage" data-value="' + NextEraID + '">' + i18n('Eras.'+NextEraID) + '</button>');
+				h.push('<button class="btn btn-switchage" style="' + (Technologies.SelectedEraID === Technologies.getMaxEra() ? 'visibility:hidden' : '') + '" data-value="' + NextEraID + '">' + i18n('Eras.'+NextEraID) + '</button>');
 	        h.push('</div>');
 	        h.push('<div class="text-small">');
             h.push('<input id="IgnorePrevEra" class="ignoreprevera game-cursor" ' + (Technologies.IgnorePrevEra ? 'checked' : '') + ' type="checkbox">' + i18n('Boxes.Technologies.IgnorePrevEra') + '<br>');
             h.push('<input id="IgnoreCurrentEraOptional" class="ignorecurrenteraoptional game-cursor" ' + (Technologies.IgnoreCurrentEraOptional ? 'checked' : '') + ' type="checkbox">' + i18n('Boxes.Technologies.IgnoreCurrentEraOptional') + '<br>');
+            h.push('<input id="GroupByEra" class="groupbyera game-cursor" ' + (Technologies.GroupByEra ? 'checked' : '') + ' type="checkbox">' + i18n('Boxes.Technologies.GroupByEra') + '<br>');
         	h.push('</div>');
         h.push('</div>');
 
-        h.push('<table class="foe-table exportable">');
+        // Hinweis, wenn im sichtbaren ZA-Bereich nichts mehr benötigt wird
+        if (TechCount === 0) {
+            h.push('<div class="technologies-hint">' + i18n('Boxes.Technologies.NoTechs') + '</div>');
+        }
 
-        h.push('<thead>' +
-            '<tr>' +
-            '<th colspan="2" columnname2="resource">' + i18n('Boxes.Technologies.Resource') + '</th>' +
-            '<th columnname="required">' + i18n('Boxes.Technologies.DescRequired') + '</th>' +
-            '<th columnname="instock">' + i18n('Boxes.Technologies.DescInStock') + '</th>' +
-            '<th columnname="remaining" class="text-right">' + i18n('Boxes.Technologies.DescStillMissing') + '</th>' +
+        // grouped mode uses its own sort handling (era blocks are sorted internally),
+        // so the global tableSorter must not be attached to the table
+        h.push('<table class="foe-table exportable ' + (Technologies.GroupByEra ? 'technologies-grouped' : 'sortable-table') + '">');
+
+        // Only show the cumulative column when the cumulative range spans more than
+        // the selected era (otherwise it would be identical to the "Required" column).
+        let ShowCumulative = CumLowerEraID < SelEraID;
+
+        // sort indicator of the grouped mode
+        let SortClass = (column) => (Technologies.GroupByEra && Technologies.SortColumn === column ? (Technologies.SortDirection === 1 ? ' ascending' : ' descending') : '');
+
+        h.push('<thead class="sticky">' +
+            '<tr class="sorter-header">' +
+            '<th class="no-sort"></th>' +
+            '<th class="' + SortClass(1) + '" data-type="technologiesTBody" data-export="resource">' + i18n('Boxes.Technologies.Resource') + '</th>' +
+            '<th class="is-number' + SortClass(2) + '" data-type="technologiesTBody" data-export="required">' + i18n('Boxes.Technologies.DescRequired') + '</th>' +
+            (ShowCumulative ? '<th class="is-number' + SortClass(3) + '" data-type="technologiesTBody" data-export="cumulative">' + i18n('Boxes.Technologies.DescCumulative') + '</th>' : '') +
+            '<th class="is-number' + SortClass(ShowCumulative ? 4 : 3) + '" data-type="technologiesTBody" data-export="instock">' + i18n('Boxes.Technologies.DescInStock') + '</th>' +
+            '<th class="is-number text-right' + SortClass(ShowCumulative ? 5 : 4) + '" data-type="technologiesTBody" data-export="remaining">' + i18n('Boxes.Technologies.DescStillMissing') + '</th>' +
             '</tr>' +
             '</thead>');
 
-        if (TechCount > 0) {
-            // Reihenfolge der Ausgabe generieren
-            let OutputList = ['strategy_points', 'money', 'supplies'];
-            for (let i = 0; i < 70; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'promethium';
-            for (let i = 70; i < 75; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'orichalcum';
-            for (let i = 75; i < 80; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'mars_ore';
-            for (let i = 80; i < 85; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'asteroid_ice';
-            for (let i = 85; i < 90; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'venus_carbon';
-            for (let i = 90; i < 95; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
-            }
-            OutputList[OutputList.length] = 'unknown_dna';
-            for (let i = 95; i < GoodsList.length; i++) {
-                OutputList[OutputList.length] = GoodsList[i]['id'];
+        h.push('<tbody class="technologiesTBody">');
+
+        // Tabelleninhalt – immer alle relevanten Ressourcen ausgeben
+        {
+            // Welche Güter kann der Spieler selbst herstellen?
+            let ProducibleGoods = Technologies.GetProducibleGoods();
+            // Welche Güter werden gerade aktiv produziert?
+            let ActiveProductionGoods = Technologies.GetActiveProductionGoods();
+
+            // special era resources grouped by era, taken from the game's resource definitions
+            let SpecialsByEra = {};
+            for (let Resource of FHResourcesList) {
+                if (Resource['abilities']?.['specialResource']?.['type'] === 'specialResource' && Resource['era']) {
+                    (SpecialsByEra[Resource['era']] = SpecialsByEra[Resource['era']] || []).push(Resource['id']);
+                }
             }
 
+            // output order: era by era the special resource (research gate) first, then the era's goods;
+            // strategy points, coins and supplies stay on top of the table in every mode (era null)
+            let OutputList = [
+                    { id: 'strategy_points', era: null },
+                    { id: 'money', era: null },
+                    { id: 'supplies', era: null }
+                ],
+                LastEra = null;
+            for (let i = 0; i < GoodsList.length; i++) {
+                let Era = GoodsList[i]['era'];
+
+                if (Era !== LastEra) {
+                    OutputList.push(...(SpecialsByEra[Era] || []).map(id => ({ id: id, era: Era })));
+                    LastEra = Era;
+                }
+
+                OutputList.push({ id: GoodsList[i]['id'], era: Era });
+            }
+
+            // resources outside the goods list (e.g. the Stellar Age research and mission
+            // resources) are appended to the block of their era so they are not lost
+            let Listed = new Set(OutputList.map(Entry => Entry['id']));
+            for (let ResourceName in RelevantResources) {
+                if (Listed.has(ResourceName) || GoodsData[ResourceName] === undefined) continue;
+
+                let Era = FHResourcesList.find(Resource => Resource['id'] === ResourceName)?.['era'] || null,
+                    LastIndex = OutputList.map(Entry => Entry['era']).lastIndexOf(Era);
+
+                // these resources are not part of the goods sprite atlas, their icon is a single image asset
+                OutputList.splice(LastIndex === -1 ? OutputList.length : LastIndex + 1, 0, { id: ResourceName, era: Era, img: true });
+            }
+
+            let Rows = [];
             for (let i = 0; i < OutputList.length; i++) {
-                let ResourceName = OutputList[i];
-                if (RequiredResources[ResourceName] !== undefined) {
-                    let Required = RequiredResources[ResourceName];
+                let ResourceName = OutputList[i]['id'];
+                // resources without goods metadata (e.g. brand-new era resources) would break the whole render
+                if (GoodsData[ResourceName] === undefined) continue;
+                if (RelevantResources[ResourceName]) {
+                    let Required = RequiredResources[ResourceName] || 0;
+                    let Cumulative = CumulativeResources[ResourceName] || 0;
                     let Stock = (ResourceName === 'strategy_points' ? StrategyPoints.AvailableFP : ResourceStock[ResourceName]);
                     if (Stock === undefined) Stock = 0;
-                    let Diff = Stock - Required;
+                    // "Still missing" is calculated against the full cumulative demand,
+                    // not just the selected era (#3544)
+                    let Diff = Stock - (ShowCumulative ? Cumulative : Required);
 
-                    h.push('<tr>');
-                    h.push('<td class="goods-image" style="width:25px"><span class="goods-sprite-50 sm '+ GoodsData[ResourceName]['id'] +'"></span></td>');
-                    h.push('<td>' + GoodsData[ResourceName]['name'] + '</td>');
-                    h.push('<td>' + HTML.Format(Required) + '</td>');
-                    h.push('<td>' + HTML.Format(Stock) + '</td>');
-                    h.push('<td class="text-right text-' + (Diff < 0 ? 'danger' : 'success') + '">' + HTML.Format(Diff) + '</td>');
-                    h.push('</tr>');
+                    // Fertige Ressourcen (weder im gewählten ZA noch kumulativ benötigt) werden abgedimmt
+                    let IsDone = Required <= 0 && (!ShowCumulative || Cumulative <= 0);
+                    // FP, Münzen und Vorräte werden nicht gehighlightet
+                    let IsProducible = (ResourceName !== 'strategy_points' && ResourceName !== 'money' && ResourceName !== 'supplies') && ProducibleGoods.has(ResourceName);
+                    let IsActive = IsProducible && ActiveProductionGoods.has(ResourceName);
+                    let NameClass = IsProducible ? (IsActive ? 'producible-good actively-produced' : 'producible-good') : '';
+
+                    let r = [];
+                    r.push('<tr' + (IsDone ? ' class="technologies-done"' : '') + '>');
+                    r.push('<td class="goods-image" style="width:25px">' + (OutputList[i]['img'] ? srcLinks.icons(ResourceName) : '<span class="goods-sprite sprite-35 ' + GoodsData[ResourceName]['id'] + '"></span>') + '</td>');
+                    r.push('<td data-text="' + helper.str.cleanup(GoodsData[ResourceName]['name']) + '"' + (NameClass ? ' class="' + NameClass + '"' : '') + '>' + GoodsData[ResourceName]['name'] + '</td>');
+                    r.push('<td data-number="' + Required + '">' + HTML.Format(Required) + '</td>');
+                    if (ShowCumulative) {
+                        r.push('<td data-number="' + Cumulative + '">' + HTML.Format(Cumulative) + '</td>');
+                    }
+                    r.push('<td data-number="' + Stock + '">' + HTML.Format(Stock) + '</td>');
+                    r.push('<td data-number="' + Diff + '" class="text-right text-' + (Diff < 0 ? 'danger' : 'success') + '">' + HTML.Format(Diff) + '</td>');
+                    r.push('</tr>');
+
+                    // column values for the grouped mode sort, aligned with the column indexes
+                    let SortValues = [null, GoodsData[ResourceName]['name'], Required];
+                    if (ShowCumulative) SortValues.push(Cumulative);
+                    SortValues.push(Stock, Diff);
+
+                    Rows.push({ era: OutputList[i]['era'], html: r.join(''), values: SortValues });
+                }
+            }
+
+            if (Technologies.GroupByEra) {
+                let ColumnCount = (ShowCumulative ? 6 : 5);
+
+                // sort each era block internally, the block order itself stays era by era
+                if (Technologies.SortColumn !== null) {
+                    let Column = Technologies.SortColumn,
+                        Direction = Technologies.SortDirection,
+                        Groups = [];
+                    for (let Row of Rows) {
+                        let LastGroup = Groups[Groups.length - 1];
+                        if (!LastGroup || LastGroup.era !== Row.era) {
+                            Groups.push({ era: Row.era, rows: [Row] });
+                        } else {
+                            LastGroup.rows.push(Row);
+                        }
+                    }
+                    Rows = Groups.flatMap(group =>
+                        group.rows.sort((a, b) => {
+                            let A = a.values[Column], B = b.values[Column];
+                            if (typeof A === 'string') return A.localeCompare(B) * Direction;
+                            return (A - B) * Direction;
+                        })
+                    );
+                }
+
+                LastEra = null;
+                for (let Row of Rows) {
+                    if (Row.era !== null && Row.era !== LastEra) {
+                        let EraID = Technologies.Eras[Row.era];
+                        h.push('<tr class="technologies-era-row"><td colspan="' + ColumnCount + '">' + (EraID !== undefined ? i18n('Eras.' + EraID) : Row.era) + '</td></tr>');
+                        LastEra = Row.era;
+                    }
+                    h.push(Row.html);
+                }
+            }
+            else {
+                for (let Row of Rows) {
+                    h.push(Row.html);
                 }
             }
         }
-        else {
-            h.push('<tr>');
-            	h.push('<td colspan="5" class="text-center">' + i18n('Boxes.Technologies.NoTechs') + '</td>');
-            h.push('</tr>');
-        }
-        h.push('</table');
+        h.push('</tbody></table>');
 
         $('#technologiesBody').html(h.join(''));
+        $('#technologiesBody .sortable-table').tableSorter();
     },
 
+
     /**
-    *
-    */
+     * Returns a Set of good IDs (excluding money/supplies/strategy_points)
+     * that are still needed for unresearched technologies in the range
+     * [CumLowerEraID .. SelectedEraID] and where the player's stock is
+     * insufficient (stock - demand < 0).
+     *
+     * Respects the same ignore options (IgnorePrevEra,
+     * IgnoreCurrentEraOptional) and SelectedEraID as the Technologies
+     * view, so the result matches the red "missing" rows in the
+     * "Forschungskosten für ..." window.
+     *
+     * Used by the Market filter "für Forschung benötigt".
+     */
+    GetNeededResearchGoods: () => {
+        let neededGoods = new Set();
+
+        if (Technologies.AllTechnologies === null || Technologies.UnlockedTechnologies === false) {
+            return neededGoods;
+        }
+
+        // Same ignore flags as the Technologies view (real booleans)
+        let IgnorePrevEra = localStorage.getItem('TechnologiesIgnorePrevEra') !== 'false';
+        let IgnoreCurrentEraOptional = localStorage.getItem('TechnologiesIgnoreCurrentEraOptional') !== 'false';
+        let SelEraID = Technologies.SelectedEraID || CurrentEraID;
+
+        let TechList = Technologies.GetTechList();
+        Technologies.MarkResearchState(TechList);
+
+        // Same "still missing" logic as CalcBody: when the cumulative range
+        // [CumLowerEraID .. SelEraID] spans more than the selected era, compare
+        // against the cumulative demand; otherwise against the selected era only.
+        let CumLowerEraID = IgnorePrevEra ? Math.min(CurrentEraID, SelEraID) : 1,
+            ShowCumulative = CumLowerEraID < SelEraID,
+            Demand = {};
+
+        for (let Tech of TechList) {
+            if (Tech['isTeaser'] || Tech['isResearched']) continue;
+
+            let EraID = Technologies.Eras[Tech['era']];
+
+            if (EraID >= CurrentEraID && Technologies.IsOptionalTech(Tech) && IgnoreCurrentEraOptional) continue;
+            if (ShowCumulative ? (EraID < CumLowerEraID || EraID > SelEraID) : EraID !== SelEraID) continue;
+
+            let TechDemand = Technologies.GetTechDemand(Tech);
+            for (let ResourceName in TechDemand) {
+                Demand[ResourceName] = (Demand[ResourceName] || 0) + TechDemand[ResourceName];
+            }
+        }
+
+        for (let ResourceName in Demand) {
+            if (ResourceName === 'strategy_points' || ResourceName === 'money' || ResourceName === 'supplies') continue;
+
+            if ((ResourceStock[ResourceName] || 0) - Demand[ResourceName] < 0) {
+                neededGoods.add(ResourceName);
+            }
+        }
+
+        return neededGoods;
+    },
+
+
+    /**
+     * Displays the settings button in the technologies settings box.
+     * Renders two buttons for exporting data in CSV and JSON formats.
+     *
+     * The function uses jQuery to dynamically populate the content of
+     * the `#technologiesSettingsBox` element with the HTML for the buttons.
+     * - The first button allows the user to export the table data in CSV format.
+     * - The second button allows the user to export the table data in JSON format.
+     *
+     * Both export actions leverage the `HTML.ExportTable` method, ensuring
+     * the appropriate table and export format are passed as arguments.
+     */
     ShowSettingsButton: () => {
         let h = [];
-        h.push(`<p class="text-center"><button class="btn btn-default" onclick="HTML.ExportTable($('#technologiesBody').find('.foe-table.exportable'), 'csv', 'technologies')">${i18n('Boxes.General.ExportCSV')}</button></p>`);
-        h.push(`<p class="text-center"><button class="btn btn-default" onclick="HTML.ExportTable($('#technologiesBody').find('.foe-table.exportable'), 'json', 'technologies')">${i18n('Boxes.General.ExportJSON')}</button></p>`);
+        h.push(`<p class="text-center"><button class="btn" onclick="HTML.ExportTable($('#technologiesBody').find('.foe-table.exportable'), 'csv', 'technologies')">${i18n('Boxes.General.ExportCSV')}</button></p>`);
+        h.push(`<p class="text-center"><button class="btn" onclick="HTML.ExportTable($('#technologiesBody').find('.foe-table.exportable'), 'json', 'technologies')">${i18n('Boxes.General.ExportJSON')}</button></p>`);
 
         $('#technologiesSettingsBox').html(h.join(''));
     },
+
+
+    /**
+     * Expands a (possibly generic) resource name like `random_good_of_age`,
+     * `all_goods_of_age`, `random_good_of_previous_age`, `all_goods_of_next_age`
+     * into the concrete good IDs of the corresponding era relative to `eraName`.
+     * Returns an array of good IDs (may be empty).
+     */
+    _expandGenericGood: (resourceName, eraName) => {
+        let ids = [];
+        let goodEra;
+
+        if (resourceName.includes('previous_age')) {
+            goodEra = Technologies.getPreviousEraIdByCurrentEraName(eraName);
+        } else if (resourceName.includes('next_age')) {
+            goodEra = Technologies.getNextEraIdByCurrentEraName(eraName);
+        } else {
+            goodEra = Technologies.getEraIdByCurrentEraName(eraName);
+        }
+
+        for (let i = 0; i < 5; i++) {
+            let goodIndex = goodEra * 5 - 5 + i;
+            if (goodIndex >= 0 && goodIndex < GoodsList.length) {
+                ids.push(GoodsList[goodIndex].id);
+            }
+        }
+        return ids;
+    },
+
+
+    /**
+     * Collects a good ID from a production resource entry if it is a real,
+     * producible good (present in GoodsData with `goodsProduceable` ability).
+     * Returns the good ID or undefined.
+     */
+    _collectProducibleGoodId: (resourceName) => {
+        if (!resourceName) return undefined;
+        if (resourceName === 'strategy_points' || resourceName === 'money' || resourceName === 'supplies') return undefined;
+        let good = GoodsData[resourceName];
+        if (good && good.abilities && good.abilities.goodsProduceable !== undefined) {
+            return resourceName;
+        }
+        return undefined;
+    },
+
+
+    /**
+     * Returns a Set of good IDs that the player can produce themselves.
+     * Only considers goods buildings owned by the player and reads the
+     * specific good each building produces from its (potential) production
+     * data, available_products, current_product, or productionOption - not
+     * all 5 goods of an era. This prevents false positives like marking
+     * glass as producible when the player only has a brickworks.
+     */
+    GetProducibleGoods: () => {
+        let producibleGoods = new Set();
+
+        // Prefer the processed CityBuildingsData when available
+        let buildings = MainParser.CityBuildingsData && Object.keys(MainParser.CityBuildingsData).length > 0
+            ? MainParser.CityBuildingsData
+            : null;
+
+        if (buildings) {
+            for (let buildingId in buildings) {
+                if (!buildings.hasOwnProperty(buildingId)) continue;
+                let building = buildings[buildingId];
+                if (!building) continue;
+
+                let eraName = building.eraName || CurrentEra;
+
+                // Potential productions (from entity metadata / setAllProductions)
+                if (building.production) {
+                    for (let production of building.production) {
+                        if (!production || !production.resources) continue;
+                        if (production.type === 'resources' || production.type === 'special_goods') {
+                            for (let resourceName of Object.keys(production.resources)) {
+                                let id = Technologies._collectProducibleGoodId(resourceName);
+                                if (id) producibleGoods.add(id);
+                                if (resourceName.includes('random_good_of_') || resourceName.includes('all_goods_of_')) {
+                                    for (let gid of Technologies._expandGenericGood(resourceName, eraName)) {
+                                        if (Technologies._collectProducibleGoodId(gid)) producibleGoods.add(gid);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Currently running productions
+                if (building.state && building.state.production) {
+                    for (let production of building.state.production) {
+                        if (!production || !production.resources) continue;
+                        if (production.type === 'resources' || production.type === 'special_goods') {
+                            for (let resourceName of Object.keys(production.resources)) {
+                                let id = Technologies._collectProducibleGoodId(resourceName);
+                                if (id) producibleGoods.add(id);
+                            }
+                        }
+                    }
+                }
+
+                // Goods buildings: read the specific good from entity available_products
+                if (building.type === 'goods') {
+                    let entity = MainParser.CityEntities[building.entityId];
+                    if (entity && entity.available_products && Array.isArray(entity.available_products)) {
+                        for (let product of entity.available_products) {
+                            if (product.product && product.product.resources) {
+                                for (let resourceName of Object.keys(product.product.resources)) {
+                                    let id = Technologies._collectProducibleGoodId(resourceName);
+                                    if (id) producibleGoods.add(id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback / supplement: raw CityMapData (only own buildings)
+        for (let buildingId in MainParser.CityMapData) {
+            if (!MainParser.CityMapData.hasOwnProperty(buildingId)) continue;
+            let building = MainParser.CityMapData[buildingId];
+            if (!building || !building.cityentity_id) continue;
+            if (building.player_id !== undefined && building.player_id !== ExtPlayerID) continue;
+
+            let entity = MainParser.CityEntities[building.cityentity_id];
+            if (!entity) continue;
+            if (entity.type !== 'goods') continue;
+
+            if (entity.available_products && Array.isArray(entity.available_products)) {
+                for (let product of entity.available_products) {
+                    if (product.product && product.product.resources) {
+                        for (let resourceName of Object.keys(product.product.resources)) {
+                            let id = Technologies._collectProducibleGoodId(resourceName);
+                            if (id) producibleGoods.add(id);
+                        }
+                    }
+                }
+            }
+            if (building.state && building.state.current_product && building.state.current_product.product && building.state.current_product.product.resources) {
+                for (let resourceName of Object.keys(building.state.current_product.product.resources)) {
+                    let id = Technologies._collectProducibleGoodId(resourceName);
+                    if (id) producibleGoods.add(id);
+                }
+            }
+            if (building.state && building.state.productionOption && building.state.productionOption.products) {
+                for (let product of building.state.productionOption.products) {
+                    if (product.playerResources && product.playerResources.resources) {
+                        for (let resourceName of Object.keys(product.playerResources.resources)) {
+                            let id = Technologies._collectProducibleGoodId(resourceName);
+                            if (id) producibleGoods.add(id);
+                        }
+                    }
+                }
+            }
+        }
+
+        return producibleGoods;
+    },
+
+
+    /**
+     * Returns a Set of good IDs that the player is currently producing
+     * (i.e. a production is actively running on the building right now).
+     * Used for the italic "actively producing" highlight.
+     */
+    GetActiveProductionGoods: () => {
+        let activeGoods = new Set();
+
+        let buildings = MainParser.CityBuildingsData && Object.keys(MainParser.CityBuildingsData).length > 0
+            ? MainParser.CityBuildingsData
+            : null;
+
+        let eraName = CurrentEra;
+
+        if (buildings) {
+            for (let buildingId in buildings) {
+                if (!buildings.hasOwnProperty(buildingId)) continue;
+                let building = buildings[buildingId];
+                if (!building) continue;
+                if (!building.state) continue;
+                // only "producing" state counts as actively producing
+                if (building.state.name && building.state.name !== 'producing') continue;
+
+                let productions = building.state.production;
+                if (!productions) continue;
+
+                for (let production of productions) {
+                    if (!production || !production.resources) continue;
+                    if (production.type === 'resources' || production.type === 'special_goods') {
+                        for (let resourceName of Object.keys(production.resources)) {
+                            let id = Technologies._collectProducibleGoodId(resourceName);
+                            if (id) activeGoods.add(id);
+                            if (resourceName.includes('random_good_of_') || resourceName.includes('all_goods_of_')) {
+                                for (let gid of Technologies._expandGenericGood(resourceName, building.eraName || eraName)) {
+                                    if (Technologies._collectProducibleGoodId(gid)) activeGoods.add(gid);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: raw CityMapData current_product
+        for (let buildingId in MainParser.CityMapData) {
+            if (!MainParser.CityMapData.hasOwnProperty(buildingId)) continue;
+            let building = MainParser.CityMapData[buildingId];
+            if (!building || !building.cityentity_id) continue;
+            if (building.player_id !== undefined && building.player_id !== ExtPlayerID) continue;
+            if (!building.state) continue;
+
+            // only running productions
+            let stateClass = building.state.__class__;
+            if (stateClass !== 'ProducingState' && stateClass !== 'ProductionFinishedState') continue;
+
+            if (building.state.current_product && building.state.current_product.product && building.state.current_product.product.resources) {
+                for (let resourceName of Object.keys(building.state.current_product.product.resources)) {
+                    let id = Technologies._collectProducibleGoodId(resourceName);
+                    if (id) activeGoods.add(id);
+                }
+            }
+            if (building.state.productionOption && building.state.productionOption.products) {
+                for (let product of building.state.productionOption.products) {
+                    if (product.playerResources && product.playerResources.resources) {
+                        for (let resourceName of Object.keys(product.playerResources.resources)) {
+                            let id = Technologies._collectProducibleGoodId(resourceName);
+                            if (id) activeGoods.add(id);
+                        }
+                    }
+                }
+            }
+        }
+
+        return activeGoods;
+    },
 };
+
+Technologies.BuildEraMaps();
