@@ -40,7 +40,7 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 
 // note of a player changed (PlayerNote.notesChanged): the note card
 window.addEventListener('toolbox#playerNotesChanged', () => {
-	if ($('#sabotageInfo').length > 0) {
+	if ($('#sabotageInfo').length > 0 && !PlayerNote.isEditing('#sabotageInfo')) {
 		Sabotage.showResult();
 	}
 });

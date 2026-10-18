@@ -191,7 +191,11 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', async (data, postData) 
 
 
 // note of a player changed (PlayerNote.notesChanged): note icons and the note card
-window.addEventListener('toolbox#playerNotesChanged', () => Looting.UpdateBoxIfVisible());
+window.addEventListener('toolbox#playerNotesChanged', () => {
+	if (!PlayerNote.isEditing('#looting')) {
+		Looting.UpdateBoxIfVisible();
+	}
+});
 
 FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 	const playerData = data.responseData;
@@ -474,6 +478,18 @@ let Looting = {
 	}),
 
 
+	/**
+	 * The note icon of a row: filters to the player and puts the cursor into the note card
+	 *
+	 * @param playerId
+	 */
+	EditNote: (playerId) => {
+		Looting.focusNote = true;
+		Looting.SelectPlayer(playerId);
+	},
+	focusNote: false,
+
+
 	SelectSource: (source) => Looting.Reload(() => {
 		Looting.page = 1;
 		Looting.filterSource = source;
@@ -513,6 +529,11 @@ let Looting = {
 		try {
 			Looting.lastViewModel = await Looting.getViewModel();
 			Looting.renderView();
+
+			if (Looting.focusNote) {
+				Looting.focusNote = false;
+				PlayerNote.focusCard('#lootingBody');
+			}
 		}
 		catch (e) {
 			console.error('Looting: render failed', e);
@@ -793,7 +814,7 @@ let Looting = {
 						<div class="player-name">
 							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}
 							${action.playerId ? html`<span class="row-filter game-cursor fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('OnlyThisPlayer')} @click=${() => Looting.SelectPlayer(action.playerId)}></span>` : ''}
-							${action.note ? html`<span class="loot-note-icon game-cursor fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${action.note} @click=${() => Looting.SelectPlayer(action.playerId)}>📝</span>` : ''}
+							${action.playerId ? html`<span class="loot-note-icon game-cursor fh-tooltip ${action.note ? '' : 'loot-note-empty'}" data-callback_tt="ToolboxTT.text" data-tt=${action.note || t('AddNote')} @click=${() => Looting.EditNote(action.playerId)}>📝</span>` : ''}
 							${action.clanName ? html`<br><span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>` : ''}
 						</div>`}
 					<div class="content">${Looting.viewActionContent(action)}</div>
