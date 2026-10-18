@@ -112,6 +112,22 @@ let PlayerNote = {
 
 
 	/**
+	 * A change in the notes box: the other open boxes with player notes show it too
+	 */
+	notesChanged: async () => {
+		await PlayerNote.loadTexts();
+
+		if ($('#PvPArena').length > 0) {
+			PvPArena.RefreshTable();
+		}
+		if ($('#sabotageInfo').length > 0) {
+			Sabotage.showResult();
+		}
+		Looting.UpdateBoxIfVisible();
+	},
+
+
+	/**
 	 * Opens the player's page in the notes box
 	 *
 	 * @param playerId

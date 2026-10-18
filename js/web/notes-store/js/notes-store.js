@@ -76,6 +76,7 @@ Notes.Store = {
 				// content changes: the callback only checks the status and updates its own cache
 				if (data.type === 'cnt') {
 					await Notes.Store.setContent(data);
+					PlayerNote.notesChanged();
 					return {status: 'OK'};
 				}
 				await db.transaction('rw', db.groups, db.items, () => Notes.Store.set(data));
@@ -105,6 +106,10 @@ Notes.Store = {
 
 			default:
 				throw new Error('Unknown endpoint ' + ep);
+		}
+
+		if (ep !== 'Notes/get') {
+			PlayerNote.notesChanged();
 		}
 
 		return {status: 'OK', notice: await Notes.Store.read()};
