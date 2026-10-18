@@ -112,18 +112,14 @@ let PlayerNote = {
 
 
 	/**
-	 * A change in the notes box: the other open boxes with player notes show it too
+	 * After every change of the notes: reloads texts, then the event 'toolbox#playerNotesChanged',
+	 * on which each box with player notes updates itself (notes box, sabotage, PvP attacks, PvP arena)
+	 *
+	 * @param source 'notes' for a change in the notes box, which then does not draw itself again
 	 */
-	notesChanged: async () => {
+	notesChanged: async (source = 'player-note') => {
 		await PlayerNote.loadTexts();
-
-		if ($('#PvPArena').length > 0) {
-			PvPArena.RefreshTable();
-		}
-		if ($('#sabotageInfo').length > 0) {
-			Sabotage.showResult();
-		}
-		Looting.UpdateBoxIfVisible();
+		window.dispatchEvent(new CustomEvent('toolbox#playerNotesChanged', { detail: { source: source } }));
 	},
 
 
@@ -240,8 +236,7 @@ let PlayerNote = {
 			note.content = content;
 		}
 
-		await PlayerNote.loadTexts();
-		await PlayerNote.refreshNoticeBox();
+		await PlayerNote.notesChanged();
 
 		return note;
 	},
@@ -252,10 +247,9 @@ let PlayerNote = {
 	 *
 	 * @param playerId
 	 * @param note result of get
-	 * @param onSaved called with the saved note, e.g. to render the box again
 	 * @returns {TemplateResult}
 	 */
-	view: (playerId, note, onSaved) => {
+	view: (playerId, note) => {
 		const { html } = litHtml,
 			content = note ? note.content : '';
 
@@ -273,8 +267,7 @@ let PlayerNote = {
 			}
 
 			try {
-				const saved = await PlayerNote.save(playerId, value);
-				if (onSaved) onSaved(saved);
+				await PlayerNote.save(playerId, value);
 			} catch (err) {
 				console.error(err);
 				HTML.ShowToastMsg({
@@ -567,17 +560,6 @@ let PlayerNote = {
 
 	isEmpty: (content) => !content || content.replace(/<br\s*\/?>|&nbsp;|\s/g, '') === '',
 
-
-	/**
-	 * Shows the new state in an open notes box
-	 */
-	refreshNoticeBox: async () => {
-		Notes.notes = await Notes.Store.read();
-
-		if ($('#toolboxNotes').length > 0) {
-			Notes.prepareContent();
-		}
-	},
 };
 
 
@@ -634,6 +616,12 @@ let PlayerNote = {
 
 		$(`#PvPArenaBody .player-note[data-id="${playerId}"]`).val(text).attr('title', text);
 	};
+
+	window.addEventListener('toolbox#playerNotesChanged', () => {
+		if ($('#PvPArena').length > 0) {
+			refreshTable();
+		}
+	});
 
 	$(document).on('click', '#PvPArenaBody .player-note-multi', function () {
 		PlayerNote.openInNotes(Number($(this).data('id')));

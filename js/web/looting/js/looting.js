@@ -190,6 +190,9 @@ FoEproxy.addHandler('CityMapService', 'showEntityIcons', async (data, postData) 
 });
 
 
+// note of a player changed (PlayerNote.notesChanged): note icons and the note card
+window.addEventListener('toolbox#playerNotesChanged', () => Looting.UpdateBoxIfVisible());
+
 FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 	const playerData = data.responseData;
 	if (!playerData?.other_player) return;
@@ -737,7 +740,7 @@ let Looting = {
 						<span class="loot-filter-count">${t('Entries')}: ${vm.count}</span>
 					</div>
 				</div>
-				${vm.filterPlayer ? html`<div class="toolbox-cards loot-note">${PlayerNote.view(vm.filterPlayer.id, vm.note, () => Looting.Render())}</div>` : ''}
+				${vm.filterPlayer ? html`<div class="toolbox-cards loot-note">${PlayerNote.view(vm.filterPlayer.id, vm.note)}</div>` : ''}
 			</div>
 			<div class="action-list">
 				${vm.actions.length === 0 ? html`<div class="no-data"> - ${t('noData')} - </div>` : vm.actions.map(Looting.viewAction)}
