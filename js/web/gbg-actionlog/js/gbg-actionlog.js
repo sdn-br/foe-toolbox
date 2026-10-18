@@ -608,6 +608,12 @@ let GBGActionLog = {
         // Init tabs first so the active tab highlights immediately; the tables fill in once the DB loads
         $body.find('.gbgal-tabs').tabslet({ active: 1 });
 
+        // FoE Toolbox: hint while nothing was collected yet, the log only fills from the game's own GbG log window
+        await GBGActionLog.dbLoadedFl;
+        if (await GBGActionLog.db.ActionLog.count() === 0) {
+            $body.prepend(`<div class="gbgal-empty">${FH.t('Boxes.GBGActionLog.NoDataHint')}</div>`);
+        }
+
         // Lazy-load each tab the first time it's shown, so expensive tabs don't slow down opening the window
         $body.find('.gbgal-tabs > ul > li').on('_before', function () {
             GBGActionLog.loadTab($(this).find('a').attr('href').slice(1));

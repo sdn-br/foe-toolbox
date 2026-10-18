@@ -28,6 +28,7 @@
     "Boxes.GBGActionLog.From": "von",
     "Boxes.GBGActionLog.LastLogTime": "Letzter Eintrag",
     "Boxes.GBGActionLog.LogCount": "Neue Einträge",
+    "Boxes.GBGActionLog.NoDataHint": "Noch keine Daten. Öffne im Spiel auf der Gefechtskarte das Protokoll, dann werden die Aktionen hier gespeichert. Das Spiel liefert jeweils nur die letzten 200 Aktionen, öffne das Protokoll also regelmäßig.",
     "Boxes.GBGActionLog.LogDate": "gesammelt am",
     "Boxes.GBGActionLog.Map": "Karte",
     "Boxes.GBGActionLog.Map.volcano_archipelago": "Vulkan",
