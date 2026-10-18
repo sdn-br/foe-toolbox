@@ -202,34 +202,6 @@ Notice.Store = {
 
 
 	/**
-	 * Import button in the edit mode, only with an API token
-	 */
-	/**
-	 * The import needs an API token of the FoE Helfer server. It is an explicit, confirmed
-	 * user action (like the city planner), so it does not depend on GlobalSend.
-	 *
-	 * @returns {boolean}
-	 */
-	CanImport: () => !!localStorage.getItem('ApiToken'),
-
-
-	BuildImportButton: () => {
-		$('.notice-import-btn').remove();
-
-		if (!Notice.Store.CanImport()) {
-			return;
-		}
-
-		$('#noticesBody .notices').first().append(
-			$('<span />')
-				.attr({role: 'button', class: 'btn notice-import-btn'})
-				.text(i18n('Boxes.Notice.Import'))
-				.on('click', Notice.Store.ShowImportModal)
-		);
-	},
-
-
-	/**
 	 * Confirmation in the same modal as group and item editing
 	 */
 	ShowImportModal: async () => {
@@ -373,3 +345,20 @@ Notice.Store = {
 		});
 	},
 };
+
+
+// Import button in the settings below the API token (tab "Info + Website"): the import is a
+// one-time step that needs this token, and in the notes box it collided with the edit buttons.
+{
+	const apiTokenInput = Settings.ApiTokenInput;
+
+	Settings.ApiTokenInput = () => $('<div />').append(
+		apiTokenInput(),
+		$('<p />').append(
+			$('<span />')
+				.attr({role: 'button', class: 'btn notice-import-btn'})
+				.text(i18n('Boxes.Notice.Import'))
+				.on('click', Notice.Store.ShowImportModal)
+		)
+	);
+}

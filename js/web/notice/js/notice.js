@@ -219,8 +219,8 @@ let Notice = {
 				Notice.ActiveTab = 1;
 			}
 
-			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups or the import
-			const canEdit = (grpCount > 0 || Notice.Store.CanImport());
+			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups
+			const canEdit = (grpCount > 0);
 			$('#notices-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notice.Edit' : 'Boxes.Notice.EditDisabled'));
 			if (!canEdit) Notice.EditMode = false;
 
@@ -293,7 +293,7 @@ let Notice = {
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {
-				$('.tab-edit, .sub-tab-edit, .notice-import-btn').remove(); // TOOLBOX: import button
+				$('.tab-edit, .sub-tab-edit').remove();
 			}
 
 			Notice.EditMode = !Notice.EditMode;
@@ -744,9 +744,6 @@ let Notice = {
 	BuildSettingButtons: ()=> {
 
 		$('.tab-edit, .sub-tab-edit').remove();
-
-		// TOOLBOX: import from the FoE Helfer server
-		Notice.Store.BuildImportButton();
 
 		// Sortfunction for horizontal + Stop event
 		$('ul.horizontal').sortable({
