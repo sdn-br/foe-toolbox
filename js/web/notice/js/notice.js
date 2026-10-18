@@ -42,9 +42,26 @@ let Notice = {
 	 */
 	init: ()=> {
 
-		// TOOLBOX: the notes are stored locally (Notice.Store), no GlobalSend or API token needed
+		let apiToken = localStorage.getItem('ApiToken');
+
+		if(apiToken === null) {
+			HTML.ShowToastMsg({
+				head: i18n('Boxes.CityMap.MissingApiKeyErrorHeader'),
+				text: [
+					i18n('Boxes.CityMap.MissingApiKeySubmitError'),
+					`<a target="_blank" href="${i18n('Settings.ApiTokenUrl')}">${i18n('Settings.ApiTokenUrl')}</a>`
+				],
+				type: 'error',
+				hideAfter: 10000,
+			});
+
+			return;
+		}
+
+		Notice.ApiToken = apiToken;
+
 		if(Notice.notes === null){
-			Notice.Store.send({}, 'Notice/get',(resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			MainParser.send2Server({apiToken:apiToken}, 'Notice/get',(resp)=>{
 				if(resp['status'] === 'ERROR') {
 					HTML.ShowToastMsg({
 						head: 'Error',
@@ -83,7 +100,6 @@ let Notice = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
-				popout: () => MainParser.PopOut('notices'), // TOOLBOX: pop-out window
 				settings: true
 			});
 
@@ -97,8 +113,14 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		// TOOLBOX: local notes, no GlobalSend requirement
-		Notice.prepareContent();
+		if(Settings.GetSetting('GlobalSend')){
+			Notice.prepareContent();
+		}
+
+		// global send is deactivated
+		else {
+			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(i18n('Boxes.Notice.GlobalSendRequired')) );
+		}
 	},
 
 
@@ -127,7 +149,7 @@ let Notice = {
 					switch (n['player_group']){
 						case 'guild': tabName = `🛡 ${i18n('Boxes.Notice.SelectPlayerGroupGuild')}`; break;
 						case 'friend': tabName = `👩🏼🤝🧑 ${i18n('Boxes.Notice.SelectPlayerGroupFriend')}`; break;
-						case 'neighbor': tabName = `👤 ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break; // TOOLBOX: shown as "players", for any player, see player-note.js
+						case 'neighbor': tabName = `⚔ ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break;
 					}
 
 				} else {
@@ -142,7 +164,7 @@ let Notice = {
 
 					let itm = n['items'][x];
 
-					subtab.push(`<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`); // TOOLBOX: current neighbor/guild/friend icons, player id for the filter
+					subtab.push(`<li><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${itm['tab']}</span></a></li>`);
 
 					subdiv.push(`<div id='subtab-${itm['id']}' class="sub-tab" spellcheck="false" data-parent="${n['id']}" data-id="${itm['id']}">`);
 
@@ -155,7 +177,9 @@ let Notice = {
 											<span class="name">${player['PlayerName']}</span>
 											<span class="clan-name"><em>#${player['PlayerID']}</em> ${player['ClanName'] ? '[' + player['ClanName'] + ']' : '&nbsp;'}</span>
 										</div>
-										<div class="info-text">${PlayerNote.relationIcons(Number(player['PlayerID']), true)}</div><!-- TOOLBOX: current neighbor/guild/friend icons -->
+										<div class="info-text">
+
+										</div>
 									</div>`);
 
 					} else {
@@ -170,7 +194,6 @@ let Notice = {
 				subcontent = `<div class='tabs-sub'>`;
 
 				if(n['player_group']){
-					subcontent += PlayerNote.filterBar(); // TOOLBOX: filter by neighbor/guild/friend
 					subcontent += 	`<span class="btn itm-btn" data-id="${n['player_group']}" data-group="${n['id']}">+ ${i18n('Boxes.Notice.NewPlayer')}</span>`;
 				} else {
 					subcontent += 	`<span class="btn itm-btn" data-id="new">+ ${i18n('Boxes.Notice.NewSide')}</span>`;
@@ -220,11 +243,6 @@ let Notice = {
 				Notice.ActiveTab = 1;
 			}
 
-			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups
-			const canEdit = (grpCount > 0);
-			$('#notices-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notice.Edit' : 'Boxes.Notice.EditDisabled'));
-			if (!canEdit) Notice.EditMode = false;
-
 			// init Tabslet
 			$('.notices').tabslet({
 				active: Notice.ActiveTab
@@ -252,8 +270,6 @@ let Notice = {
 				setTimeout(()=>{
 					Notice.SetHeights();
 				}, 150);
-
-				PlayerNote.applyFilter(); // TOOLBOX: keep the player filter across renders
 			}
 		});
 	},
@@ -266,8 +282,6 @@ let Notice = {
 	 */
 	Listener: ()=> {
 
-		PlayerNote.bindFilter(); // TOOLBOX: player filter
-
 		$('#noticesBody').on('click', '.grp-btn', function(){
 			Notice.ShowModal('grp', $(this).data('id'));
 		});
@@ -276,7 +290,7 @@ let Notice = {
 			const id = $(this).data('id');
 
 			if(id !== 'new'){
-				PlayerNote.showPicker($(this).data('group')); // TOOLBOX: picker with search and filter over all known players, see player-note.js
+				Notice.ShowPlayerModal(id, $(this).data('group'));
 
 			} else {
 				Notice.ShowModal('itm', id);
@@ -293,8 +307,6 @@ let Notice = {
 
 		// toggle edit buttons
 		$('#notices').on('click', '#notices-settings', function(){
-			if($(this).hasClass('disabled')) return; // TOOLBOX: nothing to edit yet
-
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {
@@ -432,7 +444,29 @@ let Notice = {
 			sort.wrap('<div />').insertAfter(`.inp-${type}-name`);
 		}
 
-		// TOOLBOX: no player group type selection, player pages live in the one "players" group (Notice.Store.mergePlayerGroups)
+		if(type === 'grp' && id === 'new'){
+			$('#notices-modalBody').append(
+				$('<p />').append(
+					$('<select />').attr({
+						id: 'player-grp',
+						style: 'display-none'
+					}).append(
+						$('<option />').attr({
+							'data-value': -1
+						}).text(i18n('Boxes.Notice.SelectPlayerGroupDefault')),
+						$('<option />').attr({
+							'data-value': 'guild'
+						}).text(i18n('Boxes.Notice.SelectPlayerGroupGuild')),
+						$('<option />').attr({
+							'data-value': 'friend'
+						}).text(i18n('Boxes.Notice.SelectPlayerGroupFriend')),
+						$('<option />').attr({
+							'data-value': 'neighbor'
+						}).text(i18n('Boxes.Notice.SelectPlayerGroupNeighbor')),
+					)
+				)
+			);
+		}
 
 		$('#notices-modalBody').append(btn);
 
@@ -454,13 +488,12 @@ let Notice = {
 				id: id,
 				type: type,
 				name: txt,
-				// TOOLBOX: no default, the local store appends a new group when the field is empty
-				sort: $(`.inp-grp-sort`).val(),
+				sort: $(`.inp-grp-sort`).val() || 1,
 				apiToken: Notice.ApiToken
 			},
 			grpSel = $('#player-grp option:selected');
 
-		if( grpSel.length > 0 && grpSel.data('value') !== -1 ){ // TOOLBOX: the selection is gone, see ShowModal
+		if( grpSel.data('value') !== -1 ){
 			data['player_group'] = grpSel.data('value');
 
 		} else if(txt === '') {
@@ -470,7 +503,7 @@ let Notice = {
 			data['name'] = txt;
 		}
 
-		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -483,9 +516,7 @@ let Notice = {
 				Notice.notes = resp['notice'];
 
 				if(id === 'new'){
-					// TOOLBOX: a new group may have been sorted in anywhere; local ids only grow, so the newest has the highest
-					const newId = Math.max(...Notice.notes.map(g => g.id));
-					Notice.ActiveTab = Notice.notes.findIndex(g => g.id === newId) + 1;
+					Notice.ActiveTab = Notice.notes.length;
 
 				} else {
 					// loose comparison, "id" comes from the DOM as a string
@@ -529,7 +560,7 @@ let Notice = {
 
 		txt = MainParser.ClearText(txt);
 
-		Notice.Store.send({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -583,7 +614,7 @@ let Notice = {
 		}
 
 		// send content changes to server und change local object
-		Notice.Store.send({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
@@ -636,7 +667,7 @@ let Notice = {
 		delete Notice.Players[ExtPlayerID];
 
 		// find all players by tab-type ...
-		const playerObj = Object.values(Notice.Players).filter((v) => type === 'neighbor' || v[mapper[type]] === true); // TOOLBOX: the 'neighbor' group is shown as "players" and offers every known player
+		const playerObj = Object.values(Notice.Players).filter((v) => v[mapper[type]] === true);
 
 		// ... and sort by name
 		const players = helper.arr.multisort(playerObj, ['PlayerName'], ['ASC']);
@@ -683,7 +714,7 @@ let Notice = {
 
 		// check if not double
 		const group = Notice.notes.find(e => (e.id === Notice.ActualGrp));
-		const player = group.items.find(e => (PlayerNote.playerIdOf(e) === Number(id))); // TOOLBOX: by id, a renamed player is still the same
+		const player = group.items.find(e => (e.tab === PlayerDict[id]['PlayerName']));
 
 		// Player is allways added
 		if(player){
@@ -693,7 +724,7 @@ let Notice = {
 		// set the active Tab for reload
 		Notice.ActiveTab = Notice.notes.findIndex(idx => idx.id === Notice.ActualGrp) + 1;
 
-		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -743,7 +774,7 @@ let Notice = {
 					});
 				});
 
-				Notice.Store.send({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+				MainParser.send2Server({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 					if(resp['status'] === 'ERROR') {
 						HTML.ShowToastMsg({
 							head: 'Error',
@@ -801,7 +832,7 @@ let Notice = {
 						});
 					});
 
-					Notice.Store.send({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+					MainParser.send2Server({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 						if(resp['status'] === 'ERROR') {
 							HTML.ShowToastMsg({
 								head: 'Error',
@@ -849,7 +880,7 @@ let Notice = {
 	 * @constructor
 	 */
 	DeleteElement: (type, id)=> {
-		Notice.Store.send({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
