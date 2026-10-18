@@ -385,7 +385,7 @@ let GBGActionLog = {
         let link = type === 'player' ? srcLinks.get("/guild_battlegrounds/log/log_player_icon.png", true)
                  : type === 'guild'  ? srcLinks.get("/shared/icons/event_window/eventwindow_guild_b.png", true)
                  : '';
-        return link ? `<img class="gbgal-cell-icon" src="${link}" title="${name}">` : '';
+        return link ? `<img class="gbgal-cell-icon fh-tooltip" src="${link}" ${ToolboxTT.attrs(name)}>` : '';
     },
 
     /** localStorage key for the GBGBuildings id->name snapshot */
@@ -474,7 +474,7 @@ let GBGActionLog = {
 
         let match = type === 'select' ? 'exact' : type,
             active = opts.active ? ' gbg-flt-on' : '';
-        return `<button type="button" class="btn btn-round gbg-log-filterbtn${active}" title="${FH.t('Boxes.GBGActionLog.Filter')}">▾</button>`
+        return `<button type="button" class="btn btn-round gbg-log-filterbtn${active} fh-tooltip" ${ToolboxTT.attrs(FH.t('Boxes.GBGActionLog.Filter'))}>▾</button>`
              + `<div class="gbg-log-popup" data-col="${idx}" data-match="${match}" style="display:none">${inner}</div>`;
     },
 

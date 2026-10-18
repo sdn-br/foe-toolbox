@@ -697,11 +697,17 @@ let Looting = {
 				</div>
 				<div class="loot-filter">
 					<div class="loot-filter-sources">
-						${sources.map(([key, label]) => html`
-							<button class="btn ${vm.filterSource === key ? 'btn-active' : ''}"
-								?disabled=${key === 'arenaCurrent' && vm.noArena}
-								title="${key === 'arenaCurrent' && vm.noArena ? t('PvPArenaOpponentsInactive') : ''}"
-								@click=${() => Looting.SelectSource(key)}>${t(label)}</button>`)}
+						${sources.map(([key, label]) => {
+							const button = html`
+								<button class="btn ${vm.filterSource === key ? 'btn-active' : ''}"
+									?disabled=${key === 'arenaCurrent' && vm.noArena}
+									@click=${() => Looting.SelectSource(key)}>${t(label)}</button>`;
+
+							// a disabled button gets no pointer events, the tooltip sits on a wrapper
+							return key === 'arenaCurrent' && vm.noArena
+								? html`<span class="fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('PvPArenaOpponentsInactive')}>${button}</span>`
+								: button;
+						})}
 					</div>
 					<div class="loot-filter-player">
 						<div class="loot-filter-search">
@@ -721,7 +727,7 @@ let Looting = {
 						</div>
 						${vm.filterPlayer ? html`
 							<span class="loot-filter-chip">${vm.filterPlayer.name}
-								<span class="loot-filter-chip-remove" title="${t('RemovePlayerFilter')}" @click=${() => Looting.SelectPlayer(null)}>✕</span>
+								<span class="loot-filter-chip-remove fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('RemovePlayerFilter')} @click=${() => Looting.SelectPlayer(null)}>✕</span>
 							</span>` : ''}
 						<span class="loot-filter-count">${t('Entries')}: ${vm.count}</span>
 					</div>
@@ -770,14 +776,14 @@ let Looting = {
 						<em>${moment(action.date).fromNow()}</em>
 					</div>
 					<div>
-						${action.isSamePlayer || !action.eraName ? '' : html`<div class="era" title="${t('PlayersEra')}: ${action.eraName}"><strong>${action.eraName}</strong></div>`}
+						${action.isSamePlayer || !action.eraName ? '' : html`<div class="era fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('PlayersEra') + ': ' + action.eraName}><strong>${action.eraName}</strong></div>`}
 					</div>
 				</div>
 				<div class="action-content">
 					${action.isSamePlayer ? '' : html`
 						<div class="player-name">
 							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}
-							${action.playerId ? html`<span class="row-filter game-cursor" title="${t('OnlyThisPlayer')}" @click=${() => Looting.SelectPlayer(action.playerId)}></span>` : ''}
+							${action.playerId ? html`<span class="row-filter game-cursor fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${t('OnlyThisPlayer')} @click=${() => Looting.SelectPlayer(action.playerId)}></span>` : ''}
 							${action.clanName ? html`<br><span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>` : ''}
 						</div>`}
 					<div class="content">${Looting.viewActionContent(action)}</div>
@@ -802,7 +808,7 @@ let Looting = {
 				return html`
 					<div class="loot-wrap">
 						<div class="name">
-							<img class="sabotage" src="${extUrl}css/images/plunderrepel.png" alt="" title="${t('actionRepelled')}">
+							<img class="sabotage fh-tooltip" src="${extUrl}css/images/plunderrepel.png" alt="" data-callback_tt="ToolboxTT.text" data-tt=${t('actionRepelled')}>
 							${buildingName}
 						</div>
 					</div>`;
@@ -813,8 +819,8 @@ let Looting = {
 				return html`
 					<div class="loot-wrap">
 						<div class="name">
-							<img class="sabotage" src="${extUrl}css/images/sabotage.png" alt="" title="${t('actionLooted')}">
-							${action.doubleLoot ? html`<img class="doubleLoot" src="${extUrl}css/images/doubleloot.png" alt="" title="${t('doubleLoot')}">` : ''}
+							<img class="sabotage fh-tooltip" src="${extUrl}css/images/sabotage.png" alt="" data-callback_tt="ToolboxTT.text" data-tt=${t('actionLooted')}>
+							${action.doubleLoot ? html`<img class="doubleLoot fh-tooltip" src="${extUrl}css/images/doubleloot.png" alt="" data-callback_tt="ToolboxTT.text" data-tt=${t('doubleLoot')}>` : ''}
 							${buildingName}
 						</div>
 						<div class="loot-items ${action.important ? 'text-warning' : ''}">
@@ -908,7 +914,7 @@ let Looting = {
 			eraClass = (!hasEra || ownEra === undefined ? 'none' : era < ownEra ? 'older' : era === ownEra ? 'same' : 'newer');
 
 		return html`
-			<div class="unit" title="${t('Unit')}: ${type.name}${eraText}, HP: ${endHP}/${startHP}, ${t('Attack')}: ${attBoost}, ${t('Defense')}: ${defBoost}">
+			<div class="unit fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${`${type.name}${eraText}\nHP: ${endHP}/${startHP}\n${t('Attack')}: ${attBoost}\n${t('Defense')}: ${defBoost}`}>
 				<div class="unit-portrait">
 					<img src="${srcLinks.get(`/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_${unit.unitTypeId}.jpg`, true, true)}" alt="">
 					<span class="unit_skill ${type.unitClass}"></span>

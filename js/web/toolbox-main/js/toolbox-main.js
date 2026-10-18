@@ -318,3 +318,29 @@ FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 	GBGActionLog.checkForDB(ExtPlayerID);
 	Notes.Store.checkForDB(ExtPlayerID);
 });
+
+
+/**
+ * Tooltips of the toolbox: the instant Helfer tooltip (customTooltip) instead of a title
+ * attribute, which only shows after the fixed browser delay. The text is in data-tt, line
+ * breaks become lines. Works in pop-out windows too.
+ * Usage: class "fh-tooltip" plus the attributes of ToolboxTT.attrs(text), in lit-html
+ * templates data-callback_tt="ToolboxTT.text" data-tt=${text}.
+ */
+let ToolboxTT = {
+
+	text: (e) => {
+		const text = e.currentTarget.dataset.tt;
+		return text ? `<div class="toolbox-tt">${$('<div />').text(text).html()}</div>` : '';
+	},
+
+
+	/**
+	 * @param text plain text
+	 * @returns {string} attributes for HTML strings
+	 */
+	attrs: (text) => `data-callback_tt="ToolboxTT.text" data-tt="${$('<div />').text(text).html().replace(/"/g, '&quot;')}"`,
+};
+
+// the tooltip module resolves only known roots, ToolboxTT is registered here
+Tooltips.register('ToolboxTT.text', ToolboxTT.text);
