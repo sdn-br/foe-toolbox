@@ -1,47 +1,48 @@
+/* fixed width, room for 8 units per army; min and max also beat a saved width, the grip only changes the height */
+#looting {
+	width: 690px;
+	min-width: 690px;
+	max-width: 690px;
+	height: 600px;
+}
+
+/* head and paging stay in place, only the list scrolls */
 #lootingBody {
-    max-height: 600px;
-    width: 670px;
     margin-top: 2px;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#lootingBody > .toolbox-head,
+#lootingBody > .pagination {
+    flex: none;
+}
+
+#lootingBody > .action-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 #looting .header {
     padding: 0 0 2px 2px;
 }
 
-#lootingBody .strategy-points {
-	margin-bottom: 10px;
-    justify-content: center;
-    display: flex;
+#lootingBody .toolbox-cards {
+	margin-bottom: 8px;
 }
 
-#lootingBody .strategy-points table {
-	align-self: center;
-}
-
-#lootingBody .strategy-points tr th span {
-	display: inline-block;
-	width: 25px;
-	height: 25px;
-	vertical-align: bottom;
-}
-
-#lootingBody .strategy-points tr th {
-	color: var(--text-bright);
-}
-
-#lootingBody .strategy-points tr td {
-	color: var(--text-bright);
-}
-
-#lootingBody .strategy-points tr th span.forgepoints {
+#lootingBody .toolbox-card-icon.forgepoints,
+#lootingBody .toolbox-card-icon.doubleloot {
+	width: 20px;
+	height: 20px;
 	background: url(../../x_img/forgepoints.png) center no-repeat;
 	background-size: contain;
 }
 
-#lootingBody .strategy-points tr th span.doubleloot {
-	background: url(../../x_img/doubleloot.png) center no-repeat;
-	background-size: contain;
+#lootingBody .toolbox-card-icon.doubleloot {
+	background-image: url(../../x_img/doubleloot.png);
 }
 
 
@@ -50,16 +51,12 @@
     text-align: center;
 }
 
-#looting .select-player:hover {
-	  background-color: rgba(255, 255, 255, .2);
-}
-
 #looting .action-row {
     display: flex;
     flex-direction: row;
     padding: 2px;
-    border-top: 1px solid #7F5A34;
-    border-bottom: 1px solid #3D250F;
+    border-top: 1px solid var(--border-table-top);
+    border-bottom: 1px solid var(--border-table-bottom);
     min-height: 90px;
 }
 
@@ -79,55 +76,171 @@
 
 #looting img.player-avatar {
 	max-width: 70px;
-	border: 1px solid black;
+	border: 1px solid var(--black);
 }
 
 #looting .type-1 {
-    color: #1e1;
+    color: var(--limegreen);
 }
 
 #looting .type-3 {
-    color: #ff5026;
+    color: var(--danger-red);
 }
 
-#looting div.filter {
-    padding-right: 4px;
-    display: flow-root
+/* filter: source buttons, player search and the chosen player; combinable */
+#lootingBody .loot-filter {
+	padding: 0 6px 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
-#looting div.filterd-by {
-    float: left;
-    height: 40px;
-}  
+#lootingBody .loot-filter-sources {
+	display: flex;
+}
 
-#looting div.filter-buttons {
-    float: right;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-    flex-direction: row;
-    padding-right: 4px;
-    height: 40px;
-}    
+#lootingBody .loot-filter-sources .btn {
+	flex: 1;
+	margin: 0;
+	border-radius: 0;
+	white-space: nowrap;
+}
+
+#lootingBody .loot-filter-sources .btn:first-child {
+	border-radius: 3px 0 0 3px;
+}
+
+#lootingBody .loot-filter-sources .btn:last-child {
+	border-radius: 0 3px 3px 0;
+}
+
+#lootingBody .loot-filter-player {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+#lootingBody .loot-filter-search {
+	flex: 0 0 260px;
+	position: relative;
+}
+
+#lootingBody .loot-filter-search::before {
+	content: '';
+	position: absolute;
+	left: 7px;
+	top: 50%;
+	width: 12px;
+	height: 12px;
+	transform: translateY(-50%);
+	opacity: 0.7;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffe7ba' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+#lootingBody .loot-filter-search input {
+	width: 100%;
+	padding: 3px 8px 3px 24px;
+	background: var(--black-30);
+	border: 1px solid var(--text-dark);
+	border-radius: 3px;
+	color: var(--beige);
+}
+
+#lootingBody .loot-filter-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 10;
+	margin: 2px 0 0;
+	padding: 2px 0;
+	list-style: none;
+	max-height: 220px;
+	overflow-y: auto;
+	background: var(--text-darkest);
+	border: 1px solid var(--text-medium);
+	border-radius: 3px;
+	box-shadow: 0 3px 8px var(--black-65);
+}
+
+#lootingBody .loot-filter-suggestions li {
+	padding: 3px 8px;
+	color: var(--beige);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#lootingBody .loot-filter-suggestions li.active {
+	background: var(--black-30);
+	color: var(--sunflower);
+}
+
+#lootingBody .loot-filter-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 4px 2px 10px;
+	border-radius: 12px;
+	background: var(--black-30);
+	border: 1px solid var(--text-medium);
+	color: var(--beige);
+	font-weight: bold;
+}
+
+#lootingBody .loot-filter-chip-remove {
+	display: inline-flex;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	align-items: center;
+	justify-content: center;
+	background: var(--black-50);
+	cursor: pointer;
+	font-size: 11px;
+}
+
+#lootingBody .loot-filter-count {
+	color: var(--text-medium);
+	font-size: 90%;
+}
+
+/* "only encounters with this player", behind the name */
+#lootingBody .row-filter {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 6px;
+	width: 20px;
+	height: 20px;
+	border-radius: 3px;
+	background: var(--black-30) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffe7ba'%3E%3Cpath d='M1 2h14l-5.5 6.5V14l-3-1.5V8.5z'/%3E%3C/svg%3E") center / 12px no-repeat;
+	border: 1px solid var(--text-dark);
+}
+
+#lootingBody .row-filter:hover {
+	border-color: var(--beige);
+}
 
 #looting .action-row-type-1, #looting .action-row-type-2 {
-    background-color: rgba(128, 255, 128, .1);
+    background-color: var(--table-bg-success);
 }
 
 #looting .action-row-type-3, #looting .action-row-type-6 {
-    background-color: rgba(255, 128, 128, .1);
+    background-color: var(--table-bg-error);
 }
 
 #looting .action-row-type-4 {
-    background-color: rgba(255, 255, 128, .1);
+    background-color: var(--table-bg-bright);
 }
 
 #looting .action-row-type-5 {
-    background-color: rgba(128, 128, 255, .1);
+    background-color: var(--table-bg-info);
 }
 
-#looting .action-content .content {
-
+#looting .action-content {
+	flex: 1;
+	min-width: 0;
 }
 
 #looting .info-column {
@@ -144,12 +257,12 @@
 #looting .info-column .era {
 	white-space: nowrap;
 	font-size: 10px;
-	color: #b39690;
+	color: var(--dark-beige);
 }
 
 #looting .info-column .discovered {
 	  font-size: 10px;
-	  color: #b39690;
+	  color: var(--dark-beige);
 }
 
 #looting .loot-wrap {
@@ -181,7 +294,7 @@
 
 #looting .player-name {
     font-weight: bold;
-    color: #FFB539;
+    color: var(--sunflower);
 }
 
 #looting .versus {
@@ -191,6 +304,7 @@
 
 #looting .unit-wrap {
 	display: flex;
+	flex-wrap: wrap;
 }
 
 #looting .unit {
@@ -202,8 +316,54 @@
     font-size: 10px;
 }
 
-#looting .unit_icon {
-    zoom: 100%
+/* single portrait per unit type, the class symbol small in the corner */
+#looting .unit-portrait {
+	position: relative;
+	width: 44px;
+	height: 44px;
+	margin: 0 auto;
+	--unit_scale: 3/5;
+}
+
+#looting .unit-portrait img {
+	width: 44px;
+	height: 44px;
+	display: block;
+}
+
+#looting .unit-portrait .unit_skill {
+	position: absolute;
+	right: -3px;
+	bottom: -3px;
+	--unit_scale: 4/5;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--black-65);
+	box-shadow: 0 0 0 1px var(--text-medium);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#looting .unit-era {
+	font-size: 10px;
+	line-height: 12px;
+	font-weight: bold;
+	margin-top: 1px;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-medium);
+}
+
+#looting .unit-era.same {
+	color: var(--beige);
+}
+
+#looting .unit-era.newer {
+	color: var(--danger-red);
 }
 
 #looting .stats-same-for-all {
@@ -212,16 +372,16 @@
 }
 
 #looting .green {
-    color: #1e1;
+    color: var(--limegreen);
 }
 
 #looting .red {
-    color: #ff5026;
+    color: var(--danger-red);
 }
 
 #looting .health {
 	  display: block;
-	  background-color: #ff5026;
+	  background-color: var(--danger-red);
 	  height: 5px;
 	  position: relative;
 	  margin-top: 2px;
@@ -229,7 +389,7 @@
 
 #looting .health span {
 	  position: relative;
-	  background-color: #1e7e34;
+	  background-color: var(--success);
 	  height: 5px;
 	  display: block;
 }
@@ -238,10 +398,14 @@
     margin: 4px 10px;
 }
 
-#looting .btn-default {
+#looting .btn {
 	padding: 0.2rem 0.4rem;
 }
 
 #looting .pvparena {
     font-weight: bold;
+}
+
+#looting .shield-explain img {
+	vertical-align: middle;
 }

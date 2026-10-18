@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -12,12 +12,12 @@
  */
 
 /**
- * @type {{ActualGrp: number, init: Notice.init, notes: null, Listener: Notice.Listener, SetHeights: Notice.SetHeights, buildBox: Notice.buildBox, BuildSettingButtons: Notice.BuildSettingButtons, prepareContent: Notice.prepareContent, ActiveTab: number, ShowModal: Notice.ShowModal, ShowPlayerModal: Notice.ShowPlayerModal, SavePlayerToGroup: (function(*): (undefined)), SaveContent: Notice.SaveContent, EditMode: boolean, SaveModal: (function(*=, *=): (undefined)), SaveItemModal: (function(*=): (undefined)), DeleteElement: Notice.DeleteElement, ActiveSubTab: number, Players: {}}}
+ * @type {{ActualGrp: number, init: Notice.init, notes: null, Listener: Notice.Listener, SetHeights: Notice.SetHeights, buildBox: Notice.buildBox, BuildSettingButtons: Notice.BuildSettingButtons, prepareContent: Notice.prepareContent, ActiveTab: number, ShowModal: Notice.ShowModal, ShowPlayerModal: Notice.ShowPlayerModal, SavePlayerToGroup: Notice.SavePlayerToGroup, SaveContent: Notice.SaveContent, EditMode: boolean, ApiToken: null, SaveModal: Notice.SaveModal, SaveItemModal: Notice.SaveItemModal, DeleteElement: Notice.DeleteElement, ActiveSubTab: number, Players: {}}}
  */
 let Notice = {
 
 	notes: null,
-	
+
 	/**
 	 * Toogle state for edit mode
 	 */
@@ -32,21 +32,32 @@ let Notice = {
 
 	ActiveTab: 1,
 	ActiveSubTab: 1,
-	Banned: false,
+
+	ApiToken: null,
+
+	initDone:false,
 
 	/**
 	 * On init get the content
 	 */
 	init: ()=> {
-		if(Notice.notes === null && Settings.GetSetting('GlobalSend') === true) {
-			MainParser.send2Server({isEmpty:true}, 'Notice/get',(resp)=>{
-				if (resp.status == 'OK' && resp.notice === undefined) {
-					Notice.Banned = true;
-				}
-				
-				Notice.notes = resp.notice;
 
-				Notice.buildBox(false);
+		// TOOLBOX: the notes are stored locally (Notice.Store), no GlobalSend or API token needed
+		if(Notice.notes === null){
+			Notice.Store.send({}, 'Notice/get',(resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+				if(resp['status'] === 'ERROR') {
+					HTML.ShowToastMsg({
+						head: 'Error',
+						text: resp['msg'],
+						type: 'error',
+						hideAfter: 10000,
+					});
+				}
+				else {
+					Notice.notes = resp['notice'];
+
+					Notice.buildBox(false);
+				}
 			});
 
 		} else {
@@ -72,6 +83,7 @@ let Notice = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
+				popout: () => MainParser.PopOut('notices'), // TOOLBOX: pop-out window
 				settings: true
 			});
 
@@ -85,14 +97,8 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		if(Settings.GetSetting('GlobalSend') && !Notice.Banned){
-			Notice.prepareContent();
-		}
-
-		// global send is deactivated
-		else {
-			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(Notice.Banned ? i18n('Boxes.Notice.BannedFromApi') : i18n('Boxes.Notice.GlobalSendRequired')) );
-		}
+		// TOOLBOX: local notes, no GlobalSend requirement
+		Notice.prepareContent();
 	},
 
 
@@ -120,7 +126,7 @@ let Notice = {
 				if(n['player_group']){
 					switch (n['player_group']){
 						case 'guild': tabName = `🛡 ${i18n('Boxes.Notice.SelectPlayerGroupGuild')}`; break;
-						case 'friend': tabName = `👩🏼‍🤝‍🧑 ${i18n('Boxes.Notice.SelectPlayerGroupFriend')}`; break;
+						case 'friend': tabName = `👩🏼🤝🧑 ${i18n('Boxes.Notice.SelectPlayerGroupFriend')}`; break;
 						case 'neighbor': tabName = `⚔ ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break;
 					}
 
@@ -150,9 +156,7 @@ let Notice = {
 											<span class="clan-name"><em>#${player['PlayerID']}</em> ${player['ClanName'] ? '[' + player['ClanName'] + ']' : '&nbsp;'}</span>
 										</div>
 										<div class="info-text">
-											${i18n('Boxes.Notice.ContentHeadIsGuild')}: ${player['IsGuildMember']}<br>
-											${i18n('Boxes.Notice.ContentHeadIsFriend')}: ${player['IsFriend']}<br>
-											${i18n('Boxes.Notice.ContentHeadIsNeighbor')}: ${player['IsFriend']}<br>
+
 										</div>
 									</div>`);
 
@@ -161,16 +165,16 @@ let Notice = {
 					}
 
 
-					subdiv.push(`<div class="content-text" contenteditable="true">${itm['content']}</div>
+					subdiv.push(`<div class="content-text" contenteditable="true">${itm['content'] || ''}</div>
 								</div>`);
 				}
 
 				subcontent = `<div class='tabs-sub'>`;
 
 				if(n['player_group']){
-					subcontent += 	`<span class="btn-default itm-btn" data-id="${n['player_group']}" data-group="${n['id']}">+ ${i18n('Boxes.Notice.NewPlayer')}</span>`;
+					subcontent += 	`<span class="btn itm-btn" data-id="${n['player_group']}" data-group="${n['id']}">+ ${i18n('Boxes.Notice.NewPlayer')}</span>`;
 				} else {
-					subcontent += 	`<span class="btn-default itm-btn" data-id="new">+ ${i18n('Boxes.Notice.NewSide')}</span>`;
+					subcontent += 	`<span class="btn itm-btn" data-id="new">+ ${i18n('Boxes.Notice.NewSide')}</span>`;
 				}
 
 				if(subtab.length > 0){
@@ -189,7 +193,7 @@ let Notice = {
 				content += `<ul class='horizontal dark-bg'>${tab.join('')}</ul>`;
 			}
 
-			content += 		`<span class="btn-default grp-btn" data-id="new">+ ${i18n('Boxes.Notice.NewGroup')}</span>`;
+			content += 		`<span class="btn grp-btn" data-id="new">+ ${i18n('Boxes.Notice.NewGroup')}</span>`;
 			content += 		div.join('');
 			content += `</div>`;
 
@@ -198,7 +202,7 @@ let Notice = {
 		// all empty
 		else {
 			content = `<div class='notices'>
-							<span class="btn-default grp-btn" data-id="new">+ ${i18n('Boxes.Notice.NewGroup')}</span>
+							<span class="btn grp-btn" data-id="new">+ ${i18n('Boxes.Notice.NewGroup')}</span>
 						</div>
 						<div id='notices_container'>
 							<div class="empty-notice">${i18n('Boxes.Notice.NewGroupDesc')}</div>
@@ -209,13 +213,42 @@ let Notice = {
 		// wait for html in the DOM
 		$('#notices').find('#noticesBody').html(content).promise().done(function(){
 
+			// ensure a valid tab is always active, otherwise Tabslet marks no tab
+			// as active and "grp" stays empty when a new item is saved
+			const grpCount = $('.notices > ul.horizontal > li').length;
+
+			if(!Number.isInteger(Notice.ActiveTab) || Notice.ActiveTab < 1 || Notice.ActiveTab > grpCount){
+				Notice.ActiveTab = 1;
+			}
+
+			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups or the import
+			const canEdit = (grpCount > 0 || Notice.Store.CanImport());
+			$('#notices-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notice.Edit' : 'Boxes.Notice.EditDisabled'));
+			if (!canEdit) Notice.EditMode = false;
+
 			// init Tabslet
 			$('.notices').tabslet({
 				active: Notice.ActiveTab
 			});
 
 			if( $('.tabs-sub').length > 0 ){
-				$('.tabs-sub').tabslet();
+				// restore the last used sub tab in the active group, every other group starts at 1
+				const activeSub = $('.notices > .notice-wrapper').eq(Notice.ActiveTab - 1).find('.tabs-sub');
+
+				$('.tabs-sub').each(function(){
+					const $this = $(this),
+						subCount = $this.find('ul.vertical li').length;
+
+					let active = 1;
+
+					if($this.is(activeSub) && Number.isInteger(Notice.ActiveSubTab) && Notice.ActiveSubTab >= 1 && Notice.ActiveSubTab <= subCount){
+						active = Notice.ActiveSubTab;
+					}
+
+					$this.tabslet({
+						active: active
+					});
+				});
 
 				setTimeout(()=>{
 					Notice.SetHeights();
@@ -255,27 +288,14 @@ let Notice = {
 			Notice.ShowModal('itm', $(this).data('id'));
 		});
 
-		$('body').on('click', '.btn-delete', function(){
-			Notice.DeleteElement($(this).data('type'), $(this).data('id'));
-		});
-
-		$('body').on('click', '#notices-modalclose, #notices-modal-playersclose', function(){
-			$('.foe-helper-overlay').remove();
-		});
-
-		// save content when close box
-		$('body').on('click', '#noticesclose', function(){
-			let $this = $('.sub-tab:visible');
-
-			Notice.SaveContent($this);
-		});
-
 		// toggle edit buttons
 		$('#notices').on('click', '#notices-settings', function(){
+			if($(this).hasClass('disabled')) return; // TOOLBOX: nothing to edit yet
+
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {
-				$('.tab-edit, .sub-tab-edit').remove();
+				$('.tab-edit, .sub-tab-edit, .notice-import-btn').remove(); // TOOLBOX: import button
 			}
 
 			Notice.EditMode = !Notice.EditMode;
@@ -298,9 +318,21 @@ let Notice = {
 				return false;
 			}
 		});
+		if (Notice.initDone) return;
+		$('body').on('click', '.btn-delete', function() {
+			if (confirm(i18n('Boxes.Notice.ConfirmDelete')))
+				Notice.DeleteElement($(this).data('type'), $(this).data('id'));
+		});
 
-		$('body').on('click', '.custom-option-noticePlayers', function(){
-			Notice.SavePlayerToGroup($(this).data('value'));
+		$('body').on('click', '#notices-modalclose, #notices-modal-playersclose', function(){
+			$('.foe-helper-overlay').remove();
+		});
+
+		// save content when close box
+		$('body').on('click', '#noticesclose', function(){
+			let $this = $('.sub-tab:visible');
+			if ($this.length == 0) return;
+			Notice.SaveContent($this);
 		});
 
 		// check if user changes the box size
@@ -310,6 +342,7 @@ let Notice = {
 			clearTimeout(id);
 			id = setTimeout(Notice.SetHeights(), 150);
 		});
+		Notice.initDone = true;
 	},
 
 
@@ -359,10 +392,10 @@ let Notice = {
 
 		btn.attr({
 				role: 'button',
-				class: `btn-default save-${type}-name`,
+				class: `btn save-${type}-name`,
 				'data-id': id,
 				'data-type': type,
-				onclick: (type === 'itm' ? `Notice.SaveItemModal(${(id === 'new' ? "'new'" : id)})` : `Notice.SaveModal('${type}', ${(id === 'new' ? "'new'" : id)})`)
+				onclick: (type === 'itm' ? `Notice.SaveItemModal('${(id === 'new' ? "new" : id)}')` : `Notice.SaveModal('${type}', '${(id === 'new' ? "new" : id)}')`)
 			})
 			.text(i18n('Boxes.Notice.Save'))
 			.wrap('<div class="text-right" />');
@@ -370,14 +403,14 @@ let Notice = {
 
 		$('#notices-modalBody').append(inp);
 
-		
+
 		if(id !== 'new'){
 			let delBtn = $('<span />');
 
 			delBtn
 				.attr({
 					role: 'button',
-					class: `btn-default btn-delete`,
+					class: `btn btn-delete`,
 					'data-id': id,
 					'data-type': type
 				})
@@ -390,7 +423,7 @@ let Notice = {
 			let sort = $('<input />').attr({
 				type: 'number',
 				class: `inp-${type}-sort`,
-				placeholder: i18n('Boxes.Notice.Sorting'),
+				placeholder: i18n('Boxes.Notice.Sorting')
 			});
 
 			sort.wrap('<div />').insertAfter(`.inp-${type}-name`);
@@ -398,7 +431,6 @@ let Notice = {
 
 		if(type === 'grp' && id === 'new'){
 			$('#notices-modalBody').append(
-				$('<hr>'),
 				$('<p />').append(
 					$('<select />').attr({
 						id: 'player-grp',
@@ -440,11 +472,15 @@ let Notice = {
 			data = {
 				id: id,
 				type: type,
-				name: txt
-			}
+				name: txt,
+				// TOOLBOX: no default, the local store appends a new group when the field is empty
+				sort: $(`.inp-grp-sort`).val(),
+				apiToken: Notice.ApiToken
+			},
+			grpSel = $('#player-grp option:selected');
 
-		if( $('#player-grp option:selected').data('value') !== -1 ){
-			data['player_group'] = $('#player-grp option:selected').data('value');
+		if( grpSel.data('value') !== -1 ){
+			data['player_group'] = grpSel.data('value');
 
 		} else if(txt === '') {
 			return;
@@ -453,24 +489,37 @@ let Notice = {
 			data['name'] = txt;
 		}
 
-		MainParser.send2Server(data, 'Notice/set', (resp)=>{
-			Notice.notes = resp['notice'];
-
-			if(id === 'new'){
-				Notice.ActiveTab = Notice.notes[Notice.notes.length -1];
-
-			} else {
-				Notice.ActiveTab = Notice.notes.findIndex(idx => (idx.id === id)) +1;
+		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			if(resp['status'] === 'ERROR') {
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
 			}
+			else {
+				Notice.notes = resp['notice'];
 
-			$('#notices-modal').fadeToggle('fast', function(){
-				$(this).remove();
+				if(id === 'new'){
+					// TOOLBOX: a new group may have been sorted in anywhere; local ids only grow, so the newest has the highest
+					const newId = Math.max(...Notice.notes.map(g => g.id));
+					Notice.ActiveTab = Notice.notes.findIndex(g => g.id === newId) + 1;
 
-				$('.foe-helper-overlay').remove();
-			});
+				} else {
+					// loose comparison, "id" comes from the DOM as a string
+					Notice.ActiveTab = Notice.notes.findIndex(idx => (idx.id == id)) +1;
+				}
 
-			Notice.EditMode = false;
-			Notice.buildBox();
+				$('#notices-modal').fadeToggle('fast', function(){
+					$(this).remove();
+
+					$('.foe-helper-overlay').remove();
+				});
+
+				Notice.EditMode = false;
+				Notice.buildBox();
+			}
 		});
 	},
 
@@ -484,36 +533,54 @@ let Notice = {
 	SaveItemModal: (id)=> {
 		let nN = $('.inp-itm-name').val(),
 			txt = nN.trim(),
-			grp = parseInt($('ul.horizontal').find('li.active a').data('id')),
-			sortVal = !$(`inp-itm-sort`).val() || ($(`#tab-${grp}`).find('ul.vertical li').length +1);
+			grp = $('ul.horizontal').find('li.active a').data('id');
 
 		if(txt === ''){
 			return;
 		}
 
+		// fallback: if no tab is marked as active use the first group, "grp" must never be empty
+		if(grp === undefined){
+			grp = $('ul.horizontal').find('li:first a').data('id');
+		}
+
+		let sortVal = $(`.inp-itm-sort`).val() || ($(`#tab-${grp}`).find('ul.vertical li').length +1);
+
 		txt = MainParser.ClearText(txt);
 
-		MainParser.send2Server({id:id,type:'itm',name:txt,grp:grp,sort:sortVal}, 'Notice/set', (resp)=>{
-			Notice.notes = resp['notice'];
-
-			const group = Notice.notes.find(e => (e.id === grp));
-			Notice.ActiveTab = Notice.notes.findIndex(idx => (idx.id === grp)) +1;
-
-			if(id === 'new'){
-				Notice.ActiveSubTab = group.items.length +1;
-
-			} else {
-				Notice.ActiveSubTab = group.items.findIndex(i => (i.id === id)) +1;
+		Notice.Store.send({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			if(resp['status'] === 'ERROR') {
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
 			}
+			else {
+				Notice.notes = resp['notice'];
 
-			$('#notices-modal').fadeToggle('fast', function(){
-				$(this).remove();
+				// loose comparisons, ids may arrive as strings from the DOM
+				const group = Notice.notes.find(e => (e.id == grp));
+				Notice.ActiveTab = Notice.notes.findIndex(idx => (idx.id == grp)) +1;
 
-				$('.foe-helper-overlay').remove();
-			});
+				if(id === 'new'){
+					// the response already contains the new item as the last one
+					Notice.ActiveSubTab = group.items.length;
 
-			Notice.EditMode = false;
-			Notice.buildBox();
+				} else {
+					Notice.ActiveSubTab = group.items.findIndex(i => (i.id == id)) +1;
+				}
+
+				$('#notices-modal').fadeToggle('fast', function(){
+					$(this).remove();
+
+					$('.foe-helper-overlay').remove();
+				});
+
+				Notice.EditMode = false;
+				Notice.buildBox();
+			}
 		});
 	},
 
@@ -525,26 +592,42 @@ let Notice = {
 	 * @constructor
 	 */
 	SaveContent: ($this)=> {
-		if (Settings.GetSetting('GlobalSend') === true) {
-			return;
-		}
-
-		let itmID = parseInt($this.data('id')),
-			grpID = parseInt($this.data('parent')),
+		let itmID = $this.data('id'),
+			grpID = $this.data('parent'),
 			head = $this.find('.content-head').html(),
 			cont = $this.find('.content-text').html();
 
+		if(cont === null) {
+			return;
+		}
+
 		// send content changes to server und change local object
-		MainParser.send2Server({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,}, 'Notice/set', (resp)=>{
+		Notice.Store.send({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
 
-			let grpIdx = Notice.notes.findIndex(g => g.id === grpID),
-				itmIdx = Notice.notes[grpIdx].items.findIndex(i => i.id === itmID);
+			if(resp['status'] === 'ERROR') {
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
+			}
+			else {
+				// loose comparisons, ids may arrive as strings from the DOM
+				let grpIdx = Notice.notes.findIndex(g => (g.id == grpID)),
+					itmIdx = grpIdx > -1 ? Notice.notes[grpIdx].items.findIndex(i => (i.id == itmID)) : -1;
 
-			Notice.notes[grpIdx].items[itmIdx]['title'] = head;
-			Notice.notes[grpIdx].items[itmIdx]['content'] = cont;
+				// unknown ids: the server accepted the save, just skip the local cache update
+				if(itmIdx === -1){
+					return;
+				}
 
-			Notice.ActiveTab = (grpIdx + 1);
-			Notice.ActiveSubTab = (itmIdx + 1);
+				Notice.notes[grpIdx].items[itmIdx]['title'] = head;
+				Notice.notes[grpIdx].items[itmIdx]['content'] = cont;
+
+				Notice.ActiveTab = (grpIdx + 1);
+				Notice.ActiveSubTab = (itmIdx + 1);
+			}
 		});
 	},
 
@@ -594,7 +677,7 @@ let Notice = {
 			const p = players[i],
 				a = srcLinks.GetPortrait(p['Avatar']);
 
-			content += `<span class="custom-option custom-option-noticePlayers" data-value="${p['PlayerID']}"><span class="avatar" style="background-image:url("${a}")"></span>${p['PlayerName']}</span>`;
+			content += `<span class="custom-option" onclick="Notice.SavePlayerToGroup(${p['PlayerID']})" data-value="${p['PlayerID']}"><span class="avatar" style="background-image:url('${a}')"></span>${p['PlayerName']}</span>`;
 		}
 
 		content +=		`</div>
@@ -613,7 +696,8 @@ let Notice = {
 			type: 'itm',
 			name: PlayerDict[id]['PlayerName'],
 			grp: Notice.ActualGrp,
-			player: JSON.stringify(PlayerDict[id])
+			player: JSON.stringify(PlayerDict[id]),
+			apiToken: Notice.ApiToken
 		};
 
 		// check if not double
@@ -628,16 +712,28 @@ let Notice = {
 		// set the active Tab for reload
 		Notice.ActiveTab = Notice.notes.findIndex(idx => idx.id === Notice.ActualGrp) + 1;
 
-		MainParser.send2Server(data, 'Notice/set', (resp)=>{
-			Notice.notes = resp['notice'];
+		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			if(resp['status'] === 'ERROR') {
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
+			}
+			else {
+				Notice.notes = resp['notice'];
 
-			$('#notices-modal-players').fadeToggle('fast', function(){
-				$(this).remove();
+				$('#notices-modal-players').fadeToggle('fast', function(){
+					$(this).remove();
 
-				$('.foe-helper-overlay').remove();
-			});
+					$('.foe-helper-overlay').remove();
+				});
 
-			Notice.buildBox();
+				Notice.buildBox();
+
+				$('.custom-option-noticePlayers').bind('click');
+			}
 		});
 	},
 
@@ -650,6 +746,9 @@ let Notice = {
 	BuildSettingButtons: ()=> {
 
 		$('.tab-edit, .sub-tab-edit').remove();
+
+		// TOOLBOX: import from the FoE Helfer server
+		Notice.Store.BuildImportButton();
 
 		// Sortfunction for horizontal + Stop event
 		$('ul.horizontal').sortable({
@@ -666,11 +765,21 @@ let Notice = {
 					});
 				});
 
-				MainParser.send2Server({type:'grp',grps:grps}, 'Notice/sort', (resp)=>{
-					Notice.notes = resp['notice'];
+				Notice.Store.send({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+					if(resp['status'] === 'ERROR') {
+						HTML.ShowToastMsg({
+							head: 'Error',
+							text: resp['msg'],
+							type: 'error',
+							hideAfter: 10000,
+						});
+					}
+					else {
+						Notice.notes = resp['notice'];
 
-					$('.notices').tabslet();
-					Notice.BuildSettingButtons();
+						$('.notices').tabslet();
+						Notice.BuildSettingButtons();
+					}
 				});
 			}
 		});
@@ -714,11 +823,21 @@ let Notice = {
 						});
 					});
 
-					MainParser.send2Server({type:'itm',itms:itms}, 'Notice/sort', (resp)=>{
-						Notice.notes = resp['notice'];
+					Notice.Store.send({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+						if(resp['status'] === 'ERROR') {
+							HTML.ShowToastMsg({
+								head: 'Error',
+								text: resp['msg'],
+								type: 'error',
+								hideAfter: 10000,
+							});
+						}
+						else {
+							Notice.notes = resp['notice'];
 
-						$('.tabs-sub').tabslet();
-						Notice.BuildSettingButtons();
+							$('.tabs-sub').tabslet();
+							Notice.BuildSettingButtons();
+						}
 					});
 				}
 			});
@@ -752,17 +871,31 @@ let Notice = {
 	 * @constructor
 	 */
 	DeleteElement: (type, id)=> {
-		MainParser.send2Server({type:type,id:id}, 'Notice/del', (resp)=>{
-			Notice.notes = resp['notice'];
+		Notice.Store.send({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			if(resp['status'] === 'ERROR') {
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
+			}
+			else {
+				Notice.notes = resp['notice'];
 
-			$('#notices-modal').fadeToggle('fast', function(){
-				$(this).remove();
+				// the deleted element may have been the active one, jump back to the first tab
+				Notice.ActiveTab = 1;
+				Notice.ActiveSubTab = 1;
 
-				$('.foe-helper-overlay').remove();
-			});
+				$('#notices-modal').fadeToggle('fast', function(){
+					$(this).remove();
 
-			Notice.EditMode = false;
-			Notice.buildBox();
+					$('.foe-helper-overlay').remove();
+				});
+
+				Notice.EditMode = false;
+				Notice.buildBox();
+			}
 		});
 	},
 

@@ -1,0 +1,248 @@
+/*
+ * **************************************************************************************
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
+ *
+ * See file LICENSE.md or go to
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
+ *
+ * **************************************************************************************
+ */
+
+#CityBuilderBox.window-box,
+#CityBuilderBox .window-body,
+#CityBuilderBox .window-head {
+	background: none;
+	box-shadow: none;
+	border: none;
+}
+#CityBuilderBox.window-box {
+	pointer-events: none;
+	width: 50%;
+	height: 50%;
+	top: 25%;
+	left: 25px;
+	min-width: 600px;
+	display: flex;
+	flex-direction: column;
+}
+#CityBuilderBox .window-body {
+	text-align: right;
+	position: relative;
+}
+.optimized-city-controls {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 10;
+	pointer-events: all;
+	background-color: #070b18b5;
+	padding: 4px 8px;
+	border-radius: 4px;
+	border: 1px solid var(--black-65);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.optimized-city-controls input[type="range"] {
+	width: 100px;
+	cursor: pointer;
+}
+.optimized-city-controls .control-toggle {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	margin-left: 8px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+.optimized-city-controls .control-toggle input[type="checkbox"] {
+	cursor: pointer;
+	margin: 0;
+}
+.optimized-city-controls .recalc-btn {
+	margin-left: 8px;
+	white-space: nowrap;
+}
+.optimized-city-controls .variant-control {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 8px;
+	white-space: nowrap;
+}
+.optimized-city-controls .variant-control .btn {
+	padding: 0 7px;
+	line-height: 1.4;
+}
+.scale-value {
+	min-width: 25px;
+	display: inline-block;
+	text-align: right;
+}
+.optimized-city-settings {
+	padding: 10px;
+}
+#CityBuilderBox {
+	left: calc(min(max(50vw + var(--x)),100vw - 60px)) !important;
+}
+#CityBuilderBox .window-head {
+	padding: 2px;
+	border-bottom: 1px dotted var(--black-65);
+	width: 300px;
+	align-self: end;
+	background-color: #070b18b5;
+}
+#CityBuilderBox .window-head:hover {
+	background: var(--black-30);
+}
+#CityBuilderBox .window-grippy,
+#CityBuilderBox .window-head,
+#CityBuilderBox .settingsbox-wrapper {
+	pointer-events: all;
+}
+#CityBuilderBox .settingsbox-wrapper {
+	filter: saturate(0.5)
+}
+#CityBuilderBox .window-grippy {
+	background-color: var(--black-65);
+	padding: 0;
+	bottom: 0;
+	right: 0;
+	border-radius: 9px 4px 4px 4px;
+}
+
+.map-grid-wrapper {
+	position: relative;
+	height: 2000px;
+	width: 2000px;
+	overflow: hidden;
+	--scale: 100;
+	--scale-x: calc(var(--scale) / 100);
+	--scale-y: calc(0.25 * var(--scale) / 100);
+	--tx: calc((-296289 / var(--scale) + 1471) * 1px);
+	--ty: calc((-104533 / var(--scale) + 212) * 1px);
+	transform: skewX(-63.5deg) skewY(14deg) scale(var(--scale-x), var(--scale-y)) translate(var(--tx), var(--ty));
+	opacity: 0.9;
+}
+.map-grid-canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+	/* drag surface for panning: the transformed hit area is exactly the visible map */
+	pointer-events: all;
+	cursor: grab;
+}
+.map-grid-canvas:active {
+	cursor: grabbing;
+}
+/* remove mode: buildings on the canvas are click targets */
+.map-grid-canvas.edit-mode {
+	cursor: pointer;
+}
+
+/* Pop-up window: regular filled layout instead of the in-game city overlay */
+body.foe-helper-popup #CityBuilderBox.window-box {
+	pointer-events: all;
+	width: 100vw;
+	min-width: 0;
+	height: 100vh;
+	top: 0;
+	left: 0 !important;
+}
+body.foe-helper-popup #CityBuilderBox .window-head {
+	width: auto;
+}
+body.foe-helper-popup #CityBuilderBox .window-body {
+	overflow: hidden;
+}
+/* origin 0 0 keeps the centering math in CityBuilder.fitPopout() simple */
+body.foe-helper-popup #CityBuilderBox .map-grid-wrapper {
+	transform-origin: 0 0;
+}
+/* box listing the buildings the optimizer could not fit into the layout */
+#CityBuilderUnplacedBox {
+	width: 320px;
+}
+#CityBuilderUnplacedBox .unplaced-hint {
+	padding: 6px 8px;
+	font-style: italic;
+}
+#CityBuilderUnplacedBox .unplaced-table td {
+	padding: 3px 8px;
+}
+#CityBuilderUnplacedBox .removed-restore {
+	cursor: pointer;
+	font-size: 15px;
+	font-weight: bold;
+	color: #8be28b;
+}
+#CityBuilderUnplacedBox .removed-restore:hover {
+	color: #ffffff;
+}
+
+/* pop-up window: the opacity overlay slider is pointless there */
+body.foe-helper-popup #CityBuilderBox .opacity-control {
+	display: none;
+}
+body.foe-helper-popup #CityBuilderBox .map-grid-wrapper {
+	opacity: 1 !important;
+}
+
+/* loading panel: solid background so it stays readable on top of the live city */
+.city-builder-loading {
+	margin: 40px auto;
+	max-width: 340px;
+	padding: 24px;
+	background: rgba(15, 18, 24, 0.92);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	border-radius: 8px;
+	text-align: center;
+	color: #fff;
+}
+.city-builder-loading .loading-title {
+	font-size: 14px;
+	margin-bottom: 14px;
+}
+.city-builder-loading .loading-bar {
+	height: 14px;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 7px;
+	overflow: hidden;
+}
+.city-builder-loading .loading-bar-fill {
+	height: 100%;
+	width: 0;
+	background: linear-gradient(90deg, #f6b640, #ffd97a);
+	border-radius: 7px;
+	transition: width 0.3s linear;
+}
+.city-builder-loading .calc-progress {
+	margin-top: 8px;
+	font-size: 13px;
+	color: #ffd97a;
+}
+
+/* road balance panel top-left: live city vs planned layout */
+.city-builder-stats {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	z-index: 10;
+	background-color: #070b18b5;
+	padding: 4px 10px;
+	border-radius: 4px;
+	border: 1px solid var(--black-65);
+	color: #fff;
+	font-size: 12px;
+	line-height: 1.6;
+	pointer-events: none;
+}
+.city-builder-stats .saving {
+	color: #8be28b;
+}
+.city-builder-stats .extra {
+	color: #ff8d8d;
+}

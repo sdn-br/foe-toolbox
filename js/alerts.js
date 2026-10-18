@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -11,7 +11,7 @@
  * **************************************************************************************
  */
 
-let lng = window.navigator.language.split('-')[0];
+let lng = 'de'; // TOOLBOX: German only, the translation loop below never runs
 
 let i18n = {
 	'de' : {
@@ -69,7 +69,7 @@ $(async function(){
 	})();
 
 	$('body').on('click', '.foe-link', ()=> {
-		chrome.tabs.create({url: "https://foe-helper.com/"});
+		chrome.tabs.create({url: "https://github.com/sdn-br/foe-toolbox"}); // TOOLBOX: branding
 	});
 
 	if(lng !== 'de'){

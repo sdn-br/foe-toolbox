@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -21,11 +21,11 @@
   overflow: auto;
 }
 
-#foundGB th {
-  position:sticky;
-  top:0px;
+#foundGB .progress {
+  background: linear-gradient(90deg, var(--table-bg-success) 0, var(--table-bg-success) var(--p), transparent var(--p), transparent)
 }
 
-#foundGB .progress {
-  background: linear-gradient(90deg, var(--background-table-success) 0, var(--background-table-success) var(--p), transparent var(--p), transparent)
+#foundGB .lb-tier-icon {
+  height: 18px;
+  vertical-align: text-bottom;
 }

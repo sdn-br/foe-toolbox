@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -27,21 +27,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 2px 5px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
-#fp-collectorBody .btn-tight {
+#fp-collectorBody .btn-slim {
     max-width: unset;
 }
 
-#fp-collectorBody .foehelper-accordion:hover .foehelper-accordion-head {
-	box-shadow: inset 0px 0px 0px 2000px var(--background-table-hover);
-}
-
-#fp-collectorBody .open .foehelper-accordion-head {
-	margin-bottom: unset;
+#fp-collectorBody .foehelper-accordion-head {
+	margin-bottom: 0;
 }
 
 #fp-collectorBody .open .foehelper-accordion-body {
@@ -62,7 +55,7 @@
 
 #fp-collectorBody .foehelper-accordion-body div .fps {
 	width: 105px;
-	color: var(--text-bright);
+	color: var(--sunflower);
 	text-align: right;
 	margin: 0 8px 0 0;
 }
@@ -86,7 +79,7 @@
 	image-rendering: -webkit-optimize-contrast;
 }
 
-.foehelper-accordion-head.hiddenReward-head span.image {
+.foehelper-accordion-head.hiddenReward-head span.image, .foehelper-accordion-head.hidden_reward-head span.image {
 	background-image: url('../../x_img/incident.png') !important;
 }
 
@@ -94,12 +87,16 @@
 	background-image: url('../../x_img/expedition.png') !important;
 }
 
-.foehelper-accordion-head.guildExpedition-head span.image {
+.foehelper-accordion-head.guildExpedition-head span.image, .foehelper-accordion-head.guild_expedition_reward_notification-head span.image {
 	background-image: url('../../x_img/relic.png') !important;
 }
 
 .foehelper-accordion-head.shards-head span.image {
 	background-image: url('../../x_img/shards.png') !important;
+}
+
+.foehelper-accordion-head.item_store-head span.image {
+	background-image: url('../../x_img/item_store.png') !important;
 }
 
 .foehelper-accordion-head.battlegrounds_conquest-head span.image {
@@ -150,7 +147,15 @@
 	background-image: url('../../x_img/castle_system_daily_reward_chest.png') !important;
 }
 
+.foehelper-accordion-head.guild_raids-head span.image {
+	background-image: url('../../x_img/guild_raids.png') !important;
+}
+
 /* Events */
+
+.foehelper-accordion-head.event_pass-head span.image {
+	background-image: url('../../x_img/event_pass.png') !important;
+}
 
 .foehelper-accordion-head.leagueReward-head span.image {
 	background-image: url('../../x_img/leagueReward.png') !important;
@@ -168,7 +173,7 @@
 	background-image: url('../../x_img/archeology_event.png') !important;
 }
 /*St Patrick's Day Event*/
-.foehelper-accordion-head.st_patricks_event-head span.image {
+.foehelper-accordion-head.st_patricks_event-head span.image, .foehelper-accordion-head.st_patricks_event_task_reward-head span.image {
 	background-image: url('../../x_img/st_patricks_event.png') !important;
 }
 /*May-Day Event*/
@@ -214,4 +219,8 @@
 /*Winter Event*/
 .foehelper-accordion-head.winter_event-head span.image {
 	background-image: url('../../x_img/winter_event.png') !important;
+}
+/*Anniversary Event*/
+.foehelper-accordion-head.anniversary_event-head span.image {
+	background-image: url('../../x_img/anniversary_event.png') !important;
 }

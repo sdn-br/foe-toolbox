@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -23,7 +23,6 @@ let _menu_right = {
 
 		hudWrapper.append(hudInner);
 
-
 		let btnUp = $('<span />').addClass('hud-btn-up'),
 			btnDown = $('<span />').addClass('hud-btn-down hud-btn-down-active');
 
@@ -31,18 +30,15 @@ let _menu_right = {
 		hud.append(hudWrapper)
 		hud.append(btnDown);
 
-		// Wenn sie die Fenstergröße verändert, neu berechnen
 		window.onresize = function (event) {
 			if (event.target == window) _menu_right.SetMenuHeight(true);
 		};
 
-		$('body').append(hud).ready(function () {
+		$('body').append(hud).ready(async function () {
 
-			// Buttons einfügen
 			_menu.ListLinks(_menu_right.InsertMenuItem);
-			_menu_right.CheckButtons();
+			await _menu_right.CheckButtons();
 
-			// korrekten Platz für das Menu ermitteln
 			_menu_right.SetMenuHeight();
 
 			window.dispatchEvent(new CustomEvent('foe-helper#menu_loaded'));
@@ -63,11 +59,9 @@ let _menu_right = {
 
 	/**
 	 * Collective function
-	 *
-	 * @param reset
 	 */
 	SetMenuHeight: (reset = true) => {
-		// Höhe ermitteln und setzten
+		// calibrate height
 		_menu_right.Prepare();
 
 		if (reset) {
@@ -81,12 +75,10 @@ let _menu_right = {
 
 			$('.hud-btn-up').removeClass('hud-btn-up-active');
 
-			if (_menu.SlideParts > 1) {
+			if (_menu.SlideParts > 1)
 				$('.hud-btn-down').addClass('hud-btn-down-active');
-			}
-			else { //Gesamtes Menü passt auf 1 Seite => Kein Scrollbutton nach unten
-				$('.hud-btn-down').removeClass('hud-btn-down-active');	
-			}
+			else // button not needed
+				$('.hud-btn-down').removeClass('hud-btn-down-active');
 		}
 	},
 
@@ -98,22 +90,22 @@ let _menu_right = {
 	Prepare: () => {
 		let MenuItemCount = $("#foe-helper-hud-slider").children().length;
 
-		_menu.HudCount = Math.floor((($(window).outerHeight() - 50) - $('#foe-helper-hud').offset().top) / 55);
+		_menu.HudCount = Math.floor((($(window).outerHeight() - 20) - $('#foe-helper-hud').offset().top) / 48);
 		_menu.HudCount = Math.min(_menu.HudCount, MenuItemCount);
 
 		if (_menu.HudCount <= 0) {
 			$('#foe-helper-hud').remove();
 			_menu.CallSelectedMenu('Box')
 		}
-			
-		// hat der Spieler eine Länge vorgebeben?
+
+		// has a length been set manually?
 		let MenuLength = localStorage.getItem('MenuLength');
 
 		if (MenuLength !== null && MenuLength < _menu.HudCount) {
 			_menu.HudCount = _menu.HudLength = parseInt(MenuLength);
 		}
 
-		_menu.HudHeight = (_menu.HudCount * 55);
+		_menu.HudHeight = (_menu.HudCount * 47);
 		_menu.SlideParts = Math.ceil(MenuItemCount / _menu.HudCount);
 
 		$('#foe-helper-hud').height(_menu.HudHeight + 2);
@@ -124,15 +116,14 @@ let _menu_right = {
 	/**
 	 * Make panel scrollable
 	 */
-	CheckButtons: () => {
-
+	CheckButtons: async () => {
 		let activeIdx = 0;
 
+		await ExistenceConfirmed(() => jQuery._data($('body').get(0), 'events').click != null && $('.hud-btn').length > 0);
 
 		$('.hud-btn').click(function () {
 			activeIdx = $(this).index('.hud-btn');
 		});
-
 
 		if (jQuery._data($('body').get(0), 'events' ).click.filter((elem) => elem.selector == ".hud-btn-down-active").length == 0) {
 			// Klick auf Pfeil nach unten
@@ -147,9 +138,6 @@ let _menu_right = {
 				_menu_right.ClickButtonUp();
 			});
 		};
-
-
-
 
 		// Tooltipp top ermitteln und einblenden
 		$('.hud-btn').stop().hover(function () {
@@ -169,7 +157,7 @@ let _menu_right = {
 		$('#foe-helper-hud-slider').sortable({
 			placeholder: 'menu-placeholder',
 			axis: 'y',
-			distance: 15,
+			distance: 22,
 			start: function () {
 				$('#foe-helper-hud').addClass('is--sorting');
 			},
@@ -263,8 +251,8 @@ let _menu_right = {
 		$('.hud-btn-up').removeClass('hasFocus');
 
 		_menu.ActiveSlide--;
-		
-		if (_menu.ActiveSlide == 1) 
+
+		if (_menu.ActiveSlide == 1)
 			_menu.MenuScrollTop = 0;
 		else
 			_menu.MenuScrollTop += _menu.HudHeight;
