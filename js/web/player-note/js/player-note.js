@@ -50,11 +50,12 @@ let PlayerNote = {
 
 	/**
 	 * Saves the note. Without a page the player is added to the first neighbor group,
-	 * without a neighbor group one is created. An empty note creates nothing.
+	 * without a neighbor group one is created. An empty note creates nothing and deletes an
+	 * existing page, the group stays.
 	 *
 	 * @param playerId
 	 * @param content HTML of the editable field
-	 * @returns {Promise<{id: number, content: string}|null>}
+	 * @returns {Promise<{id: number, content: string}|null>} null when there is no page (anymore)
 	 */
 	save: async (playerId, content) => {
 		const db = Notice.Store.db;
@@ -98,6 +99,10 @@ let PlayerNote = {
 				note = { id: id, content: content };
 			});
 		}
+		else if (PlayerNote.isEmpty(content)) {
+			await db.items.delete(note.id);
+			note = null;
+		}
 		else {
 			await db.items.update(note.id, { content: content });
 			note.content = content;
@@ -129,7 +134,8 @@ let PlayerNote = {
 
 			const value = e.target.innerHTML;
 
-			if (value === content || (!note && PlayerNote.isEmpty(value))) {
+			// an emptied field deletes the page, also one that was saved empty before
+			if (note ? (value === content && value !== '') : value === '') {
 				return;
 			}
 
