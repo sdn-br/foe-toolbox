@@ -211,7 +211,8 @@ let PlayerNote = {
 			.filter(([, flag]) => p[flag] === true)
 			.map(([, , icon, key]) => {
 				const text = i18n('Boxes.PlayerNote.' + key);
-				return `<span class="player-relation" title="${text}">${icon}${withText ? ' ' + text : ''}</span>`;
+				// with the text next to it the icon needs no tooltip
+				return withText ? `<span class="player-relation">${icon} ${text}</span>` : `<span class="player-relation fh-tooltip" ${ToolboxTT.attrs(text)}>${icon}</span>`;
 			})
 			.join('');
 	},

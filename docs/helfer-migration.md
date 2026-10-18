@@ -397,6 +397,7 @@ Umhüllte Upstream-Funktionen: maßgeblich ist `scripts/toolbox-wraps.txt` (Funk
 
 ## Entscheidungen
 
+- Tooltips in Toolbox-Modulen nur über den Helfer-Tooltip (`fh-tooltip`, customTooltip), kein `title`: der erscheint erst nach der festen Wartezeit des Browsers. Einfache Texte über `ToolboxTT` (`toolbox-main`, Text in `data-tt`, Zeilenumbrüche werden Zeilen), Gestaltung `#TooltipContainer .toolbox-tt` in `toolbox.css` (12 px, nicht fett). Deaktivierte Knöpfe bekommen keine Pointer-Events, ihr Tooltip sitzt an einer Hülle.
 - Upstream-Uploads (Weltenliste, eigene LG-Daten, Gebäudeliste) laufen nur mit `GlobalSend`.
 - "1 FP für Plätze ohne FP" bleibt default aus (abweichend vom Helfer).
 - Bonus pro LG: ohne gespeicherten Wert gelten die globalen Prozente.

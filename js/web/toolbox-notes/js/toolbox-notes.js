@@ -661,7 +661,7 @@ let Notes = {
 			name = group ? group.group_name : Notes.itemName(id),
 			esc = (text) => $('<div />').text(text).html();
 
-		return `<div class="notes-tt">${esc(name)}${type === 'player' ? '' : `<small>${esc(i18n('Boxes.Notes.RenameHint'))}</small>`}</div>`;
+		return `<div class="toolbox-tt">${esc(name)}${type === 'player' ? '' : `<small>${esc(i18n('Boxes.Notes.RenameHint'))}</small>`}</div>`;
 	},
 
 
@@ -769,7 +769,7 @@ let Notes = {
 	 * @param id
 	 * @returns {string} HTML
 	 */
-	deleteButton: (type, id)=> `<span class="notes-del" role="button" data-type="${type}" data-id="${id}" title="${i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroup' : 'Boxes.Notes.DeleteItem')}"></span>`,
+	deleteButton: (type, id)=> `<span class="notes-del fh-tooltip" role="button" data-type="${type}" data-id="${id}" ${ToolboxTT.attrs(i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroup' : 'Boxes.Notes.DeleteItem'))}></span>`,
 
 
 	/**
