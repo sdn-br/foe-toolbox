@@ -322,16 +322,29 @@ FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 
 /**
  * Tooltips of the toolbox: the instant Helfer tooltip (customTooltip) instead of a title
- * attribute, which only shows after the fixed browser delay. The text is in data-tt, line
- * breaks become lines. Works in pop-out windows too.
+ * attribute, which only shows after the fixed browser delay. Works in pop-out windows too.
  * Usage: class "fh-tooltip" plus the attributes of ToolboxTT.attrs(text), in lit-html
  * templates data-callback_tt="ToolboxTT.text" data-tt=${text}.
+ * Two forms: a short hint (data-tt only), or a heading (data-tt-head) with value lines in
+ * data-tt, one "label: value" per line, shown as a small table.
  */
 let ToolboxTT = {
 
 	text: (e) => {
-		const text = e.currentTarget.dataset.tt;
-		return text ? `<div class="toolbox-tt">${$('<div />').text(text).html()}</div>` : '';
+		const esc = (text) => $('<div />').text(text).html(),
+			text = e.currentTarget.dataset.tt || '',
+			head = e.currentTarget.dataset.ttHead;
+
+		if (!head) {
+			return text ? `<div class="toolbox-tt">${esc(text)}</div>` : '';
+		}
+
+		const rows = text.split('\n').filter(l => l).map(line => {
+			const i = line.indexOf(': ');
+			return i < 0 ? `<tr><td colspan="2">${esc(line)}</td></tr>` : `<tr><td>${esc(line.slice(0, i))}</td><td>${esc(line.slice(i + 2))}</td></tr>`;
+		});
+
+		return `<div class="toolbox-tt toolbox-tt-detail"><div class="toolbox-tt-head">${esc(head)}</div><table>${rows.join('')}</table></div>`;
 	},
 
 
