@@ -253,21 +253,31 @@ let PlayerNote = {
 		const { html } = litHtml,
 			content = note ? note.content : '';
 
-		const save = async (e) => {
+		const save = async (el) => {
+			clearTimeout(PlayerNote.saveTimer);
+
 			// typing and deleting leaves a <br>, which would also hide the placeholder
-			if (PlayerNote.isEmpty(e.target.innerHTML)) {
-				e.target.innerHTML = '';
+			if (PlayerNote.isEmpty(el.innerHTML)) {
+				el.innerHTML = '';
 			}
 
-			const value = e.target.innerHTML;
-
-			// an emptied field deletes the page, also one that was saved empty before
-			if (note ? (value === content && value !== '') : value === '') {
-				return;
+			// what the field holds in the db: lit reuses the element for another player or a new content
+			if (el.notePlayer !== playerId || el.noteBase !== content) {
+				Object.assign(el, { notePlayer: playerId, noteBase: content, noteSaved: note ? (content || null) : '' });
 			}
+
+			const value = el.innerHTML;
+
+			// unchanged, an emptied field deletes the page (also one saved empty before, noteSaved null)
+			if (value === el.noteSaved) {
+				return false;
+			}
+
+			el.noteSaved = value;
 
 			try {
 				await PlayerNote.save(playerId, value);
+				return true;
 			} catch (err) {
 				console.error(err);
 				HTML.ShowToastMsg({
@@ -279,15 +289,61 @@ let PlayerNote = {
 			}
 		};
 
-		// .innerHTML is only written when the stored content changes, so typing is never overwritten
+		// .innerHTML is only written when the stored content changes, and the boxes do not render
+		// while a note is edited (isEditing), so typing is never overwritten. Saved shortly after
+		// typing and when leaving the field.
 		return html`
 			<div class="toolbox-card player-note">
 				<h4>${i18n('Boxes.PlayerNote.Title')}</h4>
 				<div class="player-note-text" contenteditable="true" spellcheck="false"
 					data-placeholder="${i18n('Boxes.PlayerNote.Placeholder')}"
 					.innerHTML=${content}
-					@blur=${save}></div>
+					@input=${(e) => {
+						clearTimeout(PlayerNote.saveTimer);
+						PlayerNote.saveTimer = setTimeout(async () => {
+							// the boxes skipped this change while the note was edited
+							if (await save(e.target)) e.target.noteStale = true;
+						}, PlayerNote.SaveDelay);
+					}}
+					@blur=${async (e) => {
+						const el = e.target;
+						if (!(await save(el)) && el.noteStale) PlayerNote.notesChanged();
+						el.noteStale = false;
+					}}></div>
 			</div>`;
+	},
+
+
+	// ms after the last key until a note card saves
+	SaveDelay: 800,
+	saveTimer: null,
+
+
+	/**
+	 * Whether a note card in the box is being edited, then the box must not render
+	 *
+	 * @param box selector or element of the box
+	 * @returns {boolean}
+	 */
+	isEditing: (box) => $(box).find('.player-note-text').is(':focus'),
+
+
+	/**
+	 * Puts the cursor at the end of the note card in the box
+	 *
+	 * @param box selector or element of the box
+	 */
+	focusCard: (box) => {
+		const el = $(box).find('.player-note-text')[0];
+		if (!el) return;
+
+		el.focus();
+		const range = el.ownerDocument.createRange();
+		range.selectNodeContents(el);
+		range.collapse(false);
+		const sel = el.ownerDocument.getSelection();
+		sel.removeAllRanges();
+		sel.addRange(range);
 	},
 
 
