@@ -197,6 +197,8 @@ let Notes = {
 			// "+" right of the tabs like in a browser, outside the scrolling tab row so it never covers a tab.
 			// A span, not a div: Tabslet treats every direct div as a page
 			content += `<ul class='horizontal dark-bg'>${tab.join('')}</ul><span class="notes-add-grp fh-tooltip" role="button" ${ToolboxTT.attrs(i18n('Boxes.Notes.NewGroupHint'))}>+</span>`;
+			// soft edges of the scrolling tab row, outside the row so they never touch the players tab
+			content += `<span class="notes-fade notes-fade-left"></span><span class="notes-fade notes-fade-right"></span>`;
 			content += 		div.join('');
 			content += `</div>`;
 
@@ -376,7 +378,7 @@ let Notes = {
 			return;
 		}
 
-		const li = $('<li class="notes-fixed notes-new" />').appendTo(ul);
+		const li = $('<li class="notes-new" />').appendTo(ul);
 
 		Notes.EditNewName(li, i18n('Boxes.Notes.GroupName'), (name) => {
 			Notes.Store.send({id: 'new', type: 'grp', name: name}, 'Notes/set', (resp)=>{
@@ -392,7 +394,7 @@ let Notes = {
 		});
 
 		ul.scrollLeft(ul[0].scrollWidth);
-		ul.removeClass('notes-tabs-more');
+		ul.parent().removeClass('notes-tabs-more');
 	},
 
 
@@ -703,7 +705,7 @@ let Notes = {
 		$('#toolboxNotesBody ul.horizontal').sortable({
 			axis: 'x',
 			distance: 5,
-			items: '> li:not(.notes-fixed)',
+			items: '> li:not(.notes-fixed):not(.notes-new)',
 			cancel: '.notes-del, input',
 			stop: function() {
 				$(this).prepend($(this).children('li.notes-fixed'));
@@ -731,13 +733,17 @@ let Notes = {
 	 */
 	EnableTabScrolling: ()=> {
 		const ul = $('#toolboxNotesBody ul.horizontal'),
-			// fade out the right edge while more tabs follow, instead of a hard cut
-			// and shade the fixed players tab while tabs run below it
+			box = ul.parent(),
+			// soft edges instead of hard cuts: left while tabs are scrolled away, right while more follow
 			markMore = () => ul.each(function(){
-				$(this)
+				box
 					.toggleClass('notes-tabs-more', this.scrollLeft + this.clientWidth < this.scrollWidth - 1)
 					.toggleClass('notes-tabs-scrolled', this.scrollLeft > 0);
 			});
+
+		// the players tab sits left of the row, which starts right after it (its width depends on the font)
+		const fixed = ul.children('li.notes-fixed');
+		box[0].style.setProperty('--notes-fixed-w', (fixed.length ? Math.ceil(fixed.outerWidth()) + 2 : 0) + 'px');
 
 		ul.off('scroll.notes').on('scroll.notes', markMore);
 

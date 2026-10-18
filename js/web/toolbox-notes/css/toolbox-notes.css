@@ -81,8 +81,9 @@
 	overflow-y: hidden;
 	/* no visible scrollbar, it covered the tabs; the wheel scrolls (Notes.EnableTabScrolling) */
 	scrollbar-width: none;
+	/* the row runs between the players tab (Notes.EnableTabScrolling sets its width) and the "+" */
+	margin-left: var(--notes-fixed-w, 0);
 	margin-right: 34px;
-	/* no gap left of the fixed players tab, scrolled tabs would show through it */
 	padding-left: 0 !important;
 }
 
@@ -90,9 +91,34 @@
 	display: none;
 }
 
-#toolboxNotesBody .tabs ul.horizontal.notes-tabs-more {
-	-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-	mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+/* soft edges of the row, drawn with the row's own background */
+#toolboxNotesBody .toolboxNotes > .notes-fade {
+	display: none;
+	position: absolute;
+	top: 5px;
+	height: 34px;
+	z-index: 24;
+	pointer-events: none;
+	background-image: url('../../../../css/images/hud/box-bg.png');
+}
+
+#toolboxNotesBody .toolboxNotes > .notes-fade-left {
+	left: var(--notes-fixed-w, 0);
+	width: 30px;
+	-webkit-mask-image: linear-gradient(to right, #000, transparent);
+	mask-image: linear-gradient(to right, #000, transparent);
+}
+
+#toolboxNotesBody .toolboxNotes > .notes-fade-right {
+	right: 34px;
+	width: 40px;
+	-webkit-mask-image: linear-gradient(to left, #000, transparent);
+	mask-image: linear-gradient(to left, #000, transparent);
+}
+
+#toolboxNotesBody .toolboxNotes.notes-tabs-scrolled > .notes-fade-left,
+#toolboxNotesBody .toolboxNotes.notes-tabs-more > .notes-fade-right {
+	display: block;
 }
 
 #toolboxNotesBody .tabs ul.horizontal li {
@@ -100,16 +126,14 @@
 	min-width: 70px;
 }
 
-/* the players tab stays at the left while the other tabs scroll */
+/* the players tab stays left of the scrolling row. Still a li of the row for Tabslet, but placed
+   against the notes container, so the row's overflow does not cut it */
 #toolboxNotesBody .tabs ul.horizontal li.notes-fixed {
 	flex: none;
-	position: sticky;
+	position: absolute;
 	left: 0;
+	top: 5px;
 	z-index: 25;
-}
-
-#toolboxNotesBody .tabs ul.horizontal.notes-tabs-scrolled li.notes-fixed {
-	box-shadow: 8px 0 8px -4px rgba(0, 0, 0, 0.8);
 }
 
 #toolboxNotesBody .tabs ul.horizontal li a {
