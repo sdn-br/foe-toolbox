@@ -439,3 +439,8 @@
 .tooltip-inner .text-orange {
 	color: var(--orange);
 }
+
+/* import button of the notes below the API token in the settings */
+.notice-import-btn {
+	margin-top: 8px;
+}

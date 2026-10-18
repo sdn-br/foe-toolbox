@@ -664,6 +664,12 @@ let Notes = {
 			else {
 				Notes.notes = resp['notice'];
 
+				// open the new page with the cursor in its text, like "+ new page"
+				const items = Notes.notes[Notes.ActiveTab - 1].items,
+					newId = Math.max(...items.map(i => i.id));
+				Notes.ActiveSubTab = items.findIndex(i => i.id === newId) + 1;
+				Notes.FocusText = newId;
+
 				$('#toolboxNotes-modal-players').fadeToggle('fast', function(){
 					$(this).remove();
 
@@ -882,6 +888,9 @@ let Notes = {
 	 * @constructor
 	 */
 	DeleteElement: (type, id)=> {
+		// a deleted page keeps its group open, a deleted group goes back to the first tab
+		const groupId = type === 'itm' ? (Notes.notes || []).find(g => g.items.some(i => i.id == id))?.id : undefined;
+
 		Notes.Store.send({type:type,id:id,apiToken:Notes.ApiToken}, 'Notes/del', (resp)=>{ // local store (Notes.Store) instead of the server
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
@@ -894,8 +903,8 @@ let Notes = {
 			else {
 				Notes.notes = resp['notice'];
 
-				// the deleted element may have been the active one, jump back to the first tab
-				Notes.ActiveTab = 1;
+				const grpIdx = Notes.notes.findIndex(g => g.id === groupId);
+				Notes.ActiveTab = grpIdx >= 0 ? grpIdx + 1 : 1;
 				Notes.ActiveSubTab = 1;
 
 				$('#toolboxNotes-modal').fadeToggle('fast', function(){

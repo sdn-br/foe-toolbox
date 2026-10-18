@@ -310,6 +310,12 @@
 	z-index: 21;
 }
 
+/* like browser tabs: the trash only on the active or hovered tab, a tab cut at the row's edge
+   would otherwise show a lone trash icon without its name */
+#toolboxNotesBody .tabs ul.horizontal li:not(.active):not(:hover) .notes-del {
+	visibility: hidden;
+}
+
 #toolboxNotesBody .tabs ul.horizontal li:has(.notes-del) a {
 	padding-right: 26px;
 }
