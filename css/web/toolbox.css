@@ -134,6 +134,11 @@
 }
 
 /* toolbox tooltips (customTooltip via ToolboxTT, #TooltipContainer also exists in pop-out windows) */
+/* the Helfer places the tooltip 10px from the pointer tip, the pointer covered the first letters */
+#TooltipContainer:has(> .toolbox-tt) {
+	margin: 8px 0 0 8px;
+}
+
 #TooltipContainer .toolbox-tt {
 	font-size: 12px;
 	font-weight: normal;
