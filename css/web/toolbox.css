@@ -117,7 +117,8 @@
 	top: 0;
 }
 
-#noticesBody .player-filter-chip {
+#noticesBody .player-filter-chip,
+#notices-modal-players .player-filter-chip {
 	padding: 1px 8px;
 	border: 1px solid var(--text-dark);
 	border-radius: 10px;
@@ -125,7 +126,8 @@
 	cursor: pointer;
 }
 
-#noticesBody .player-filter-chip.active {
+#noticesBody .player-filter-chip.active,
+#notices-modal-players .player-filter-chip.active {
 	background: var(--black-30);
 	color: var(--beige);
 	font-weight: bold;
@@ -134,6 +136,74 @@
 #noticesBody .player-filter-empty {
 	display: none;
 	margin-left: 6px;
+	color: var(--text-medium);
+	font-style: italic;
+}
+
+/* player picker of the notes: search, filter, at most PlayerNote.PickerLimit rows */
+#notices-modal-players {
+	width: 380px;
+	left: calc(50% - 190px);
+}
+
+#notices-modal-players .player-picker {
+	width: 100%;
+}
+
+#notices-modal-players .player-picker-search {
+	width: 100%;
+	margin-bottom: 6px;
+}
+
+#notices-modal-players .player-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+
+#notices-modal-players .player-picker-list {
+	max-height: 300px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#notices-modal-players .player-picker-list li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 4px;
+	border-top: 1px solid var(--black-30);
+	cursor: pointer;
+}
+
+#notices-modal-players .player-picker-list li:hover {
+	background: var(--black-30);
+}
+
+#notices-modal-players .player-picker-list .avatar {
+	flex: none;
+	width: 30px;
+	height: 30px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	border-radius: 20%;
+}
+
+#notices-modal-players .player-picker-name {
+	flex: 1;
+	color: var(--beige);
+}
+
+#notices-modal-players .player-picker-name small {
+	display: block;
+	color: var(--text-medium);
+}
+
+#notices-modal-players .player-picker-hint {
+	margin: 6px 0 0;
 	color: var(--text-medium);
 	font-style: italic;
 }

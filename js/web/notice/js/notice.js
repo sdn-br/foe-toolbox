@@ -276,7 +276,7 @@ let Notice = {
 			const id = $(this).data('id');
 
 			if(id !== 'new'){
-				Notice.ShowPlayerModal(id, $(this).data('group'));
+				PlayerNote.showPicker($(this).data('group')); // TOOLBOX: picker with search and filter over all known players, see player-note.js
 
 			} else {
 				Notice.ShowModal('itm', id);
