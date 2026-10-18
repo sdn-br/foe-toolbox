@@ -72,13 +72,12 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 	const otherUnits = unitsOrder.filter(it => it.teamFlag === 2).map(Looting.adaptUnit(false));
 	const requests = Looting.getResponseEntries();
 	const isPvpArena = requests.some(e => e.requestClass === 'PVPArenaService');
+	const arenaPlayer = requests.find(e => e.requestClass === 'PVPArenaService' && e.requestMethod === 'addLog')?.responseData?.otherPlayer?.player;
 	let defenderPlayerId = data.responseData.defenderPlayerId || otherUnits[0]?.ownerId || 0;
 
-	if (defenderPlayerId <= 0) {
-		const logEntry = requests.find(e => e.requestClass === 'PVPArenaService' && e.requestMethod === 'addLog');
-		if (logEntry?.responseData?.otherPlayer?.player?.player_id) {
-			defenderPlayerId = logEntry.responseData.otherPlayer.player.player_id;
-		}
+	// arena units have no owner (-1), the opponent comes from the log entry
+	if (defenderPlayerId <= 0 && arenaPlayer?.player_id) {
+		defenderPlayerId = arenaPlayer.player_id;
 	}
 
 	// defenderPlayerId = -1 if PVE
@@ -90,6 +89,7 @@ FoEproxy.addHandler('BattlefieldService', 'all', async (data, postData) => {
 	await IndexDB.getDB();
 
 	// Ensure the player exists in the db
+	if (arenaPlayer?.player_id === defenderPlayerId) await Looting.rememberArenaPlayer(arenaPlayer);
 	await IndexDB.addUserFromPlayerDictIfNotExists(defenderPlayerId);
 
 	await IndexDB.db.neighborhoodAttacks.add({
@@ -197,7 +197,7 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 	Looting.lastVisitedPlayer = playerData;
 	Looting.page = 1;
 	Looting.filterByPlayerId = playerData.other_player.player_id;
-	Looting.filterByPvPArena = false;
+	Looting.filterSource = 'all';
 
 	MainParser.UpdatePlayerDict(playerData, 'VisitPlayer').then(() => {
 		Looting.UpdateBoxIfVisible();
@@ -207,6 +207,10 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 
 // PvP arena opened
 FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
+	// arena players are mostly unknown otherwise: store them, so the history shows names and finds them
+	for (const action of (data.responseData?.actions || [])) Looting.rememberArenaPlayer(action?.otherPlayer?.player);
+	for (const opponent of (data.responseData?.opponents || [])) Looting.rememberArenaPlayer(opponent?.opposingPlayer?.player);
+
 	Looting.setPvPArenaOpponents(data.responseData?.opponents);
 });
 
@@ -233,7 +237,8 @@ let Looting = {
 	page: 1,
 	perPage: 20,
 	filterByPlayerId: null,
-	filterByPvPArena: false,
+	// 'all', 'neighborhood', 'arena' (all arena fights) or 'arenaCurrent' (arena fights against the current opponents)
+	filterSource: 'all',
 	loading: false,
 
 	// Cached last visited player for getting info about the city before looting.
@@ -332,9 +337,33 @@ let Looting = {
 			const id = opponent?.opposingPlayer?.player?.player_id;
 			if (id !== undefined) Looting.lastPvPArenaOpponents.push(id);
 		}
-		Looting.filterByPvPArena = true;
+		Looting.filterSource = 'arenaCurrent';
 		Looting.filterByPlayerId = null;
 		Looting.UpdateBoxIfVisible();
+	},
+
+
+	/**
+	 * Adds a player of the arena (otherPlayer.player of an arena action or opponent) to PlayerDict and the db,
+	 * known players stay as they are
+	 *
+	 * @param player {player_id, name, avatar, clan_id, clan_name}
+	 * @returns {Promise<void>}
+	 */
+	rememberArenaPlayer: async (player) => {
+		const id = player?.player_id;
+		if (!id || !player.name) return;
+
+		await MainParser.loadPlayerIntoDict(id);
+		if (PlayerDict[id]?.PlayerName) return;
+
+		PlayerDict[id] = Object.assign(PlayerDict[id] || {}, {
+			PlayerID: id,
+			PlayerName: player.name,
+			...(player.avatar ? { Avatar: player.avatar } : {}),
+			...(player.clan_id ? { ClanId: player.clan_id, ClanName: player.clan_name || player.clan?.name } : {}),
+		});
+		await IndexDB.addUserFromPlayerDictIfNotExists(id, true);
 	},
 
 
@@ -439,7 +468,12 @@ let Looting = {
 	SelectPlayer: (playerId) => Looting.Reload(() => {
 		Looting.page = 1;
 		Looting.filterByPlayerId = playerId || null;
-		Looting.filterByPvPArena = false;
+	}),
+
+
+	SelectSource: (source) => Looting.Reload(() => {
+		Looting.page = 1;
+		Looting.filterSource = source;
 	}),
 
 
@@ -448,11 +482,20 @@ let Looting = {
 	 *
 	 * @returns {Dexie.Collection}
 	 */
-	select: (filterByPlayerId, filterByPvPArena) => {
-		const table = IndexDB.db.neighborhoodAttacks;
-		if (filterByPlayerId) return table.where('playerId').equals(filterByPlayerId);
-		if (filterByPvPArena) return table.where('playerId').anyOf(Looting.lastPvPArenaOpponents).filter(action => !!action.pvpArena);
-		return table.orderBy('date');
+	select: (filterByPlayerId, filterSource) => {
+		const table = IndexDB.db.neighborhoodAttacks,
+			opponents = Looting.lastPvPArenaOpponents;
+		const matchesSource = {
+			neighborhood: action => !action.pvpArena,
+			arena: action => !!action.pvpArena,
+			arenaCurrent: action => !!action.pvpArena && opponents.includes(action.playerId),
+		}[filterSource];
+
+		const collection = filterByPlayerId ? table.where('playerId').equals(filterByPlayerId)
+			: filterSource === 'arenaCurrent' ? table.where('playerId').anyOf(opponents)
+			: table.orderBy('date');
+
+		return matchesSource ? collection.filter(matchesSource) : collection;
 	},
 
 
@@ -484,17 +527,18 @@ let Looting = {
 	 * @returns {Promise<Object>}
 	 */
 	getViewModel: async () => {
-		const { page, perPage, filterByPlayerId, filterByPvPArena } = Looting;
+		const { page, perPage, filterByPlayerId, filterSource } = Looting;
 
 		await IndexDB.getDB();
 
-		let actions = await Looting.select(filterByPlayerId, filterByPvPArena)
+		let actions = await Looting.select(filterByPlayerId, filterSource)
 			.reverse()
 			.offset((page - 1) * perPage)
 			.limit(perPage)
 			.sortBy('date');
 
-		const pages = Math.max(1, Math.ceil((await Looting.select(filterByPlayerId, filterByPvPArena).count()) / perPage));
+		const count = await Looting.select(filterByPlayerId, filterSource).count(),
+			pages = Math.max(1, Math.ceil(count / perPage));
 
 		for (const action of actions) {
 			await MainParser.loadPlayerIntoDict(action.playerId);
@@ -511,35 +555,33 @@ let Looting = {
 			return {
 				...it,
 				isSamePlayer,
-				playerId: player?.PlayerID || 0,
+				// the id of the entry, also for players not in PlayerDict (link and player filter still work)
+				playerId: it.playerId,
 				playerName: player?.PlayerName || i18n('Boxes.Looting.Unknown'),
 				clanId: player?.ClanId || 0,
-				clanName: player?.ClanName || i18n('Boxes.Looting.Unknown'),
+				// arena players come without guild, then no guild line
+				clanName: player?.ClanName,
 				avatar: player?.Avatar && srcLinks.GetPortrait(player.Avatar),
 				eraName: (player?.Era && Technologies.Eras[player.Era] !== undefined ? i18n('Eras.' + Technologies.Eras[player.Era]) : undefined),
 			};
 		});
 
-		let filterLabel;
-		if (filterByPlayerId) {
-			const p = PlayerDict[filterByPlayerId];
-			filterLabel = {
-				playerLink: MainParser.GetPlayerLink(filterByPlayerId, p?.PlayerName || i18n('Boxes.Looting.Unknown')),
-				guildLink: (p?.ClanName ? MainParser.GetGuildLink(p.ClanId || 0, p.ClanName) : undefined),
-			};
-		}
-		else {
-			filterLabel = { text: i18n(filterByPvPArena ? 'Boxes.Looting.CurrentPvPArenaOpponents' : 'Boxes.Looting.AllPlayers') };
-		}
+		// players of the history for the search, from the db (also those not loaded into PlayerDict)
+		const ids = await IndexDB.db.neighborhoodAttacks.orderBy('playerId').uniqueKeys(),
+			players = (await IndexDB.db.players.bulkGet(ids))
+				.filter(p => p?.name)
+				.map(p => ({ id: p.id, name: p.name }))
+				.sort((a, b) => a.name.localeCompare(b.name));
 
 		return {
 			page,
 			pages,
-			filterByPlayerId,
-			filterByPvPArena,
-			filterLabel,
+			count,
+			filterSource,
+			filterPlayer: (filterByPlayerId ? { id: filterByPlayerId, name: PlayerDict[filterByPlayerId]?.PlayerName || `#${filterByPlayerId}` } : undefined),
+			players,
 			noArena: (Looting.lastPvPArenaOpponents.length === 0),
-			sp: await Looting.calculateSP(filterByPlayerId, filterByPvPArena),
+			sp: await Looting.calculateSP(filterByPlayerId, filterSource),
 			actions,
 		};
 	},
@@ -549,10 +591,10 @@ let Looting = {
 	 * Sum up the plundered forge points (today, last 7 days, total)
 	 *
 	 * @param filterByPlayerId
-	 * @param filterByPvPArena
+	 * @param filterSource
 	 * @returns {Promise<Object>} per period the forge points and the part from double loot
 	 */
-	calculateSP: async (filterByPlayerId, filterByPvPArena) => {
+	calculateSP: async (filterByPlayerId, filterSource) => {
 		const dateThisWeek = moment().subtract(1, 'weeks').toDate();
 		const dateToday = moment().startOf('day').toDate();
 		const sp = {
@@ -565,13 +607,7 @@ let Looting = {
 			sp[period].double += double;
 		};
 
-		const totalSPSelect = (filterByPlayerId ?
-			IndexDB.db.neighborhoodAttacks.where('playerId').equals(filterByPlayerId) :
-			(filterByPvPArena ?
-				IndexDB.db.neighborhoodAttacks.where('playerId').anyOf(Looting.lastPvPArenaOpponents) :
-				IndexDB.db.neighborhoodAttacks.where('type').equals(Looting.ACTION_TYPE_LOOTED)));
-
-		await totalSPSelect.each((it) => {
+		await Looting.select(filterByPlayerId, filterSource).each((it) => {
 			const all = (it.sp || 0),
 				double = (it.doubleLoot ? all / 2 : 0);
 			add('total', all, double);
@@ -594,8 +630,17 @@ let Looting = {
 	view: (vm) => {
 		const { html, unsafeHTML } = litHtml,
 			t = (key) => i18n('Boxes.Looting.' + key),
-			f = vm.filterLabel,
-			periods = [['collectedToday', vm.sp.today], ['thisWeek', vm.sp.week], ['total', vm.sp.total]];
+			periods = [['collectedToday', vm.sp.today], ['thisWeek', vm.sp.week], ['total', vm.sp.total]],
+			sources = [['all', 'FilterAll'], ['neighborhood', 'FilterNeighborhood'], ['arena', 'FilterArena'], ['arenaCurrent', 'FilterArenaCurrent']];
+
+		// a name picked from the suggestions (or typed exactly) sets the player filter
+		const pickPlayer = (e) => {
+			const name = e.target.value.trim().toLowerCase(),
+				player = vm.players.find(p => p.name.toLowerCase() === name);
+			if (!player) return;
+			e.target.value = '';
+			Looting.SelectPlayer(player.id);
+		};
 
 		return html`
 			<div class="dark-bg toolbox-head">
@@ -614,22 +659,25 @@ let Looting = {
 								</div>
 							</div>`)}
 					</div>
-					<div class="filter">
-						<div class="filterd-by"><b>${t('filteredByUser')}:</b><br>
-							<span class="player-name">${f.text !== undefined ? f.text
-								: html`${unsafeHTML(f.playerLink)}${f.guildLink ? html` [${unsafeHTML(f.guildLink)}]` : ''}`}</span>
+				</div>
+				<div class="loot-filter">
+					<div class="loot-filter-sources">
+						${sources.map(([key, label]) => html`
+							<button class="btn ${vm.filterSource === key ? 'btn-active' : ''}"
+								?disabled=${key === 'arenaCurrent' && vm.noArena}
+								title="${key === 'arenaCurrent' && vm.noArena ? t('PvPArenaOpponentsInactive') : ''}"
+								@click=${() => Looting.SelectSource(key)}>${t(label)}</button>`)}
+					</div>
+					<div class="loot-filter-player">
+						<div class="loot-filter-search">
+							<input type="text" list="looting-players" placeholder="${t('SearchPlayer')}" @change=${pickPlayer}>
+							<datalist id="looting-players">${vm.players.map(p => html`<option value="${p.name}"></option>`)}</datalist>
 						</div>
-						<div class="filter-buttons">
-							<div><button class="btn select-pvp-arena-opponents ${vm.filterByPvPArena ? 'btn-active' : ''}" ?disabled=${vm.noArena}
-								title="${vm.noArena ? t('PvPArenaOpponentsInactive') : ''}"
-								@click=${() => Looting.Reload(() => {
-									Looting.page = 1;
-									Looting.filterByPlayerId = null;
-									Looting.filterByPvPArena = true;
-								})}>${t('showPvPArenaOpponents')}</button></div>
-							<div><button class="btn select-player ${!vm.filterByPvPArena && vm.filterByPlayerId === null ? 'btn-active' : ''}"
-								@click=${() => Looting.SelectPlayer(null)}>${t('showAllPlayers')}</button></div>
-						</div>
+						${vm.filterPlayer ? html`
+							<span class="loot-filter-chip">${vm.filterPlayer.name}
+								<span class="loot-filter-chip-remove" title="${t('RemovePlayerFilter')}" @click=${() => Looting.SelectPlayer(null)}>✕</span>
+							</span>` : ''}
+						<span class="loot-filter-count">${t('Entries')}: ${vm.count}</span>
 					</div>
 				</div>
 			</div>
@@ -652,8 +700,7 @@ let Looting = {
 	 */
 	viewAction: (action) => {
 		const { html, unsafeHTML } = litHtml,
-			t = (key) => i18n('Boxes.Looting.' + key),
-			select = () => Looting.SelectPlayer(action.playerId);
+			t = (key) => i18n('Boxes.Looting.' + key);
 
 		const type = {
 			[Looting.ACTION_TYPE_LOOTED]: 'actionLooted',
@@ -666,7 +713,7 @@ let Looting = {
 
 		return html`
 			<div class="action-row action-row-type-${action.type}">
-				<div class="avatar select-player game-cursor" @click=${select}>
+				<div class="avatar">
 					${action.isSamePlayer || !action.avatar ? '' : html`<img class="player-avatar" src="${action.avatar}" alt=""><br>`}
 					<span class="type text-${action.type === Looting.ACTION_TYPE_BATTLE_LOSS ? 'danger' : 'success'}">${type ? t(type) : 'unknown'}</span>
 					${action.pvpArena ? html`<br><span class="pvparena">${t('PvPArenaAction')}</span>` : ''}
@@ -682,9 +729,10 @@ let Looting = {
 				</div>
 				<div class="action-content">
 					${action.isSamePlayer ? '' : html`
-						<div class="player-name select-player game-cursor" @click=${select}>
-							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}<br>
-							<span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>
+						<div class="player-name">
+							${action.playerId ? unsafeHTML(MainParser.GetPlayerLink(action.playerId, action.playerName)) : action.playerName}
+							${action.playerId ? html`<span class="row-filter game-cursor" title="${t('OnlyThisPlayer')}" @click=${() => Looting.SelectPlayer(action.playerId)}></span>` : ''}
+							${action.clanName ? html`<br><span class="clan">[${action.clanId ? unsafeHTML(MainParser.GetGuildLink(action.clanId, action.clanName)) : action.clanName}]</span>` : ''}
 						</div>`}
 					<div class="content">${Looting.viewActionContent(action)}</div>
 				</div>
