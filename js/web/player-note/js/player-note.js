@@ -42,27 +42,125 @@ let PlayerNote = {
 	 * @returns {Promise<{id: number, content: string}|null>}
 	 */
 	get: async (playerId) => {
-		const db = Notes.Store.db;
-
-		if (db === null || !playerId) {
+		if (Notes.Store.db === null || !playerId) {
 			return null;
 		}
 
-		const groupIds = (await db.groups.toArray())
-			.filter(g => g.player_group)
-			.sort((a, b) => (a.sort - b.sort) || (a.id - b.id))
-			.map(g => g.id);
-
-		if (groupIds.length === 0) {
-			return null;
-		}
-
-		const items = await db.items.where('groupId').anyOf(groupIds).toArray(),
-			item = items
-				.filter(i => PlayerNote.playerIdOf(i) === Number(playerId))
-				.sort((a, b) => (groupIds.indexOf(a.groupId) - groupIds.indexOf(b.groupId)) || (a.sort - b.sort))[0];
+		const item = (await PlayerNote.playerPages()).find(i => PlayerNote.playerIdOf(i) === Number(playerId));
 
 		return item ? { id: item.id, content: item.content || '' } : null;
+	},
+
+
+	/**
+	 * All pages of the player groups in the order get looks for a player's page
+	 *
+	 * @returns {Promise<Object[]>}
+	 */
+	playerPages: async () => {
+		const db = Notes.Store.db,
+			groupIds = (await db.groups.toArray())
+				.filter(g => g.player_group)
+				.sort((a, b) => (a.sort - b.sort) || (a.id - b.id))
+				.map(g => g.id);
+
+		if (groupIds.length === 0) {
+			return [];
+		}
+
+		return (await db.items.where('groupId').anyOf(groupIds).toArray())
+			.sort((a, b) => (groupIds.indexOf(a.groupId) - groupIds.indexOf(b.groupId)) || (a.sort - b.sort));
+	},
+
+
+	/**
+	 * Note text per player id, for readers that cannot wait for the db (the PvP arena table)
+	 * and for the note icons in the PvP attacks. Filled by loadTexts, which save calls again.
+	 */
+	texts: new Map(),
+
+
+	/**
+	 * @returns {Promise<Map<number, string>>} see texts
+	 */
+	loadTexts: async () => {
+		const texts = new Map();
+
+		if (Notes.Store.db !== null) {
+			for (const item of await PlayerNote.playerPages()) {
+				const id = PlayerNote.playerIdOf(item);
+				if (id !== undefined && !texts.has(id) && !PlayerNote.isEmpty(item.content)) {
+					texts.set(id, PlayerNote.toText(item.content));
+				}
+			}
+		}
+
+		return PlayerNote.texts = texts;
+	},
+
+
+	/**
+	 * Plain text of a note, its lines kept
+	 *
+	 * @param content HTML of the editable field
+	 * @returns {string}
+	 */
+	toText: (content) => {
+		const html = (content || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(div|p)>/gi, '\n');
+		return new DOMParser().parseFromString(html, 'text/html').body.textContent.replace(/\u00a0/g, ' ').trim();
+	},
+
+
+	/**
+	 * Opens the player's page in the notes box
+	 *
+	 * @param playerId
+	 */
+	openInNotes: async (playerId) => {
+		Notes.notes = await Notes.Store.read();
+
+		const grpIdx = Notes.notes.findIndex(g => g.player_group && g.items.some(i => PlayerNote.playerIdOf(i) === playerId));
+		if (grpIdx < 0) {
+			return;
+		}
+
+		Notes.ActiveTab = grpIdx + 1;
+		Notes.ActiveSubTab = Notes.notes[grpIdx].items.findIndex(i => PlayerNote.playerIdOf(i) === playerId) + 1;
+		PlayerNote.filter = 'all';
+		Notes.buildBox();
+	},
+
+
+	/**
+	 * One-time take-over of the notes of the Helfer's PvP arena (localStorage PvPArenaNotes-<world>)
+	 * into player pages, a text not in the page yet is appended. The arena notes stay untouched.
+	 */
+	migrateArenaNotes: async () => {
+		const key = `PvPArenaNotes-${ExtWorld}`,
+			done = `ToolboxPvPArenaNotesTaken-${ExtWorld}`;
+
+		if (localStorage.getItem(done) || !localStorage.getItem(key) || Notes.Store.db === null) {
+			return;
+		}
+
+		try {
+			for (const [id, text] of Object.entries(JSON.parse(localStorage.getItem(key)))) {
+				const playerId = Number(id),
+					line = String(text).trim(),
+					note = await PlayerNote.get(playerId);
+
+				if (!line || (note && PlayerNote.toText(note.content).includes(line))) {
+					continue;
+				}
+
+				await MainParser.loadPlayerIntoDict(playerId); // name of a new page
+				await PlayerNote.save(playerId, (note && !PlayerNote.isEmpty(note.content) ? note.content + '<br>' : '') + HTML.escapeHtml(line));
+			}
+
+			localStorage.setItem(done, '1');
+		} catch (e) {
+			console.error('PlayerNote: taking over the PvP arena notes failed', e);
+		}
 	},
 
 
@@ -126,6 +224,7 @@ let PlayerNote = {
 			note.content = content;
 		}
 
+		await PlayerNote.loadTexts();
 		await PlayerNote.refreshNoticeBox();
 
 		return note;
@@ -464,3 +563,63 @@ let PlayerNote = {
 		}
 	},
 };
+
+
+// PvP arena of the Helfer: its note column shows and edits the player page of the notes instead of
+// its own notes in localStorage (taken over once by PlayerNote.migrateArenaNotes). The field has one
+// line, a note with several lines is read only there and a click opens it in the notes.
+{
+	const calcBody = PvPArena.CalcBody,
+		refreshTable = PvPArena.RefreshTable,
+		calcTable = PvPArena.CalcTable;
+
+	PvPArena.GetNotes = () => Object.fromEntries(PlayerNote.texts);
+
+	// the table reads the notes synchronously, so they are loaded before
+	PvPArena.CalcBody = async () => {
+		await PlayerNote.loadTexts();
+		calcBody();
+	};
+
+	PvPArena.RefreshTable = async () => {
+		await PlayerNote.loadTexts();
+		refreshTable();
+	};
+
+	PvPArena.CalcTable = () => {
+		const table = $('<div />').html(calcTable());
+
+		table.find('input.player-note').each(function () {
+			const text = PlayerNote.texts.get(Number($(this).data('id'))) || '';
+
+			if (text.includes('\n')) {
+				$(this).attr({ readonly: 'readonly', value: text.split('\n')[0] + ' …', title: text }).addClass('player-note-multi');
+			}
+		});
+
+		return table.html();
+	};
+
+	PvPArena.SaveNote = async (playerId, text) => {
+		text = text.trim();
+
+		try {
+			await MainParser.loadPlayerIntoDict(playerId); // name of a new page
+			await PlayerNote.save(playerId, HTML.escapeHtml(text));
+		} catch (e) {
+			console.error(e);
+			HTML.ShowToastMsg({
+				head: i18n('Boxes.Notes.Title'),
+				text: e && e.message ? e.message : String(e),
+				type: 'error',
+				hideAfter: 10000,
+			});
+		}
+
+		$(`#PvPArenaBody .player-note[data-id="${playerId}"]`).val(text).attr('title', text);
+	};
+
+	$(document).on('click', '#PvPArenaBody .player-note-multi', function () {
+		PlayerNote.openInNotes(Number($(this).data('id')));
+	});
+}

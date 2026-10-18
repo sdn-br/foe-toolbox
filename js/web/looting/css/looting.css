@@ -222,6 +222,21 @@
 	border-color: var(--beige);
 }
 
+/* the player has a note: the text as tooltip, a click filters to the player and shows the note */
+#lootingBody .loot-note-icon {
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
+/* note card of the filtered player, below the filter */
+#lootingBody .loot-note {
+	padding: 0 6px 6px;
+}
+
+#lootingBody .loot-note .player-note {
+	flex: 1;
+}
+
 #looting .action-row-type-1, #looting .action-row-type-2 {
     background-color: var(--table-bg-success);
 }
