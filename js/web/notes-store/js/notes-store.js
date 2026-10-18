@@ -69,6 +69,7 @@ Notes.Store = {
 		switch (ep) {
 			case 'Notes/get':
 				await Notes.Store.mergePlayerGroups();
+				await Notes.Store.migrateTitles();
 				break;
 
 			case 'Notes/set':
@@ -159,14 +160,7 @@ Notes.Store = {
 
 
 	setContent: async (data) => {
-		const changes = {content: data.cont};
-
-		// player pages have no editable heading
-		if (data.head !== undefined) {
-			changes.title = data.head;
-		}
-
-		await Notes.Store.db.items.update(Number(data.id), changes);
+		await Notes.Store.db.items.update(Number(data.id), {content: data.cont});
 	},
 
 
@@ -347,6 +341,34 @@ Notes.Store = {
 			}
 
 			await Notes.Store.mergePlayerGroups();
+			await Notes.Store.migrateTitles();
+		});
+	},
+
+
+	/**
+	 * One name per page: the heading shows the page name. A former own heading (FoE Helfer
+	 * import, older versions) that differs from the name and is not the placeholder moves once
+	 * into the text as a bold first line, so nothing is lost. Player pages never had one.
+	 */
+	migrateTitles: async () => {
+		const db = Notes.Store.db,
+			items = (await db.items.toArray()).filter(i => i.title);
+
+		if (items.length === 0) {
+			return;
+		}
+
+		await db.transaction('rw', db.items, async () => {
+			for (const item of items) {
+				const text = $('<div />').html(item.title).text().trim(),
+					keep = !item.player_data && text !== '' && text !== item.tab && text !== i18n('Boxes.Notes.DummyHeading');
+
+				await db.items.update(item.id, {
+					title: '',
+					content: keep ? `<b>${item.title}</b><br>${item.content || ''}` : item.content
+				});
+			}
 		});
 	},
 
