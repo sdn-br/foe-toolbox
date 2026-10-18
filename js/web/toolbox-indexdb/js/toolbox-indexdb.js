@@ -169,6 +169,8 @@ Object.assign(IndexDB, {
 			const source = await openIfFilled(legacyName);
 			if (!source) continue;
 
+			const entries = [];
+			const log = text => entries.push(`${moment().format('YYYY-MM-DD HH:mm:ss')} ${text}`);
 			try {
 				log(`Copy "${legacyName}" (v${source.verno}) => "${db.name}"`);
 				for (const sourceTable of source.tables) {
@@ -194,6 +196,7 @@ Object.assign(IndexDB, {
 				}
 			} finally {
 				source.close();
+				writeLog(entries);
 			}
 			return legacyName;
 		}
@@ -220,9 +223,10 @@ Object.assign(IndexDB, {
 
 		// Migration log in localStorage, one line per copied DB and table.
 		// Copies happen only once per DB, the log is limited anyway.
-		function log(text) {
+		// Several DBs are copied in parallel, so each copy writes its lines as one block.
+		function writeLog(entries) {
 			const lines = (localStorage.getItem('FH_IndexDBLastMigraion') || '').split('\n').filter(l => l);
-			lines.push(`${moment().format('YYYY-MM-DD HH:mm:ss')} ${text}`);
+			lines.push(...entries);
 			localStorage.setItem('FH_IndexDBLastMigraion', lines.slice(-200).join('\n') + '\n');
 		}
 	},
