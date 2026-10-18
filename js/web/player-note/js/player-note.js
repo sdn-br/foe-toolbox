@@ -20,6 +20,14 @@
 let PlayerNote = {
 
 	/**
+	 * Filter of the players group in the notes box, not stored
+	 */
+	filter: 'all',
+
+	// what a player is right now: flag in PlayerDict, icon, i18n key
+	Relations: [['neighbor', 'IsNeighbor', '⚔', 'Neighbor'], ['guild', 'IsGuildMember', '🛡', 'GuildMember'], ['friend', 'IsFriend', '🤝', 'Friend']],
+
+	/**
 	 * Player page of the first player group (any type) that belongs to the player
 	 *
 	 * @param playerId
@@ -191,13 +199,81 @@ let PlayerNote = {
 			return '';
 		}
 
-		return [['IsNeighbor', '⚔', 'Neighbor'], ['IsGuildMember', '🛡', 'GuildMember'], ['IsFriend', '🤝', 'Friend']]
-			.filter(([flag]) => p[flag] === true)
-			.map(([, icon, key]) => {
+		return PlayerNote.Relations
+			.filter(([, flag]) => p[flag] === true)
+			.map(([, , icon, key]) => {
 				const text = i18n('Boxes.PlayerNote.' + key);
 				return `<span class="player-relation" title="${text}">${icon}${withText ? ' ' + text : ''}</span>`;
 			})
 			.join('');
+	},
+
+
+	/**
+	 * Filter bar above the player pages: all, one relation, or none of them ("others")
+	 *
+	 * @returns {string} HTML
+	 */
+	filterBar: () => {
+		const chip = (value, text) => `<span class="player-filter-chip${PlayerNote.filter === value ? ' active' : ''}" data-filter="${value}">${text}</span>`;
+
+		// a nav, not a div: Tabslet treats every direct div of the sub tabs as a page
+		return `<nav class="player-filter">`
+			+ chip('all', i18n('Boxes.PlayerNote.FilterAll'))
+			+ PlayerNote.Relations.map(([value, , icon, key]) => chip(value, `${icon} ${i18n('Boxes.PlayerNote.Filter' + key)}`)).join('')
+			+ chip('other', i18n('Boxes.PlayerNote.FilterOther'))
+			+ `<span class="player-filter-empty">${i18n('Boxes.PlayerNote.FilterEmpty')}</span>`
+			+ `</nav>`;
+	},
+
+
+	/**
+	 * Delegated on the box body, so it also works in the pop-out
+	 */
+	bindFilter: () => {
+		$('#noticesBody').on('click', '.player-filter-chip', function () {
+			PlayerNote.filter = $(this).data('filter');
+			PlayerNote.applyFilter();
+		});
+	},
+
+
+	/**
+	 * Hides the player pages outside the filter. The relations are read at the moment of the
+	 * click, so the filter always matches the current game session.
+	 */
+	applyFilter: () => {
+		const matches = (playerId) => {
+			const p = PlayerDict[playerId] || {},
+				relations = PlayerNote.Relations.filter(([, flag]) => p[flag] === true).map(([value]) => value);
+
+			return PlayerNote.filter === 'all'
+				|| (PlayerNote.filter === 'other' ? relations.length === 0 : relations.includes(PlayerNote.filter));
+		};
+
+		$('#noticesBody .player-filter').each(function () {
+			const bar = $(this),
+				tabs = bar.closest('.tabs-sub'),
+				items = tabs.find('ul.vertical > li');
+
+			bar.find('.player-filter-chip').each(function () {
+				$(this).toggleClass('active', $(this).data('filter') === PlayerNote.filter);
+			});
+
+			items.each(function () {
+				$(this).toggleClass('player-hidden', !matches(Number($(this).data('player'))));
+			});
+
+			const visible = items.not('.player-hidden');
+
+			tabs.toggleClass('player-filter-none', visible.length === 0);
+			bar.find('.player-filter-empty').toggle(items.length > 0 && visible.length === 0);
+
+			// the open page must be one of the visible ones
+			if (visible.length > 0 && visible.filter('.active').length === 0) {
+				visible.first().find('a').trigger('click');
+			}
+		});
 	},
 
 

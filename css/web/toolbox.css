@@ -102,6 +102,41 @@
 	color: var(--beige);
 }
 
+/* notes: filter of the players group, by what a player is right now */
+#noticesBody .player-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+	margin: 0 0 6px;
+}
+
+#noticesBody .player-filter-chip {
+	padding: 1px 8px;
+	border: 1px solid var(--text-dark);
+	border-radius: 10px;
+	color: var(--dark-beige);
+	cursor: pointer;
+}
+
+#noticesBody .player-filter-chip.active {
+	background: var(--black-30);
+	color: var(--beige);
+	font-weight: bold;
+}
+
+#noticesBody .player-filter-empty {
+	display: none;
+	margin-left: 6px;
+	color: var(--text-medium);
+	font-style: italic;
+}
+
+#noticesBody .tabs-sub ul.vertical > li.player-hidden,
+#noticesBody .tabs-sub.player-filter-none > .sub-tab {
+	display: none !important;
+}
+
 /* a box button without function in the current state (e.g. notes edit mode without groups) */
 .window-box .box-buttons span.disabled {
 	opacity: 0.4;
