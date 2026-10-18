@@ -52,14 +52,49 @@
 	white-space: nowrap;
 }
 
+/* group tabs in one row like browser tabs: they shrink and cut their names with ..., only then
+   the row scrolls, and the "+" stays visible at the right end */
+#toolboxNotesBody .tabs ul.horizontal {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li {
+	flex: 0 1 auto;
+	min-width: 70px;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li.notes-fixed {
+	flex: none;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li a {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li a span {
+	display: inline;
+}
+
 /* "+" behind the last group tab, like a new tab button in a browser */
 #toolboxNotesBody .tabs ul.horizontal .notes-add-grp {
-	display: inline-block;
-	width: 26px;
-	line-height: 26px;
-	margin-left: 2px;
+	position: sticky;
+	right: 0;
+	z-index: 30;
+	flex: none;
+	align-self: stretch;
+	width: 30px;
+	line-height: 34px;
 	text-align: center;
-	vertical-align: bottom;
+	/* the row's own background covers the tabs scrolled below it, the shadow hints at them */
+	background: inherit;
+	box-shadow: -10px 0 8px -6px rgba(0, 0, 0, 0.8);
 	font-size: 18px;
 	color: var(--text-tab);
 	border-radius: 4px 4px 0 0;
@@ -68,7 +103,6 @@
 
 #toolboxNotesBody .tabs ul.horizontal .notes-add-grp:hover {
 	color: var(--text-tab-active);
-	background: var(--black-30);
 }
 
 #toolboxNotesBody .toolboxNotes ul.vertical {
