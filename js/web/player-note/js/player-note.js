@@ -122,6 +122,11 @@ let PlayerNote = {
 			content = note ? note.content : '';
 
 		const save = async (e) => {
+			// typing and deleting leaves a <br>, which would also hide the placeholder
+			if (PlayerNote.isEmpty(e.target.innerHTML)) {
+				e.target.innerHTML = '';
+			}
+
 			const value = e.target.innerHTML;
 
 			if (value === content || (!note && PlayerNote.isEmpty(value))) {

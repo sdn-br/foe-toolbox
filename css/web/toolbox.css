@@ -73,14 +73,16 @@
 	max-height: 10em;
 	overflow-y: auto;
 	padding: 4px 8px;
+	border-top: 1px solid var(--black-30);
 	text-align: left;
 	color: var(--beige);
 	cursor: text;
 }
 
+/* a frame instead of a background, the heading already uses --black-30 */
 .window-body .player-note-text:focus {
 	outline: none;
-	background: var(--black-30);
+	box-shadow: inset 0 0 0 1px var(--sunflower);
 }
 
 .window-body .player-note-text:empty::before {
