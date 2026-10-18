@@ -700,7 +700,7 @@ let Notes = {
 
 		$('#toolboxNotes-modalBody').append(
 			$('<p />').addClass('notes-delete-text').text(HTML.i18nReplacer(i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroupConfirm' : 'Boxes.Notes.DeleteItemConfirm'), { name: name })),
-			pages > 0 ? $('<p />').addClass('notes-delete-text notes-delete-warning').text(HTML.i18nReplacer(i18n('Boxes.Notes.DeleteGroupPages'), { count: pages })) : '',
+			pages > 0 ? $('<p />').addClass('notes-delete-text notes-delete-warning').text(HTML.i18nReplacer(i18n(pages === 1 ? 'Boxes.Notes.DeleteGroupPage' : 'Boxes.Notes.DeleteGroupPages'), { count: pages })) : '',
 			$('<span />').attr({role: 'button', class: 'btn btn-delete'}).text(i18n('Boxes.Notes.Delete')).on('click', () => Notes.DeleteElement(type, id)),
 			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('General.Cancel')).on('click', Notes.Store.CloseModal)
 		);
