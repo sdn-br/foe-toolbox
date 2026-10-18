@@ -91,6 +91,17 @@
 	font-style: italic;
 }
 
+/* notes: icons for what a player is right now (neighbor, guild member, friend) */
+#noticesBody .tabs-sub .player-relation {
+	margin-right: 3px;
+}
+
+#noticesBody .content-head-player .info-text .player-relation {
+	display: block;
+	text-align: right;
+	color: var(--beige);
+}
+
 /* a box button without function in the current state (e.g. notes edit mode without groups) */
 .window-box .box-buttons span.disabled {
 	opacity: 0.4;

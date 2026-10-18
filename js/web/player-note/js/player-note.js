@@ -12,13 +12,14 @@
  */
 
 // FoE Toolbox: a note per player inside other boxes (first the sabotage box).
-// The note is a player page of a neighbor group in the notes module (Notice.Store),
-// so it is the same note in both places. Players are matched by id, not by name.
+// The note is a player page in the notes module (Notice.Store), so it is the same note in
+// both places. Any player group counts, new pages go to a group of the toolbox type 'player'
+// that does not depend on the neighborhood. Players are matched by id, not by name.
 
 let PlayerNote = {
 
 	/**
-	 * Player page of the first neighbor group that belongs to the player
+	 * Player page of the first player group (any type) that belongs to the player
 	 *
 	 * @param playerId
 	 * @returns {Promise<{id: number, content: string}|null>}
@@ -31,7 +32,7 @@ let PlayerNote = {
 		}
 
 		const groupIds = (await db.groups.toArray())
-			.filter(g => g.player_group === 'neighbor')
+			.filter(g => g.player_group)
 			.sort((a, b) => (a.sort - b.sort) || (a.id - b.id))
 			.map(g => g.id);
 
@@ -49,8 +50,8 @@ let PlayerNote = {
 
 
 	/**
-	 * Saves the note. Without a page the player is added to the first neighbor group,
-	 * without a neighbor group one is created. An empty note creates nothing and deletes an
+	 * Saves the note. Without a page the player is added to the first 'player' group,
+	 * without such a group one is created. An empty note creates nothing and deletes an
 	 * existing page, the group stays.
 	 *
 	 * @param playerId
@@ -73,14 +74,14 @@ let PlayerNote = {
 
 			await db.transaction('rw', db.groups, db.items, async () => {
 				let group = (await db.groups.toArray())
-					.filter(g => g.player_group === 'neighbor')
+					.filter(g => g.player_group === 'player')
 					.sort((a, b) => (a.sort - b.sort) || (a.id - b.id))[0];
 
 				if (!group) {
 					const last = await db.groups.orderBy('sort').last(),
 						groupId = await db.groups.add({
-							group_name: i18n('Boxes.Notice.SelectPlayerGroupNeighbor'),
-							player_group: 'neighbor',
+							group_name: i18n('Boxes.Notice.SelectPlayerGroupPlayer'),
+							player_group: 'player',
 							sort: last ? last.sort + 1 : 1
 						});
 					group = { id: groupId };
@@ -171,6 +172,31 @@ let PlayerNote = {
 		} catch (e) {
 			return undefined;
 		}
+	},
+
+
+	/**
+	 * Icons for what the player is right now (neighbor, guild member, friend), from the
+	 * player lists of the current game session. Not stored, so always up to date.
+	 *
+	 * @param playerId
+	 * @param withText adds the meaning next to each icon (page header), otherwise only a tooltip
+	 * @returns {string} HTML, empty for unknown players and pages without a player
+	 */
+	relationIcons: (playerId, withText = false) => {
+		const p = PlayerDict[playerId];
+
+		if (!p) {
+			return '';
+		}
+
+		return [['IsNeighbor', '⚔', 'Neighbor'], ['IsGuildMember', '🛡', 'GuildMember'], ['IsFriend', '🤝', 'Friend']]
+			.filter(([flag]) => p[flag] === true)
+			.map(([, icon, key]) => {
+				const text = i18n('Boxes.PlayerNote.' + key);
+				return `<span class="player-relation" title="${text}">${icon}${withText ? ' ' + text : ''}</span>`;
+			})
+			.join('');
 	},
 
 
