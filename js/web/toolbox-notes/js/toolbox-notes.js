@@ -661,7 +661,7 @@ let Notes = {
 			name = group ? group.group_name : Notes.itemName(id),
 			esc = (text) => $('<div />').text(text).html();
 
-		return `<div class="notes-tt"><strong>${esc(name)}</strong>${type === 'player' ? '' : `<br><small>${esc(i18n('Boxes.Notes.RenameHint'))}</small>`}</div>`;
+		return `<div class="notes-tt">${esc(name)}${type === 'player' ? '' : `<small>${esc(i18n('Boxes.Notes.RenameHint'))}</small>`}</div>`;
 	},
 
 
