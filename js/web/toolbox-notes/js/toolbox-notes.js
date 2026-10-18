@@ -165,7 +165,8 @@ let Notes = {
 									</div>`);
 
 					} else {
-						subdiv.push(`<div class="content-head-row"><div class="content-head" contenteditable="true">${(itm['title'] === '' ? i18n('Boxes.Notes.DummyHeading') : itm['title'])}</div>${Notes.deleteButton('itm', itm['id'])}</div>`)
+						// one name per page: the heading is the page name (Notes.Store.migrateTitles moved former own headings into the text)
+						subdiv.push(`<div class="content-head-row"><div class="content-head" contenteditable="true" spellcheck="false">${itm['tab']}</div>${Notes.deleteButton('itm', itm['id'])}</div>`)
 					}
 
 
@@ -305,13 +306,28 @@ let Notes = {
 		});
 
 		$('#toolboxNotesBody').on('blur', '.sub-tab [contenteditable="true"]', function(){
-			let $this = $(this).closest('.sub-tab');
+			if ($(this).hasClass('content-head')) {
+				Notes.SaveHeading($(this));
+				return;
+			}
 
-			Notes.SaveContent($this);
+			Notes.SaveContent($(this).closest('.sub-tab'));
 		});
 
 		// enter is pressed
 		$('#toolboxNotesBody').on('keydown', '.sub-tab [contenteditable="true"]', function(e){
+
+			// the heading is the page name: one line, Enter saves, Escape restores
+			if ($(this).hasClass('content-head')) {
+				if (e.key === 'Escape') {
+					$(this).text(Notes.itemName($(this).closest('.sub-tab').data('id')));
+				}
+				if (e.key === 'Enter' || e.key === 'Escape') {
+					e.preventDefault();
+					this.blur();
+				}
+				return;
+			}
 
 			if (e.keyCode === 13) {
 				// prevent to enter a div instad a <br>
@@ -524,7 +540,7 @@ let Notes = {
 
 
 	/**
-	 * Save the content-head and -text into the database
+	 * Save the content-text into the database (the heading is the page name, see SaveHeading)
 	 *
 	 * @param $this
 	 * @constructor
@@ -532,7 +548,6 @@ let Notes = {
 	SaveContent: ($this)=> {
 		let itmID = $this.data('id'),
 			grpID = $this.data('parent'),
-			head = $this.find('.content-head').html(),
 			cont = $this.find('.content-text').html();
 
 		if(cont === null) {
@@ -540,7 +555,7 @@ let Notes = {
 		}
 
 		// send content changes to server und change local object
-		Notes.Store.send({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notes.ApiToken}, 'Notes/set', (resp)=>{ // local store (Notes.Store) instead of the server
+		Notes.Store.send({id:itmID,grp:grpID,type:'cnt',cont:cont,apiToken:Notes.ApiToken}, 'Notes/set', (resp)=>{ // local store (Notes.Store) instead of the server
 
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
@@ -560,13 +575,74 @@ let Notes = {
 					return;
 				}
 
-				Notes.notes[grpIdx].items[itmIdx]['title'] = head;
 				Notes.notes[grpIdx].items[itmIdx]['content'] = cont;
 
 				Notes.ActiveTab = (grpIdx + 1);
 				Notes.ActiveSubTab = (itmIdx + 1);
 			}
 		});
+	},
+
+
+	/**
+	 * The heading of a page is its name: saving it renames the page and its tab
+	 *
+	 * @param head the .content-head element
+	 */
+	SaveHeading: (head)=> {
+		const id = head.closest('.sub-tab').data('id'),
+			old = Notes.itemName(id),
+			txt = MainParser.ClearText(head.text().trim());
+
+		if (txt === '' || txt === old) {
+			head.text(old);
+			return;
+		}
+
+		Notes.Store.send({id: id, type: 'itm', name: txt}, 'Notes/set', (resp)=>{
+			if(resp['status'] === 'ERROR') {
+				head.text(old);
+				HTML.ShowToastMsg({
+					head: 'Error',
+					text: resp['msg'],
+					type: 'error',
+					hideAfter: 10000,
+				});
+			}
+			else {
+				Notes.notes = resp['notice'];
+				Notes.showItemName(id, txt);
+			}
+		});
+	},
+
+
+	/**
+	 * @param id page id
+	 * @returns {string} stored name of the page
+	 */
+	itemName: (id)=> {
+		const item = (Notes.notes || []).flatMap(g => g.items).find(i => i.id == id);
+		return item ? item.tab : '';
+	},
+
+
+	/**
+	 * Shows a new page name in the tab (cut with ... when too long, full name in the tooltip) and the heading
+	 *
+	 * @param id page id
+	 * @param name
+	 */
+	showItemName: (id, name)=> {
+		const tabName = $(`#toolboxNotesBody .notes-name[data-type="itm"][data-id="${id}"]`);
+
+		tabName.text(name);
+		tabName.closest('a').attr('title', `${name} (${i18n('Boxes.Notes.RenameHint')})`);
+
+		const head = $(`#toolboxNotesBody #subtab-${id} .content-head`);
+		if (!head.is(':focus')) {
+			head.text(name);
+		}
 	},
 
 
@@ -749,7 +825,10 @@ let Notes = {
 				}
 				else {
 					Notes.notes = resp['notice'];
-					name.closest('li').find('a').attr('title', type === 'itm' ? `${txt} (${i18n('Boxes.Notes.RenameHint')})` : i18n('Boxes.Notes.RenameHint'));
+
+					if (type === 'itm') {
+						Notes.showItemName(id, txt);
+					}
 				}
 			});
 		};
