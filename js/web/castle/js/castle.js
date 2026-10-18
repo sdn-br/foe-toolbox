@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -199,7 +199,7 @@ FoEproxy.addHandler('CastleSystemService', 'all', (data, postData) => {
 
 });
 
-// Update SevenDayChallenge 
+// Update SevenDayChallenge
 FoEproxy.addHandler('ChallengeService', 'updateTaskProgress', (data, postData) => {
 
     if (!data || !data.responseData) { return; }
@@ -284,7 +284,7 @@ FoEproxy.addHandler('ChallengeService', 'getActiveChallenges', (data, postData) 
 });
 
 /**
- * @type {{curCastlePoints: undefined, AuctionWinningReward: number, curCastlePointsDiff: {}, UpdateCastleData: Castle.UpdateCastleData, DailyWinningBattlesReward: number, RewardGroups: {Shop: number, Daily: number, Gex: number, AntiqueDealer: number, Challenge: number}, curWinningBattles: undefined, BuildBox: Castle.BuildBox, curDailyChallenge: undefined, curLevel: number, SevenDayChallengeReward: number, ShowLog: Castle.ShowLog, NextNegotiationPoints: undefined, SevenDayChallenge: number, Settings: {showSummary: boolean, showGroupNames: boolean, logDays: number}, ShowProgressTable: Castle.ShowProgressTable, DailyWinningBattles: number, ShopGemstonesDivisor: number, DailyChallengeReward: number, CastleSettings: Castle.CastleSettings, MaxDailNegotiationsReward: number, MaxGexLastOfSections: number, curNegotiations: undefined, DailyCastlePoints: number, Show: Castle.Show, DailyChallenge: number, MaxDailyWinningBattlesReward: number, ShopTradeCoinsDivisor: number, SetCastlePointLog: Castle.SetCastlePointLog, curDailyCastlePoints: undefined, DailyNegotiations: number, curShopItems: undefined, startOfDay: *, DailyNegotiationsReward: number, curGexLastOfSection: undefined, UpdateCastlePointsLog: Castle.UpdateCastlePointsLog, SettingsSaveValues: Castle.SettingsSaveValues, CurrentView: string, UpdateCastlePoints: Castle.UpdateCastlePoints, dailyPointsCollectionAvailableAt: undefined, curSevenDayChallenge: undefined, NextWinningBattlesPoints: undefined, CastlePointLog: undefined, GexLastOfSectionsIds: number[], CreateRewardList: (function(): *[]), ShowCastlePoints: Castle.ShowCastlePoints, WeeklyGexLastOfSection: number, curAuctionWinning: undefined, UnlockedFeatures: undefined}}
+ * @type {{curCastlePoints: undefined, AuctionWinningReward: number, curCastlePointsDiff: {}, UpdateCastleData: Castle.UpdateCastleData, DailyWinningBattlesReward: number, RewardGroups: {Shop: number, Daily: number, Gex: number, AntiqueDealer: number, Challenge: number}, curWinningBattles: undefined, BuildBox: Castle.BuildBox, curDailyChallenge: undefined, curLevel: number, SevenDayChallengeReward: number, ShowLog: Castle.ShowLog, NextNegotiationPoints: undefined, SevenDayChallenge: number, Settings: {showSummary: boolean, showGroupNames: boolean, logDays: number}, ShowProgressTable: Castle.ShowProgressTable, DailyWinningBattles: number, ShopGemstonesDivisor: number, DailyChallengeReward: number, CastleSettings: Castle.CastleSettings, MaxDailyNegotiationsReward: number, MaxGexLastOfSections: number, curNegotiations: undefined, DailyCastlePoints: number, Show: Castle.Show, DailyChallenge: number, MaxDailyWinningBattlesReward: number, ShopTradeCoinsDivisor: number, SetCastlePointLog: Castle.SetCastlePointLog, curDailyCastlePoints: undefined, DailyNegotiations: number, curShopItems: undefined, startOfDay: *, DailyNegotiationsReward: number, curGexLastOfSection: undefined, UpdateCastlePointsLog: Castle.UpdateCastlePointsLog, SettingsSaveValues: Castle.SettingsSaveValues, CurrentView: string, UpdateCastlePoints: Castle.UpdateCastlePoints, dailyPointsCollectionAvailableAt: undefined, curSevenDayChallenge: undefined, NextWinningBattlesPoints: undefined, CastlePointLog: undefined, GexLastOfSectionsIds: number[], CreateRewardList: (function(): *[]), ShowCastlePoints: Castle.ShowCastlePoints, WeeklyGexLastOfSection: number, curAuctionWinning: undefined, UnlockedFeatures: undefined}}
  */
 let Castle = {
 
@@ -296,10 +296,15 @@ let Castle = {
     DailyNegotiationsReward: 30,
     DailyWinningBattles: 15,
     DailyWinningBattlesReward: 30,
-    GexLastOfSectionsIds: [7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103, 111, 119, 127],
-    MaxDailNegotiationsReward: 240,
+    GexLastOfSectionsIds: [
+        7, 15, 23, 31,
+        39, 47, 55, 63,
+        71, 79, 87, 95,
+        103, 111, 119, 127,
+        135, 143, 151, 159],
+    MaxDailyNegotiationsReward: 240,
     MaxDailyWinningBattlesReward: 240,
-    MaxGexLastOfSections: 600,
+    MaxGexLastOfSections: 900,
     SevenDayChallenge: 7,
     SevenDayChallengeReward: 700,
     ShopGemstonesDivisor: 2,
@@ -345,7 +350,7 @@ let Castle = {
                 dragdrop: true,
                 resize: false,
                 minimize: true,
-                settings: 'Castle.CastleSettings()'
+                settings: () => Castle.CastleSettings()
             });
 
             HTML.AddCssFile('castle');
@@ -454,7 +459,7 @@ let Castle = {
         if (d.nextCastlePoints)
         {
             let n = d.nextCastlePoints;
-            
+
             // reset battle/negotiation points if new day started
             if (Castle.startOfDay !== startOfDay)
             {
@@ -560,7 +565,7 @@ let Castle = {
             date: startOfDay
         });
 
-        // Daily negotiation reward   
+        // Daily negotiation reward
         for (let i = Castle.DailyNegotiationsReward; i > Castle.NextNegotiationPoints; i -= 2)
         {
             negotiationPointReward += i;
@@ -573,7 +578,7 @@ let Castle = {
             progress: Castle.DailyNegotiations - Castle.curNegotiations,
             maxprogress: Castle.DailyNegotiations,
             reward: negotiationPointReward,
-            maxreward: Castle.MaxDailNegotiationsReward,
+            maxreward: Castle.MaxDailyNegotiationsReward,
             warning: false,
             success: Castle.DailyNegotiations - Castle.curNegotiations === Castle.DailyNegotiations,
             date: startOfDay
@@ -860,7 +865,7 @@ let Castle = {
                 <div><span>${i18n('Boxes.Castle.CastlePoints')}: ${HTML.Format(Castle.curCastlePoints)} / ${HTML.Format(CastleLimit)}</span>
                 <span id="casPointsDiff">${diff ? '+' + diff : ''}</span><br />
                 <span>${i18n('Boxes.Castle.Level')}: ${Castle.curLevel}</span></div>
-                <div><span id="casLogBtn"><button id="casSwitchView" class="btn btn-default"${!Castle.CastlePointLog || Castle.CastlePointLog.length === 0 ? ' disabled' : ''}>${Castle.CurrentView === 'log' ? i18n('Boxes.Castle.Overview') : i18n('Boxes.Castle.Log')}</button></span></div>
+                <div><span id="casLogBtn"><button id="casSwitchView" class="btn"${!Castle.CastlePointLog || Castle.CastlePointLog.length === 0 ? ' disabled' : ''}>${Castle.CurrentView === 'log' ? i18n('Boxes.Castle.Overview') : i18n('Boxes.Castle.Log')}</button></span></div>
             `).promise().done(function () {
 
                 if (diff)
@@ -889,7 +894,7 @@ let Castle = {
 
         if (!Castle.Settings.showGroupNames)
         {
-            h.push(`<thead><tr class="caption"><th>${i18n('Boxes.Castle.Type')}</th><th class="text-right"><span>${HTML.i18nTooltip(i18n('Boxes.Castle.Progress'))}</span></th><th class="text-right"><span>${HTML.i18nTooltip(i18n('Boxes.Castle.CastlePoints'))}</span></th></tr></thead>`);
+            h.push(`<thead class="sticky"><tr class="caption"><th>${i18n('Boxes.Castle.Type')}</th><th class="text-right"><span>${HTML.i18nTooltip(i18n('Boxes.Castle.Progress'))}</span></th><th class="text-right"><span>${HTML.i18nTooltip(i18n('Boxes.Castle.CastlePoints'))}</span></th></tr></thead>`);
         }
 
         h.push(`<tbody>`);
@@ -1012,7 +1017,7 @@ let Castle = {
             CastlePointLog = JSON.parse(localStorage.getItem('CastlePointLog') || '[]');
         }
 
-        // remove requestIds from log 
+        // remove requestIds from log
         CastlePointLog = CastlePointLog.map(e => {
             delete e.rid
             return e
@@ -1043,7 +1048,7 @@ let Castle = {
         });
         c.push(`</select></p>`);
 
-        c.push(`<hr><p><button id="save-Castle-settings" class="btn btn-default" style="width:100%" onclick="Castle.SettingsSaveValues()">${i18n('Boxes.General.Save')}</button></p>`);
+        c.push(`<hr><p><button id="save-Castle-settings" class="btn" style="width:100%" onclick="Castle.SettingsSaveValues()">${i18n('Boxes.General.Save')}</button></p>`);
         $('#CastleSettingsBox').html(c.join(''));
 
     },

@@ -1,7 +1,7 @@
 /*
  * *************************************************************************************
  *
- * Copyright (C) 2023 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -14,9 +14,11 @@
 
 'use strict';
 
-importScripts(
-	'vendor/browser-polyfill/browser-polyfill.min.js','vendor/dexie/dexie.min.js'
-)
+try {
+	importScripts('vendor/browser-polyfill/browser-polyfill.min.js','vendor/dexie/dexie.min.js')
+}
+catch {
+}
 
 // @ts-ignore
 let alertsDB = new Dexie("Alerts");
@@ -88,6 +90,9 @@ alertsDB.version(1).stores({
 			if (typeof data.expires === 'string') data.expires = Number.parseInt(data.expires);
 			if (data.expires === undefined && typeof data.datetime === 'string') data.expires = new Date(data.datetime).getTime();
 			if (typeof data.repeat  === 'string') data.repeat  = Number.parseInt(data.repeat);
+			// game timestamps may carry fractional milliseconds (e.g. lockedUntil floats)
+			if (typeof data.expires === 'number') data.expires = Math.round(data.expires);
+			if (typeof data.repeat  === 'number') data.repeat  = Math.round(data.repeat);
 			if (data.category === undefined) data.category = '';
 			if (data.tag === undefined) data.tag = '';
 			if (data.vibrate === undefined) data.vibrate = false;
@@ -98,12 +103,12 @@ alertsDB.version(1).stores({
 			if (typeof data.body  !== 'string')       throw 'Alert: "data.body" needs to be a string';
 			if (!Number.isInteger(data.expires))      throw 'Alert: "data.expires" needs to be a integer';
 			if (!Number.isInteger(data.repeat))       throw 'Alert: "data.repeat" needs to be a integer';
-			if (data.actions instanceof Array)        throw 'Alert: "data.actions" needs to be an array';
+			if (data.actions != null && !(data.actions instanceof Array))        throw 'Alert: "data.actions" needs to be an array';
 			if (typeof data.category   !== 'string')  throw 'Alert: "data.category" needs to be a string';
 			if (typeof data.persistent !== 'boolean') throw 'Alert: "data.persistent" needs to be a boolean';
 			if (typeof data.tag        !== 'string')  throw 'Alert: "data.tag" needs to be a string';
 			if (typeof data.vibrate    !== 'boolean') throw 'Alert: "data.vibrate" needs to be a boolean';
-			
+
 			// copy attributes to prevent additional attributes
 			return {
 				title:   data.title,
@@ -247,17 +252,54 @@ alertsDB.version(1).stores({
 		function triggerAlert(alert) {
 			return browser.notifications.create(
 				alert.id != null ? (prefix + alert.id) : previevId,
-				{
-					type: 'basic',
-					title: alert.data.title,
-					message: alert.data.body,
-					// @ts-ignore
-					contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://"),
-					iconUrl: '/images/app128.png',
-					eventTime: alert.data.expires,
-					requireInteraction: alert.data.persistent
-				}
+				Object.assign(navigator.userAgent.indexOf("Firefox") > -1 ? {}:
+					{
+						requireInteraction: alert.data.persistent||false,
+						buttons: alert.data.actions
+					}, {
+						type: 'basic',
+						title: alert.data.title,
+						message: alert.data.body,
+						iconUrl: '/images/app128.png',
+						eventTime: alert.data.expires,
+						contextMessage: 'FoE Toolbox − '+trimPrefix(alert.server, "https://") // TOOLBOX: branding
+
+					}
+				)
 			);
+		}
+
+		/**
+		 * shows the notification of an alert exactly once, no matter whether the
+		 * browser alarm or a precise page side timer got there first
+		 * @param {!number} alertId the id of the alert to fire
+		 * @returns {Promise<boolean>} true if this call fired the notification
+		 */
+		async function fireAlert(alertId) {
+			const alertData = await db.transaction('rw', db.alerts, async () => {
+				const alertData = await Alerts.get(alertId);
+				// already fired => this is the slower of the two paths, ignore it
+				if (alertData == null || alertData.triggered) return null;
+				alertData.triggered = true;
+				await db.alerts.put(alertData);
+				return alertData;
+			});
+			if (alertData == null) return false;
+
+			triggerAlert(alertData);
+			return true;
+		}
+
+		/**
+		 * fires an alert ahead of its browser alarm and drops the now obsolete alarm
+		 * @param {!number} alertId the id of the alert to fire
+		 * @returns {Promise<boolean>} true if this call fired the notification
+		 */
+		async function fireAlertNow(alertId) {
+			const fired = await fireAlert(alertId);
+			// the alarm would only produce a duplicate now
+			await browser.alarms.clear(prefix + alertId);
+			return fired;
 		}
 
 		// Alarm triggered => show Notification
@@ -267,16 +309,7 @@ alertsDB.version(1).stores({
 			const alertId = Number.parseInt(alarm.name.substring(prefix.length));
 			if (!Number.isInteger(alertId) || alertId > Number.MAX_SAFE_INTEGER || alertId < 0) return;
 
-			const alertData = await db.transaction('rw', db.alerts, async () => {
-				const alertData = await Alerts.get(alertId);
-				if (alertData == null) return null;
-				alertData.triggered = true;
-				await db.alerts.put(alertData);
-				return alertData;
-			});
-			if (alertData == null) return;
-
-			triggerAlert(alertData);
+			await fireAlert(alertId);
 		});
 
 
@@ -324,7 +357,7 @@ alertsDB.version(1).stores({
 
 		// upon start cleanup alerts which didn't get removed properly.
 		//cleanupAlerts(); // deactivated - is triggered too often and deletes correct/active alarms (it seems the background.js is unloaded/reloaded regularly and this is triggered then unintentionally)
-				
+
 		return {
 			getValidData: getValidateAlertData,
 			/**
@@ -349,29 +382,34 @@ alertsDB.version(1).stores({
 			create: createAlert,
 			createTemp: createAlertData,
 			setData: setAlertData,
-			trigger: triggerAlert
+			trigger: triggerAlert,
+			triggerNow: fireAlertNow
 		};
 	})();
 
+
+	// TOOLBOX-BEGIN: on update ask in open game tabs to reload instead of opening the update page
+	/**
+	 * Runs inside the game tab (injected via scripting.executeScript)
+	 * and asks whether the game should be reloaded to activate the new version
+	 */
 	function InstallConfirm() {
 		if (confirm('Die FoE-Toolbox wurde aktualisiert.\n\nSoll das Spiel jetzt neu geladen werden, damit die neuen Features sofort verfügbar sind?'))
 			window.location.reload();
 	}
-	
+
 	browser.runtime.onInstalled.addListener(() => {
 		"use strict";
-		const version = browser.runtime.getManifest().version;
-		console.log(browser);
-		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs)=> {
+
+		// ask in every open game tab whether it should be reloaded
+		browser.tabs.query({url: ['https://*.forgeofempires.com/game/index', 'https://*.forgeofempires.com/game/index?*']}).then((tabs) => {
 			for (const tab of tabs) {
 				browser.tabs.update(tab.id, {active: true});
-				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm}).then(() => console.log('reload executed'));
+				browser.scripting.executeScript({target: {tabId: tab.id}, func: InstallConfirm})
+					.catch((e) => console.error('InstallConfirm failed', e));
 			}
 		});
-
-		browser.tabs.create({
-			url: `https://github.com/sdn-br/foe-toolbox/wiki/Changelog#${version.replaceAll('.', '')}`
-		});
+		// TOOLBOX-END
 	});
 
 
@@ -380,8 +418,7 @@ alertsDB.version(1).stores({
 	 *
 	 * @returns {boolean}
 	 */
-	function isDevMode()
-	{
+	function isDevMode() {
 		return !('update_url' in browser.runtime.getManifest());
 	}
 
@@ -411,11 +448,11 @@ alertsDB.version(1).stores({
 
 	/**
 	 * handles internal and external extension communication
-	 * @param {any} request 
-	 * @param {browser.runtime.MessageSender} sender 
+	 * @param {any} request
+	 * @param {browser.runtime.MessageSender} sender
 	 * @returns {Promise<{ok: true, data: any} | {ok: false, error: string}>}
 	 */
-	async function handleWebpageRequests(request, sender, sendResponse) {
+	async function handleWebpageRequests(request, sender) {
 		"use strict";
 		if (!sender.origin) sender.origin = sender.url;
 		// remove sender.id if it was just a forwarded message, so it can't run into private API's
@@ -475,7 +512,7 @@ alertsDB.version(1).stores({
 
 							// Deaktiviere die standard behandlung durch die entfernung der id
 							delete alert.id;
-							await Alerts.trigger(alert);
+							await Alerts.trigger(alert)
 							return APIsuccess(true);
 						}
 
@@ -575,6 +612,19 @@ alertsDB.version(1).stores({
 							return APIsuccess(true);
 						}
 
+						case 'triggerNow': { // action
+							const id = request.id;
+							if (!Number.isInteger(id)) return APIerror('malformed request: expected "id": integer');
+
+							const alert = await Alerts.get(id);
+							if (!alert || alert.server !== server || alert.playerId !== playerId) return APIsuccess(false);
+
+							// browser alarms are only accurate to roughly a minute, so an open
+							// game tab fires the alert on time and cancels the pending alarm
+							const fired = await Alerts.triggerNow(id);
+							return APIsuccess(fired);
+						}
+
 						case 'delete': { // action
 							const id = request.id;
 							if (!Number.isInteger(id)) return APIerror('malformed request: expected "id": integer');
@@ -615,6 +665,9 @@ alertsDB.version(1).stores({
 			}
 
 			case 'send2Api': { // type
+				// TOOLBOX: only the foe-helper API, the message also arrives from the game page
+				if (typeof request.url !== 'string' || !request.url.startsWith('https://api.foe-rechner.de/')) return APIerror('send2Api: url not allowed');
+
 				fetch(request.url, {
 					method: 'POST',
 					headers: {
@@ -623,6 +676,42 @@ alertsDB.version(1).stores({
 					body: request.data
 				});
 				return APIsuccess(true);
+			}
+
+			case 'send2Server': { // type
+				// TOOLBOX: requests to the foe-helper API are made from the background instead of the game page
+				const allowedApis = ['https://api.foe-rechner.de/'];
+				if (typeof request.url !== 'string' || !allowedApis.includes(request.url)) return APIerror('send2Server: url not allowed');
+				if (typeof request.endpoint !== 'string' || !/^[A-Za-z0-9/_-]+$/.test(request.endpoint)) return APIerror('send2Server: invalid endpoint');
+
+				const params = new URLSearchParams({
+					player_id: request.playerId ?? '',
+					guild_id: request.guildId ?? '',
+					world: request.world ?? ''
+				});
+
+				try {
+					const response = await fetch(request.url + request.endpoint + '/?' + params.toString(), {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ data: request.data })
+					});
+
+					let body = null;
+					try {
+						body = await response.json();
+					}
+					catch (e) {
+						return APIsuccess({ status: response.status, statusText: response.statusText, body: null, error: 'invalid response: ' + e.message });
+					}
+
+					return APIsuccess({ status: response.status, statusText: response.statusText, body: body });
+				}
+				catch (e) {
+					return APIerror('send2Server: the server could not be reached: ' + e.message);
+				}
 			}
 
 			case 'showNotification': { // type
@@ -646,32 +735,6 @@ alertsDB.version(1).stores({
 					return APIsuccess(false);
 				}
 				return APIsuccess(true);
-			}
-
-			case "send2Server": {
-				let data = request.data;
-				let playerId = request.playerId;
-				let guildId = request.guildId | '';
-				let world = request.world;
-
-				console.log({data: data});
-				return fetch(
-					request.url + request.endpoint + '/?player_id=' + playerId + '&guild_id=' + guildId + '&world=' + world,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({data})
-					}
-				).then(response => { 
-					return response.json().then(body => {
-						return APIsuccess({
-							status: response.status,
-							body: body
-						});
-					})
-				});
 			}
 
 		} // end of switch type

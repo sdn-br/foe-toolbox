@@ -1,12 +1,11 @@
 /*
  * **************************************************************************************
  *
- * Dateiname:                 sabotage.js (Original Name: read-buildings.css)
+ * Dateiname:                 sabotage.css (Original Name: read-buildings.css)
  * Projekt:                   foe-chrome
  *
  * erstellt von:              Daniel Siekiera <daniel.siekiera@gmail.com>
  * erstellt am:	              27.12.19, 12:14 Uhr
- * zuletzt bearbeitet:       27.12.19, 12:14 Uhr
  *
  * Copyright © 2019
  *
@@ -33,18 +32,32 @@
 	height: 20px;
 }
 
+#sabotageInfo #sabotageInfoBody .show-entity img {
+	width: 20px;
+	height: 20px;
+}
+
 #sabotageInfo #sabotageInfoBody p.header .player-name {
 	display: block;
 	white-space: nowrap;
-	color: var(--text-bright);
+	color: var(--beige);
 	margin: 0 10px;
 }
 
-#sabotageInfo #sabotageInfoBody .army, #sabotageInfo #sabotageInfoBody .army-boost, #sabotageInfo #sabotageInfoBody .production-headline {
-	color: var(--text-bright);
+#sabotageInfo #sabotageInfoBody .production-headline {
+	color: var(--beige);
 }
 
-#sabotageInfo #sabotageInfoBody .foe-table td {
+#sabotageInfo #sabotageInfoBody p.plunder-repel {
+	margin: 6px 0 5px;
+}
+
+#sabotageInfo #sabotageInfoBody .foe-table {
+	margin: 2px 0 5px;
+}
+
+#sabotageInfo #sabotageInfoBody .foe-table td,
+#sabotageInfo #sabotageInfoBody table tr td:first-child {
 	white-space: nowrap;
 }
 
@@ -56,28 +69,18 @@
 #sabotageInfo #sabotageInfoBody p .error,
 #sabotageInfo #sabotageInfoBody td.error,
 #sabotageInfo #sabotageInfoBody td .error {
-	color: #ec4d4d;
+	color: var(--danger-red);
 }
 
 #sabotageInfo #sabotageInfoBody p.success {
-	color: var(--text-success);
+	color: var(--success);
 }
 
-#sabotageInfo #sabotageInfoBody #attdeftab td {
-	padding-top: 0px;
-	padding-left: 1px;
-	padding-bottom: 0px;
-}
-
-#sabotageInfo #sabotageInfoBody .show-entity img {
-	width: 20px;
-	height: 20px;
-}
-
-#sabotageInfo #sabotageInfoBody table tr td:first-child {
-	white-space: nowrap;
-}
-
-#sabotageInfo .btn-default {
+#sabotageInfo .btn {
 	padding: 0.2rem 0.4rem;
+	margin: 0 2px;
+}
+
+#sabotageInfo #sabotageInfoBody td.unimportant {
+	color: grey;
 }

@@ -2,38 +2,32 @@
 	"name": "__MSG_appName__",
 	"description": "__MSG_appDesc__",
 	"default_locale": "de",
-	"version": "1.24.0.0",
-	"version_name": "1.24.0.0 (3.1.0.1)",
- 	
+	"version": "2.0.0.0",
+	"version_name": "2.0.0.0 (4.8.3.0)",
 	"manifest_version": 3,
 	"permissions": [
 		"alarms",
 		"storage",
-		"tabs",
-	  	"notifications",
+		"notifications",
 		"clipboardWrite",
 		"scripting"
 	],
-
 	"host_permissions": [
 		"https://*.forgeofempires.com/*",
 		"https://foe-helper.com/*",
 		"https://*.foe-helper.com/*",
 		"https://*.foe-rechner.de/*"
 	],
-
 	"action": {
 		"default_icon": "images/app16.png",
 		"default_popup": "content/popup.html",
 		"default_title": "__MSG_appName__"
 	},
-
 	"icons": {
 		"16": "images/app16.png",
 		"48": "images/app48.png",
 		"128": "images/app128.png"
 	},
-
 	"web_accessible_resources": [
 		{
 			"resources": [
@@ -42,29 +36,63 @@
 				"css/*",
 				"content/*"
 			],
-			"matches": [ "https://*/*" ]
+			"matches": [
+				"https://*/*"
+			]
 		}
 	],
-
 	"content_scripts": [
 		{
-			"matches": ["https://*.forgeofempires.com/*"],
-			"include_globs": [ "*forgeofempires.com/game*" ],
+			"matches": [
+				"https://*.forgeofempires.com/*"
+			],
+			"include_globs": [
+				"*forgeofempires.com/game*"
+			],
+			"js": [
+				"js/foeproxy.js"
+			],
 			"run_at": "document_start",
+			"world": "MAIN"
+		},
+		{
+			"matches": [
+				"https://*.forgeofempires.com/*"
+			],
+			"include_globs": [
+				"*forgeofempires.com/game*"
+			],
+			"js": [
+				"js/foeproxy-fallback.js"
+			],
+			"run_at": "document_start"
+		},
+		{
+			"matches": [
+				"https://*.forgeofempires.com/*"
+			],
+			"include_globs": [
+				"*forgeofempires.com/game*"
+			],
 			"js": [
 				"vendor/browser-polyfill/browser-polyfill.min.js",
 				"js/web/_languages/js/_languages.js",
 				"js/inject.js"
-			]
+			],
+			"run_at": "document_end"
 		}
 	],
-
-	"externally_connectable" : {
-		"matches": ["https://*.forgeofempires.com/*"],
-		"ids": ["*"]
+	"externally_connectable": {
+		"matches": [
+			"https://*.forgeofempires.com/*"
+		]
 	},
-
 	"background": {
-		"service_worker": "background.js"
+		"service_worker": "background.js",
+		"scripts": [
+			"vendor/browser-polyfill/browser-polyfill.min.js",
+			"vendor/dexie/dexie.min.js",
+			"background.js"
+		]
 	}
 }

@@ -1,5 +1,13 @@
 ## Changelog - Extension
 
+##### 2.0.0.0
+**FoE-Helfer**
+- Migration auf FoE Helfer 4.8.3.0 als neue Basis (vorher FoE Helfer 3.1.0.1)
+
+**Update**
+- GvG
+    - GvG Angriffshilfe entfernt, da GvG aus dem Spiel entfernt wurde
+
 ##### 1.24.0.0
 **Bugfix**
 - Allgemein

@@ -1,6 +1,6 @@
 /*
  * **************************************************************************************
- * Copyright (C) 2022 FoE-Helper team - All Rights Reserved
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the AGPL license.
  *
@@ -12,71 +12,6 @@
  */
 
 /*
-*   "neighborhoodAttacks" structure
-*   {
-*      playerId: number,
-*       date: Date,
-*       type: ACTION_TYPE_BATTLE_WIN | ACTION_TYPE_BATTLE_LOSS | ACTION_TYPE_BATTLE_SURRENDERED,
-*       battle: {
-*           myArmy: Unit[],
-*           otherArmy: Unit[],
-*           round: number,
-*           auto: boolean,
-*           era: string,
-*       }
-*   }
-*   OR
-*   {
-*       playerId: number,
-*       date: Date,
-*       type: Looting.ACTION_TYPE_LOOTED,
-*       resources: Object, //
-*       doubleLoot: boolean | undefined, // double loot bonus is applied or not
-*       doubleLootApplied: boolean // true when double bonus is applied
-*       sp: number, * strategy points
-*       important: boolean, // if not supplies or money only
-*       entityId: number, // foe city entity Id
-*       buildId: string, // key for BuildingNamesi18n
-*   }
-*   OR
-*   {
-*       type: Looting.ACTION_TYPE_SHIELDED,
-*       playerId: number,
-*       date: Date,
-*       expireTime: number, // timestamp. usage: new Date(expireTime * 1000)
-*   }
-*   where Unit =
-*   {
-*       startHP: number, // usually 10
-*       endHp: number,
-*       attBoost: number,
-*       defBoost: number,
-*       unitTypeId: string,
-*       ownerId: number, // other player id
-*   }
-*
-*   "players" structure
-*   {
-*       id: number,
-*       name: string,
-*       clanId: number, // 0 if no clan
-*       clanName: string | undefined,
-*       avatar: string,
-*       era: string | 'unknown',
-*       date: new Date(), // last visit date
-*   }
-*
-*   "greatbuildings" structure
-*   {
-*       id: number,
-*       playerid: number,
-*       name: string,
-*       level: number,
-*       currentfp: number,
-*       bestratenettofp: number
-*       bestratecosts: number,
-*       date: new Date(), // last visit date
-*   }
 *  "statsGBGPlayers", Battle ground leader board
 * {
 *   date: Date,
@@ -149,16 +84,21 @@ let IndexDB = {
 
 
     Init: async (playerId) => {
-        const primaryDBName = 'FoEToolboxDB_' + playerId; //Create different IndexDBs if two players are sharing the same PC playing on the same world
+        const primaryDBName = 'FoEToolbox2DB_' + playerId; // TOOLBOX: own name, the legacy DBs are only read. Create different IndexDBs if two players are sharing the same PC playing on the same world
         const isNewDB = !await Dexie.exists(primaryDBName);
 
         const db = IndexDB.db = new Dexie(primaryDBName);
         IndexDB._applyIndexSchema(db);
-        db.open();
+        db.open().catch((e) => {
+            //console.error(e);
+            setTimeout(() => {
+                IndexDB.Init(playerId);
+            }, 100);
+        });
 
         try {
             if (isNewDB) {
-                await IndexDB.mergeDatabases(playerId);
+                await IndexDB.copyLegacyMainDB(playerId); // TOOLBOX: instead of mergeDatabases, which deletes old DBs, see toolbox-indexdb.js
             }
         } catch (e) {
             console.error(e);
@@ -167,6 +107,7 @@ let IndexDB = {
 
         setTimeout(() => {
             IndexDB.GarbageCollector();
+            IndexDB.rewardDBCleanup()
         }, 10 * 1000);
     },
 
@@ -174,7 +115,7 @@ let IndexDB = {
     _applyIndexSchema(db) {
         db.version(1).stores({
             players: 'id,date',
-            neighborhoodAttacks: '++id,playerId,date,type',
+            pvpActions: '++id,playerId,date,type',
             greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
             forgeStats: '++id,type,amount,date', // FP Collector
             statsGBGPlayers: 'date', // battleground
@@ -191,7 +132,7 @@ let IndexDB = {
 
         db.version(2).stores({
             players: 'id,date',
-            neighborhoodAttacks: '++id,playerId,date,type',
+            pvpActions: '++id,playerId,date,type',
             greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
             investhistory: '++id,playerId,entity_id,&[playerId+entity_id],name,level,max_progress,current_progress,profit,currentFp,fphistory,date',
             forgeStats: '++id,type,amount,date', // FP Collector
@@ -206,6 +147,9 @@ let IndexDB = {
             statsTreasureClanH: 'date, clanId',
             statsTreasureClanD: 'date, clanId',
         });
+        db.version(3).stores({
+            buildingMeta: 'id, hash, json',
+        });
     },
 
     /**
@@ -218,102 +162,116 @@ let IndexDB = {
 
         //log('Looks like your db is empty, trying to populate db using old databases');
 
-        let foeHelperPrivDB = null;
-		let foeHelperDB = null;
+        let betaDB = null;
+        let masterDB = null;
+        let statsDB = null;
 
-        // DB from previous FoE Helper Private
-        const foeHelperPrivDBName = 'FoeHelperPrivateDB_' + playerId;
-        if (await Dexie.exists(foeHelperPrivDBName)) {
-            foeHelperPrivDB = new Dexie(foeHelperPrivDBName);
-            foeHelperPrivDB.version(1).stores({
+        // DB from beta
+        const betaDBName = 'FoeHelper_' + playerId;
+        if (await Dexie.exists(betaDBName)) {
+            betaDB = new Dexie(betaDBName);
+
+            betaDB.version(1).stores({
                 players: 'id,date',
-				neighborhoodAttacks: '++id,playerId,date,type',
-				greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-				forgeStats: '++id,type,amount,date', // FP Collector
-                statsGBGPlayers: 'date', // battleground
-				statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
-				statsRewards: 'date', // Collected rewards by Himeji, etc
-				statsRewardTypes: 'id', // Human readable cache info about rewards
-				statsUnitsD: 'date',
-				statsUnitsH: 'date',
-				statsTreasurePlayerH: 'date',
-				statsTreasurePlayerD: 'date',
-				statsTreasureClanH: 'date, clanId',
-				statsTreasureClanD: 'date, clanId',
+                actions: '++id,playerId,date,type',
+                greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
+           });
+
+            betaDB.version(2).stores({
+                players: 'id,date',
+                actions: '++id,playerId,date,type',
+                greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
+                investhistory: '++id,playerId,entity_id,&[playerId+entity_id],name,level,max_progress,current_progress,profit,currentFp,fphistory,date'
             });
-            foeHelperPrivDB.open();
-            if (!(await foeHelperPrivDB.players.count())) {
-                foeHelperPrivDB = null;
-            }
-        }
-		
-		const foeHelperDBName = 'FoeHelperDB_' + playerId;
-		if (await Dexie.exists(foeHelperDBName)) {
-            foeHelperDB = new Dexie(foeHelperDBName);
-            foeHelperDB.version(1).stores({
-				players: 'id,date',
-				pvpActions: '++id,playerId,date,type',
-				greatbuildings: '++id,playerId,name,&[playerId+name],level,currentFp,bestRateNettoFp,bestRateCosts,date',
-				forgeStats: '++id,type,amount,date', // FP Collector
-				statsGBGPlayers: 'date', // battleground
-				statsGBGPlayerCache: 'id, date', // Cache of players for using in gbgPlayers
-				statsRewards: 'date', // Collected rewards by Himeji, etc
-				statsRewardTypes: 'id', // Human readable cache info about rewards
-				statsUnitsD: 'date',
-				statsUnitsH: 'date',
-				statsTreasurePlayerH: 'date',
-				statsTreasurePlayerD: 'date',
-				statsTreasureClanH: 'date, clanId',
-				statsTreasureClanD: 'date, clanId',
-            });
-            foeHelperDB.open();
-            if (!(await foeHelperDB.players.count())) {
-                foeHelperDB = null;
+
+            betaDB.open();
+            if (!(await betaDB.players.count())) {
+                betaDB = null;
             }
         }
 
-        if (foeHelperPrivDB) {
-            log(`Found DB "${foeHelperPrivDBName}"`)
-            await cloneTables(foeHelperPrivDB, {
+        // Database from master
+        const masterDBName = 'PlayerDB';
+        if (await Dexie.exists(masterDBName)) {
+            masterDB = new Dexie(masterDBName);
+            masterDB.version(7).stores({
+                players: 'id,date',
+                actions: '++id,playerId,date,type'
+            });
+            masterDB.version(6).stores({
+                players: 'id',
+                actions: '++id,playerId,date,type'
+            });
+            masterDB.open();
+            if (!(await masterDB.players.count())) {
+                masterDB = null;
+            }
+        }
+
+        // Stats db, beta
+        const statsDBName = 'StatsDb';
+        if (await Dexie.exists(statsDBName)) {
+            statsDB = new Dexie(statsDBName);
+            statsDB.version(4).stores({
+                // battleground
+                gbgPlayers: 'date', // battleground
+                playerCache: 'id, date', // Cache of players for using in gbgPlayers
+                // rewards
+                rewards: 'date', // Collected rewards by Himeji, etc
+                rewardTypes: 'id', // Human readable cache info about rewards
+                // units
+                unitsDaily: 'date',
+                units: 'date',
+                // treasure player
+                treasurePlayer: 'date',
+                treasurePlayerDaily: 'date',
+                // treasure clan
+                treasureClan: 'date, clanId',
+                treasureClanDaily: 'date, clanId',
+            });
+            statsDB.open();
+            if (!(await  statsDB.treasurePlayer.count())) {
+                statsDB = null;
+            }
+        }
+
+        if (betaDB) {
+            //log(`Found DB "${betaDBName}"`)
+            await cloneTables(betaDB, {
                 players: 'players',
-				neighborhoodAttacks: 'neighborhoodAttacks',
-				greatbuildings: 'greatbuildings',
-				forgeStats: 'forgeStats', // FP Collector
-				statsGBGPlayers: 'statsGBGPlayers',
-				statsGBGPlayerCache: 'statsGBGPlayerCache',
-				statsRewards: 'statsRewards',
-				statsRewardTypes: 'statsRewardTypes', 
-				statsUnitsD: 'statsUnitsD',
-				statsUnitsH: 'statsUnitsH',
-				statsTreasurePlayerH: 'statsTreasurePlayerH',
-				statsTreasurePlayerD: 'statsTreasurePlayerD',
-				statsTreasureClanH: 'statsTreasureClanH',
-				statsTreasureClanD: 'statsTreasureClanD'
+                pvpActions: 'actions',
+                greatbuildings: 'greatbuildings'
             });
-        } else if (foeHelperDB) {
-			log(`Found DB "${foeHelperDBName}"`)
-            await cloneTables(foeHelperDB, {
-				players: 'players',
-				pvpActions: 'neighborhoodAttacks',
-				greatbuildings: 'greatbuildings',
-				forgeStats: 'forgeStats', // FP Collector
-				statsGBGPlayers: 'statsGBGPlayers',
-				statsGBGPlayerCache: 'statsGBGPlayerCache',
-				statsRewards: 'statsRewards',
-				statsRewardTypes: 'statsRewardTypes', 
-				statsUnitsD: 'statsUnitsD',
-				statsUnitsH: 'statsUnitsH',
-				statsTreasurePlayerH: 'statsTreasurePlayerH',
-				statsTreasurePlayerD: 'statsTreasurePlayerD',
-				statsTreasureClanH: 'statsTreasureClanH',
-				statsTreasureClanD: 'statsTreasureClanD'
+        } else if (masterDB) {
+            //log(`Found DB "${masterDBName}"`)
+            await cloneTables(masterDB, {
+                players: 'players',
+                pvpActions: 'actions',
             });
-		}
-		
-        log('Deleting old databases');
-        await Dexie.delete(foeHelperPrivDBName);
-		await Dexie.delete(foeHelperDBName);
-        log('Done.');
+        }
+        if (statsDB) {
+            log(`Found DB "${statsDBName}"`)
+            await cloneTables(statsDB, {
+                statsGBGPlayers: 'gbgPlayers',
+                statsGBGPlayerCache: 'playerCache',
+                statsRewards: 'rewards',
+                statsRewardTypes: 'rewardTypes',
+                statsUnitsD: 'unitsDaily',
+                statsUnitsH: 'units',
+                statsTreasurePlayerH: 'treasurePlayer',
+                statsTreasurePlayerD: 'treasurePlayerDaily',
+                statsTreasureClanH: 'treasureClan',
+                statsTreasureClanD: 'treasureClanDaily',
+            });
+        }
+
+
+
+        // log('Deleting old databases');
+        await Dexie.delete(betaDBName);
+        await Dexie.delete(masterDBName);
+        await Dexie.delete(statsDBName);
+        //log('Done.');
 
         // Copy tables.
         // Basicly this is not transaction safe to bulkAdd, but we can ignore it because
@@ -333,7 +291,7 @@ let IndexDB = {
         }
 
         function log(text) {
-            console.log('mergeDatabases: ' + text);
+            //console.log('mergeDatabases: ' + text);
             let logTxt = localStorage.getItem('FH_IndexDBLastMigraion') || '';
             logTxt += text + '\n';
             localStorage.setItem('FH_IndexDBLastMigraion', logTxt);
@@ -364,11 +322,11 @@ let IndexDB = {
         return sdb.open().then(() => {
             // Clone scheme
             version = version || sdb.verno;
-            console.log(`Cloning DB "${srcName}" v${sdb.verno} => "${dstName}" v${version}`);
+            // console.log(`Cloning DB "${srcName}" v${sdb.verno} => "${dstName}" v${version}`);
 
-            console.log('Dumping schema...');
+            // console.log('Dumping schema...');
             const schema = sdb.tables.reduce((result, table) => {
-                console.log(` => ${table.name}...`);
+                // console.log(` => ${table.name}...`);
                 result[table.name] = (
                     [table.schema.primKey]
                         .concat(table.schema.indexes)
@@ -376,19 +334,19 @@ let IndexDB = {
                 ).toString();
                 return result;
             }, {});
-            console.log('Schema:', schema);
+            // console.log('Schema:', schema);
             ddb.version(version).stores(schema);
 
             return sdb.tables.reduce(
                 (result, table) => result
-                    .then(() => console.log(`Cloning table ${table.name}...`))
+                    // .then(() => console.log(`Cloning table ${table.name}...`))
                     .then(() => table.toArray())
                     .then(rows => ddb.table(table.name).bulkAdd(rows) ),
                 Promise.resolve()
             ).then((x) => {
                 sdb.close();
                 ddb.close();
-                console.log(`Clonning DB is finished, created "${dstName}"`);
+               // console.log(`Clonning DB is finished, created "${dstName}"`);
             })
         });
     },
@@ -400,36 +358,18 @@ let IndexDB = {
     * @returns {Promise<void>}
     */
     GarbageCollector: async () => {
-        const neighborhoodAttackExpiryTime = moment().subtract(1, 'years').toDate();
-		// Expiry time for db with 1 record per day
+        // Expiry time for db with 1 record per day
         const daylyExpiryTime = moment().subtract(1, 'years').toDate();
+
         // Expiry time for db with 1 record per hour
         const hourlyExpiryTime = moment().subtract(8, 'days').toDate();
+
         // Keep logs for guild battlegrounds for 2 weeks
         const gbgExpiryTime = moment().subtract(2, 'weeks').toDate();
 
-        await IndexDB.getDB(); 
-        await IndexDB.db.neighborhoodAttacks
-            .where('date').below(neighborhoodAttackExpiryTime)
-            .delete();
-
-        // Remove expired city shields
-        await IndexDB.db.neighborhoodAttacks
-            .where('type').equals(5)
-            .and((item)=>{ return item.expireTime < moment().unix() })
-            .delete();
-
-        await IndexDB.db.players
-            .where('date').below(neighborhoodAttackExpiryTime)
-            .delete();
-
-        let LeftPlayers = await IndexDB.db.players
-            .where('id').above(0)
-            .keys();
-
-        await IndexDB.db.greatbuildings
-            .where('playerId').noneOf(LeftPlayers)
-            .delete();
+        await IndexDB.getDB();
+        await IndexDB.db.pvpActions.clear();
+        await IndexDB.toolboxGarbageCollector(); // TOOLBOX: keeps players and greatbuildings instead of clearing them
 
         for (const table of ['statsRewards', 'statsUnitsD', 'statsTreasurePlayerD', 'statsTreasureClanD']) {
             await IndexDB.db[table].where('date').below(daylyExpiryTime).delete();
@@ -441,6 +381,26 @@ let IndexDB = {
 
         for (const table of ['statsGBGPlayers', 'statsGBGPlayerCache']) {
             await IndexDB.db[table].where('date').below(gbgExpiryTime).delete();
+        }
+    },
+
+    rewardDBCleanup: async () => {
+        //reward type for shard, Ad chests and shards was changed around april 11 and code was amended for that on May 19 - this will switch all old entries for incidents to the new type
+        if (!localStorage.getItem("HiddenRewardOverwrite")) {
+            let x = await IndexDB.db.statsRewards.toArray();
+            let y= [];
+            x.forEach(a=>{
+                if (a.type=="hidden_reward") {
+                    a.type="shards"
+                    y.push(a)
+                }
+                if (a.type=="default" || a.type=="living_city") {
+                    a.type="hidden_reward"
+                    y.push(a)
+                }
+                });
+            IndexDB.db.statsRewards.bulkPut(y);
+            localStorage.setItem("HiddenRewardOverwrite","done");
         }
     },
 
@@ -469,50 +429,26 @@ let IndexDB = {
      * @param updateDate
      * @returns {Promise<void>}
      */
-    addUserFromPlayerDictIfNotExists: (playerId, updateDate) => {
-		let player = PlayerDict[playerId];
-		let promise = new Promise((resolve, reject)=>{});
-		return IndexDB.loadPlayer(playerId).then((playerFromDB) => {
-			if (!playerFromDB) {
-				if (player) {
-					promise = IndexDB.db.players.add({
-						id: playerId,
-						name: player.PlayerName,
-						clanId: player.ClanId || 0,
-						clanName: player.ClanName,
-						avatar: player.Avatar,
-						era: player.Era || 'unknown',
-						score: player.Score,
-						lastScoreChangeDate: player.ScoreDate,
-						lastScoreReceiveData:player.ScoreReceiveDate, 
-						wonBattles: player.WonBattles,
-						lastWonBattlesChangeDate: player.WonBattlesDate,
-						lastWonBattlesReceiveDate: player.WonBattlesReceiveDate,
-						date: MainParser.getCurrentDate(),
-					});
-				}
-			}
-			else if (updateDate) {
-				promise = IndexDB.db.players.update(playerId, {
-					era: player.Era,
-					score: player.Score,
-					lastScoreChangeDate: player.ScoreDate,
-					lastScoreReceiveData:player.ScoreReceiveDate, 
-					wonBattles: player.WonBattles,
-					lastWonBattlesChangeDate: player.WonBattlesDate,
-					lastWonBattlesReceiveDate: player.WonBattlesReceiveDate,
-					date: MainParser.getCurrentDate(),
-				});
-			}
-		}).catch((error) => {
-			promise.reject(error);
-		});
-		return promise;
-    },
-	
-	loadPlayer: (playerId) => {
-		return IndexDB.getDB().then(() => {
-			return IndexDB.db.players.get(playerId);
-		}); 
-	}
+    addUserFromPlayerDictIfNotExists: async(playerId, updateDate) => {
+        const playerFromDB = await IndexDB.db.players.get(playerId);
+        if (!playerFromDB) {
+            let player = PlayerDict[playerId];
+            if (player) {
+                await IndexDB.db.players.add({
+                    id: playerId,
+                    name: player.PlayerName,
+                    clanId: player.ClanId || 0,
+                    clanName: player.ClanName,
+                    avatar: player.Avatar,
+                    era: 'unknown', // Era can be discovered when user is visited, not now
+                    date: MainParser.getCurrentDate(),
+                });
+            }
+        }
+        else if (updateDate) {
+            IndexDB.db.players.update(playerId, {
+                date: MainParser.getCurrentDate()
+            });
+        }
+    }
 };

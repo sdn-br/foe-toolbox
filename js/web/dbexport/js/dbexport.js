@@ -88,7 +88,7 @@ let DBExport = {
 
         h.push(`</tbody></table>`);
 
-        h.push(`<button class="btn btn-default" id="dbex_ExportSelection" href="#">${i18n('Boxes.DBExport.ExportData')}</button>`);
+        h.push(`<button class="btn" id="dbex_ExportSelection" href="#">${i18n('Boxes.DBExport.ExportData')}</button>`);
 
         $('#dbexport_wrapper').html(h.join('')).promise().done(function () {
 
@@ -131,7 +131,7 @@ let DBExport = {
 
                 data.localStorage = localSettings.length ? true : false;
 
-                if (!data.indexdb && !data.localStorage) 
+                if (!data.indexdb && !data.localStorage)
                 {
                     DBExport.hidePreloader();
                     return;
@@ -229,7 +229,7 @@ let DBExport = {
 
                     let SuccessMessage = SuccessState === 1 ? i18n('Boxes.DBExport.ImportSuccessful') : (SuccessState === 0 ? i18n('Boxes.DBExport.ImportPartlySuccessful') : i18n('Boxes.DBExport.ImportFileError'));
                     $("#debex_import_wrapper").append(`<p class="success">${SuccessMessage}</p>` +
-                        `<p><button onclick="location.reload();" class="btn-default">${i18n('Boxes.DBExport.ReloadPage')}</button></p>`);
+                        `<p><button onclick="location.reload();" class="btn">${i18n('Boxes.DBExport.ReloadPage')}</button></p>`);
 
                     DBExport.hidePreloader();
                     break;
@@ -280,7 +280,7 @@ let DBExport = {
                     Promise.all(promises).then(function () {
                         let SuccessMessage = SuccessState === 1 ? i18n('Boxes.DBExport.ImportSuccessful') : (SuccessState === 0 ? i18n('Boxes.DBExport.ImportPartlySuccessful') : i18n('Boxes.DBExport.ImportFileError'));
                         $("#debex_import_wrapper").append(`<p class="success">${SuccessMessage}</p>` +
-                            `<p><button onclick="location.reload();" class="btn-default">${i18n('Boxes.DBExport.ReloadPage')}</button></p>`);
+                            `<p><button onclick="location.reload();" class="btn">${i18n('Boxes.DBExport.ReloadPage')}</button></p>`);
                         DBExport.hidePreloader();
                     });
                     break;
@@ -470,7 +470,7 @@ let DBExport = {
         {
             zip.generateAsync({ type: "blob", compression: "DEFLATE" })
                 .then(function (blob) {
-                    download(blob, ExtWorld + "_foe_toolbox_export_" + moment().format("YYMMDD-HHmm") + "_" + ExtPlayerID + ".zip", "application/zip");
+                    download(blob, ExtWorld + "_foe_toolbox_export_" + moment().format("YYMMDD-HHmm") + "_" + ExtPlayerID + ".zip", "application/zip"); // TOOLBOX: branding
                     DBExport.hidePreloader();
                 });
         }
