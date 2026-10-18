@@ -82,6 +82,8 @@
 	/* no visible scrollbar, it covered the tabs; the wheel scrolls (Notes.EnableTabScrolling) */
 	scrollbar-width: none;
 	margin-right: 34px;
+	/* no gap left of the fixed players tab, scrolled tabs would show through it */
+	padding-left: 0 !important;
 }
 
 #toolboxNotesBody .tabs ul.horizontal::-webkit-scrollbar {
@@ -98,8 +100,16 @@
 	min-width: 70px;
 }
 
+/* the players tab stays at the left while the other tabs scroll */
 #toolboxNotesBody .tabs ul.horizontal li.notes-fixed {
 	flex: none;
+	position: sticky;
+	left: 0;
+	z-index: 25;
+}
+
+#toolboxNotesBody .tabs ul.horizontal.notes-tabs-scrolled li.notes-fixed {
+	box-shadow: 8px 0 8px -4px rgba(0, 0, 0, 0.8);
 }
 
 #toolboxNotesBody .tabs ul.horizontal li a {
