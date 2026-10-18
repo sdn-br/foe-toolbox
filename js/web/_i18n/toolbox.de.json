@@ -155,6 +155,7 @@
     "Boxes.Notes.ModalMissingPlayers": "Gibt es Spieler, die auf der Auswahlliste fehlen? Schließe diese Box, klicken Sie auf die beiden anderen Reiter unten in der Sozialleiste (Nachbarn, Gildenmitglieder, Freunde) und öffne dann diese Box erneut.",
     "Boxes.Notes.NewGroup": "Gruppe",
     "Boxes.Notes.NewGroupDesc": "Lege zuerst eine Gruppe an... ",
+    "Boxes.Notes.NewGroupHint": "Neue Gruppe",
     "Boxes.Notes.NewPlayer": "Spieler",
     "Boxes.Notes.NewSide": "Seite",
     "Boxes.Notes.RenameHint": "Doppelklick zum Umbenennen",
