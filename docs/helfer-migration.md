@@ -404,7 +404,8 @@ Umhüllte Upstream-Funktionen: maßgeblich ist `scripts/toolbox-wraps.txt` (Funk
 - `ShowPlayersAttDeffValues` ist default aus (Bann-Warnung), der Menüknopf weist ohne aktive Einstellung darauf hin.
 - Alerts-Link im Popup bleibt ausgeblendet wie im Helfer.
 - Firefox wird vorerst nicht unterstützt.
-- Notizen nur lokal (`FoEToolbox2DB_Notice_<id>`), ohne `GlobalSend` und API-Token. Einziger Netzwerkzugriff: manueller Import vom Helfer-Server, der den lokalen Stand ersetzt.
+- Notizen nur lokal (`FoEToolbox2DB_Notice_<id>`), ohne `GlobalSend`. Einziger Netzwerkzugriff: manueller Import vom Helfer-Server (nur mit API-Token, nach Rückfrage), der den lokalen Stand ersetzt. Ist auf dem Server nichts gespeichert, bleibt der lokale Stand.
+- Die GitHub-Action `.github/workflows/issues_handle.yml` des Helfers (schließt inaktive Issues nach 30 + 14 Tagen) ist entfernt, sie würde nach dem Merge in `master` auch die Issues der Toolbox schließen. Ändert Upstream die Datei, meldet `scripts/toolbox-check.sh` das unter (c).
 - Eigene IndexedDB-Namen (`FoEToolbox2DB_*`), die DBs von 1.24 und Helfer werden nur gelesen (einmalige Kopie beim ersten Start), nie beschrieben oder gelöscht. Damit können Tester jederzeit zu 1.24 zurück; was in der Testphase neu entstand, sieht 1.24 nicht.
 
 ## Browser-Tests
