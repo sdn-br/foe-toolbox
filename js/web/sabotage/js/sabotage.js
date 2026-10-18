@@ -314,6 +314,7 @@ let Sabotage = {
 			guildLink: (Sabotage.ClanName ? MainParser.GetGuildLink(Sabotage.ClanId, Sabotage.ClanName) : undefined),
 			era: (Sabotage.PlayerEra && Technologies.Eras[Sabotage.PlayerEra] !== undefined ? i18n('Eras.' + Technologies.Eras[Sabotage.PlayerEra]) : undefined),
 			attack: attack,
+			note: await PlayerNote.get(Sabotage.PlayerId),
 			showCity: showCity,
 			showLoot: (!Sabotage.IsGuildMember && typeof Looting !== 'undefined'),
 			boosts: (Settings.GetSetting('ShowPlayersAttDeffValues') ? Object.assign({ PlunderRepel: Sabotage.PlunderRepel }, Sabotage.ArmyBoosts) : undefined),
@@ -383,6 +384,7 @@ let Sabotage = {
 						])}
 					</div>
 					<p class="plunder-repel">${t('PlunderRepel')}: <span class="toolbox-card-value">${fmt(b.PlunderRepel)}%</span></p>`}
+				<div class="toolbox-cards">${PlayerNote.view(vm.playerId, vm.note, () => Sabotage.showResult())}</div>
 			</div>
 			${!p ? '' : html`
 				<table class="foe-table">

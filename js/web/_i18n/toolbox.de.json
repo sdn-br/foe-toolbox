@@ -133,6 +133,8 @@
     "Boxes.Looting.Unknown": "Unbekannt",
     "Boxes.Neighbors.GuildPower": "Gildenmacht",
     "Boxes.Neighbors.ReadyProductions": "Fertige Produktionen",
+    "Boxes.PlayerNote.Placeholder": "Notiz zu diesem Spieler, wird beim Verlassen des Feldes gespeichert",
+    "Boxes.PlayerNote.Title": "Notiz",
     "Boxes.RecurringQuests.Empty": "Noch keine wiederkehrenden Quests erfasst. Sie werden gespeichert, sobald sie im Quest-Menü erscheinen.",
     "Boxes.Sabotage.AlreadySetAlarm": "Alarm",
     "Boxes.Sabotage.Attack": "Angriff",
