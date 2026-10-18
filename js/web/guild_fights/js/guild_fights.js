@@ -1100,7 +1100,11 @@ let Guild_fights = {
 			if (localStorage.getItem('GildPlayersDetailViewCords') === null) {
 				ptop = $('#GildPlayers').length !== 0 ? $('#GildPlayers').position().top : 0;
 				pright = $('#GildPlayers').length !== 0 ? ($('#GildPlayers').position().left + $('#GildPlayers').width() + 10) : 0;
-				$('#GildPlayersDetailView').css('top', ptop + 'px').css('left', (pright * 1) + 'px');
+				// TOOLBOX-BEGIN: position via --x/--y (offset from the screen centre), a fixed left/top overrode them and the box could not be dragged
+				let box = $('#GildPlayersDetailView');
+				pright = Math.max(0, Math.min(pright, window.innerWidth - box.outerWidth()));
+				box.css({ '--x': (pright - window.innerWidth / 2) + 'px', '--y': (ptop - window.innerHeight / 2) + 'px' });
+				// TOOLBOX-END
 			}
 		}
 
