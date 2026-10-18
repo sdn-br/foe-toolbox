@@ -26,26 +26,36 @@
 	position: relative;
 }
 
-.window-body .empty-notice {
-	padding: 10px;
-}
-
-.window-body .toolboxNotes .grp-btn {
+/* "+ new page" / "+ add player" row on top of the page list, like in browser sidebars.
+   Absolute like the list itself, so it stays visible when the list scrolls */
+#toolboxNotesBody .notes-add-row {
 	position: absolute;
-	left: 4px;
-	top: 2px;
+	top: 0;
+	left: 0;
 	z-index: 10;
+	box-sizing: border-box;
+	width: 120px;
+	margin: 0;
+	padding: 0 8px;
+	line-height: 30px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-tab);
+	border-bottom: 1px solid var(--black-30);
+	cursor: pointer;
 }
 
-.window-body .toolboxNotes .itm-btn {
-	margin-top: 5px;
-	margin-left: 5px;
-	position: absolute;
-	z-index: 10;
+#toolboxNotesBody .notes-add-row:hover {
+	color: var(--text-tab-active);
+	background: var(--black-30);
 }
 
-#toolboxNotesBody .empty-notice {
-	padding-left: 120px;
+/* name input of a new group or page */
+#toolboxNotesBody .notes-new .notes-rename {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 8em;
 }
 
 #toolboxNotesBody .tabs ul.horizontal li a span {
@@ -106,7 +116,7 @@
 }
 
 #toolboxNotesBody .toolboxNotes ul.vertical {
-	padding-top: 39px;
+	padding-top: 31px;
 }
 
 #toolboxNotesBody ::-webkit-scrollbar-thumb {
