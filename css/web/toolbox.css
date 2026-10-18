@@ -79,10 +79,10 @@
 	cursor: text;
 }
 
-/* a frame instead of a background, the heading already uses --black-30 */
+/* a frame in the card border color instead of a background, the heading already uses --black-30 */
 .window-body .player-note-text:focus {
 	outline: none;
-	box-shadow: inset 0 0 0 1px var(--sunflower);
+	box-shadow: inset 0 0 0 1px var(--text-dark);
 }
 
 .window-body .player-note-text:empty::before {
