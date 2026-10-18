@@ -1,0 +1,327 @@
+/*
+ * **************************************************************************************
+ * Copyright (C) 2026 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
+ *
+ * See file LICENSE.md or go to
+ * https://github.com/mainIine/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
+ *
+ * **************************************************************************************
+ */
+
+#toolboxNotes {
+	left: calc(50% - 310px);
+	top: 30%;
+	min-width: 620px;
+}
+
+#toolboxNotesBody {
+	min-height: 200px;
+	min-width: 620px;
+}
+
+/* wider page list than the Helfer default (120px), names are cut later */
+#toolboxNotesBody .tabs ul.vertical {
+	width: 160px;
+}
+
+#toolboxNotesBody .tabs .sub-tab {
+	margin-left: 160px;
+}
+
+.window-body .toolboxNotes {
+	position: relative;
+}
+
+/* "+ new page" / "+ add player" row on top of the page list, like in browser sidebars.
+   Absolute like the list itself, so it stays visible when the list scrolls */
+#toolboxNotesBody .notes-add-row {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 10;
+	box-sizing: border-box;
+	width: 160px;
+	margin: 0;
+	padding: 0 8px;
+	line-height: 30px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-tab);
+	border-bottom: 1px solid var(--black-30);
+	cursor: pointer;
+}
+
+#toolboxNotesBody .notes-add-row:hover {
+	color: var(--text-tab-active);
+	background: var(--black-30);
+}
+
+/* name input of a new group or page */
+#toolboxNotesBody .notes-new .notes-rename {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 8em;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li a span {
+	white-space: nowrap;
+}
+
+/* group tabs in one row like browser tabs: they shrink and cut their names with ..., only then
+   the row scrolls, and the "+" stays visible at the right end */
+#toolboxNotesBody .tabs ul.horizontal {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: hidden;
+	/* no visible scrollbar, it covered the tabs; the wheel scrolls (Notes.EnableTabScrolling) */
+	scrollbar-width: none;
+	/* the row runs between the players tab (Notes.EnableTabScrolling sets its width) and the "+" */
+	margin-left: var(--notes-fixed-w, 0);
+	margin-right: 34px;
+	padding-left: 0 !important;
+}
+
+#toolboxNotesBody .tabs ul.horizontal::-webkit-scrollbar {
+	display: none;
+}
+
+/* soft edges of the row, drawn with the row's own background */
+#toolboxNotesBody .toolboxNotes > .notes-fade {
+	display: none;
+	position: absolute;
+	top: 5px;
+	height: 34px;
+	z-index: 24;
+	pointer-events: none;
+	background-image: url('../../../../css/images/hud/box-bg.png');
+}
+
+#toolboxNotesBody .toolboxNotes > .notes-fade-left {
+	left: var(--notes-fixed-w, 0);
+	width: 30px;
+	-webkit-mask-image: linear-gradient(to right, #000, transparent);
+	mask-image: linear-gradient(to right, #000, transparent);
+}
+
+#toolboxNotesBody .toolboxNotes > .notes-fade-right {
+	right: 34px;
+	width: 40px;
+	-webkit-mask-image: linear-gradient(to left, #000, transparent);
+	mask-image: linear-gradient(to left, #000, transparent);
+}
+
+#toolboxNotesBody .toolboxNotes.notes-tabs-scrolled > .notes-fade-left,
+#toolboxNotesBody .toolboxNotes.notes-tabs-more > .notes-fade-right {
+	display: block;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li {
+	flex: 0 1 auto;
+	min-width: 70px;
+}
+
+/* the players tab stays left of the scrolling row. Still a li of the row for Tabslet, but placed
+   against the notes container, so the row's overflow does not cut it */
+#toolboxNotesBody .tabs ul.horizontal li.notes-fixed {
+	flex: none;
+	position: absolute;
+	left: 0;
+	top: 5px;
+	z-index: 25;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li a {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li a span {
+	display: inline;
+}
+
+/* "+" behind the last group tab, like a new tab button in a browser */
+#toolboxNotesBody .toolboxNotes > .notes-add-grp {
+	position: absolute;
+	top: 5px;
+	right: 2px;
+	width: 30px;
+	line-height: 34px;
+	text-align: center;
+	font-size: 18px;
+	color: var(--text-tab);
+	border-radius: 4px 4px 0 0;
+	cursor: pointer;
+}
+
+#toolboxNotesBody .toolboxNotes > .notes-add-grp:hover {
+	color: var(--text-tab-active);
+}
+
+#toolboxNotesBody .toolboxNotes ul.vertical {
+	padding-top: 31px;
+}
+
+#toolboxNotesBody ::-webkit-scrollbar-thumb {
+	background: #7b3f20;
+}
+
+#toolboxNotesBody .content-head {
+	font-size: 110%;
+	font-weight: 700;
+	color: var(--sunflower);
+	margin-bottom: 5px;
+}
+
+#toolboxNotesBody .content-head-player {
+	display: flex;
+	color: var(--sunflower);
+	margin-bottom: 15px;
+}
+
+#toolboxNotesBody .content-head-player span.avatar {
+	display: inline-block;
+	width: 65px;
+	height: 65px;
+	background-size: contain;
+	margin-right: 15px;
+}
+
+#toolboxNotesBody .content-head-player span.name {
+	font-size: 110%;
+	font-weight: 700;
+	display: block;
+	margin-bottom: 15px;
+}
+
+#toolboxNotesBody .content-head-player div.info-text {
+	margin-left: auto;
+}
+
+#toolboxNotesBody .content-text {
+	overflow: hidden;
+	overflow-y: auto;
+}
+
+#toolboxNotesBody .content-text:focus, #toolboxNotesBody .content-head:focus {
+	outline: 2px solid var(--text-dark);
+}
+
+#toolboxNotesBody .content-text * {
+	font-family: inherit !important;
+	color: inherit !important;
+    background-color: transparent !important;
+	border-color: var(--text-dark) !important;
+}
+
+/*******************************************************************************/
+#toolboxNotes-modal {
+	left: calc(50% - 150px);
+	top: calc(50% - 50px);
+	width: 300px;
+	min-height: 30px;
+	z-index: 300;
+}
+
+#toolboxNotes-modalBody {
+	padding: 10px;
+	flex-wrap: wrap;
+	display: flex;
+}
+
+#toolboxNotes-modalBody input {
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+#toolboxNotes-modalBody .btn {
+	margin: 0 1px;
+	flex-grow: 2;
+}
+
+	/******************************************************************************/
+.global-send-required-bg {
+	background-color: rgba(0,0,0, 0.5);
+	position: relative;
+}
+
+.global-send-required {
+	display: inline-block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	width: 70%;
+	text-align: center;
+}
+
+
+/* trash icons: right in a group tab, top right in a page header */
+#toolboxNotesBody .notes-del {
+	display: inline-block;
+	flex: none;
+	width: 16px;
+	height: 16px;
+	background: url('../../x_img/trash.svg') center center / contain no-repeat;
+	opacity: 0.55;
+	cursor: pointer;
+}
+
+#toolboxNotesBody .notes-del:hover {
+	opacity: 1;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li .notes-del {
+	position: absolute;
+	right: 6px;
+	top: 7px;
+	z-index: 21;
+}
+
+/* like browser tabs: the trash only on the active or hovered tab, a tab cut at the row's edge
+   would otherwise show a lone trash icon without its name */
+#toolboxNotesBody .tabs ul.horizontal li:not(.active):not(:hover) .notes-del {
+	visibility: hidden;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li:has(.notes-del) a {
+	padding-right: 26px;
+}
+
+#toolboxNotesBody .content-head-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+#toolboxNotesBody .content-head-row .content-head {
+	flex: 1;
+}
+
+#toolboxNotesBody .content-head-player .info-text .notes-del {
+	display: block;
+	margin: 0 0 6px auto;
+}
+
+/* rename in place (double click on a group or page name) */
+#toolboxNotesBody .notes-rename {
+	width: 10em;
+	padding: 0 3px;
+	line-height: 20px;
+}
+
+#toolboxNotes-modalBody .notes-delete-text {
+	width: 100%;
+	margin-top: 0;
+}
+
+#toolboxNotes-modalBody .notes-delete-warning {
+	color: var(--danger-red);
+	font-weight: bold;
+}

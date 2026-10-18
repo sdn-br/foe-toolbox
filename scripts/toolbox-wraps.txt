@@ -1,6 +1,10 @@
 # Upstream functions the toolbox wraps, checked by scripts/toolbox-check.sh.
 # Format: Object.function<TAB>upstream file. The comment above each line says what the wrapper adds.
 
+# import button for the notes below the API token (notes-store)
+Settings.ApiTokenInput	js/web/settings/js/settings.js
+# opens the toolbox notes instead of the Helfer notes (toolbox-menu)
+_menu.notice_Btn	js/web/_menu/js/_menu.js
 # second counter for future events (toolbox-menu)
 _menu.hiddenRewards_Btn	js/web/_menu/js/_menu.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
@@ -17,3 +21,10 @@ MainParser.UpdatePlayerDictCore	js/web/_main/js/_main.js
 IndexDB._applyIndexSchema	js/web/indexdb/js/indexdb.js
 # then write era, score, wins, date fields, name, guild and avatar, keep known values if the new one is missing (toolbox-indexdb)
 IndexDB.addUserFromPlayerDictIfNotExists	js/web/indexdb/js/indexdb.js
+# the note column reads and writes the player pages of the notes (player-note)
+PvPArena.GetNotes	js/web/pvparena/js/pvparena.js
+PvPArena.SaveNote	js/web/pvparena/js/pvparena.js
+PvPArena.CalcTable	js/web/pvparena/js/pvparena.js
+# load the note texts before the table is drawn (player-note)
+PvPArena.CalcBody	js/web/pvparena/js/pvparena.js
+PvPArena.RefreshTable	js/web/pvparena/js/pvparena.js
