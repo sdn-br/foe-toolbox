@@ -128,6 +128,7 @@ let Notice = {
 						case 'guild': tabName = `🛡 ${i18n('Boxes.Notice.SelectPlayerGroupGuild')}`; break;
 						case 'friend': tabName = `👩🏼🤝🧑 ${i18n('Boxes.Notice.SelectPlayerGroupFriend')}`; break;
 						case 'neighbor': tabName = `⚔ ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break;
+						case 'player': tabName = `👤 ${i18n('Boxes.Notice.SelectPlayerGroupPlayer')}`; break; // TOOLBOX: group for any player, see player-note.js
 					}
 
 				} else {
@@ -142,7 +143,7 @@ let Notice = {
 
 					let itm = n['items'][x];
 
-					subtab.push(`<li><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${itm['tab']}</span></a></li>`);
+					subtab.push(`<li><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`); // TOOLBOX: current neighbor/guild/friend icons
 
 					subdiv.push(`<div id='subtab-${itm['id']}' class="sub-tab" spellcheck="false" data-parent="${n['id']}" data-id="${itm['id']}">`);
 
@@ -155,9 +156,7 @@ let Notice = {
 											<span class="name">${player['PlayerName']}</span>
 											<span class="clan-name"><em>#${player['PlayerID']}</em> ${player['ClanName'] ? '[' + player['ClanName'] + ']' : '&nbsp;'}</span>
 										</div>
-										<div class="info-text">
-
-										</div>
+										<div class="info-text">${PlayerNote.relationIcons(Number(player['PlayerID']), true)}</div><!-- TOOLBOX: current neighbor/guild/friend icons -->
 									</div>`);
 
 					} else {
@@ -448,6 +447,7 @@ let Notice = {
 						$('<option />').attr({
 							'data-value': 'neighbor'
 						}).text(i18n('Boxes.Notice.SelectPlayerGroupNeighbor')),
+						$('<option />').attr({ 'data-value': 'player' }).text(i18n('Boxes.Notice.SelectPlayerGroupPlayer')), // TOOLBOX: group for any player
 					)
 				)
 			);
@@ -655,7 +655,7 @@ let Notice = {
 		delete Notice.Players[ExtPlayerID];
 
 		// find all players by tab-type ...
-		const playerObj = Object.values(Notice.Players).filter((v) => v[mapper[type]] === true);
+		const playerObj = Object.values(Notice.Players).filter((v) => type === 'player' || v[mapper[type]] === true); // TOOLBOX: 'player' groups offer every known player
 
 		// ... and sort by name
 		const players = helper.arr.multisort(playerObj, ['PlayerName'], ['ASC']);
@@ -702,7 +702,7 @@ let Notice = {
 
 		// check if not double
 		const group = Notice.notes.find(e => (e.id === Notice.ActualGrp));
-		const player = group.items.find(e => (e.tab === PlayerDict[id]['PlayerName']));
+		const player = group.items.find(e => (PlayerNote.playerIdOf(e) === Number(id))); // TOOLBOX: by id, a renamed player is still the same
 
 		// Player is allways added
 		if(player){
