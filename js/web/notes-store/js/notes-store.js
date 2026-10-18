@@ -178,7 +178,8 @@ Notes.Store = {
 	read: async () => {
 		const db = Notes.Store.db,
 			bySort = (a, b) => (a.sort - b.sort) || (a.id - b.id),
-			groups = (await db.groups.toArray()).sort(bySort),
+			// the players group always comes first, only the own groups are sorted
+			groups = (await db.groups.toArray()).sort((a, b) => (!!b.player_group - !!a.player_group) || bySort(a, b)),
 			items = (await db.items.toArray()).sort(bySort);
 
 		if (groups.length === 0) {
