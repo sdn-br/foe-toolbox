@@ -213,13 +213,6 @@
 	display: none !important;
 }
 
-/* a box button without function in the current state (e.g. notes edit mode without groups) */
-.window-box .box-buttons span.disabled {
-	opacity: 0.4;
-	filter: grayscale(1);
-	cursor: default;
-}
-
 /* recurring quests: hint while no quest is recorded yet */
 #RecurringQuestsBoxBody .recurring-empty {
 	padding: 10px;

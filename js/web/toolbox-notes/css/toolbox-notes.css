@@ -52,23 +52,6 @@
 	white-space: nowrap;
 }
 
-#toolboxNotesBody .tab-edit,
-#toolboxNotesBody .sub-tab-edit {
-	width: 24px;
-	height: 24px;
-	background: var(--black-50) url('../../../../css/images/hud/edit.png') center center no-repeat;
-	position: absolute;
-	background-size: 80%;
-	border: 1px solid var(--border-table-bottom);
-	border-radius: 3px;
-	z-index: 50;
-}
-
-#toolboxNotesBody .tab-edit:hover,
-#toolboxNotesBody .sub-tab-edit:hover {
-	border-color: var(--sunflower);
-}
-
 #toolboxNotesBody .tabs ul.horizontal {
 	padding-left: 120px;
 }
@@ -194,4 +177,63 @@
 	transform: translate(-50%,-50%);
 	width: 70%;
 	text-align: center;
+}
+
+
+/* trash icons: right in a group tab, top right in a page header */
+#toolboxNotesBody .notes-del {
+	display: inline-block;
+	flex: none;
+	width: 16px;
+	height: 16px;
+	background: url('../../x_img/trash.svg') center center / contain no-repeat;
+	opacity: 0.55;
+	cursor: pointer;
+}
+
+#toolboxNotesBody .notes-del:hover {
+	opacity: 1;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li .notes-del {
+	position: absolute;
+	right: 6px;
+	top: 7px;
+	z-index: 21;
+}
+
+#toolboxNotesBody .tabs ul.horizontal li:has(.notes-del) a {
+	padding-right: 26px;
+}
+
+#toolboxNotesBody .content-head-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+#toolboxNotesBody .content-head-row .content-head {
+	flex: 1;
+}
+
+#toolboxNotesBody .content-head-player .info-text .notes-del {
+	display: block;
+	margin: 0 0 6px auto;
+}
+
+/* rename in place (double click on a group or page name) */
+#toolboxNotesBody .notes-rename {
+	width: 10em;
+	padding: 0 3px;
+	line-height: 20px;
+}
+
+#toolboxNotes-modalBody .notes-delete-text {
+	width: 100%;
+	margin-top: 0;
+}
+
+#toolboxNotes-modalBody .notes-delete-warning {
+	color: var(--danger-red);
+	font-weight: bold;
 }

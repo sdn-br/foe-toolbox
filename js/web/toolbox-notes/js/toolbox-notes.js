@@ -18,16 +18,11 @@
 // own ids (toolboxNotes) and texts (Boxes.Notes.*).
 
 /**
- * @type {{ActualGrp: number, init: Notes.init, notes: null, Listener: Notes.Listener, SetHeights: Notes.SetHeights, buildBox: Notes.buildBox, BuildSettingButtons: Notes.BuildSettingButtons, prepareContent: Notes.prepareContent, ActiveTab: number, ShowModal: Notes.ShowModal, SavePlayerToGroup: Notes.SavePlayerToGroup, SaveContent: Notes.SaveContent, EditMode: boolean, ApiToken: null, SaveModal: Notes.SaveModal, SaveItemModal: Notes.SaveItemModal, DeleteElement: Notes.DeleteElement, ActiveSubTab: number, Players: {}}}
+ * @type {{ActualGrp: number, init: Notes.init, notes: null, Listener: Notes.Listener, SetHeights: Notes.SetHeights, buildBox: Notes.buildBox, prepareContent: Notes.prepareContent, ActiveTab: number, ShowModal: Notes.ShowModal, SavePlayerToGroup: Notes.SavePlayerToGroup, SaveContent: Notes.SaveContent, ApiToken: null, SaveModal: Notes.SaveModal, SaveItemModal: Notes.SaveItemModal, DeleteElement: Notes.DeleteElement, ActiveSubTab: number, Players: {}}}
  */
 let Notes = {
 
 	notes: null,
-
-	/**
-	 * Toogle state for edit mode
-	 */
-	EditMode: false,
 
 	/**
 	 * Object for player picker
@@ -90,7 +85,6 @@ let Notes = {
 				resize: true,
 				minimize: true,
 				popout: () => MainParser.PopOut('toolboxNotes'), // pop-out window
-				settings: true
 			});
 
 			Notes.Listener();
@@ -140,7 +134,10 @@ let Notes = {
 					tabName = n['group_name'];
 				}
 
-				tab.push(`<li><a href="#tab-${n['id']}" data-id="${n['id']}"><span>${tabName}</span></a></li>`);
+				// the players group always exists (Notes.Store.mergePlayerGroups), it is neither renamed nor deleted
+				tab.push(n['player_group']
+					? `<li><a href="#tab-${n['id']}" data-id="${n['id']}"><span>${tabName}</span></a></li>`
+					: `<li><a href="#tab-${n['id']}" data-id="${n['id']}" title="${i18n('Boxes.Notes.RenameHint')}"><span class="notes-name" data-type="grp" data-id="${n['id']}">${tabName}</span></a>${Notes.deleteButton('grp', n['id'])}</li>`);
 
 				for(let x in n['items']){
 
@@ -148,7 +145,10 @@ let Notes = {
 
 					let itm = n['items'][x];
 
-					subtab.push(`<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`); // current neighbor/guild/friend icons, player id for the filter
+					// current neighbor/guild/friend icons, player id for the filter. Player pages carry the player's name, only other pages are renamed
+					subtab.push(itm['player_data']
+						? `<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`
+						: `<li data-player=""><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']} (${i18n('Boxes.Notes.RenameHint')})"><span class="notes-name" data-type="itm" data-id="${itm['id']}">${itm['tab']}</span></a></li>`);
 
 					subdiv.push(`<div id='subtab-${itm['id']}' class="sub-tab" spellcheck="false" data-parent="${n['id']}" data-id="${itm['id']}">`);
 
@@ -161,11 +161,11 @@ let Notes = {
 											<span class="name">${player['PlayerName']}</span>
 											<span class="clan-name"><em>#${player['PlayerID']}</em> ${player['ClanName'] ? '[' + player['ClanName'] + ']' : '&nbsp;'}</span>
 										</div>
-										<div class="info-text">${PlayerNote.relationIcons(Number(player['PlayerID']), true)}</div><!-- current neighbor/guild/friend icons -->
+										<div class="info-text">${Notes.deleteButton('itm', itm['id'])}${PlayerNote.relationIcons(Number(player['PlayerID']), true)}</div><!-- current neighbor/guild/friend icons -->
 									</div>`);
 
 					} else {
-						subdiv.push(`<div class="content-head" contenteditable="true">${(itm['title'] === '' ? i18n('Boxes.Notes.DummyHeading') : itm['title'])}</div>`)
+						subdiv.push(`<div class="content-head-row"><div class="content-head" contenteditable="true">${(itm['title'] === '' ? i18n('Boxes.Notes.DummyHeading') : itm['title'])}</div>${Notes.deleteButton('itm', itm['id'])}</div>`)
 					}
 
 
@@ -226,11 +226,6 @@ let Notes = {
 				Notes.ActiveTab = 1;
 			}
 
-			// the settings button toggles the edit mode, which has nothing to edit without groups
-			const canEdit = (grpCount > 0);
-			$('#toolboxNotes-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notes.Edit' : 'Boxes.Notes.EditDisabled'));
-			if (!canEdit) Notes.EditMode = false;
-
 			// init Tabslet
 			$('.toolboxNotes').tabslet({
 				active: Notes.ActiveTab
@@ -261,6 +256,8 @@ let Notes = {
 
 				PlayerNote.applyFilter(); // keep the player filter across renders
 			}
+
+			Notes.EnableSorting();
 		});
 	},
 
@@ -289,36 +286,27 @@ let Notes = {
 			}
 		});
 
-		$('#toolboxNotesBody').on('click', '.tab-edit', function(){
-			Notes.ShowModal('grp', $(this).data('id'));
+		// trash icons on group tabs and page headers
+		$('#toolboxNotesBody').on('click', '.notes-del', function(e){
+			e.preventDefault();
+			e.stopPropagation();
+			Notes.ConfirmDelete($(this).data('type'), $(this).data('id'));
 		});
 
-		$('#toolboxNotesBody').on('click', '.sub-tab-edit', function(){
-			Notes.ShowModal('itm', $(this).data('id'));
+		// rename groups and pages in place
+		$('#toolboxNotesBody').on('dblclick', '.notes-name', function(e){
+			e.preventDefault();
+			Notes.StartRename($(this));
 		});
 
-		// toggle edit buttons
-		$('#toolboxNotes').on('click', '#toolboxNotes-settings', function(){
-			if($(this).hasClass('disabled')) return; // nothing to edit yet
-
-			if(!Notes.EditMode){
-				Notes.BuildSettingButtons();
-			} else {
-				$('.tab-edit, .sub-tab-edit').remove();
-			}
-
-			Notes.EditMode = !Notes.EditMode;
-		});
-
-
-		$('#toolboxNotesBody').on('blur', '[contenteditable="true"]', function(){
+		$('#toolboxNotesBody').on('blur', '.sub-tab [contenteditable="true"]', function(){
 			let $this = $(this).closest('.sub-tab');
 
 			Notes.SaveContent($this);
 		});
 
 		// enter is pressed
-		$('#toolboxNotesBody').on('keydown', '[contenteditable="true"]', function(e){
+		$('#toolboxNotesBody').on('keydown', '.sub-tab [contenteditable="true"]', function(e){
 
 			if (e.keyCode === 13) {
 				// prevent to enter a div instad a <br>
@@ -328,10 +316,6 @@ let Notes = {
 			}
 		});
 		if (Notes.initDone) return;
-		$('body').on('click', '.btn-delete', function() {
-			if (confirm(i18n('Boxes.Notes.ConfirmDelete')))
-				Notes.DeleteElement($(this).data('type'), $(this).data('id'));
-		});
 
 		$('body').on('click', '#toolboxNotes-modalclose, #toolboxNotes-modal-playersclose', function(){
 			$('.foe-helper-overlay').remove();
@@ -356,7 +340,7 @@ let Notes = {
 
 
 	/**
-	 * Show a tiny modal for create, edit or delete a group or item
+	 * Show a tiny modal to create a group or page (renaming is in place, deleting via the trash icons)
 	 *
 	 * @param type
 	 * @param id
@@ -365,18 +349,7 @@ let Notes = {
 	ShowModal:(type, id)=> {
 
 		let title = type === 'grp' ? i18n('Boxes.Notes.NewGroup') : i18n('Boxes.Notes.NewSide'),
-			txt;
-
-		if(id !== 'new'){
-
-			if(type === 'grp'){
-				txt = $('.horizontal').find(`[data-id="${id}"]`).text();
-			} else {
-				txt = $('.vertical').find(`[data-id="${id}"]`).text();
-			}
-
-			title = txt + ' - ' + i18n('Boxes.Notes.Edit');
-		}
+			txt = '';
 
 		HTML.Box({
 			id: 'toolboxNotes-modal',
@@ -412,31 +385,6 @@ let Notes = {
 
 		$('#toolboxNotes-modalBody').append(inp);
 
-
-		if(id !== 'new'){
-			let delBtn = $('<span />');
-
-			delBtn
-				.attr({
-					role: 'button',
-					class: `btn btn-delete`,
-					'data-id': id,
-					'data-type': type
-				})
-				.text(type === 'grp' ? i18n('Boxes.Notes.DeleteGroup') : i18n('Boxes.Notes.DeleteItem'))
-			;
-
-			$('#toolboxNotes-modalBody').append(delBtn);
-
-		} else {
-			let sort = $('<input />').attr({
-				type: 'number',
-				class: `inp-${type}-sort`,
-				placeholder: i18n('Boxes.Notes.Sorting')
-			});
-
-			sort.wrap('<div />').insertAfter(`.inp-${type}-name`);
-		}
 
 		// no player group type selection, player pages live in the one "players" group (Notes.Store.mergePlayerGroups)
 
@@ -504,7 +452,6 @@ let Notes = {
 					$('.foe-helper-overlay').remove();
 				});
 
-				Notes.EditMode = false;
 				Notes.buildBox();
 			}
 		});
@@ -565,7 +512,6 @@ let Notes = {
 					$('.foe-helper-overlay').remove();
 				});
 
-				Notes.EditMode = false;
 				Notes.buildBox();
 			}
 		});
@@ -668,124 +614,150 @@ let Notes = {
 
 
 	/**
-	 * Create "Edit" buttons for the DOM
-	 *
-	 * @constructor
+	 * Drag and drop sorting of groups and pages, always on. The minimum distance keeps
+	 * a normal click a tab switch.
 	 */
-	BuildSettingButtons: ()=> {
-
-		$('.tab-edit, .sub-tab-edit').remove();
-
-		// Sortfunction for horizontal + Stop event
-		$('ul.horizontal').sortable({
-			axis: 'x',
-			stop: function() {
-				let grps = [];
-
-				$('ul.horizontal li').each(function(idx){
-					let id = $(this).find('a').data('id');
-
-					grps.push({
-						id: id,
-						sort: idx
+	EnableSorting: ()=> {
+		const save = (type, list) => {
+			Notes.Store.send({type: type, [type === 'grp' ? 'grps' : 'itms']: list}, 'Notes/sort', (resp)=>{
+				if(resp['status'] === 'ERROR') {
+					HTML.ShowToastMsg({
+						head: 'Error',
+						text: resp['msg'],
+						type: 'error',
+						hideAfter: 10000,
 					});
-				});
+				}
+				else {
+					Notes.notes = resp['notice'];
+				}
+			});
+		};
 
-				Notes.Store.send({type:'grp',grps:grps,apiToken:Notes.ApiToken}, 'Notes/sort', (resp)=>{ // local store (Notes.Store) instead of the server
-					if(resp['status'] === 'ERROR') {
-						HTML.ShowToastMsg({
-							head: 'Error',
-							text: resp['msg'],
-							type: 'error',
-							hideAfter: 10000,
-						});
-					}
-					else {
-						Notes.notes = resp['notice'];
+		const order = (ul) => ul.children('li').map((idx, li) => ({ id: $(li).find('a').data('id'), sort: idx })).get();
 
-						$('.toolboxNotes').tabslet();
-						Notes.BuildSettingButtons();
-					}
-				});
+		$('#toolboxNotesBody ul.horizontal').sortable({
+			axis: 'x',
+			distance: 5,
+			cancel: '.notes-del, input',
+			stop: function() {
+				save('grp', order($(this)));
+				// keep the dragged group open
+				Notes.ActiveTab = $(this).children('li').index($(this).children('li.active')) + 1;
 			}
 		});
 
+		$('#toolboxNotesBody ul.vertical').sortable({
+			axis: 'y',
+			distance: 5,
+			cancel: 'input',
+			stop: function() {
+				save('itm', order($(this)));
+				Notes.ActiveSubTab = $(this).children('li').index($(this).children('li.active')) + 1;
+			}
+		});
+	},
 
-		$('ul.horizontal li').each(function(){
-			let $this = $(this),
-				id = $this.find('a').data('id'),
-				left = $this.position().left,
-				width = $this.width(),
-				btn = $('<span />');
 
-			btn.attr({
-				class: 'tab-edit',
-				'data-id': id
-			}).css({
-				left: ((left + width) - 28),
-				top: 5
-			});
+	/**
+	 * Trash icon of a group tab or page header
+	 *
+	 * @param type 'grp' or 'itm'
+	 * @param id
+	 * @returns {string} HTML
+	 */
+	deleteButton: (type, id)=> `<span class="notes-del" role="button" data-type="${type}" data-id="${id}" title="${i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroup' : 'Boxes.Notes.DeleteItem')}"></span>`,
 
-			$('.tabs').append(btn);
+
+	/**
+	 * Confirmation in the notes modal (no confirm(), it blocks the game and fails in the pop-out).
+	 * A group with pages gets an extra warning.
+	 *
+	 * @param type 'grp' or 'itm'
+	 * @param id
+	 */
+	ConfirmDelete: (type, id)=> {
+		const group = type === 'grp' ? (Notes.notes || []).find(g => g.id == id) : undefined,
+			item = type === 'itm' ? (Notes.notes || []).flatMap(g => g.items).find(i => i.id == id) : undefined,
+			name = group ? group.group_name : (item ? item.tab : ''),
+			pages = group ? group.items.length : 0;
+
+		HTML.Box({
+			id: 'toolboxNotes-modal',
+			title: i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroup' : 'Boxes.Notes.DeleteItem'),
+			auto_close: true,
 		});
 
-		$('.notice-wrapper').each(function(){
-			let div = $(this),
-				top = 43;
+		$('body').prepend( $('<div class="foe-helper-overlay" />') );
 
-			// Sortfunction for vertical + Stop event
-			div.find('ul.vertical').sortable({
-				axis: 'y',
-				stop: function(e, ui) {
-					let itms = [],
-						ul = $(ui.item).closest('ul');
+		$('#toolboxNotes-modalBody').append(
+			$('<p />').addClass('notes-delete-text').text(HTML.i18nReplacer(i18n(type === 'grp' ? 'Boxes.Notes.DeleteGroupConfirm' : 'Boxes.Notes.DeleteItemConfirm'), { name: name })),
+			pages > 0 ? $('<p />').addClass('notes-delete-text notes-delete-warning').text(HTML.i18nReplacer(i18n('Boxes.Notes.DeleteGroupPages'), { count: pages })) : '',
+			$('<span />').attr({role: 'button', class: 'btn btn-delete'}).text(i18n('Boxes.Notes.Delete')).on('click', () => Notes.DeleteElement(type, id)),
+			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('General.Cancel')).on('click', Notes.Store.CloseModal)
+		);
+	},
 
-					ul.find('li').each(function(idx){
-						let id = $(this).find('a').data('id');
 
-						itms.push({
-							id: id,
-							sort: idx
-						});
-					});
+	/**
+	 * Double click on a group or page name: an input in place, Enter or leaving saves, Escape cancels
+	 *
+	 * @param name the .notes-name span
+	 */
+	StartRename: (name)=> {
+		if (name.find('input').length > 0) {
+			return;
+		}
 
-					Notes.Store.send({type:'itm',itms:itms,apiToken:Notes.ApiToken}, 'Notes/sort', (resp)=>{ // local store (Notes.Store) instead of the server
-						if(resp['status'] === 'ERROR') {
-							HTML.ShowToastMsg({
-								head: 'Error',
-								text: resp['msg'],
-								type: 'error',
-								hideAfter: 10000,
-							});
-						}
-						else {
-							Notes.notes = resp['notice'];
+		const type = name.data('type'),
+			id = name.data('id'),
+			old = name.text(),
+			input = $('<input type="text" class="notes-rename" />').val(old);
 
-							$('.tabs-sub').tabslet();
-							Notes.BuildSettingButtons();
-						}
+		let done = false;
+
+		const finish = (save) => {
+			if (done) return;
+			done = true;
+
+			const txt = MainParser.ClearText(input.val().trim());
+
+			if (!save || txt === '' || txt === old) {
+				name.text(old);
+				return;
+			}
+
+			name.text(txt);
+
+			Notes.Store.send({id: id, type: type, name: txt}, 'Notes/set', (resp)=>{
+				if(resp['status'] === 'ERROR') {
+					name.text(old);
+					HTML.ShowToastMsg({
+						head: 'Error',
+						text: resp['msg'],
+						type: 'error',
+						hideAfter: 10000,
 					});
 				}
+				else {
+					Notes.notes = resp['notice'];
+					name.closest('li').find('a').attr('title', type === 'itm' ? `${txt} (${i18n('Boxes.Notes.RenameHint')})` : i18n('Boxes.Notes.RenameHint'));
+				}
 			});
+		};
 
-			div.find('ul.vertical li').each(function(){
-				let $this = $(this),
-					id = $this.find('a').data('id'),
-					btn = $('<span />');
+		input
+			.on('keydown', (e) => {
+				e.stopPropagation();
+				if (e.key === 'Enter') finish(true);
+				if (e.key === 'Escape') finish(false);
+			})
+			.on('blur', () => finish(true))
+			// clicks in the input must not switch tabs or start dragging
+			.on('click mousedown', (e) => e.stopPropagation());
 
-				btn.attr({
-					class: 'sub-tab-edit',
-					'data-id': id
-				}).css({
-					top: top,
-					left: 90
-				});
-
-				top += 32;
-
-				div.append(btn);
-			});
-		});
+		name.empty().append(input);
+		input.trigger('focus').trigger('select');
 	},
 
 
@@ -819,7 +791,6 @@ let Notes = {
 					$('.foe-helper-overlay').remove();
 				});
 
-				Notes.EditMode = false;
 				Notes.buildBox();
 			}
 		});
