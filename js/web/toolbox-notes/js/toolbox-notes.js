@@ -195,11 +195,8 @@ let Notes = {
 
 			content = `<div class='tabs toolboxNotes'>`;
 
-			if(tab.length > 0){
-				content += `<ul class='horizontal dark-bg'>${tab.join('')}</ul>`;
-			}
-
-			content += 		`<span class="btn grp-btn" data-id="new">+ ${i18n('Boxes.Notes.NewGroup')}</span>`;
+			// "+" behind the last tab like in a browser. A span, not a li: Tabslet and the sorting only see li
+			content += `<ul class='horizontal dark-bg'>${tab.join('')}<span class="notes-add-grp fh-tooltip" role="button" ${ToolboxTT.attrs(i18n('Boxes.Notes.NewGroupHint'))}>+</span></ul>`;
 			content += 		div.join('');
 			content += `</div>`;
 
@@ -290,6 +287,13 @@ let Notes = {
 		// trash icons on group tabs and page headers. Capture phase: Tabslet stops the click on
 		// the tab li before it bubbles up, and the tab must not switch either
 		$('#toolboxNotesBody')[0].addEventListener('click', function(e){
+			if (e.target.closest('.notes-add-grp')) {
+				e.preventDefault();
+				e.stopPropagation();
+				Notes.ShowModal('grp', 'new');
+				return;
+			}
+
 			const del = e.target.closest('.notes-del');
 
 			if (!del) return;
