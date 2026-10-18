@@ -286,12 +286,17 @@ let Notes = {
 			}
 		});
 
-		// trash icons on group tabs and page headers
-		$('#toolboxNotesBody').on('click', '.notes-del', function(e){
+		// trash icons on group tabs and page headers. Capture phase: Tabslet stops the click on
+		// the tab li before it bubbles up, and the tab must not switch either
+		$('#toolboxNotesBody')[0].addEventListener('click', function(e){
+			const del = e.target.closest('.notes-del');
+
+			if (!del) return;
+
 			e.preventDefault();
 			e.stopPropagation();
-			Notes.ConfirmDelete($(this).data('type'), $(this).data('id'));
-		});
+			Notes.ConfirmDelete($(del).data('type'), $(del).data('id'));
+		}, true);
 
 		// rename groups and pages in place
 		$('#toolboxNotesBody').on('dblclick', '.notes-name', function(e){
