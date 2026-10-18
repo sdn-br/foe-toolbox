@@ -137,7 +137,7 @@ let Notes = {
 				// the players group always exists (Notes.Store.mergePlayerGroups), it is neither renamed nor deleted
 				tab.push(n['player_group']
 					? `<li class="notes-fixed"><a href="#tab-${n['id']}" data-id="${n['id']}"><span>${tabName}</span></a></li>`
-					: `<li><a href="#tab-${n['id']}" data-id="${n['id']}" title="${i18n('Boxes.Notes.RenameHint')}"><span class="notes-name" data-type="grp" data-id="${n['id']}">${tabName}</span></a>${Notes.deleteButton('grp', n['id'])}</li>`);
+					: `<li><a href="#tab-${n['id']}" data-id="${n['id']}" class="fh-tooltip" data-callback_tt="Notes.nameTT" data-type="grp"><span class="notes-name" data-type="grp" data-id="${n['id']}">${tabName}</span></a>${Notes.deleteButton('grp', n['id'])}</li>`);
 
 				for(let x in n['items']){
 
@@ -147,8 +147,8 @@ let Notes = {
 
 					// current neighbor/guild/friend icons, player id for the filter. Player pages carry the player's name, only other pages are renamed
 					subtab.push(itm['player_data']
-						? `<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']}"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`
-						: `<li data-player=""><a href="#subtab-${itm['id']}" data-id="${itm['id']}" title="${itm['tab']} (${i18n('Boxes.Notes.RenameHint')})"><span class="notes-name" data-type="itm" data-id="${itm['id']}">${itm['tab']}</span></a></li>`);
+						? `<li data-player="${PlayerNote.playerIdOf(itm) || ''}"><a href="#subtab-${itm['id']}" data-id="${itm['id']}" class="fh-tooltip" data-callback_tt="Notes.nameTT" data-type="player"><span>${PlayerNote.relationIcons(PlayerNote.playerIdOf(itm))}${itm['tab']}</span></a></li>`
+						: `<li data-player=""><a href="#subtab-${itm['id']}" data-id="${itm['id']}" class="fh-tooltip" data-callback_tt="Notes.nameTT" data-type="itm"><span class="notes-name" data-type="itm" data-id="${itm['id']}">${itm['tab']}</span></a></li>`);
 
 					subdiv.push(`<div id='subtab-${itm['id']}' class="sub-tab" spellcheck="false" data-parent="${n['id']}" data-id="${itm['id']}">`);
 
@@ -637,13 +637,31 @@ let Notes = {
 		const tabName = $(`#toolboxNotesBody .notes-name[data-type="itm"][data-id="${id}"]`);
 
 		tabName.text(name);
-		tabName.closest('a').attr('title', `${name} (${i18n('Boxes.Notes.RenameHint')})`);
 		tabName.parents('a, li, ul').each(function(){ this.scrollLeft = 0; });
 
 		const head = $(`#toolboxNotesBody #subtab-${id} .content-head`);
 		if (!head.is(':focus')) {
 			head.text(name);
 		}
+	},
+
+
+	/**
+	 * Tooltip of group and page tabs (customTooltip, shows at once unlike a title attribute):
+	 * the full name, cut in the page list when too long, and how to rename
+	 *
+	 * @param e pointerenter event of the tab link
+	 * @returns {string} HTML
+	 */
+	nameTT: (e)=> {
+		const a = e.currentTarget,
+			type = a.dataset.type,
+			id = a.dataset.id,
+			group = type === 'grp' ? (Notes.notes || []).find(g => g.id == id) : undefined,
+			name = group ? group.group_name : Notes.itemName(id),
+			esc = (text) => $('<div />').text(text).html();
+
+		return `<div class="notes-tt"><strong>${esc(name)}</strong>${type === 'player' ? '' : `<br><small>${esc(i18n('Boxes.Notes.RenameHint'))}</small>`}</div>`;
 	},
 
 
@@ -903,3 +921,6 @@ let Notes = {
 		$('.content-text').height(h - $('.content-text').prev().height());
 	},
 };
+
+// the tooltip module resolves only known roots, Notes is registered here
+Tooltips.register('Notes.nameTT', Notes.nameTT);
