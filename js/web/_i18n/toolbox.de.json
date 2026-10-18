@@ -173,7 +173,7 @@
     "Boxes.Notice.ImportNotPossible": "Der Import braucht einen API-Token (Einstellungen, Reiter \"Info + Website\").",
     "Boxes.Notice.ImportStart": "Importieren",
     "Boxes.Notice.ImportSuccess": "Die Notizen vom FoE-Helfer-Server wurden importiert.",
-    "Boxes.Notice.SelectPlayerGroupPlayer": "Spieler",
+    "Boxes.Notice.SelectPlayerGroupNeighbor": "Spieler",
     "Boxes.OwnpartCalculator.ArcBonusForEachGB": "Bonuseinstellung pro LG speichern",
     "Boxes.OwnpartCalculator.OneFPForNonFPPlace": "1 FP für Plätze ohne FP berechnen",
     "General.Total": "Gesamt",
