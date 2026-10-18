@@ -334,5 +334,44 @@ FoEproxy.addWsHandler('OtherPlayerService', 'newEvent', async (data) => {
 // DBs of the toolbox modules, after the handler of _main.js has set ExtPlayerID
 FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 	GBGActionLog.checkForDB(ExtPlayerID);
-	Notice.Store.checkForDB(ExtPlayerID);
+	Notes.Store.checkForDB(ExtPlayerID).then(PlayerNote.migrateArenaNotes); // notes of the PvP arena, once
 });
+
+
+/**
+ * Tooltips of the toolbox: the instant Helfer tooltip (customTooltip) instead of a title
+ * attribute, which only shows after the fixed browser delay. Works in pop-out windows too.
+ * Usage: class "fh-tooltip" plus the attributes of ToolboxTT.attrs(text), in lit-html
+ * templates data-callback_tt="ToolboxTT.text" data-tt=${text}.
+ * Two forms: a short hint (data-tt only), or a heading (data-tt-head) with value lines in
+ * data-tt, one "label: value" per line, shown as a small table.
+ */
+let ToolboxTT = {
+
+	text: (e) => {
+		const esc = (text) => $('<div />').text(text).html(),
+			text = e.currentTarget.dataset.tt || '',
+			head = e.currentTarget.dataset.ttHead;
+
+		if (!head) {
+			return text ? `<div class="toolbox-tt">${esc(text)}</div>` : '';
+		}
+
+		const rows = text.split('\n').filter(l => l).map(line => {
+			const i = line.indexOf(': ');
+			return i < 0 ? `<tr><td colspan="2">${esc(line)}</td></tr>` : `<tr><td>${esc(line.slice(0, i))}</td><td>${esc(line.slice(i + 2))}</td></tr>`;
+		});
+
+		return `<div class="toolbox-tt toolbox-tt-detail"><div class="toolbox-tt-head">${esc(head)}</div><table>${rows.join('')}</table></div>`;
+	},
+
+
+	/**
+	 * @param text plain text
+	 * @returns {string} attributes for HTML strings
+	 */
+	attrs: (text) => `data-callback_tt="ToolboxTT.text" data-tt="${$('<div />').text(text).html().replace(/"/g, '&quot;')}"`,
+};
+
+// the tooltip module resolves only known roots, ToolboxTT is registered here
+Tooltips.register('ToolboxTT.text', ToolboxTT.text);

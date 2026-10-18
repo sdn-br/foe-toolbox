@@ -67,11 +67,209 @@
 	color: var(--text-medium);
 }
 
-/* a box button without function in the current state (e.g. notes edit mode without groups) */
-.window-box .box-buttons span.disabled {
-	opacity: 0.4;
-	filter: grayscale(1);
+/* player note card (sabotage box), stored as a player page in the notes */
+.window-body .player-note-text {
+	min-height: 2.6em;
+	max-height: 10em;
+	overflow-y: auto;
+	padding: 4px 8px;
+	border-top: 1px solid var(--black-30);
+	text-align: left;
+	color: var(--beige);
+	cursor: text;
+}
+
+/* a frame in the card border color instead of a background, the heading already uses --black-30 */
+.window-body .player-note-text:focus {
+	outline: none;
+	box-shadow: inset 0 0 0 1px var(--text-dark);
+}
+
+.window-body .player-note-text:empty::before {
+	content: attr(data-placeholder);
+	color: var(--text-medium);
+	font-style: italic;
+}
+
+/* notes: icons for what a player is right now (neighbor, guild member, friend) */
+#toolboxNotesBody .tabs-sub .player-relation {
+	margin-right: 3px;
+}
+
+#toolboxNotesBody .content-head-player .info-text .player-relation {
+	display: block;
+	text-align: right;
+	color: var(--beige);
+}
+
+/* notes: filter of the players group, by what a player is right now. It sits right of the
+   absolute positioned page list, which would otherwise catch the clicks on the first chips */
+#toolboxNotesBody .player-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+	margin: 0 0 6px 165px;
+}
+
+#toolboxNotesBody .player-filter-chip {
+	padding: 1px 8px;
+	border: 1px solid var(--text-dark);
+	border-radius: 10px;
+	color: var(--dark-beige);
+	cursor: pointer;
+}
+
+#toolboxNotesBody .player-filter-chip.active {
+	background: var(--black-30);
+	color: var(--beige);
+	font-weight: bold;
+}
+
+#toolboxNotesBody .player-filter-empty {
+	display: none;
+	margin-left: 6px;
+	color: var(--text-medium);
+	font-style: italic;
+}
+
+/* toolbox tooltips (customTooltip via ToolboxTT, #TooltipContainer also exists in pop-out windows) */
+/* the Helfer places the tooltip 10px from the pointer tip, the pointer covered the first letters */
+#TooltipContainer:has(> .toolbox-tt) {
+	margin: 8px 0 0 8px;
+}
+
+#TooltipContainer .toolbox-tt {
+	font-size: 12px;
+	font-weight: normal;
+	line-height: 1.3;
+	white-space: pre-line;
+}
+
+/* heading with value lines (e.g. units in PvP attacks) */
+#TooltipContainer .toolbox-tt-head {
+	font-weight: 600;
+	color: var(--beige);
+	margin-bottom: 3px;
+}
+
+#TooltipContainer .toolbox-tt-detail table {
+	border-collapse: collapse;
+	font-size: 11px;
+}
+
+#TooltipContainer .toolbox-tt-detail td {
+	padding: 1px 0;
+}
+
+#TooltipContainer .toolbox-tt-detail td:first-child {
+	padding-right: 12px;
+	color: var(--text-medium);
+}
+
+#TooltipContainer .toolbox-tt-detail td + td {
+	text-align: right;
+	font-weight: 600;
+}
+
+#TooltipContainer .toolbox-tt small {
+	display: block;
+	font-size: 11px;
+	color: var(--text-medium);
+}
+
+/* player search of the notes ("+ player", PlayerNote.showPicker): a list over the open page,
+   wider than the page list, at most PlayerNote.PickerLimit players without a page */
+#toolboxNotesBody .player-picker {
+	position: absolute;
+	left: 0;
+	z-index: 30;
+	width: 360px;
+	max-width: 100%;
+	box-sizing: border-box;
+	padding: 4px;
+	background-image: url('../images/hud/box-bg.png');
+	border: 1px solid var(--text-dark);
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+#toolboxNotesBody .player-picker-search {
+	box-sizing: border-box;
+	width: 100%;
+	margin-bottom: 4px;
+}
+
+#toolboxNotesBody .player-picker-list {
+	max-height: 300px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#toolboxNotesBody .player-picker-list li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 4px;
+	border-top: 1px solid var(--black-30);
+	cursor: pointer;
+}
+
+/* the row Enter takes */
+#toolboxNotesBody .player-picker-list li:hover,
+#toolboxNotesBody .player-picker-list li.first {
+	background: var(--black-30);
+}
+
+/* between the players of the group and the other players */
+#toolboxNotesBody .player-picker-list li.player-picker-sep {
+	padding: 0;
+	border-top: 2px solid var(--text-dark);
 	cursor: default;
+	background: none;
+}
+
+#toolboxNotesBody .player-picker-list .avatar {
+	flex: none;
+	width: 30px;
+	height: 30px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	border-radius: 20%;
+}
+
+#toolboxNotesBody .player-picker-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--beige);
+}
+
+#toolboxNotesBody .player-picker-name small {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-medium);
+}
+
+#toolboxNotesBody .player-picker-add {
+	flex: none;
+	font-weight: bold;
+	color: var(--orange);
+}
+
+#toolboxNotesBody .player-picker-hint {
+	margin: 6px 0 0;
+	color: var(--text-medium);
+	font-style: italic;
+}
+
+#toolboxNotesBody .tabs-sub ul.vertical > li.player-hidden,
+#toolboxNotesBody .tabs-sub.player-filter-none > .sub-tab {
+	display: none !important;
 }
 
 /* recurring quests: hint while no quest is recorded yet */
@@ -167,15 +365,8 @@
 	background-position: -209px 3px;
 }
 
-/* notices: import from the FoE Helfer server (edit mode) */
-.window-body .notices .notice-import-btn {
-	position: absolute;
-	right: 4px;
-	top: 2px;
-	z-index: 10;
-}
-
-#notices-modalBody .notice-import-text {
+/* toolboxNotes: import from the FoE Helfer server (edit mode) */
+#toolboxNotes-modalBody .notice-import-text {
 	width: 100%;
 	margin-top: 0;
 }
@@ -271,4 +462,14 @@
 /* colour legend of the overview, the tooltip lives in the body of its document */
 .tooltip-inner .text-orange {
 	color: var(--orange);
+}
+
+/* import button of the notes below the API token in the settings */
+.notice-import-btn {
+	margin-top: 8px;
+}
+
+/* note of the PvP arena with several lines: read only there, a click opens it in the notes */
+#PvPArenaBody .player-note.player-note-multi {
+	cursor: pointer;
 }

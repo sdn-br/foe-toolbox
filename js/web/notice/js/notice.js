@@ -42,9 +42,26 @@ let Notice = {
 	 */
 	init: ()=> {
 
-		// TOOLBOX: the notes are stored locally (Notice.Store), no GlobalSend or API token needed
+		let apiToken = localStorage.getItem('ApiToken');
+
+		if(apiToken === null) {
+			HTML.ShowToastMsg({
+				head: i18n('Boxes.CityMap.MissingApiKeyErrorHeader'),
+				text: [
+					i18n('Boxes.CityMap.MissingApiKeySubmitError'),
+					`<a target="_blank" href="${i18n('Settings.ApiTokenUrl')}">${i18n('Settings.ApiTokenUrl')}</a>`
+				],
+				type: 'error',
+				hideAfter: 10000,
+			});
+
+			return;
+		}
+
+		Notice.ApiToken = apiToken;
+
 		if(Notice.notes === null){
-			Notice.Store.send({}, 'Notice/get',(resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+			MainParser.send2Server({apiToken:apiToken}, 'Notice/get',(resp)=>{
 				if(resp['status'] === 'ERROR') {
 					HTML.ShowToastMsg({
 						head: 'Error',
@@ -83,7 +100,6 @@ let Notice = {
 				dragdrop: true,
 				resize: true,
 				minimize: true,
-				popout: () => MainParser.PopOut('notices'), // TOOLBOX: pop-out window
 				settings: true
 			});
 
@@ -97,8 +113,14 @@ let Notice = {
 
 		Notice.Players = PlayerDict;
 
-		// TOOLBOX: local notes, no GlobalSend requirement
-		Notice.prepareContent();
+		if(Settings.GetSetting('GlobalSend')){
+			Notice.prepareContent();
+		}
+
+		// global send is deactivated
+		else {
+			$('#noticesBody').addClass('global-send-required-bg').append( $('<span />').addClass('global-send-required').html(i18n('Boxes.Notice.GlobalSendRequired')) );
+		}
 	},
 
 
@@ -221,11 +243,6 @@ let Notice = {
 				Notice.ActiveTab = 1;
 			}
 
-			// TOOLBOX: the settings button toggles the edit mode, which has nothing to edit without groups or the import
-			const canEdit = (grpCount > 0 || Notice.Store.CanImport());
-			$('#notices-settings').toggleClass('disabled', !canEdit).attr('title', i18n(canEdit ? 'Boxes.Notice.Edit' : 'Boxes.Notice.EditDisabled'));
-			if (!canEdit) Notice.EditMode = false;
-
 			// init Tabslet
 			$('.notices').tabslet({
 				active: Notice.ActiveTab
@@ -290,12 +307,10 @@ let Notice = {
 
 		// toggle edit buttons
 		$('#notices').on('click', '#notices-settings', function(){
-			if($(this).hasClass('disabled')) return; // TOOLBOX: nothing to edit yet
-
 			if(!Notice.EditMode){
 				Notice.BuildSettingButtons();
 			} else {
-				$('.tab-edit, .sub-tab-edit, .notice-import-btn').remove(); // TOOLBOX: import button
+				$('.tab-edit, .sub-tab-edit').remove();
 			}
 
 			Notice.EditMode = !Notice.EditMode;
@@ -473,8 +488,7 @@ let Notice = {
 				id: id,
 				type: type,
 				name: txt,
-				// TOOLBOX: no default, the local store appends a new group when the field is empty
-				sort: $(`.inp-grp-sort`).val(),
+				sort: $(`.inp-grp-sort`).val() || 1,
 				apiToken: Notice.ApiToken
 			},
 			grpSel = $('#player-grp option:selected');
@@ -489,7 +503,7 @@ let Notice = {
 			data['name'] = txt;
 		}
 
-		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -502,9 +516,7 @@ let Notice = {
 				Notice.notes = resp['notice'];
 
 				if(id === 'new'){
-					// TOOLBOX: a new group may have been sorted in anywhere; local ids only grow, so the newest has the highest
-					const newId = Math.max(...Notice.notes.map(g => g.id));
-					Notice.ActiveTab = Notice.notes.findIndex(g => g.id === newId) + 1;
+					Notice.ActiveTab = Notice.notes.length;
 
 				} else {
 					// loose comparison, "id" comes from the DOM as a string
@@ -548,7 +560,7 @@ let Notice = {
 
 		txt = MainParser.ClearText(txt);
 
-		Notice.Store.send({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({id:id,type:'itm',name:txt,grp:grp,sort:sortVal,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -602,7 +614,7 @@ let Notice = {
 		}
 
 		// send content changes to server und change local object
-		Notice.Store.send({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({id:itmID,grp:grpID,type:'cnt',head:head,cont:cont,apiToken:Notice.ApiToken}, 'Notice/set', (resp)=>{
 
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
@@ -712,7 +724,7 @@ let Notice = {
 		// set the active Tab for reload
 		Notice.ActiveTab = Notice.notes.findIndex(idx => idx.id === Notice.ActualGrp) + 1;
 
-		Notice.Store.send(data, 'Notice/set', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server(data, 'Notice/set', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',
@@ -747,9 +759,6 @@ let Notice = {
 
 		$('.tab-edit, .sub-tab-edit').remove();
 
-		// TOOLBOX: import from the FoE Helfer server
-		Notice.Store.BuildImportButton();
-
 		// Sortfunction for horizontal + Stop event
 		$('ul.horizontal').sortable({
 			axis: 'x',
@@ -765,7 +774,7 @@ let Notice = {
 					});
 				});
 
-				Notice.Store.send({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+				MainParser.send2Server({type:'grp',grps:grps,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 					if(resp['status'] === 'ERROR') {
 						HTML.ShowToastMsg({
 							head: 'Error',
@@ -823,7 +832,7 @@ let Notice = {
 						});
 					});
 
-					Notice.Store.send({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+					MainParser.send2Server({type:'itm',itms:itms,apiToken:Notice.ApiToken}, 'Notice/sort', (resp)=>{
 						if(resp['status'] === 'ERROR') {
 							HTML.ShowToastMsg({
 								head: 'Error',
@@ -871,7 +880,7 @@ let Notice = {
 	 * @constructor
 	 */
 	DeleteElement: (type, id)=> {
-		Notice.Store.send({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{ // TOOLBOX: local store (Notice.Store) instead of the server
+		MainParser.send2Server({type:type,id:id,apiToken:Notice.ApiToken}, 'Notice/del', (resp)=>{
 			if(resp['status'] === 'ERROR') {
 				HTML.ShowToastMsg({
 					head: 'Error',

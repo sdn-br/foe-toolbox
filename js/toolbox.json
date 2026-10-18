@@ -4,7 +4,9 @@
 	"calculator-overview",
 	"sabotage",
 	"looting",
-	"notice-store",
+	"toolbox-notes",
+	"notes-store",
+	"player-note",
 	"fh-compat",
 	"gbg-actionlog",
 	"toolbox-menu"

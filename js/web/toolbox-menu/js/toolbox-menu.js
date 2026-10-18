@@ -100,3 +100,20 @@ _menu.possibleInvestments_Btn = () => {
 		$('<span id="hidden-future-reward-count" class="hud-counter hud-future-counter">0</span>')
 	);
 }
+
+
+/**
+ * The notes button opens the toolbox notes (toolbox-notes) instead of the FoE Helfer notes.
+ * Same id, icon and place in the menu, the Helfer module is still loaded but never opened.
+ */
+{
+	const noticeBtn = _menu.notice_Btn;
+
+	_menu.notice_Btn = () => {
+		const btn = noticeBtn();
+
+		btn.find('span').off('click').on('click', () => Notes.init());
+
+		return btn;
+	};
+}
