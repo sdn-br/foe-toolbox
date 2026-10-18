@@ -732,7 +732,12 @@ let Notes = {
 	EnableTabScrolling: ()=> {
 		const ul = $('#toolboxNotesBody ul.horizontal'),
 			// fade out the right edge while more tabs follow, instead of a hard cut
-			markMore = () => ul.each(function(){ $(this).toggleClass('notes-tabs-more', this.scrollLeft + this.clientWidth < this.scrollWidth - 1); });
+			// and shade the fixed players tab while tabs run below it
+			markMore = () => ul.each(function(){
+				$(this)
+					.toggleClass('notes-tabs-more', this.scrollLeft + this.clientWidth < this.scrollWidth - 1)
+					.toggleClass('notes-tabs-scrolled', this.scrollLeft > 0);
+			});
 
 		ul.off('scroll.notes').on('scroll.notes', markMore);
 
