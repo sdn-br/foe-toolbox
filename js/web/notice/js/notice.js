@@ -127,8 +127,7 @@ let Notice = {
 					switch (n['player_group']){
 						case 'guild': tabName = `🛡 ${i18n('Boxes.Notice.SelectPlayerGroupGuild')}`; break;
 						case 'friend': tabName = `👩🏼🤝🧑 ${i18n('Boxes.Notice.SelectPlayerGroupFriend')}`; break;
-						case 'neighbor': tabName = `⚔ ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break;
-						case 'player': tabName = `👤 ${i18n('Boxes.Notice.SelectPlayerGroupPlayer')}`; break; // TOOLBOX: group for any player, see player-note.js
+						case 'neighbor': tabName = `👤 ${i18n('Boxes.Notice.SelectPlayerGroupNeighbor')}`; break; // TOOLBOX: shown as "players", for any player, see player-note.js
 					}
 
 				} else {
@@ -447,7 +446,6 @@ let Notice = {
 						$('<option />').attr({
 							'data-value': 'neighbor'
 						}).text(i18n('Boxes.Notice.SelectPlayerGroupNeighbor')),
-						$('<option />').attr({ 'data-value': 'player' }).text(i18n('Boxes.Notice.SelectPlayerGroupPlayer')), // TOOLBOX: group for any player
 					)
 				)
 			);
@@ -655,7 +653,7 @@ let Notice = {
 		delete Notice.Players[ExtPlayerID];
 
 		// find all players by tab-type ...
-		const playerObj = Object.values(Notice.Players).filter((v) => type === 'player' || v[mapper[type]] === true); // TOOLBOX: 'player' groups offer every known player
+		const playerObj = Object.values(Notice.Players).filter((v) => type === 'neighbor' || v[mapper[type]] === true); // TOOLBOX: the 'neighbor' group is shown as "players" and offers every known player
 
 		// ... and sort by name
 		const players = helper.arr.multisort(playerObj, ['PlayerName'], ['ASC']);
