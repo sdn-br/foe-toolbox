@@ -13,8 +13,9 @@
 
 // FoE Toolbox: a note per player inside other boxes (first the sabotage box).
 // The note is a player page in the notes module (Notice.Store), so it is the same note in
-// both places. Any player group counts, new pages go to a group of the toolbox type 'player'
-// that does not depend on the neighborhood. Players are matched by id, not by name.
+// both places. Any player group counts, new pages go to a group of the type 'neighbor', which
+// the toolbox shows as "players" for any player, independent of the neighborhood (players are
+// neighbors for two weeks at most). Players are matched by id, not by name.
 
 let PlayerNote = {
 
@@ -50,7 +51,7 @@ let PlayerNote = {
 
 
 	/**
-	 * Saves the note. Without a page the player is added to the first 'player' group,
+	 * Saves the note. Without a page the player is added to the first 'neighbor' group,
 	 * without such a group one is created. An empty note creates nothing and deletes an
 	 * existing page, the group stays.
 	 *
@@ -74,14 +75,14 @@ let PlayerNote = {
 
 			await db.transaction('rw', db.groups, db.items, async () => {
 				let group = (await db.groups.toArray())
-					.filter(g => g.player_group === 'player')
+					.filter(g => g.player_group === 'neighbor')
 					.sort((a, b) => (a.sort - b.sort) || (a.id - b.id))[0];
 
 				if (!group) {
 					const last = await db.groups.orderBy('sort').last(),
 						groupId = await db.groups.add({
-							group_name: i18n('Boxes.Notice.SelectPlayerGroupPlayer'),
-							player_group: 'player',
+							group_name: i18n('Boxes.Notice.SelectPlayerGroupNeighbor'),
+							player_group: 'neighbor',
 							sort: last ? last.sort + 1 : 1
 						});
 					group = { id: groupId };
