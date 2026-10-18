@@ -297,8 +297,12 @@ let PlayerNote = {
 			return;
 		}
 
+		// below the filter bar, which stays usable and also filters the search
+		const bar = tabs.children('.player-filter'),
+			top = bar.length > 0 ? bar.position().top + bar.outerHeight(true) : row.position().top;
+
 		// an aside, not a div: Tabslet treats every direct div of the sub tabs as a page
-		const el = $('<aside class="player-picker" />').css('top', row.position().top).insertAfter(row)[0],
+		const el = $('<aside class="player-picker" />').css('top', top).insertAfter(row)[0],
 			groupId = Number(row.data('group')),
 			byId = new Map(),
 			group = (Notes.notes || []).find(n => n.id === groupId);
