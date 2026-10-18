@@ -397,6 +397,7 @@ let Sabotage = {
 
 	ShowLoot: (PlayerId) => {
 		Looting.filterByPlayerId = PlayerId;
+		Looting.filterSource = 'all';
 		Looting.page = 1;
 		Looting.Show();
 	},

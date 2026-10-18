@@ -51,10 +51,6 @@
     text-align: center;
 }
 
-#looting .select-player:hover {
-	  background-color: var(--table-bg-hover);
-}
-
 #looting .action-row {
     display: flex;
     flex-direction: row;
@@ -91,25 +87,109 @@
     color: var(--danger-red);
 }
 
-#looting div.filter {
-    padding-right: 4px;
-    display: flow-root
+/* filter: source buttons, player search and the chosen player; combinable */
+#lootingBody .loot-filter {
+	padding: 0 6px 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
-#looting div.filterd-by {
-    float: left;
-    height: 40px;
-}  
+#lootingBody .loot-filter-sources {
+	display: flex;
+}
 
-#looting div.filter-buttons {
-    float: right;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-    flex-direction: row;
-    padding-right: 4px;
-    height: 40px;
-}    
+#lootingBody .loot-filter-sources .btn {
+	flex: 1;
+	margin: 0;
+	border-radius: 0;
+	white-space: nowrap;
+}
+
+#lootingBody .loot-filter-sources .btn:first-child {
+	border-radius: 3px 0 0 3px;
+}
+
+#lootingBody .loot-filter-sources .btn:last-child {
+	border-radius: 0 3px 3px 0;
+}
+
+#lootingBody .loot-filter-player {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+#lootingBody .loot-filter-search {
+	flex: 0 0 260px;
+	position: relative;
+}
+
+#lootingBody .loot-filter-search::before {
+	content: '';
+	position: absolute;
+	left: 7px;
+	top: 50%;
+	width: 12px;
+	height: 12px;
+	transform: translateY(-50%);
+	opacity: 0.7;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffe7ba' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+#lootingBody .loot-filter-search input {
+	width: 100%;
+	padding: 3px 8px 3px 24px;
+	background: var(--black-30);
+	border: 1px solid var(--text-dark);
+	border-radius: 3px;
+	color: var(--beige);
+}
+
+#lootingBody .loot-filter-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 4px 2px 10px;
+	border-radius: 12px;
+	background: var(--black-30);
+	border: 1px solid var(--text-medium);
+	color: var(--beige);
+	font-weight: bold;
+}
+
+#lootingBody .loot-filter-chip-remove {
+	display: inline-flex;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	align-items: center;
+	justify-content: center;
+	background: var(--black-50);
+	cursor: pointer;
+	font-size: 11px;
+}
+
+#lootingBody .loot-filter-count {
+	color: var(--text-medium);
+	font-size: 90%;
+}
+
+/* "only encounters with this player", behind the name */
+#lootingBody .row-filter {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 6px;
+	width: 20px;
+	height: 20px;
+	border-radius: 3px;
+	background: var(--black-30) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffe7ba'%3E%3Cpath d='M1 2h14l-5.5 6.5V14l-3-1.5V8.5z'/%3E%3C/svg%3E") center / 12px no-repeat;
+	border: 1px solid var(--text-dark);
+}
+
+#lootingBody .row-filter:hover {
+	border-color: var(--beige);
+}
 
 #looting .action-row-type-1, #looting .action-row-type-2 {
     background-color: var(--table-bg-success);
