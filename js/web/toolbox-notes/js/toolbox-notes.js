@@ -17,6 +17,20 @@
 // storage (notes-store), one players group with relation filter and picker (player-note),
 // own ids (toolboxNotes) and texts (Boxes.Notes.*).
 
+// note of a player changed in another box (PlayerNote.notesChanged), the notes box's own changes are already shown
+window.addEventListener('toolbox#playerNotesChanged', async (e) => {
+	if (e.detail.source === 'notes' || Notes.Store.db === null) {
+		return;
+	}
+
+	Notes.notes = await Notes.Store.read();
+
+	if ($('#toolboxNotes').length > 0) {
+		Notes.prepareContent();
+	}
+});
+
+
 /**
  * @type {{ActualGrp: number, init: Notes.init, notes: null, Listener: Notes.Listener, SetHeights: Notes.SetHeights, buildBox: Notes.buildBox, prepareContent: Notes.prepareContent, ActiveTab: number, SavePlayerToGroup: Notes.SavePlayerToGroup, SaveContent: Notes.SaveContent, ApiToken: null, DeleteElement: Notes.DeleteElement, ActiveSubTab: number, Players: {}}}
  */
