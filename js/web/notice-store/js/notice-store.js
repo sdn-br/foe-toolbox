@@ -68,6 +68,7 @@ Notice.Store = {
 
 		switch (ep) {
 			case 'Notice/get':
+				await Notice.Store.mergePlayerGroups();
 				break;
 
 			case 'Notice/set':
@@ -342,6 +343,73 @@ Notice.Store = {
 					});
 				}
 			}
+
+			await Notice.Store.mergePlayerGroups();
+		});
+	},
+
+
+	/**
+	 * The toolbox has exactly one player group, shown as "players" (type 'neighbor', see
+	 * player-note.js). Whether a player is a neighbor, guild member or friend changes, so the
+	 * notes filter by the current state instead of sorting players into groups.
+	 *
+	 * Creates the group if it is missing. Further player groups (FoE Helfer import, older
+	 * versions) are merged into the first one: pages move over, several pages of one player
+	 * become one page with the texts one below the other. Nothing is lost but the grouping.
+	 */
+	mergePlayerGroups: async () => {
+		const db = Notice.Store.db,
+			bySort = (a, b) => (a.sort - b.sort) || (a.id - b.id);
+
+		await db.transaction('rw', db.groups, db.items, async () => {
+			const groups = (await db.groups.toArray()).filter(g => g.player_group).sort(bySort);
+
+			if (groups.length === 0) {
+				const last = await db.groups.orderBy('sort').last();
+				await db.groups.add({
+					group_name: i18n('Boxes.Notice.SelectPlayerGroupNeighbor'),
+					player_group: 'neighbor',
+					sort: last ? last.sort + 1 : 1
+				});
+				return;
+			}
+
+			const target = groups[0],
+				groupIds = groups.map(g => g.id),
+				items = (await db.items.where('groupId').anyOf(groupIds).toArray())
+					.sort((a, b) => (groupIds.indexOf(a.groupId) - groupIds.indexOf(b.groupId)) || bySort(a, b)),
+				byPlayer = new Map();
+
+			if (groups.length === 1 && target.player_group === 'neighbor' && new Set(items.map(PlayerNote.playerIdOf)).size === items.length) {
+				return;
+			}
+
+			let sort = 1;
+
+			for (const item of items) {
+				const playerId = PlayerNote.playerIdOf(item),
+					keep = (playerId !== undefined ? byPlayer.get(playerId) : undefined);
+
+				if (keep) {
+					if (!PlayerNote.isEmpty(item.content)) {
+						keep.content = PlayerNote.isEmpty(keep.content) ? item.content : keep.content + '<br><br>' + item.content;
+						await db.items.update(keep.id, {content: keep.content});
+					}
+					await db.items.delete(item.id);
+					continue;
+				}
+
+				if (playerId !== undefined) {
+					byPlayer.set(playerId, item);
+				}
+				await db.items.update(item.id, {groupId: target.id, sort: sort++});
+			}
+
+			if (target.player_group !== 'neighbor') {
+				await db.groups.update(target.id, {player_group: 'neighbor'});
+			}
+			await db.groups.bulkDelete(groupIds.slice(1));
 		});
 	},
 };
