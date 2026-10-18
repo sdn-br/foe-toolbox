@@ -914,7 +914,7 @@ let Looting = {
 			eraClass = (!hasEra || ownEra === undefined ? 'none' : era < ownEra ? 'older' : era === ownEra ? 'same' : 'newer');
 
 		return html`
-			<div class="unit fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt=${`${type.name}${eraText}\nHP: ${endHP}/${startHP}\n${t('Attack')}: ${attBoost}\n${t('Defense')}: ${defBoost}`}>
+			<div class="unit fh-tooltip" data-callback_tt="ToolboxTT.text" data-tt-head=${type.name + eraText} data-tt=${`HP: ${endHP} / ${startHP}\n${t('Attack')}: ${attBoost}\n${t('Defense')}: ${defBoost}`}>
 				<div class="unit-portrait">
 					<img src="${srcLinks.get(`/shared/unit_portraits/armyuniticons_50x50/armyuniticons_50x50_${unit.unitTypeId}.jpg`, true, true)}" alt="">
 					<span class="unit_skill ${type.unitClass}"></span>
