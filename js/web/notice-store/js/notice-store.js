@@ -231,7 +231,11 @@ Notice.Store = {
 	/**
 	 * Confirmation in the same modal as group and item editing
 	 */
-	ShowImportModal: () => {
+	ShowImportModal: async () => {
+		const db = Notice.Store.db,
+			groups = db ? await db.groups.count() : 0,
+			items = db ? await db.items.count() : 0;
+
 		HTML.Box({
 			id: 'notices-modal',
 			title: i18n('Boxes.Notice.Import'),
@@ -241,7 +245,7 @@ Notice.Store = {
 		$('body').prepend( $('<div class="foe-helper-overlay" />') );
 
 		$('#notices-modalBody').append(
-			$('<p />').addClass('notice-import-text').text(i18n('Boxes.Notice.ImportConfirm')),
+			$('<p />').addClass('notice-import-text').text(HTML.i18nReplacer(i18n('Boxes.Notice.ImportConfirm'), {groups, items})),
 			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('Boxes.Notice.ImportStart')).on('click', Notice.Store.Import),
 			$('<span />').attr({role: 'button', class: 'btn'}).text(i18n('General.Cancel')).on('click', Notice.Store.CloseModal)
 		);
@@ -277,6 +281,10 @@ Notice.Store = {
 			// status OK without notes = blocked on the API, the local notes stay untouched
 			else if (resp['notice'] === undefined) {
 				$('#notices-modalBody').html( $('<div />').addClass('notice-import-text').html(i18n('Boxes.Notice.BannedFromApi')) );
+			}
+			// nothing stored on the server: an empty answer must not wipe the local notes
+			else if (!resp['notice'] || Object.keys(resp['notice']).length === 0) {
+				$('#notices-modalBody').html( $('<p />').addClass('notice-import-text').text(i18n('Boxes.Notice.ImportEmpty')) );
 			}
 			else {
 				try {
