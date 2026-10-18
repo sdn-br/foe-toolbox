@@ -1,6 +1,8 @@
 # Upstream functions the toolbox wraps, checked by scripts/toolbox-check.sh.
 # Format: Object.function<TAB>upstream file. The comment above each line says what the wrapper adds.
 
+# import button for the notes below the API token (notice-store)
+Settings.ApiTokenInput	js/web/settings/js/settings.js
 # second counter for future events (toolbox-menu)
 _menu.hiddenRewards_Btn	js/web/_menu/js/_menu.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
