@@ -137,6 +137,7 @@
     "Boxes.Notes.Delete": "Löschen",
     "Boxes.Notes.DeleteGroup": "Gruppe und Seiten löschen",
     "Boxes.Notes.DeleteGroupConfirm": "Gruppe „__name__“ löschen?",
+    "Boxes.Notes.DeleteGroupPage": "Achtung, es ist noch 1 Seite vorhanden, sie wird mit gelöscht.",
     "Boxes.Notes.DeleteGroupPages": "Achtung, es sind noch __count__ Seiten vorhanden, sie werden mit gelöscht.",
     "Boxes.Notes.DeleteItem": "Seite löschen",
     "Boxes.Notes.DeleteItemConfirm": "Seite „__name__“ löschen?",
