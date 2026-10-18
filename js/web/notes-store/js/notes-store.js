@@ -76,7 +76,7 @@ Notes.Store = {
 				// content changes: the callback only checks the status and updates its own cache
 				if (data.type === 'cnt') {
 					await Notes.Store.setContent(data);
-					PlayerNote.notesChanged();
+					PlayerNote.notesChanged('notes');
 					return {status: 'OK'};
 				}
 				await db.transaction('rw', db.groups, db.items, () => Notes.Store.set(data));
@@ -109,7 +109,7 @@ Notes.Store = {
 		}
 
 		if (ep !== 'Notes/get') {
-			PlayerNote.notesChanged();
+			PlayerNote.notesChanged('notes');
 		}
 
 		return {status: 'OK', notice: await Notes.Store.read()};

@@ -38,6 +38,13 @@ FoEproxy.addHandler('OtherPlayerService', 'visitPlayer', (data, postData) => {
 });
 
 
+// note of a player changed (PlayerNote.notesChanged): the note card
+window.addEventListener('toolbox#playerNotesChanged', () => {
+	if ($('#sabotageInfo').length > 0) {
+		Sabotage.showResult();
+	}
+});
+
 let Sabotage = {
 
 	/** productions shown in grey (unimportant) */
@@ -384,7 +391,7 @@ let Sabotage = {
 						])}
 					</div>
 					<p class="plunder-repel">${t('PlunderRepel')}: <span class="toolbox-card-value">${fmt(b.PlunderRepel)}%</span></p>`}
-				<div class="toolbox-cards">${PlayerNote.view(vm.playerId, vm.note, () => Sabotage.showResult())}</div>
+				<div class="toolbox-cards">${PlayerNote.view(vm.playerId, vm.note)}</div>
 			</div>
 			${!p ? '' : html`
 				<table class="foe-table">
