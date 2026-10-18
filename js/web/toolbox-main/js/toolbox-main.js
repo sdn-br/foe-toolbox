@@ -313,6 +313,24 @@ FoEproxy.addHandler('PVPArenaService', 'getOverview', (data, postData) => {
 });
 
 
+// Leveled foreign GB (live event, also shown in the infobox): drop it from the investments right away.
+// Upstream removes it only with the next getContributions or the GB overview of that player.
+// The event carries the GB name but no entity_id, the stored level is the one before the level-up.
+FoEproxy.addWsHandler('OtherPlayerService', 'newEvent', async (data) => {
+	let d = data.responseData;
+	if (d?.['type'] !== 'great_building_contribution' || !d['other_player']) return;
+
+	let deleted = await IndexDB.db.investhistory
+		.where('playerId').equals(d['other_player']['player_id'])
+		.filter(gb => gb['gbname'] === d['great_building_name'] && gb['level'] < d['level'])
+		.delete();
+
+	if (deleted > 0 && $('#Investment').length !== 0) {
+		Investment.Show();
+	}
+});
+
+
 // DBs of the toolbox modules, after the handler of _main.js has set ExtPlayerID
 FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 	GBGActionLog.checkForDB(ExtPlayerID);
