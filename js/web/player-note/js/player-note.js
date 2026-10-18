@@ -12,7 +12,7 @@
  */
 
 // FoE Toolbox: a note per player inside other boxes (first the sabotage box).
-// The note is a player page in the notes module (Notice.Store), so it is the same note in
+// The note is a player page in the notes module (Notes.Store), so it is the same note in
 // both places. Any player group counts, new pages go to a group of the type 'neighbor', which
 // the toolbox shows as "players" for any player, independent of the neighborhood (players are
 // neighbors for two weeks at most). Players are matched by id, not by name.
@@ -42,7 +42,7 @@ let PlayerNote = {
 	 * @returns {Promise<{id: number, content: string}|null>}
 	 */
 	get: async (playerId) => {
-		const db = Notice.Store.db;
+		const db = Notes.Store.db;
 
 		if (db === null || !playerId) {
 			return null;
@@ -76,10 +76,10 @@ let PlayerNote = {
 	 * @returns {Promise<{id: number, content: string}|null>} null when there is no page (anymore)
 	 */
 	save: async (playerId, content) => {
-		const db = Notice.Store.db;
+		const db = Notes.Store.db;
 
 		if (db === null) {
-			throw new Error('Notice DB not ready');
+			throw new Error('Notes DB not ready');
 		}
 
 		let note = await PlayerNote.get(playerId);
@@ -97,7 +97,7 @@ let PlayerNote = {
 				if (!group) {
 					const last = await db.groups.orderBy('sort').last(),
 						groupId = await db.groups.add({
-							group_name: i18n('Boxes.Notice.SelectPlayerGroupNeighbor'),
+							group_name: i18n('Boxes.Notes.SelectPlayerGroupNeighbor'),
 							player_group: 'neighbor',
 							sort: last ? last.sort + 1 : 1
 						});
@@ -163,7 +163,7 @@ let PlayerNote = {
 			} catch (err) {
 				console.error(err);
 				HTML.ShowToastMsg({
-					head: i18n('Boxes.Notice.Title'),
+					head: i18n('Boxes.Notes.Title'),
 					text: err && err.message ? err.message : String(err),
 					type: 'error',
 					hideAfter: 10000,
@@ -239,7 +239,7 @@ let PlayerNote = {
 	 * Delegated on the box body, so it also works in the pop-out
 	 */
 	bindFilter: () => {
-		$('#noticesBody').on('click', '.player-filter-chip', function () {
+		$('#toolboxNotesBody').on('click', '.player-filter-chip', function () {
 			PlayerNote.filter = $(this).data('filter');
 			PlayerNote.applyFilter();
 		});
@@ -253,7 +253,7 @@ let PlayerNote = {
 	applyFilter: () => {
 		const matches = (playerId) => PlayerNote.matchesFilter(playerId, PlayerNote.filter);
 
-		$('#noticesBody .player-filter').each(function () {
+		$('#toolboxNotesBody .player-filter').each(function () {
 			const bar = $(this),
 				tabs = bar.closest('.tabs-sub'),
 				items = tabs.find('ul.vertical > li');
@@ -287,11 +287,11 @@ let PlayerNote = {
 	 * @param groupId players group the chosen player is added to
 	 */
 	showPicker: async (groupId) => {
-		Notice.ActualGrp = groupId;
+		Notes.ActualGrp = groupId;
 
 		HTML.Box({
-			id: 'notices-modal-players',
-			title: i18n('Boxes.Notice.ModalChoosePlayer'),
+			id: 'toolboxNotes-modal-players',
+			title: i18n('Boxes.Notes.ModalChoosePlayer'),
 			auto_close: true,
 			dragdrop: true
 		});
@@ -299,7 +299,7 @@ let PlayerNote = {
 		$('body').prepend( $('<div class="foe-helper-overlay" />') );
 
 		const byId = new Map(),
-			group = (Notice.notes || []).find(n => n.id === groupId),
+			group = (Notes.notes || []).find(n => n.id === groupId),
 			taken = new Set((group ? group.items : []).map(PlayerNote.playerIdOf));
 
 		try {
@@ -326,12 +326,12 @@ let PlayerNote = {
 		};
 
 		PlayerNote.renderPicker();
-		$('#notices-modal-playersBody .player-picker-search').trigger('focus');
+		$('#toolboxNotes-modal-playersBody .player-picker-search').trigger('focus');
 	},
 
 
 	renderPicker: () => {
-		const body = $('#notices-modal-playersBody')[0];
+		const body = $('#toolboxNotes-modal-playersBody')[0];
 
 		if (body) {
 			litHtml.render(PlayerNote.pickerView(PlayerNote.picker), body);
@@ -357,7 +357,7 @@ let PlayerNote = {
 			// players from the db only are not in the session yet, SavePlayerToGroup reads PlayerDict
 			await MainParser.loadPlayerIntoDict(id);
 			if (PlayerDict[id]) {
-				Notice.SavePlayerToGroup(id);
+				Notes.SavePlayerToGroup(id);
 			}
 		};
 
@@ -413,10 +413,10 @@ let PlayerNote = {
 	 * Shows the new state in an open notes box
 	 */
 	refreshNoticeBox: async () => {
-		Notice.notes = await Notice.Store.read();
+		Notes.notes = await Notes.Store.read();
 
-		if ($('#notices').length > 0) {
-			Notice.prepareContent();
+		if ($('#toolboxNotes').length > 0) {
+			Notes.prepareContent();
 		}
 	},
 };

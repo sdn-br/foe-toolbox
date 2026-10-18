@@ -92,11 +92,11 @@
 }
 
 /* notes: icons for what a player is right now (neighbor, guild member, friend) */
-#noticesBody .tabs-sub .player-relation {
+#toolboxNotesBody .tabs-sub .player-relation {
 	margin-right: 3px;
 }
 
-#noticesBody .content-head-player .info-text .player-relation {
+#toolboxNotesBody .content-head-player .info-text .player-relation {
 	display: block;
 	text-align: right;
 	color: var(--beige);
@@ -104,7 +104,7 @@
 
 /* notes: filter of the players group, by what a player is right now. It sits right of the
    absolute positioned page list, which would otherwise catch the clicks on the first chips */
-#noticesBody .player-filter {
+#toolboxNotesBody .player-filter {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
@@ -113,12 +113,12 @@
 }
 
 /* the "+ player" button is absolute without a top and would land below the filter bar */
-#noticesBody .tabs-sub > .itm-btn {
+#toolboxNotesBody .tabs-sub > .itm-btn {
 	top: 0;
 }
 
-#noticesBody .player-filter-chip,
-#notices-modal-players .player-filter-chip {
+#toolboxNotesBody .player-filter-chip,
+#toolboxNotes-modal-players .player-filter-chip {
 	padding: 1px 8px;
 	border: 1px solid var(--text-dark);
 	border-radius: 10px;
@@ -126,14 +126,14 @@
 	cursor: pointer;
 }
 
-#noticesBody .player-filter-chip.active,
-#notices-modal-players .player-filter-chip.active {
+#toolboxNotesBody .player-filter-chip.active,
+#toolboxNotes-modal-players .player-filter-chip.active {
 	background: var(--black-30);
 	color: var(--beige);
 	font-weight: bold;
 }
 
-#noticesBody .player-filter-empty {
+#toolboxNotesBody .player-filter-empty {
 	display: none;
 	margin-left: 6px;
 	color: var(--text-medium);
@@ -141,28 +141,28 @@
 }
 
 /* player picker of the notes: search, filter, at most PlayerNote.PickerLimit rows */
-#notices-modal-players {
+#toolboxNotes-modal-players {
 	width: 380px;
 	left: calc(50% - 190px);
 }
 
-#notices-modal-players .player-picker {
+#toolboxNotes-modal-players .player-picker {
 	width: 100%;
 }
 
-#notices-modal-players .player-picker-search {
+#toolboxNotes-modal-players .player-picker-search {
 	width: 100%;
 	margin-bottom: 6px;
 }
 
-#notices-modal-players .player-filter {
+#toolboxNotes-modal-players .player-filter {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
 	margin-bottom: 6px;
 }
 
-#notices-modal-players .player-picker-list {
+#toolboxNotes-modal-players .player-picker-list {
 	max-height: 300px;
 	overflow-y: auto;
 	margin: 0;
@@ -170,7 +170,7 @@
 	list-style: none;
 }
 
-#notices-modal-players .player-picker-list li {
+#toolboxNotes-modal-players .player-picker-list li {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -179,11 +179,11 @@
 	cursor: pointer;
 }
 
-#notices-modal-players .player-picker-list li:hover {
+#toolboxNotes-modal-players .player-picker-list li:hover {
 	background: var(--black-30);
 }
 
-#notices-modal-players .player-picker-list .avatar {
+#toolboxNotes-modal-players .player-picker-list .avatar {
 	flex: none;
 	width: 30px;
 	height: 30px;
@@ -192,24 +192,24 @@
 	border-radius: 20%;
 }
 
-#notices-modal-players .player-picker-name {
+#toolboxNotes-modal-players .player-picker-name {
 	flex: 1;
 	color: var(--beige);
 }
 
-#notices-modal-players .player-picker-name small {
+#toolboxNotes-modal-players .player-picker-name small {
 	display: block;
 	color: var(--text-medium);
 }
 
-#notices-modal-players .player-picker-hint {
+#toolboxNotes-modal-players .player-picker-hint {
 	margin: 6px 0 0;
 	color: var(--text-medium);
 	font-style: italic;
 }
 
-#noticesBody .tabs-sub ul.vertical > li.player-hidden,
-#noticesBody .tabs-sub.player-filter-none > .sub-tab {
+#toolboxNotesBody .tabs-sub ul.vertical > li.player-hidden,
+#toolboxNotesBody .tabs-sub.player-filter-none > .sub-tab {
 	display: none !important;
 }
 
@@ -313,8 +313,8 @@
 	background-position: -209px 3px;
 }
 
-/* notices: import from the FoE Helfer server (edit mode) */
-#notices-modalBody .notice-import-text {
+/* toolboxNotes: import from the FoE Helfer server (edit mode) */
+#toolboxNotes-modalBody .notice-import-text {
 	width: 100%;
 	margin-top: 0;
 }
