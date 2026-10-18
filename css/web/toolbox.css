@@ -102,13 +102,19 @@
 	color: var(--beige);
 }
 
-/* notes: filter of the players group, by what a player is right now */
+/* notes: filter of the players group, by what a player is right now. It sits right of the
+   absolute positioned page list, which would otherwise catch the clicks on the first chips */
 #noticesBody .player-filter {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
 	align-items: center;
-	margin: 0 0 6px;
+	margin: 0 0 6px 125px;
+}
+
+/* the "+ player" button is absolute without a top and would land below the filter bar */
+#noticesBody .tabs-sub > .itm-btn {
+	top: 0;
 }
 
 #noticesBody .player-filter-chip {
