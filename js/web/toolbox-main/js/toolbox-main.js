@@ -334,7 +334,7 @@ FoEproxy.addWsHandler('OtherPlayerService', 'newEvent', async (data) => {
 // DBs of the toolbox modules, after the handler of _main.js has set ExtPlayerID
 FoEproxy.addHandler('StartupService', 'getData', (data, postData) => {
 	GBGActionLog.checkForDB(ExtPlayerID);
-	Notes.Store.checkForDB(ExtPlayerID);
+	Notes.Store.checkForDB(ExtPlayerID).then(PlayerNote.migrateArenaNotes); // notes of the PvP arena, once
 });
 
 

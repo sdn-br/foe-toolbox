@@ -21,3 +21,10 @@ MainParser.UpdatePlayerDictCore	js/web/_main/js/_main.js
 IndexDB._applyIndexSchema	js/web/indexdb/js/indexdb.js
 # then write era, score, wins, date fields, name, guild and avatar, keep known values if the new one is missing (toolbox-indexdb)
 IndexDB.addUserFromPlayerDictIfNotExists	js/web/indexdb/js/indexdb.js
+# the note column reads and writes the player pages of the notes (player-note)
+PvPArena.GetNotes	js/web/pvparena/js/pvparena.js
+PvPArena.SaveNote	js/web/pvparena/js/pvparena.js
+PvPArena.CalcTable	js/web/pvparena/js/pvparena.js
+# load the note texts before the table is drawn (player-note)
+PvPArena.CalcBody	js/web/pvparena/js/pvparena.js
+PvPArena.RefreshTable	js/web/pvparena/js/pvparena.js
