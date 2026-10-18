@@ -146,6 +146,37 @@
 	color: var(--beige);
 }
 
+#lootingBody .loot-filter-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 10;
+	margin: 2px 0 0;
+	padding: 2px 0;
+	list-style: none;
+	max-height: 220px;
+	overflow-y: auto;
+	background: var(--text-darkest);
+	border: 1px solid var(--text-medium);
+	border-radius: 3px;
+	box-shadow: 0 3px 8px var(--black-65);
+}
+
+#lootingBody .loot-filter-suggestions li {
+	padding: 3px 8px;
+	color: var(--beige);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#lootingBody .loot-filter-suggestions li.active {
+	background: var(--black-30);
+	color: var(--sunflower);
+}
+
 #lootingBody .loot-filter-chip {
 	display: inline-flex;
 	align-items: center;

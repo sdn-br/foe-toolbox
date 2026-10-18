@@ -508,9 +508,8 @@ let Looting = {
 		Looting.loading = true;
 
 		try {
-			const vm = await Looting.getViewModel();
-			// lit-html updates only what changed, the body element keeps its state across renders and pop-out moves
-			litHtml.render(Looting.view(vm), $('#lootingBody')[0]);
+			Looting.lastViewModel = await Looting.getViewModel();
+			Looting.renderView();
 		}
 		catch (e) {
 			console.error('Looting: render failed', e);
@@ -519,6 +518,23 @@ let Looting = {
 			Looting.loading = false;
 		}
 	},
+
+
+	/**
+	 * Renders the last view model again, without db access (e.g. while typing in the player search)
+	 */
+	renderView: () => {
+		const body = $('#lootingBody')[0];
+		if (!body || !Looting.lastViewModel) return;
+
+		// lit-html updates only what changed, the body element keeps its state across renders and pop-out moves
+		litHtml.render(Looting.view(Looting.lastViewModel), body);
+	},
+
+
+	/** player search: typed text, highlighted suggestion (-1 none, only after hover or arrow keys), list open */
+	search: { text: '', index: -1, open: false },
+	lastViewModel: undefined,
 
 
 	/**
@@ -633,13 +649,32 @@ let Looting = {
 			periods = [['collectedToday', vm.sp.today], ['thisWeek', vm.sp.week], ['total', vm.sp.total]],
 			sources = [['all', 'FilterAll'], ['neighborhood', 'FilterNeighborhood'], ['arena', 'FilterArena'], ['arenaCurrent', 'FilterArenaCurrent']];
 
-		// a name picked from the suggestions (or typed exactly) sets the player filter
-		const pickPlayer = (e) => {
-			const name = e.target.value.trim().toLowerCase(),
-				player = vm.players.find(p => p.name.toLowerCase() === name);
-			if (!player) return;
-			e.target.value = '';
-			Looting.SelectPlayer(player.id);
+		// player search with own suggestions (a datalist is drawn by the browser, unstyled and misplaced)
+		const search = Looting.search,
+			query = search.text.trim().toLowerCase(),
+			suggestions = (query ? vm.players.filter(p => p.name.toLowerCase().includes(query)) : vm.players).slice(0, 10),
+			update = (change) => {
+				Object.assign(search, change);
+				Looting.renderView();
+			},
+			pick = (player) => {
+				Object.assign(search, { text: '', index: -1, open: false });
+				Looting.SelectPlayer(player.id);
+			};
+		const onKey = (e) => {
+			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+				e.preventDefault();
+				const step = (e.key === 'ArrowDown' ? 1 : -1);
+				update({ open: true, index: Math.max(0, Math.min(suggestions.length - 1, search.index + step)) });
+			}
+			else if (e.key === 'Enter') {
+				// the highlighted suggestion, else an exact name or the only suggestion
+				const player = suggestions[search.index] || suggestions.find(p => p.name.toLowerCase() === query) || (suggestions.length === 1 ? suggestions[0] : undefined);
+				if (player) pick(player);
+			}
+			else if (e.key === 'Escape') {
+				update({ open: false });
+			}
 		};
 
 		return html`
@@ -670,8 +705,19 @@ let Looting = {
 					</div>
 					<div class="loot-filter-player">
 						<div class="loot-filter-search">
-							<input type="text" list="looting-players" placeholder="${t('SearchPlayer')}" @change=${pickPlayer}>
-							<datalist id="looting-players">${vm.players.map(p => html`<option value="${p.name}"></option>`)}</datalist>
+							<input type="text" placeholder="${t('SearchPlayer')}" .value=${search.text}
+								@input=${(e) => update({ text: e.target.value, index: -1, open: true })}
+								@focus=${() => update({ open: true })}
+								@blur=${() => update({ open: false, index: -1 })}
+								@keydown=${onKey}>
+							${search.open && suggestions.length > 0 ? html`
+								<ul class="loot-filter-suggestions">
+									${suggestions.map((p, i) => html`
+										<li class="${i === search.index ? 'active' : ''}"
+											@mousedown=${(e) => { e.preventDefault(); pick(p); }}
+											@mouseenter=${() => update({ index: i })}
+											@mouseleave=${() => update({ index: -1 })}>${p.name}</li>`)}
+								</ul>` : ''}
 						</div>
 						${vm.filterPlayer ? html`
 							<span class="loot-filter-chip">${vm.filterPlayer.name}
