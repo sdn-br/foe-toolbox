@@ -153,7 +153,6 @@
     "Boxes.Notes.ImportNotPossible": "Der Import braucht einen API-Token (Einstellungen, Reiter \"Info + Website\").",
     "Boxes.Notes.ImportStart": "Importieren",
     "Boxes.Notes.ImportSuccess": "Die Notizen vom FoE-Helfer-Server wurden importiert.",
-    "Boxes.Notes.ModalChoosePlayer": "Wähle einen Spieler",
     "Boxes.Notes.NewGroupHint": "Neue Gruppe",
     "Boxes.Notes.NewPage": "Neue Seite",
     "Boxes.Notes.RenameHint": "Doppelklick zum Umbenennen",

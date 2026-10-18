@@ -27,7 +27,7 @@ let PlayerNote = {
 	/**
 	 * State of the player picker ("+ player" in the notes)
 	 */
-	picker: { players: [], text: '', filter: 'all' },
+	picker: { own: [], players: [], text: '', el: null },
 
 	// more rows make the list slow with a year of known players, the search narrows it down
 	PickerLimit: 50,
@@ -243,6 +243,7 @@ let PlayerNote = {
 		$('#toolboxNotesBody').on('click', '.player-filter-chip', function () {
 			PlayerNote.filter = $(this).data('filter');
 			PlayerNote.applyFilter();
+			PlayerNote.renderPicker();
 		});
 	},
 
@@ -281,27 +282,38 @@ let PlayerNote = {
 
 
 	/**
-	 * Player picker of the players group: every player the toolbox knows, the current
-	 * session (PlayerDict) and the local players table (former neighbors, arena opponents,
-	 * visited cities). Only local data, nothing is requested from the game.
+	 * Player search of the players group, opened by "+ player". Not modal: a list over the open
+	 * page, wider than the page list, closed by a click outside or Escape. On top the players of
+	 * this group (a click opens the page), below every other player the toolbox knows (a click
+	 * adds a page): the current session (PlayerDict) and the local players table (former
+	 * neighbors, arena opponents, visited cities). Only local data, nothing is requested from the game.
 	 *
-	 * @param groupId players group the chosen player is added to
+	 * @param row the "+ player" row of the group
 	 */
-	showPicker: async (groupId) => {
+	showPicker: async (row) => {
+		const tabs = row.closest('.tabs-sub');
+
+		if (tabs.children('.player-picker').length > 0) {
+			return;
+		}
+
+		// an aside, not a div: Tabslet treats every direct div of the sub tabs as a page
+		const el = $('<aside class="player-picker" />').css('top', row.position().top).insertAfter(row)[0],
+			groupId = Number(row.data('group')),
+			byId = new Map(),
+			group = (Notes.notes || []).find(n => n.id === groupId);
+
 		Notes.ActualGrp = groupId;
+		PlayerNote.picker = { own: [], players: [], text: '', el: el };
+		PlayerNote.renderPicker();
+		$(el).find('.player-picker-search').trigger('focus');
 
-		HTML.Box({
-			id: 'toolboxNotes-modal-players',
-			title: i18n('Boxes.Notes.ModalChoosePlayer'),
-			auto_close: true,
-			dragdrop: true
+		$(el.ownerDocument).off('mousedown.playerpicker').on('mousedown.playerpicker', (e) => {
+			// the filter of the group also filters the search
+			if ($(e.target).closest('.player-picker, .player-filter').length === 0) {
+				PlayerNote.closePicker();
+			}
 		});
-
-		$('body').prepend( $('<div class="foe-helper-overlay" />') );
-
-		const byId = new Map(),
-			group = (Notes.notes || []).find(n => n.id === groupId),
-			taken = new Set((group ? group.items : []).map(PlayerNote.playerIdOf));
 
 		try {
 			await IndexDB.getDB();
@@ -317,25 +329,40 @@ let PlayerNote = {
 			byId.set(Number(p.PlayerID), { id: Number(p.PlayerID), name: p.PlayerName, avatar: p.Avatar, clanName: p.ClanName });
 		}
 
+		const own = (group ? group.items : []).map(item => {
+			const id = PlayerNote.playerIdOf(item);
+			return { ...(byId.get(id) || {}), id: id, name: item.tab };
+		}).filter(p => p.id !== undefined);
+
 		byId.delete(Number(ExtPlayerID));
-		taken.forEach(id => byId.delete(id));
+		own.forEach(p => byId.delete(p.id));
 
-		PlayerNote.picker = {
-			players: [...byId.values()].filter(p => p.name).sort((a, b) => a.name.localeCompare(b.name)),
-			text: '',
-			filter: PlayerNote.filter,
-		};
+		const byName = (a, b) => a.name.localeCompare(b.name);
 
+		Object.assign(PlayerNote.picker, {
+			own: own.sort(byName),
+			players: [...byId.values()].filter(p => p.name).sort(byName),
+		});
 		PlayerNote.renderPicker();
-		$('#toolboxNotes-modal-playersBody .player-picker-search').trigger('focus');
+	},
+
+
+	closePicker: () => {
+		const el = PlayerNote.picker.el;
+
+		if (el) {
+			$(el.ownerDocument).off('mousedown.playerpicker');
+			$(el).remove();
+			PlayerNote.picker.el = null;
+		}
 	},
 
 
 	renderPicker: () => {
-		const body = $('#toolboxNotes-modal-playersBody')[0];
+		const el = PlayerNote.picker.el;
 
-		if (body) {
-			litHtml.render(PlayerNote.pickerView(PlayerNote.picker), body);
+		if (el && el.isConnected) {
+			litHtml.render(PlayerNote.pickerView(PlayerNote.picker), el);
 		}
 	},
 
@@ -347,14 +374,21 @@ let PlayerNote = {
 	pickerView: (picker) => {
 		const { html, unsafeHTML } = litHtml,
 			query = picker.text.trim().toLowerCase(),
-			matches = picker.players.filter(p => PlayerNote.matchesFilter(p.id, picker.filter) && (query === '' || p.name.toLowerCase().includes(query))),
-			shown = matches.slice(0, PlayerNote.PickerLimit),
-			update = (change) => {
-				Object.assign(PlayerNote.picker, change);
-				PlayerNote.renderPicker();
-			};
+			fits = (p) => PlayerNote.matchesFilter(p.id, PlayerNote.filter) && (query === '' || p.name.toLowerCase().includes(query)),
+			own = picker.own.filter(fits),
+			others = picker.players.filter(fits),
+			shown = others.slice(0, PlayerNote.PickerLimit),
+			// Enter takes the first row
+			first = own[0] || shown[0];
 
-		const choose = async (id) => {
+		const open = (id) => {
+			const tabs = $(picker.el).closest('.tabs-sub');
+			PlayerNote.closePicker();
+			tabs.find(`ul.vertical > li[data-player="${id}"] a`).trigger('click');
+		};
+
+		const add = async (id) => {
+			PlayerNote.closePicker();
 			// players from the db only are not in the session yet, SavePlayerToGroup reads PlayerDict
 			await MainParser.loadPlayerIntoDict(id);
 			if (PlayerDict[id]) {
@@ -362,29 +396,34 @@ let PlayerNote = {
 			}
 		};
 
-		const chips = [['all', i18n('Boxes.PlayerNote.FilterAll')]]
-			.concat(PlayerNote.Relations.map(([value, , icon, key]) => [value, `${icon} ${i18n('Boxes.PlayerNote.Filter' + key)}`]))
-			.concat([['other', i18n('Boxes.PlayerNote.FilterOther')]]);
+		const pick = (p) => (own.includes(p) ? open(p.id) : add(p.id));
+
+		const row = (p) => html`
+			<li class=${p === first ? 'first' : ''} @click=${() => pick(p)}>
+				<span class="avatar" style="background-image:url('${srcLinks.GetPortrait(p.avatar)}')"></span>
+				<span class="player-picker-name">${p.name}${p.clanName ? html`<small>${p.clanName}</small>` : ''}</span>
+				<span class="player-picker-icons">${unsafeHTML(PlayerNote.relationIcons(p.id))}</span>
+				${own.includes(p) ? '' : html`<span class="player-picker-add">+</span>`}
+			</li>`;
 
 		return html`
-			<div class="player-picker">
-				<input type="text" class="player-picker-search" placeholder="${i18n('Boxes.PlayerNote.Search')}" .value=${picker.text}
-					@input=${(e) => update({ text: e.target.value })}
-					@keydown=${(e) => { if (e.key === 'Enter' && matches.length === 1) choose(matches[0].id); }}>
-				<nav class="player-filter">
-					${chips.map(([value, text]) => html`<span class="player-filter-chip ${picker.filter === value ? 'active' : ''}" @click=${() => update({ filter: value })}>${text}</span>`)}
-				</nav>
-				<ul class="player-picker-list">
-					${shown.map(p => html`
-						<li @click=${() => choose(p.id)}>
-							<span class="avatar" style="background-image:url('${srcLinks.GetPortrait(p.avatar)}')"></span>
-							<span class="player-picker-name">${p.name}${p.clanName ? html`<small>${p.clanName}</small>` : ''}</span>
-							<span class="player-picker-icons">${unsafeHTML(PlayerNote.relationIcons(p.id))}</span>
-						</li>`)}
-				</ul>
-				${matches.length === 0 ? html`<p class="player-picker-hint">${i18n('Boxes.PlayerNote.FilterEmpty')}</p>` : ''}
-				${matches.length > shown.length ? html`<p class="player-picker-hint">${HTML.i18nReplacer(i18n('Boxes.PlayerNote.MorePlayers'), { count: matches.length - shown.length })}</p>` : ''}
-			</div>`;
+			<input type="text" class="player-picker-search" placeholder="${i18n('Boxes.PlayerNote.Search')}" .value=${picker.text}
+				@input=${(e) => { picker.text = e.target.value; PlayerNote.renderPicker(); }}
+				@keydown=${(e) => {
+					if (e.key === 'Escape') {
+						e.stopPropagation();
+						PlayerNote.closePicker();
+					} else if (e.key === 'Enter' && first) {
+						pick(first);
+					}
+				}}>
+			<ul class="player-picker-list">
+				${own.map(row)}
+				${own.length > 0 && shown.length > 0 ? html`<li class="player-picker-sep"></li>` : ''}
+				${shown.map(row)}
+			</ul>
+			${own.length + others.length === 0 ? html`<p class="player-picker-hint">${i18n('Boxes.PlayerNote.FilterEmpty')}</p>` : ''}
+			${others.length > shown.length ? html`<p class="player-picker-hint">${HTML.i18nReplacer(i18n('Boxes.PlayerNote.MorePlayers'), { count: others.length - shown.length })}</p>` : ''}`;
 	},
 
 
