@@ -11,7 +11,9 @@
  *   so the difference is what other players added.
  * - Contributors: the rankings of an own GB (getConstruction when opened, contributeForgePoints
  *   after an own contribution) are kept per GB, with the state of the previous visit as baseline.
- * - Tab "Meine LGs" in the Investment box (wrapper around Investment.BuildBox).
+ * - Tab "Meine LGs" in the Investment box (wrapper around Investment.BuildBox), counter with the
+ *   FP total on the Investment menu button (wrapper around _menu.investment_Btn, setting
+ *   ShowMyGBsCounter).
  *
  * Storage (localStorage, per player id):
  *   MyGBsSnapshot_<id>      { time, gbs: { <cityentity_id>: { level, invested, needed, own } } }
@@ -44,6 +46,9 @@ FoEproxy.addHandler('GreatBuildingsService', 'all', (data, postData) => {
 	}
 });
 
+// the counter setting takes effect right away
+$(document).on('change', 'input[data-id="ShowMyGBsCounter"]', () => MyGBs.refreshCounter());
+
 
 let MyGBs = {
 
@@ -53,8 +58,14 @@ let MyGBs = {
 	/** result of the comparison at the start: { since, rows: [...] }, undefined before the start */
 	Progress: undefined,
 
+	/** the "Meine LGs" tab was opened since the start, the counter is hidden then */
+	Seen: false,
+
 	/** expanded rows (cityentity_id) */
 	expanded: new Set(),
+
+	/** the last Investment.BuildBox call created the box (menu button: open on this tab) */
+	boxCreated: false,
 
 
 	storageKey: (kind) => `MyGBs${kind}_${ExtPlayerID}`,
@@ -162,7 +173,9 @@ let MyGBs = {
 			since: prev?.time || null,
 			rows: MyGBs.compare(prev?.gbs ? prev : null, current),
 		};
+		MyGBs.Seen = false;
 
+		MyGBs.refreshCounter();
 		MyGBs.render();
 	},
 
@@ -272,6 +285,26 @@ let MyGBs = {
 
 
 	/**
+	 * Counter on the Investment menu button: FP of other players since the last visit,
+	 * until the tab was opened. Setting ShowMyGBsCounter (default on).
+	 * Reads localStorage directly, the counter can be drawn before config.json is loaded.
+	 */
+	refreshCounter: () => {
+		const show = MyGBs.hasNews();
+
+		$('#mygbs-count').text(show ? HTML.FormatNumberShort(MyGBs.total()) : '').toggle(show);
+	},
+
+
+	/**
+	 * The counter is shown: other players added FP since the last visit, the tab was not opened yet
+	 *
+	 * @returns {boolean}
+	 */
+	hasNews: () => localStorage.getItem('ShowMyGBsCounter') !== 'false' && !MyGBs.Seen && MyGBs.total() > 0,
+
+
+	/**
 	 * Builds the tab bar once around the body of a new Investment box:
 	 * #InvestmentTabs (tab bar, #InvestmentBody of upstream, #MyGBsBody).
 	 * Upstream keeps writing into #InvestmentBody by id.
@@ -299,7 +332,11 @@ let MyGBs = {
 
 		wrapper.toggleClass('mygbs-active', tab === 'mygbs');
 
-		if (tab === 'mygbs') MyGBs.render();
+		if (tab === 'mygbs') {
+			MyGBs.Seen = true;
+			MyGBs.refreshCounter();
+			MyGBs.render();
+		}
 
 		MyGBs.renderTabs();
 	},
@@ -497,11 +534,32 @@ let MyGBs = {
 	const buildBox = Investment.BuildBox;
 
 	Investment.BuildBox = (...args) => {
+		const created = $('#Investment').length === 0;
 		const result = buildBox(...args);
 
-		MyGBs.attachTab();
+		MyGBs.boxCreated = created && $('#Investment').length > 0;
+		if (MyGBs.boxCreated) MyGBs.attachTab();
 
 		return result;
 	};
 }
 
+
+// Counter on the Investment menu button; with a counter the button opens the box on the "Meine LGs" tab
+{
+	const investmentBtn = _menu.investment_Btn;
+
+	_menu.investment_Btn = () => {
+		const btn = investmentBtn();
+
+		// after the upstream handler, which has just created (or closed) the box
+		btn.children('span').first().on('click', () => {
+			if (MyGBs.boxCreated && MyGBs.hasNews()) MyGBs.selectTab('mygbs');
+		});
+
+		btn.append($('<span id="mygbs-count" class="hud-counter mygbs-counter" />').hide());
+		setTimeout(MyGBs.refreshCounter);
+
+		return btn;
+	};
+}

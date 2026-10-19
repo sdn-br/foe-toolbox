@@ -602,6 +602,21 @@
 	font-style: italic;
 }
 
+/* Investment menu button: FP of other players in the own GBs since the last visit (my-gbs.js) */
+.hud-btn span.hud-counter.mygbs-counter {
+	width: auto;
+	min-width: 15px;
+	padding: 1px 3px;
+	border-radius: 8px;
+	background-color: var(--hud-counter-success);
+	white-space: nowrap;
+}
+
+.hud-bottom .hud-btn span.hud-counter.mygbs-counter {
+	min-width: 12px;
+	padding: 1px 2px;
+}
+
 /* import button of the notes below the API token in the settings */
 .notice-import-btn {
 	margin-top: 8px;
