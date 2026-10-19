@@ -84,7 +84,7 @@ FoEproxy.addWsHandler('GuildBattlegroundService', 'getParticipantVictoryPoints',
 });
 
 FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData) => {
-	if (['unsubscribed', 'subscribed'].includes(data.responseData?.stateId)) return; // TOOLBOX: no round to show while the guild is not or only signed up (Forge Hammer)
+	if (data.responseData?.stateId !== 'participating' && !data.responseData?.playerLeaderboardEntries?.length) return; // TOOLBOX: nothing to show without a player ranking (Forge Hammer filtered by state, but "subscribed" after a round still has the ranking of that round)
 	Guild_fights.GlobalRankingTimeout = setTimeout(()=>{
 		if (data.responseData['stateId'] !== 'participating')	{
 			Guild_fights.CurrentGBGRound = parseInt(data.responseData['startsAt']) - 259200;
