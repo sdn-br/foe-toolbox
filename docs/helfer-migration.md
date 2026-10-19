@@ -365,6 +365,20 @@ Quelle: `forge-hammer` `js/web/guildfights/js/guildfights.js` (`HandleGuildLeade
 - Lese-API für andere Module: `GbgHistory.getRoundRows(gbground)` (alle Zeilen einer Runde, älteste zuerst, Standard laufende Runde), `GbgHistory.getPlacements(gbground)` (letzte Gildenliste oder `null`), Ereignis `GbgHistoryUpdated` (`FoEproxy.addFoeHelperHandler`) mit der gespeicherten Zeile.
 - Texte `Boxes.GBGSeasonOverflow.*`, `Boxes.GuildFights.GuildResults`, `Boxes.GuildFights.ShowOverflowWarning` in `toolbox.de.json`. Kein neuer Netzwerkzugriff; Flaggen und Güter-Symbole über `srcLinks` vom Spiel-CDN.
 
+## Übernahme aus Forge Hammer: Fenster "GG Statistiken"
+
+Quelle: `forge-hammer` `js/web/stats/js/stats.js` (`ShowGBGCharts`, `buildGBGGuildsChart`, `showGBGGuildsTooltip`, `getGBGRateSeries`, `getGBGForecast`, `ShowGBGStatsSettings`), Knopf aus `js/web/guildfights/js/guildfights.js` (`BuildPlayerContent`), Texte aus der Forge-Hammer-`de.json`.
+
+- Modul `js/web/gbg-stats` (JS + CSS, Objekt `GbgStats`, Box-Id `GbgStats`, mit Pop-out). Keine Änderung in Upstream-Dateien. Daten nur aus `gbg-history` (`GbgHistory.getRoundRows`), Aktualisierung über das Ereignis `GbgHistoryUpdated`, solange der Reiter "Siegpunkte" die Runde der neuen Zeile zeigt.
+- Knopf "Statistiken" in der Rundenleiste des Spieler-Fensters per Wrapper um `Guild_fights.SetBoxNavigation`, vorn in `#gbgLogFilter`. Abweichung: Forge Hammer zeigt den Knopf nur bei der laufenden Runde und das Fenster nur für sie; hier bei jeder Runde, das Fenster öffnet auf der gewählten Runde und hat eine eigene Rundenauswahl (Runden des Spieler-Fensters plus alle Runden mit Siegpunkten, neueste zuerst). Zweiter Klick auf dieselbe Runde schließt das Fenster.
+- Reiter "Siegpunkte": ECharts statt Chart.js, geladen und gestaltet wie die Toolbox-Statistik (`Stats.loadChartLib`, Theme `foe`, `Stats.ChartColors`, `Stats.formatNumber`). Eine Linie je Gilde, Farben der Gildenkarte (`Guild_fights.SortedColors` über `MapData.battlegroundParticipants`) nur für die laufende Runde, sonst die Toolbox-Palette. Legende von ECharts (blättern, "Alle"/"Umkehren" statt Forge Hammers "alle ein/aus"), Zoom mit dem Mausrad, PNG und CSV über die ECharts-Werkzeugleiste. Die CSV enthält wie in Forge Hammer nur gemessene Werte (`gbg-siegpunkte-<Rundenende>.csv`, Spalten Datum und Gilden).
+- Tooltip wie Forge Hammer: Gilden nach Punkten, Spalten Gilde und SP fest, wählbar "hinter ▲" (Abstand zur Gilde davor), "voraus ▼" (Abstand zur Gilde dahinter), "SP/Std" (gemessen zur Zeile etwa 24 h vorher, im Kopf die tatsächliche Stundenbasis). ECharts-Tooltip am Mauszeiger statt eigenem Kasten.
+- Prognose wie Forge Hammer (mindestens 3 Zeilen über mindestens 24 h, Rate der neuesten Zeile, ein Punkt je verbleibendem Tag zur Uhrzeit des Rundenendes), als gestrichelte zweite Linie je Gilde mit gleichem Namen (die Legende schaltet beide). Abweichung: nur für eine laufende Runde (Rundenende in der Zukunft); Forge Hammer hätte bei vergangenen Runden eine Prognose in die Vergangenheit gezeichnet, zeigte sie dort aber nie. Fehlen Daten, steht bei eingeschalteter Prognose ein Hinweis über dem Diagramm; der Haken in den Einstellungen bleibt anders als in Forge Hammer immer bedienbar.
+- Einstellungen (Zahnrad): "Siegpunkte-Prognose anzeigen" (Standard aus) und die Tooltip-Spalten (Standard `ahead,rate`), wie bei GexStat als JSON in `localStorage` `GbgStatsSettings` (`{ forecast, tooltipColumns }`). Forge Hammer nutzt `StatsGBGForecast` und `StatsGBGTooltipColumns`, die nicht übernommen werden.
+- Ohne Daten der Runde: Hinweis "Noch keine Daten. Öffne im Gefecht die Rangliste der Gilden, dann werden die Siegpunkte gesammelt." statt eines leeren Diagramms.
+- Reiter "Spieler": nicht nachgebaut. Die Toolbox-Statistik zeigt dieselben Daten schon (Quelle "Gildengefechte", Tabelle `statsGBGPlayers`, Wert Kämpfe plus doppelte Verhandlungen wie in Forge Hammer, mit Avataren im Tooltip, Delta-Ansicht und Datumsauswahl). Der Reiter erklärt das, sein Knopf öffnet die Statistik mit dieser Quelle, Linienansicht und dem Zeitraum der Runde (Rundenende minus 11 Tage bis Rundenende bzw. jetzt).
+- Texte `Boxes.GuildFights.Stats.*` in `toolbox.de.json`. Kein neuer Netzwerkzugriff; ECharts liegt in `vendor/echarts`.
+
 ## Notizen lokal
 
 Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sort|del`), also nur mit `GlobalSend` und API-Token. Die Toolbox speichert sie lokal, in eigenen Modulen getrennt vom Helfer.
@@ -581,6 +595,21 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Einstellungen des Spieler-Fensters (Zahnrad): Haken "Warnung, wenn ..." ist an. Aus, speichern, Fixture erneut laufen lassen: kein Toast. Filter-Knopf (Pfeil) klicken, Seite neu laden: der Haken bleibt aus.
 - `GbgHistoryFixture.cleanup()`: Fake-Runde verschwindet aus der Rundenauswahl, `guildHistory` und `history` enthalten keine Zeilen der Fake-Runde mehr.
 - Migration: Profil, das nur Forge Hammer kannte (`ForgeHammer_GBG_<id>`, keine `FoeHelperDB_GuildFights_<id>`), Toolbox-DB löschen, neu laden: Snapshots, Runden und `guildHistory` stehen in der Toolbox-DB, `FH_IndexDBLastMigraion` nennt die Kopie, die Forge-Hammer-DB ist unverändert.
+
+**Fenster "GG Statistiken" (aus Forge Hammer)**
+- Spieler-Fenster öffnen: in der Rundenleiste rechts vorn der Knopf "Statistiken", auch bei vergangenen Runden. Klick öffnet "GG Statistiken" auf der gezeigten Runde, zweiter Klick schließt es.
+- Runde ohne Siegpunkte (z. B. eine alte Runde vor dem Update): Hinweis "Noch keine Daten. Öffne im Gefecht ...", kein Diagramm.
+- Im GbG die Rangliste der Gilden öffnen, Fenster auf der laufenden Runde: Linien in den Farben der Gildenkarte; bei offener Rangliste und Punktänderung in einer neuen Stunde wächst das Diagramm ohne neues Öffnen.
+- Ohne GbG: `gbg-stats-fixture.js` aus dem Scratchpad in die Konsole kopieren. Das Fenster öffnet auf der Fake-Runde (Ende in etwa 2,5 Tagen), 8 Gilden, Toolbox-Palette, gestrichelte Prognose bis zum Rundenende. Nach 5 s endet die durchgezogene Linie eine Stunde später (Live-Aktualisierung).
+- Tooltip: Maus über das Diagramm: Datum, Gilden nach Punkten, Spalten SP, "voraus ▼", "SP/Std (24 Std)". Der Name mit `<b>` erscheint als Text. Über dem gestrichelten Teil: "Prognose" im Kopf, die Rate ist die der Prognose.
+- Legende: Gilde anklicken blendet durchgezogene und gestrichelte Linie aus, die Abstände im Tooltip rechnen nur mit sichtbaren Gilden. "Alle" und "Umkehren" funktionieren. Mausrad zoomt die Zeitachse.
+- CSV-Symbol oben rechts: Datei `gbg-siegpunkte-<Datum>.csv` mit Datum und einer Spalte je Gilde, ohne Prognosewerte. PNG-Symbol: Bild.
+- Zahnrad: Prognose aus, speichern: gestrichelte Linien weg. Spalte "hinter ▲" an, "SP/Std" aus, speichern: Tooltip folgt sofort. Seite neu laden, Fenster öffnen: Einstellungen bleiben (`localStorage` `GbgStatsSettings`). (Die Fixture schaltet die Prognose nur im Speicher ein.)
+- Prognose an, Runde mit weniger als 24 h Daten: Hinweis "Für die Prognose fehlen noch Daten ..." über dem Diagramm. Vergangene Runde: keine Prognose, kein Hinweis.
+- Reiter "Spieler": Text und Knopf "In der Statistik öffnen": die Statistik öffnet mit Quelle Gildengefechte, Linienansicht und dem Zeitraum der Runde im Datumsknopf.
+- Pop-out-Knopf: Fenster separat, Diagramm füllt es, Rundenwechsel, Reiter, Zahnrad-Speichern und Tooltip funktionieren dort.
+- Fenster schließen und wieder öffnen, Größe ziehen: das Diagramm passt sich an, keine Fehler in der Konsole.
+- `GbgStatsFixture.cleanup()`: Zeilen der Fake-Runden weg (auch die der gbg-history-Fixture), Fenster zu, die Fake-Runde fehlt in der Rundenauswahl.
 
 **Pop-out**
 - Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.

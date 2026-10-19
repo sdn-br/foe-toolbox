@@ -1,0 +1,70 @@
+/*
+ * FoE Toolbox: window "GG Statistiken" (gbg-stats)
+ */
+
+#GbgStats {
+	width: 900px;
+	height: 560px;
+	min-width: 480px;
+	min-height: 320px;
+}
+
+#GbgStatsBody {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+#GbgStatsBody .gbgstats-roundswitch {
+	padding: 2px 5px;
+}
+
+#GbgStatsBody .gbgstats-round {
+	margin: 0 4px;
+}
+
+#GbgStatsBody .gbgstats-tabs {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+/* tabslet hides and shows the tabs inline, shown they fall back to this */
+#GbgStatsGuilds {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+#GbgStatsChart {
+	flex: 1;
+	min-height: 260px;
+}
+
+#GbgStatsPlayers {
+	padding: 10px;
+}
+
+#GbgStatsBody .gbgstats-hint {
+	padding: 10px;
+	text-align: center;
+}
+
+/* ECharts tooltip of the victory points chart */
+.gbgstats-tt table {
+	border-collapse: collapse;
+	margin-top: 2px;
+}
+
+.gbgstats-tt th,
+.gbgstats-tt td {
+	padding: 0 6px;
+	white-space: nowrap;
+}
+
+.gbgstats-tt th {
+	font-weight: normal;
+	opacity: 0.75;
+}
