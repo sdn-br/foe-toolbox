@@ -46,17 +46,41 @@ let GbgHistory = {
 			GbgHistory.checkOverflow(ranking);
 		}
 
+		await GbgHistory.storeRow(gbground, GbgHistory.guildsOf(ranking), now);
+	},
+
+
+	/**
+	 * Final guild ranking of an ended round, sent with getState after the round ("subscribed",
+	 * leaderboardEntries in the same form as getLeaderboard). Stored as the last row at the end of
+	 * the round, so the placements and the end of the chart exist even if nobody opened the ranking
+	 * during the round. No overflow warning, the reward is already paid out.
+	 *
+	 * @param {number} gbground end of the ended round
+	 * @param {Object[]} ranking leaderboardEntries
+	 * @returns {Promise<void>}
+	 */
+	handleFinalRanking: async (gbground, ranking) => {
+		if (!gbground || !Array.isArray(ranking) || ranking.length === 0 || !Guild_fights.db) return;
+
+		await GbgHistory.storeRow(gbground, GbgHistory.guildsOf(ranking), gbground);
+	},
+
+
+	/**
+	 * @param {Object[]} ranking entries of the guild ranking
+	 * @returns {{id: number, name: string, flag: string|null, points: number}[]}
+	 */
+	guildsOf: (ranking) => {
 		// the leaderboard may lack the flag, the map data has it
 		let participants = Guild_fights.MapData?.battlegroundParticipants || [];
 
-		let guilds = ranking.filter(rank => rank?.clan).map(rank => ({
+		return ranking.filter(rank => rank?.clan).map(rank => ({
 			id: rank.clan.id,
 			name: rank.clan.name,
 			flag: rank.clan.flag ?? participants.find(p => p.clan?.id === rank.clan.id)?.clan.flag ?? null,
 			points: rank.victoryPointsTotal || 0,
 		}));
-
-		await GbgHistory.storeRow(gbground, guilds, now);
 	},
 
 
@@ -151,7 +175,8 @@ let GbgHistory = {
 	 * @returns {Promise<void>}
 	 */
 	renderPlacements: async (gbground, token) => {
-		if (!gbground || gbground === Guild_fights.CurrentGBGRound) return;
+		// only for ended rounds, after the end the ended round is still the current one
+		if (!gbground || gbground > moment().unix()) return;
 
 		let guilds = await GbgHistory.getPlacements(gbground);
 		if (!guilds || token !== GbgHistory.renderToken) return;
@@ -229,4 +254,12 @@ Guild_fights.PlayerBoxSettings.showOverflowWarning =
 
 FoEproxy.addHandler('GuildBattlegroundService', 'getLeaderboard', (data) => {
 	GbgHistory.handleLeaderboard(data.responseData);
+});
+
+// the round of a getState outside of a round is computed like Guild_fights does (start of the next round minus 3 days)
+FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data) => {
+	let state = data.responseData;
+	if (!state || state.stateId === 'participating' || !state.startsAt) return;
+
+	GbgHistory.handleFinalRanking(parseInt(state.startsAt) - 259200, state.leaderboardEntries);
 });
