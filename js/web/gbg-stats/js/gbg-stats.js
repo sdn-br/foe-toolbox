@@ -321,13 +321,13 @@ let GbgStats = {
 
 		return {
 			animation: false,
-			grid: { left: 10, right: 20, top: 40, bottom: 10, containLabel: true },
+			grid: { left: 10, right: 20, top: 62, bottom: 10, containLabel: true },
 			legend: {
 				type: 'scroll',
-				top: 6,
+				// below the toolbox icons, like in the statistics box
+				top: 28,
 				left: 10,
-				// room for the toolbox icons, also when the legend pages
-				right: 100,
+				right: 20,
 				data: guilds.map(g => g.name),
 				// at the end the buttons ran into the toolbox icons
 				selectorPosition: 'start',
@@ -338,7 +338,8 @@ let GbgStats = {
 			},
 			toolbox: {
 				right: 8,
-				top: 4,
+				top: 0,
+				itemSize: 13,
 				itemGap: 10,
 				feature: {
 					saveAsImage: { title: 'PNG', name: 'gbg-siegpunkte', backgroundColor: '#2a2a2b' },
