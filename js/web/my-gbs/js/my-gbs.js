@@ -24,9 +24,10 @@
  *   MyGBsPending_<id>       { since, rows: [...] }  result with news, until the tab is opened
  *
  * Live updates: the game pushes contributions of other players to own GBs as WebSocket
- * CityMapService.updateEntity (new invested FP, no rankings, see _main.js). MyGBs.progressSince
- * with the snapshot entry and such an entity gives the live difference without touching the
- * snapshot.
+ * CityMapService.updateEntity (new invested FP, no rankings, confirmed live 2026-10-19).
+ * MyGBs.liveUpdate adds the difference since the start to the row of that GB, the tab and the
+ * counter follow right away. Opening the tab moves the stored snapshot to the current state,
+ * so the next start compares from there ("since the last look").
  *
  * You may use, distribute and modify this code under the terms of the AGPL license.
  * See file LICENSE.md for full license details.
@@ -49,6 +50,14 @@ FoEproxy.addHandler('GreatBuildingsService', 'all', (data, postData) => {
 	}
 });
 
+// contributions of other players arrive as push; own ones come with the answer to the contribution
+FoEproxy.addWsHandler('CityMapService', 'updateEntity', (data) => {
+	(data.responseData || []).forEach(MyGBs.liveUpdate);
+});
+FoEproxy.addHandler('CityMapService', 'updateEntity', (data) => {
+	(data.responseData || []).forEach(MyGBs.liveUpdate);
+});
+
 // the counter setting takes effect right away
 $(document).on('change', 'input[data-id="ShowMyGBsCounter"]', () => MyGBs.refreshCounter());
 
@@ -61,8 +70,14 @@ let MyGBs = {
 	/** result of the comparison at the start: { since, rows: [...] }, undefined before the start */
 	Progress: undefined,
 
-	/** the "Meine LGs" tab was opened since the result with news, the counter is hidden then */
-	Seen: false,
+	/** FP total the user has seen on the "Meine LGs" tab this visit, the counter shows what came after */
+	SeenTotal: 0,
+
+	/** rows at the start by cityentity_id, the base of the live updates */
+	StartRows: {},
+
+	/** snapshot entries at the start by cityentity_id ({ level, invested, needed, own }), own contributions of this visit included */
+	LiveBase: {},
 
 	/** expanded rows (cityentity_id) */
 	expanded: new Set(),
@@ -200,7 +215,9 @@ let MyGBs = {
 			since: pending?.since || prev?.time || null,
 			rows: MyGBs.mergePending(pending, MyGBs.compare(prev?.gbs ? prev : null, current)),
 		};
-		MyGBs.Seen = false;
+		MyGBs.SeenTotal = 0;
+		MyGBs.StartRows = Object.fromEntries(MyGBs.Progress.rows.map(r => [r.ceId, r]));
+		MyGBs.LiveBase = Object.fromEntries(Object.entries(current).map(([ceId, c]) => [ceId, { ...c, own: 0 }]));
 
 		if (MyGBs.Progress.rows.some(r => r.changed)) {
 			MyGBs.write('Pending', MyGBs.Progress);
@@ -211,6 +228,62 @@ let MyGBs = {
 
 		MyGBs.refreshCounter();
 		MyGBs.render();
+	},
+
+
+	/**
+	 * Live change of an own GB (updateEntity): the row gets the start row plus what other
+	 * players added since the start. GBs built during this visit wait for the next start.
+	 *
+	 * @param entity city map entity
+	 */
+	liveUpdate: (entity) => {
+		if (!MyGBs.Progress || entity?.type !== 'greatbuilding' || entity.player_id !== ExtPlayerID) return;
+
+		const ceId = entity.cityentity_id,
+			base = MyGBs.LiveBase[ceId],
+			start = MyGBs.StartRows[ceId];
+		if (!base || !start) return;
+
+		const c = MyGBs.gbState(entity),
+			added = MyGBs.progressSince(base, c),
+			row = {
+				...start,
+				level: c.level,
+				invested: c.invested,
+				needed: c.needed,
+				delta: start.delta + added,
+				changed: (start.changed || added > 0 || c.level !== start.level),
+			};
+
+		MyGBs.Progress.rows = MyGBs.Progress.rows.map(r => r.ceId === ceId ? row : r);
+
+		// seen right away when the tab is open
+		if ($('#InvestmentTabs').hasClass('mygbs-active') && $('#Investment').is(':visible')) {
+			MyGBs.markSeen();
+		}
+
+		MyGBs.refreshCounter();
+		MyGBs.render();
+	},
+
+
+	/**
+	 * The user looked at the tab: the counter starts over, nothing is pending any more, and the
+	 * stored snapshot moves to the current state (the next start compares from here)
+	 */
+	markSeen: () => {
+		MyGBs.SeenTotal = MyGBs.total();
+		MyGBs.remove('Pending');
+
+		const gbs = {};
+		for (const entity of Object.values(MainParser.CityMapData || {})) {
+			if (entity?.type !== 'greatbuilding') continue;
+			gbs[entity.cityentity_id] = { ...MyGBs.gbState(entity), own: 0 };
+		}
+		if (Object.keys(gbs).length > 0) {
+			MyGBs.write('Snapshot', { time: +MainParser.getCurrentDate(), gbs });
+		}
 	},
 
 
@@ -249,6 +322,7 @@ let MyGBs = {
 			// from the rankings; without rankings of this level from before, the amount of the request
 			const amount = before !== null ? (players[ExtPlayerID]?.fp || 0) - before : (Number.isInteger(requestData[3]) ? requestData[3] : 0);
 			MyGBs.addOwnContribution(ceId, amount);
+			MyGBs.liveUpdate(entity);
 		}
 	},
 
@@ -315,6 +389,8 @@ let MyGBs = {
 
 		gb.own = (gb.own || 0) + amount;
 		MyGBs.write('Snapshot', snapshot);
+
+		if (MyGBs.LiveBase[ceId]) MyGBs.LiveBase[ceId].own += amount;
 	},
 
 
@@ -326,16 +402,16 @@ let MyGBs = {
 	refreshCounter: () => {
 		const show = MyGBs.hasNews();
 
-		$('#mygbs-count').text(show ? HTML.FormatNumberShort(MyGBs.total()) : '').toggle(show);
+		$('#mygbs-count').text(show ? HTML.FormatNumberShort(MyGBs.total() - MyGBs.SeenTotal) : '').toggle(show);
 	},
 
 
 	/**
-	 * The counter is shown: other players added FP since the last visit, the tab was not opened yet
+	 * The counter is shown: other players added FP the user has not seen on the tab yet
 	 *
 	 * @returns {boolean}
 	 */
-	hasNews: () => localStorage.getItem('ShowMyGBsCounter') !== 'false' && !MyGBs.Seen && MyGBs.total() > 0,
+	hasNews: () => localStorage.getItem('ShowMyGBsCounter') !== 'false' && MyGBs.total() > MyGBs.SeenTotal,
 
 
 	/**
@@ -367,8 +443,7 @@ let MyGBs = {
 		wrapper.toggleClass('mygbs-active', tab === 'mygbs');
 
 		if (tab === 'mygbs') {
-			MyGBs.Seen = true;
-			MyGBs.remove('Pending');
+			MyGBs.markSeen();
 			MyGBs.refreshCounter();
 			MyGBs.render();
 		}
