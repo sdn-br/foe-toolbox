@@ -337,6 +337,20 @@ Quelle: `forge-hammer` `js/web/gbg-actionlog` ("Copyright (C) 2026 Forge Hammer 
 - Texte: `Boxes.GBGActionLog.*` und `General.Total` neu in `de.json`, nach der Forge-Hammer-`de.json`; dort halb englische oder falsche Texte (`RangeCap*`, `Toast.PrevLoadTime`, `Toast.CurrLoadTime`, `RedAfterHoursHint`) neu übersetzt.
 - Kein neuer Netzwerkzugriff; Icons der Spalten kommen wie sonst über `srcLinks` vom Spiel-CDN.
 
+## Übernahme aus Forge Hammer: GbG-Zielleiste und Menü-Countdown
+
+Quelle: `forge-hammer` `js/web/guildfights/js/guildfights.js` (`HandleSignals`, `ShowFocusSignals`, `UpdateSignalProgress`, `UpdateMenuSignalTimer`), CSS aus `css/boxes.css` (`#GBGTargets`).
+
+- Modul `js/web/gbg-targets` (JS + CSS, Objekt `GbgTargets`), eigene Id `#toolboxGbgTargets` (die alten Upstream-Regeln für `#GBGTargets` in `boxes.css` greifen so nicht). Keine Änderung in Upstream-Dateien. Liest nur, was `Guild_fights` schon hält: `MapData`, `own.signals` (Handler `updateSignal`), `Alerts`/`GetAlertButton`/`SetAlert`/`DeleteAlert`, `SortedColors`, `serverOffset`.
+- Leiste über dem Spiel nur bei `ActiveMap === 'gg'` und solange Fokus-Ziele da sind; eigene Sektoren fallen heraus (über `ownerId`). Kachel wie in Forge Hammer: Fadenkreuz mit Punkt (rot = Angriff), Sektorname, "um HH:mm" bei mehr als 30 min, sonst "in mm:ss", offene Sektoren mit Balken je angreifender Gilde, Alarm-Knopf beim Überfahren des Symbols. Offene zuerst, dann nach Öffnungszeit. Nur Symbol und "+N" nehmen die Maus, sonst gehen Klicks ans Spiel.
+- Statt fest 7 Kacheln: so viele, wie in die Leiste der gewählten Position passen (nach dem Zeichnen gemessen), dann eine Kachel "+N" mit Tooltip (`ToolboxTT`) der übrigen Sektoren samt Zeit.
+- Aktualisierung: Handler `getBattleground`, `updateSignal`, WebSocket `GuildBattlegroundService` (alle Methoden) und `ActiveMapUpdated` stoßen einen Neuaufbau an (per `setTimeout 0`, weil der `all`-Handler von `Guild_fights` erst später registriert wird). Danach jede Sekunde, solange Leiste oder Menü-Countdown etwas zeigen, sonst wird das Intervall beendet.
+- Menü-Countdown "H:mm" bis zum nächsten noch gesperrten Fokus-Ziel, rot unter 2,4 min: Zähler-Span per Wrapper um `_menu.gildFight_Btn` (`toolbox-menu`), gefüllt im selben Sekundentakt wie die Leiste, auch außerhalb der Karte. Forge Hammer nutzt ein eigenes globales 60-s-Intervall, das die Einstellung nicht prüft und abgelaufene Ziele in den Kartendaten löscht; beides nicht übernommen. CSS in `css/web/toolbox.css`.
+- Einstellungen im Reiter "Anzeige" der GbG-Einstellungen: "Zeige Markierungen" (Standard an), "Position der Markierungen" (Oben (Standard), Unten, Links). Schlüssel wie Forge Hammer in `LiveFightSettings`: `showGbgTargets`, `gbgTargetsPosition`. Per Wrapper um `Guild_fights.ShowLiveFightSettings` (Felder anhängen) und `Guild_fights.SaveLiveFightSettings` (das Original baut `LiveFightSettings` nur aus den eigenen Feldern neu, die beiden Schlüssel werden danach eingemischt; sofort wirksam). Die Einstellung betrifft nur Leiste und Menü-Countdown.
+- Behobene Forge-Hammer-Fehler: Aus der Leiste stoppte dort auch das Neuzeichnen der Alarm-Knöpfe im Reiter "Nächste" (in der Toolbox baut das der `updateSignal`-Handler von `Guild_fights` ohnehin neu). Veraltete Fortschrittsbalken blieben stehen (falsche Klasse `.attack`); hier werden die Balken bei jeder Änderung aus `conquestProgress` neu gebaut.
+- Kein Handler für `getAction` `province_conquered`: Forge Hammer löscht damit Signale auf Sektoren der eigenen Gilde aus den Kartendaten. Hier filtern Leiste und Countdown eigene Sektoren über `ownerId` (aktualisiert vom `all`-Handler), und die Signale bleiben unverändert, damit Fokus-Symbol in den Tabellen und Wasserzeichen auf der Karte wie bisher arbeiten.
+- Texte `Boxes.GuildFights.GBGTargets*` in `toolbox.de.json` ("Postion" korrigiert, "Weitere Markierungen" und "offen" für den Tooltip neu). Kein neuer Netzwerkzugriff; das Symbol kommt über `srcLinks` vom Spiel-CDN.
+
 ## Notizen lokal
 
 Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sort|del`), also nur mit `GlobalSend` und API-Token. Die Toolbox speichert sie lokal, in eigenen Modulen getrennt vom Helfer.
@@ -535,6 +549,15 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Zähler: nach dem ersten Sammeln, nach mindestens einer Stunde die GbG-Karte erneut öffnen: links auf der Karte erscheint eine Zahl (Stunden seit dem letzten Sammeln). Ab der eingestellten Stundenzahl (Standard 8) ist sie rot. Gefechts-Log öffnen setzt sie zurück, Karte verlassen entfernt sie.
 - Einstellungen: Anzeigedauer 0 -> keine Meldung mehr. Im Netzwerk-Tab keine neuen Anfragen außer Bildern vom Spiel-CDN.
 - Migration: Profil mit Forge-Hammer-Daten (`FoeHelperDB_GBG_<id>`), erster Start: die Daten stehen in `FoEToolbox2DB_GBG_<id>`, die Alt-DB ist unverändert, `FH_IndexDBLastMigraion` nennt die Kopie.
+
+**GbG-Zielleiste und Menü-Countdown (aus Forge Hammer)**
+- GbG-Karte öffnen, im Spiel zwei, drei Sektoren mit dem Signal "Fokus" markieren: oben links neben der Spiel-HUD erscheint die Leiste, je Ziel Fadenkreuz (Punkt rot bei Angriff, sonst blau), Name und "um HH:mm" bzw. "in mm:ss". Offene Ziele stehen vorn, ohne Zeit, mit Balken in den Farben der angreifenden Gilden.
+- Signal entfernen oder auf "Ignorieren" stellen: die Kachel verschwindet. Einen Fokus-Sektor erobern: die Kachel verschwindet. Letztes Ziel weg: Leiste weg.
+- Symbol überfahren: Alarm-Knopf erscheint; Klick legt den Alarm an (Toast), erneutes Überfahren zeigt den roten Löschknopf. Im Reiter "Nächste" der Live-Box zeigt der Knopf denselben Zustand. Klicks neben das Symbol (auf Name oder Zeit) gehen an die Spielkarte.
+- Viele Ziele (oder Fenster schmal ziehen): letzte Kachel "+N", Tooltip "Weitere Markierungen" mit den übrigen Sektoren und Zeiten. Fenster breiter ziehen: mehr Kacheln, "+N" kleiner oder weg.
+- Einstellungen, Reiter "Anzeige": Position Unten bzw. Links, speichern: die Leiste springt sofort an den unteren Rand bzw. links in eine Spalte. "Zeige Markierungen" aus: Leiste und Menü-Countdown weg, Live-Box, Alarm-Knöpfe und Fokus-Symbole arbeiten unverändert.
+- Menü: am Knopf "Gildengefechte" steht "H:mm" bis zum nächsten noch gesperrten Ziel, unter 2:24 min rot; ohne gesperrtes Ziel leer.
+- Karte verlassen: Leiste weg, der Countdown am Menüknopf läuft weiter.
 
 **Pop-out**
 - Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.

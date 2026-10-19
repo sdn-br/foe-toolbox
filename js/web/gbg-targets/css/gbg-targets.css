@@ -1,0 +1,206 @@
+/*
+ * FoE Toolbox: focus target bar over the GBG map (gbg-targets), after Forge Hammer css/boxes.css (#GBGTargets).
+ * Own id: the upstream boxes.css still carries unused rules for #GBGTargets.
+ */
+
+#toolboxGbgTargets {
+	--gbg-targets-text: #d6be8d;
+	--gbg-targets-bg: #210f09e3;
+	position: absolute;
+	box-sizing: border-box;
+	z-index: 2000;
+	color: #fffc;
+	text-shadow: 0 1px 1px var(--black);
+	display: flex;
+	text-align: left;
+	gap: 12px;
+	padding: 12px;
+	/* the game below stays usable, only the icon and the "+N" tile take the mouse */
+	pointer-events: none;
+	overflow: hidden;
+}
+
+#toolboxGbgTargets.pos-bottom {
+	bottom: 0;
+	left: 223px;
+	max-width: calc(100% - 446px);
+	height: 100px;
+	align-items: end;
+	flex-wrap: nowrap;
+}
+
+#toolboxGbgTargets.pos-left {
+	bottom: 149px;
+	left: 9px;
+	width: 144px;
+	max-height: calc(100% - 300px);
+	align-items: end;
+	flex-direction: column;
+}
+
+#toolboxGbgTargets .gbgTarget {
+	width: clamp(85px, 7vw, 110px);
+	flex-shrink: 0;
+}
+
+#toolboxGbgTargets .gbgTarget.is-hidden,
+#toolboxGbgTargets .gbgTarget.open .signal-countdown,
+#toolboxGbgTargets .signal-countdown:empty {
+	display: none;
+}
+
+#toolboxGbgTargets .progress > div {
+	height: 4px;
+	margin-bottom: 2px;
+	box-shadow: 0 0 1px 1px #0005;
+	border-radius: 1px;
+}
+
+#toolboxGbgTargets .title,
+#toolboxGbgTargets .signal-countdown {
+	background-color: var(--black-65);
+	backdrop-filter: blur(2px);
+	padding: 0 4px;
+	border-radius: 3px;
+	position: relative;
+}
+
+#toolboxGbgTargets .title {
+	display: flex;
+	align-items: center;
+	z-index: 2;
+}
+
+#toolboxGbgTargets .title b {
+	font-size: clamp(25px, 3vh, 33px);
+}
+
+#toolboxGbgTargets .gbgTargetActions {
+	pointer-events: all;
+	position: relative;
+	display: inline-block;
+	z-index: 210;
+}
+
+#toolboxGbgTargets .gbgTargetActions .battleType {
+	width: 7px;
+	height: 7px;
+	border-radius: 4px;
+	display: inline-block;
+	position: absolute;
+	left: calc(50% - 4px);
+	top: calc(50% - 4px);
+	background-color: var(--def);
+}
+
+#toolboxGbgTargets .gbgTargetActions .battleType.red {
+	background-color: var(--att);
+}
+
+#toolboxGbgTargets .gbgTargetActions img {
+	height: clamp(25px, 3vh, 33px);
+	vertical-align: text-bottom;
+}
+
+#toolboxGbgTargets .gbgTargetActions .createGBGNotification,
+#toolboxGbgTargets .gbgTarget.open .btn[class*=alertbutton] {
+	display: none;
+}
+
+#toolboxGbgTargets .gbgTargetActions:hover img {
+	transform: scale(1.1);
+	transform-origin: center;
+}
+
+#toolboxGbgTargets .gbgTargetActions:hover .createGBGNotification {
+	display: block;
+	position: absolute;
+	bottom: 25px;
+	left: -4px;
+	height: 25px;
+}
+
+#toolboxGbgTargets.pos-left .gbgTargetActions:hover .createGBGNotification {
+	left: unset;
+	bottom: unset;
+	right: 27px;
+	top: 0;
+	text-align: right;
+}
+
+#toolboxGbgTargets.pos-top .gbgTargetActions:hover .createGBGNotification {
+	bottom: unset;
+	top: 0;
+	left: 24px;
+}
+
+/* "+N" tile, hover shows the hidden sectors */
+#toolboxGbgTargets .gbgTargetMore {
+	pointer-events: all;
+	width: auto;
+	min-width: 40px;
+}
+
+#toolboxGbgTargets .gbgTargetMore .title {
+	justify-content: center;
+}
+
+/* top: compact tiles in the game look next to the HUD */
+#toolboxGbgTargets.pos-top {
+	top: 3px;
+	left: 324px;
+	gap: 2px;
+	padding: 0;
+	max-width: calc(50% - 363px);
+	height: 66px;
+	color: var(--gbg-targets-text);
+}
+
+#toolboxGbgTargets.pos-top .gbgTarget {
+	width: 71px;
+	position: relative;
+}
+
+#toolboxGbgTargets.pos-top .gbgTargetMore {
+	width: auto;
+	min-width: 40px;
+}
+
+#toolboxGbgTargets.pos-top .gbgTarget b {
+	font-weight: normal;
+}
+
+#toolboxGbgTargets.pos-top .signal-countdown,
+#toolboxGbgTargets.pos-top .title {
+	border: 1px solid #664421;
+	border-radius: 4px 4px 0 0;
+}
+
+#toolboxGbgTargets.pos-top img {
+	height: 23px;
+	padding: 1px 1px 1px 0;
+}
+
+#toolboxGbgTargets.pos-top .title {
+	background-color: var(--gbg-targets-bg);
+}
+
+#toolboxGbgTargets.pos-top .title b {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+#toolboxGbgTargets.pos-top .signal-countdown {
+	font-size: 85%;
+	border-top: 0;
+	border-radius: 2px;
+	width: max-content !important;
+}
+
+#toolboxGbgTargets.pos-top .progress,
+#toolboxGbgTargets.pos-top .signal-countdown {
+	position: absolute;
+	top: 28px;
+	left: 0;
+	width: 70px;
+}

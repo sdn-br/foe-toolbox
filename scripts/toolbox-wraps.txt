@@ -7,6 +7,11 @@ Settings.ApiTokenInput	js/web/settings/js/settings.js
 _menu.notice_Btn	js/web/_menu/js/_menu.js
 # second counter for future events (toolbox-menu)
 _menu.hiddenRewards_Btn	js/web/_menu/js/_menu.js
+# counter span for the countdown to the next GBG focus target (toolbox-menu, filled by gbg-targets)
+_menu.gildFight_Btn	js/web/_menu/js/_menu.js
+# settings "Zeige Markierungen" and their position in the display tab, merged into LiveFightSettings after saving (gbg-targets)
+Guild_fights.ShowLiveFightSettings	js/web/guild_fights/js/guild_fights.js
+Guild_fights.SaveLiveFightSettings	js/web/guild_fights/js/guild_fights.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
 MainParser.sendExtMessage	js/web/_main/js/_main.js
 # only with GlobalSend or forceSend (toolbox-main)
