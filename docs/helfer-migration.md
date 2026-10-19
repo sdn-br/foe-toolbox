@@ -379,6 +379,12 @@ Quelle: `forge-hammer` `js/web/stats/js/stats.js` (`ShowGBGCharts`, `buildGBGGui
 - Reiter "Spieler": nicht nachgebaut. Die Toolbox-Statistik zeigt dieselben Daten schon (Quelle "Gildengefechte", Tabelle `statsGBGPlayers`, Wert Kämpfe plus doppelte Verhandlungen wie in Forge Hammer, mit Avataren im Tooltip, Delta-Ansicht und Datumsauswahl). Der Reiter erklärt das, sein Knopf öffnet die Statistik mit dieser Quelle, Linienansicht und dem Zeitraum der Runde (Rundenende minus 11 Tage bis Rundenende bzw. jetzt).
 - Texte `Boxes.GuildFights.Stats.*` in `toolbox.de.json`. Kein neuer Netzwerkzugriff; ECharts liegt in `vendor/echarts`.
 
+## Übernahme aus Forge Hammer: kleine GbG-Funktionen
+
+Quelle: `forge-hammer` `js/web/guildfights/js/guildfights.js` (Handler `getState`, `ProvinceMap.trackHover`/`trackClick`/`highlightAdjacentProvincess`, `BuildProgressTab`, `BuildDetailViewContent`, `BuildOwnedTab`).
+
+- Handler `GuildBattlegroundStateService.getState` (2 Zeilen mit Marker in `guild_fights.js`, der Handler ist anonym und lässt sich nicht umhüllen): Bei `stateId` `unsubscribed` (Gilde nicht angemeldet) und `subscribed` (angemeldet, Runde läuft noch nicht) passiert nichts mehr, bei `trialSelection` wird die Runde gesetzt, aber keine Spielerliste verarbeitet. Ohne Filter behandelte der Handler diese Zustände wie "Runde vorbei": `CurrentGBGRound` aus `startsAt` minus 3 Tage (ohne `startsAt` `NaN`), dann `HandlePlayerLeaderboard` mit leerer oder fehlender Liste. Folgen: ein leeres Spieler-Fenster springt auf (Forge-Hammer-Commit "remove blank ranking popup"), `history` bekommt eine Runde ohne Teilnehmer, die gemerkte Vergleichsliste `GuildFights.NewAction` wird leer überschrieben, und passt die errechnete Runde nicht zur gespeicherten (keine Snapshots dazu), löscht `BuildPlayerContent` über `DeleteOldSnapshots` die Snapshots der letzten echten Runde. Was das Spiel in `trialSelection` genau schickt, ist nicht belegt; übernommen wie in Forge Hammer.
+
 ## Notizen lokal
 
 Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sort|del`), also nur mit `GlobalSend` und API-Token. Die Toolbox speichert sie lokal, in eigenen Modulen getrennt vom Helfer.

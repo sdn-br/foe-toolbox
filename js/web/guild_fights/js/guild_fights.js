@@ -84,6 +84,7 @@ FoEproxy.addWsHandler('GuildBattlegroundService', 'getParticipantVictoryPoints',
 });
 
 FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData) => {
+	if (['unsubscribed', 'subscribed'].includes(data.responseData?.stateId)) return; // TOOLBOX: no round to show while the guild is not or only signed up (Forge Hammer)
 	Guild_fights.GlobalRankingTimeout = setTimeout(()=>{
 		if (data.responseData['stateId'] !== 'participating')	{
 			Guild_fights.CurrentGBGRound = parseInt(data.responseData['startsAt']) - 259200;
@@ -93,7 +94,7 @@ FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData
 				Guild_fights.curDateEndFilter = moment.unix(Guild_fights.CurrentGBGRound).format('YYYYMMDD');
 			}
 
-			Guild_fights.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']);
+			if (data.responseData['stateId'] !== 'trialSelection') Guild_fights.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']); // TOOLBOX: no player ranking in this state (Forge Hammer)
 		}
 	},500)
 });
