@@ -11,6 +11,9 @@
  * - tab "Fortschritt": one bar per attacker (progress / maxProgress) and "highest / needed",
  *   after the build of the box and after every live update of a row (wrapper around
  *   Guild_fights.RefreshTable)
+ * - snapshot log: column "Zermürbung" in the player log (sum per day) and the period log
+ *   (per snapshot), from the attrition stored with every snapshot (wrapper around
+ *   Guild_fights.BuildDetailViewContent)
  *
  * You may use, distribute and modify this code under the terms of the AGPL license.
  * See file LICENSE.md for full license details.
@@ -188,6 +191,75 @@ let GbgExtras = {
 			$(this).find('.required-progress').text(`${highest} / ${max}`);
 		});
 	},
+
+
+	// the snapshot log can be redrawn before the DB answered, only the last call may write
+	logToken: 0,
+
+
+	/**
+	 * Appends the attrition column to the table BuildDetailViewContent just drew.
+	 * Reads the snapshots again with the same query and order as the original.
+	 *
+	 * @param {Object} d filter of BuildDetailViewContent ({ content, player_id, gbground })
+	 * @param {number} token
+	 * @returns {Promise<void>}
+	 */
+	addAttritionColumn: async (d, token) => {
+		const content = d?.content || 'player',
+			gbground = d?.gbground || Guild_fights.CurrentGBGRound,
+			cell = value => `<td class="is-number text-center" data-number="${value}">${HTML.Format(value)}</td>`;
+
+		if (content === 'player') {
+			if (!d?.player_id) return;
+
+			const snapshots = await Guild_fights.db.snapshots.where({ gbground: gbground, player_id: d.player_id }).toArray();
+			if (token !== GbgExtras.logToken) return;
+
+			// the stored attrition is the gain since the previous snapshot, like battles and negotiations
+			const perDay = {};
+			for (const snapshot of snapshots) {
+				const day = moment.unix(snapshot.time).format('YYYYMMDD');
+				perDay[day] = (perDay[day] || 0) + (snapshot.attrition || 0);
+			}
+
+			const table = $('#gbgPlayerLogTable');
+			if (table.find('th.gbg-attrition').length > 0) return;
+
+			table.find('thead tr.sorter-header').append(GbgExtras.attritionHeader('gbg-playerlog-group'));
+			table.find('tbody tr').each(function () {
+				const day = moment.unix($(this).children('td').first().data('number')).format('YYYYMMDD');
+				$(this).append(cell(perDay[day] || 0));
+			});
+		}
+		else if (content === 'filter') {
+			const snapshots = await Guild_fights.db.snapshots.where({ gbground: gbground }).and(item =>
+				item.date >= Guild_fights.curDateFilter && item.date <= Guild_fights.curDateEndFilter
+			).toArray();
+			if (token !== GbgExtras.logToken) return;
+
+			snapshots.sort((a, b) => b.time - a.time);
+
+			const table = $('#GuildFightsLogTable'),
+				rows = table.find('tbody tr');
+
+			// several players share one snapshot time, so rows match by position
+			if (table.find('th.gbg-attrition').length > 0 || rows.length !== snapshots.length) return;
+			if (rows.toArray().some((row, i) => $(row).children('td').first().data('number') !== snapshots[i].time)) return;
+
+			table.find('thead tr.sorter-header').append(GbgExtras.attritionHeader('gbg-log-group'));
+			rows.each(function (i) {
+				$(this).append(cell(snapshots[i].attrition || 0));
+			});
+		}
+	},
+
+
+	/**
+	 * @param {string} group tbody class the table sorter sorts
+	 * @returns {string}
+	 */
+	attritionHeader: (group) => `<th class="is-number text-center gbg-attrition" data-type="${group}">${i18n('Boxes.GuildFights.Attrition')}</th>`,
 };
 
 
@@ -235,6 +307,18 @@ let GbgExtras = {
 		const result = refreshTable(data, ...rest);
 		// a locked sector fades out of the tab, nothing to draw
 		if (!data?.lockedUntil) GbgExtras.renderProgressBars($(`#progress tr#province-${data?.id || 0}`));
+		return result;
+	};
+}
+
+
+{
+	const buildDetailViewContent = Guild_fights.BuildDetailViewContent;
+
+	Guild_fights.BuildDetailViewContent = async (...args) => {
+		const token = ++GbgExtras.logToken;
+		const result = await buildDetailViewContent(...args);
+		await GbgExtras.addAttritionColumn(args[0], token);
 		return result;
 	};
 }
