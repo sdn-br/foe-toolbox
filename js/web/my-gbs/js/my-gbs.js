@@ -7,6 +7,8 @@
  *
  * - Snapshot: on every game start (StartupService.getData) the level and invested FP of every
  *   own GB are compared with the snapshot of the previous start, then the snapshot is replaced.
+ *   A result not seen yet (tab not opened) is kept and added to the next comparison, so a
+ *   reload does not lose it.
  *   Own contributions in between are counted in the snapshot (field "own") and subtracted,
  *   so the difference is what other players added.
  * - Contributors: the rankings of an own GB (getConstruction when opened, contributeForgePoints
@@ -19,6 +21,7 @@
  *   MyGBsSnapshot_<id>      { time, gbs: { <cityentity_id>: { level, invested, needed, own } } }
  *   MyGBsContributors_<id>  { <cityentity_id>: { level, visit, capturedAt, prevCapturedAt,
  *                             curr: { <player_id>: { name, fp } }, prev: { ... } } }
+ *   MyGBsPending_<id>       { since, rows: [...] }  result with news, until the tab is opened
  *
  * Live updates: the game pushes contributions of other players to own GBs as WebSocket
  * CityMapService.updateEntity (new invested FP, no rankings, see _main.js). MyGBs.progressSince
@@ -58,7 +61,7 @@ let MyGBs = {
 	/** result of the comparison at the start: { since, rows: [...] }, undefined before the start */
 	Progress: undefined,
 
-	/** the "Meine LGs" tab was opened since the start, the counter is hidden then */
+	/** the "Meine LGs" tab was opened since the result with news, the counter is hidden then */
 	Seen: false,
 
 	/** expanded rows (cityentity_id) */
@@ -80,6 +83,8 @@ let MyGBs = {
 	},
 
 	write: (kind, value) => localStorage.setItem(MyGBs.storageKey(kind), JSON.stringify(value)),
+
+	remove: (kind) => localStorage.removeItem(MyGBs.storageKey(kind)),
 
 
 	/**
@@ -146,6 +151,26 @@ let MyGBs = {
 
 
 	/**
+	 * Adds a result not seen yet to the new comparison: per GB the deltas add up, level and
+	 * "newly built" of the older result stay. GBs no longer in the city drop out.
+	 *
+	 * @param pending { since, rows } or null
+	 * @param rows rows of compare()
+	 * @returns {Object[]}
+	 */
+	mergePending: (pending, rows) => {
+		const old = Object.fromEntries((pending?.rows || []).map(r => [r.ceId, r]));
+
+		return rows.map(r => {
+			const p = old[r.ceId];
+			if (!p?.changed) return r;
+
+			return { ...r, prevLevel: p.prevLevel, delta: p.delta + r.delta, changed: true, newlyBuilt: p.newlyBuilt };
+		});
+	},
+
+
+	/**
 	 * Game start: compare with the previous snapshot, store the new one
 	 *
 	 * @param entities city_map.entities of StartupService.getData
@@ -168,12 +193,21 @@ let MyGBs = {
 			gbs: Object.fromEntries(Object.entries(current).map(([ceId, c]) => [ceId, { ...c, own: 0 }])),
 		});
 
+		const pending = MyGBs.read('Pending');
+
 		MyGBs.VisitTime = now;
 		MyGBs.Progress = {
-			since: prev?.time || null,
-			rows: MyGBs.compare(prev?.gbs ? prev : null, current),
+			since: pending?.since || prev?.time || null,
+			rows: MyGBs.mergePending(pending, MyGBs.compare(prev?.gbs ? prev : null, current)),
 		};
 		MyGBs.Seen = false;
+
+		if (MyGBs.Progress.rows.some(r => r.changed)) {
+			MyGBs.write('Pending', MyGBs.Progress);
+		}
+		else {
+			MyGBs.remove('Pending');
+		}
 
 		MyGBs.refreshCounter();
 		MyGBs.render();
@@ -334,6 +368,7 @@ let MyGBs = {
 
 		if (tab === 'mygbs') {
 			MyGBs.Seen = true;
+			MyGBs.remove('Pending');
 			MyGBs.refreshCounter();
 			MyGBs.render();
 		}
