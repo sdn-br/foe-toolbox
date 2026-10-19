@@ -14,6 +14,8 @@
  * - snapshot log: column "Zermürbung" in the player log (sum per day) and the period log
  *   (per snapshot), from the attrition stored with every snapshot (wrapper around
  *   Guild_fights.BuildDetailViewContent)
+ * - tab "Eigene" sortable with the table sorter, sort keys kept current after live
+ *   updates of a row (wrapper around Guild_fights.UpdateProvinceCells)
  *
  * You may use, distribute and modify this code under the terms of the AGPL license.
  * See file LICENSE.md for full license details.
@@ -260,6 +262,49 @@ let GbgExtras = {
 	 * @returns {string}
 	 */
 	attritionHeader: (group) => `<th class="is-number text-center gbg-attrition" data-type="${group}">${i18n('Boxes.GuildFights.Attrition')}</th>`,
+
+
+	/**
+	 * Makes the table of the "Eigene" tab sortable: name and owner as text,
+	 * countdown, slots and victory points as numbers
+	 */
+	makeOwnedSortable: () => {
+		const table = $('#gbgowned table');
+		if (table.length === 0) return;
+
+		table.find('thead tr').addClass('sorter-header');
+		table.find('thead th').attr('data-type', 'gbg-owned-group').each(function (i) {
+			// first column the sector, second the owner if that column is shown
+			if (i > (Guild_fights.showGuildColumn ? 1 : 0)) $(this).addClass('is-number');
+		});
+		table.find('tbody').addClass('gbg-owned-group');
+		table.find('tbody tr').each(function () {
+			GbgExtras.setOwnedSortKeys($(this));
+		});
+
+		table.tableSorter();
+	},
+
+
+	/**
+	 * Sort keys of one row of the "Eigene" tab, from the map data
+	 *
+	 * @param {jQuery} row
+	 */
+	setOwnedSortKeys: (row) => {
+		const province = GbgExtras.findProvince(parseInt(row.attr('data-id')) || 0);
+		if (!province) return;
+
+		// attr for a fresh read, data for a value the sorter already cached
+		const set = (cells, key, value) => cells.attr('data-' + key, value).data(key, value);
+		const cells = row.children('td');
+
+		set(cells.filter('.prov-name'), 'text', province.title || '');
+		if (Guild_fights.showGuildColumn) set(cells.eq(1), 'text', province.owner || '');
+		set(cells.filter('.time-dynamic'), 'number', province.lockedUntil || 0);
+		set(cells.filter('.slots-cell'), 'number', province.usedBuildingSlots || 0);
+		set(cells.filter('.vp-cell'), 'number', province.victoryPoints || 0);
+	},
 };
 
 
@@ -295,6 +340,7 @@ let GbgExtras = {
 		GbgExtras.markHoveredRows();
 		$('#progress thead th').last().text(i18n('Boxes.GuildFights.HighestOfRequired'));
 		GbgExtras.renderProgressBars($('#progress tbody tr'));
+		GbgExtras.makeOwnedSortable();
 		return result;
 	};
 }
@@ -319,6 +365,19 @@ let GbgExtras = {
 		const token = ++GbgExtras.logToken;
 		const result = await buildDetailViewContent(...args);
 		await GbgExtras.addAttritionColumn(args[0], token);
+		return result;
+	};
+}
+
+
+{
+	const updateProvinceCells = Guild_fights.UpdateProvinceCells;
+
+	Guild_fights.UpdateProvinceCells = (id, ...rest) => {
+		const result = updateProvinceCells(id, ...rest);
+		// the VP cell gets replaced, slots may have changed
+		const row = $(`#gbgowned #time-${id}`);
+		if (row.length > 0) GbgExtras.setOwnedSortKeys(row);
 		return result;
 	};
 }
