@@ -8,6 +8,9 @@
  *   highlights the adjacent sectors that open earlier (overlay canvas, wrapper around
  *   ProvinceMap.DrawOverlay), a click selects the row in "Nächste" for copy/Discord
  *   (wrapper around ProvinceMap.prepare)
+ * - tab "Fortschritt": one bar per attacker (progress / maxProgress) and "highest / needed",
+ *   after the build of the box and after every live update of a row (wrapper around
+ *   Guild_fights.RefreshTable)
  *
  * You may use, distribute and modify this code under the terms of the AGPL license.
  * See file LICENSE.md for full license details.
@@ -151,6 +154,40 @@ let GbgExtras = {
 
 		ctx.restore();
 	},
+
+
+	/**
+	 * Turns the progress numbers of the given rows of the "Fortschritt" tab into bars.
+	 * Reads the map data, which the websocket handler updates before RefreshTable,
+	 * so also attackers RefreshTable added without a number get theirs.
+	 *
+	 * @param {jQuery} rows tr elements of #progress
+	 */
+	renderProgressBars: (rows) => {
+		rows.each(function () {
+			const province = GbgExtras.findProvince(parseInt($(this).attr('data-id')) || 0),
+				progress = province?.conquestProgress || [];
+
+			if (progress.length === 0) return;
+
+			const max = progress[0].maxProgress || 0;
+			let highest = 0;
+
+			for (const entry of progress) {
+				const value = entry.progress || 0,
+					bar = $(this).find('.attacker-' + entry.participantId);
+
+				highest = Math.max(highest, value);
+				if (bar.length === 0) continue;
+
+				bar.addClass('gbg-progress-bar').text(value);
+				bar[0].style.setProperty('--gbg-bar-width', (max > 0 ? Math.min(100, value / max * 100) : 0) + '%');
+				bar[0].style.setProperty('--gbg-bar-color', ProvinceMap.getSectorColors(entry.participantId)?.main || '#888');
+			}
+
+			$(this).find('.required-progress').text(`${highest} / ${max}`);
+		});
+	},
 };
 
 
@@ -184,6 +221,20 @@ let GbgExtras = {
 		HTML.AddCssFile('gbg-extras');
 		const result = buildFightContent(...args);
 		GbgExtras.markHoveredRows();
+		$('#progress thead th').last().text(i18n('Boxes.GuildFights.HighestOfRequired'));
+		GbgExtras.renderProgressBars($('#progress tbody tr'));
+		return result;
+	};
+}
+
+
+{
+	const refreshTable = Guild_fights.RefreshTable;
+
+	Guild_fights.RefreshTable = (data, ...rest) => {
+		const result = refreshTable(data, ...rest);
+		// a locked sector fades out of the tab, nothing to draw
+		if (!data?.lockedUntil) GbgExtras.renderProgressBars($(`#progress tr#province-${data?.id || 0}`));
 		return result;
 	};
 }

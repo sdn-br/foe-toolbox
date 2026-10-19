@@ -6,3 +6,17 @@
 #LiveGildFightingBody table.foe-table tr.gbg-map-hover td {
 	background-color: rgba(208, 200, 172, 0.25);
 }
+
+/* tab "Fortschritt": the number stays readable, the bar runs below it */
+#LiveGildFightingBody #progress .attack.gbg-progress-bar {
+	display: block;
+	margin-right: 0;
+	padding-bottom: 3px;
+	background:
+		linear-gradient(var(--gbg-bar-color), var(--gbg-bar-color)) left bottom / var(--gbg-bar-width) 3px no-repeat,
+		linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) left bottom / 100% 3px no-repeat;
+}
+
+#LiveGildFightingBody #progress .required-progress {
+	white-space: nowrap;
+}

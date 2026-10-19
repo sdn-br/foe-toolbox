@@ -21,8 +21,10 @@ Guild_fights.SetBoxNavigation	js/web/guild_fights/js/guild_fights.js
 # province map to tables: hover marks the rows and the earlier opening neighbours, click selects the row (gbg-extras)
 ProvinceMap.prepare	js/web/guild_fights/js/parts/province_map.js
 ProvinceMap.DrawOverlay	js/web/guild_fights/js/parts/province_map.js
-# keeps the map hover mark on the rebuilt rows (gbg-extras)
+# keeps the map hover mark on the rebuilt rows, progress bars (gbg-extras)
 Guild_fights.BuildFightContent	js/web/guild_fights/js/guild_fights.js
+# progress bars and "highest / needed" in the tab "Fortschritt" after a live update (gbg-extras)
+Guild_fights.RefreshTable	js/web/guild_fights/js/guild_fights.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
 MainParser.sendExtMessage	js/web/_main/js/_main.js
 # only with GlobalSend or forceSend (toolbox-main)
