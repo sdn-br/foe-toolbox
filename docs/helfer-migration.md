@@ -624,6 +624,17 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Fenster schließen und wieder öffnen, Größe ziehen: das Diagramm passt sich an, keine Fehler in der Konsole.
 - `GbgStatsFixture.cleanup()`: Zeilen der Fake-Runden weg (auch die der gbg-history-Fixture), Fenster zu, die Fake-Runde fehlt in der Rundenauswahl.
 
+**Kleine GbG-Funktionen (aus Forge Hammer)**
+- Ohne GbG: `gbg-small-fixture.js` aus dem Scratchpad in die Konsole kopieren. Sie baut eine Fake-Karte (alle Sektoren, 4 Gilden, eigene Gilde grün), öffnet Live-Box, Provinzkarte und das Spieler-Log einer Fake-Runde. Discord-Auto-Versand, Web-Request und Auto-Alarm sind solange im Speicher aus. Auf Fake-Sektoren keine Alarme setzen.
+- Provinzkarte, Maus über einen gesperrten Sektor, der in "Nächste" steht: die Zeile ist hell hinterlegt; angrenzende Sektoren, die noch gesperrt sind und früher öffnen, sind halbtransparent in Gildenfarbe mit weißem Rand gefüllt, die Uhrzeit darauf bleibt lesbar. Nachbarn, die schon offen sind (in der Fixture jeder sechste Sektor mit alter Uhrzeit), leuchten nicht. Maus von der Karte: alles weg. Reiter "Eigene", Maus über einen eigenen gesperrten Sektor: Zeile in "Eigene" hell.
+- Klick auf einen Sektor mit Zeile in "Nächste": Zeile ausgewählt, der Knopf wechselt von "Alle auswählen" zu "Kopieren" (bei eingerichtetem Discord auch die Discord-Knöpfe); zweiter Klick wählt ab. Karte vergrößern ("Zoom"), ziehen: beim Loslassen wird nichts ausgewählt. Hover über eine Tabellenzeile zeigt weiter den pulsierenden Umriss auf der Karte.
+- Reiter "Fortschritt": unter jeder Zahl ein dünner Balken in Gildenfarbe, Breite passend zum Wert (80 = voll), letzte Spalte "Höchster / Benötigt" mit z. B. "62 / 80". `GbgExtrasFixture.progress()` (oder `.progress(<id>)`): Zahlen +7, Balken wachsen, die Zeile pulsiert, "Höchster" passt.
+- Reiter "Eigene": Klick auf "Sektor", "Countdown", "Slots", "VP" sortiert (Pfeil im Kopf), zweiter Klick dreht. `GbgExtrasFixture.build()`: die erste eigene Zeile bekommt einen belegten Slot und +5 VP; danach nach Slots bzw. VP sortieren: die Zeile steht richtig.
+- Snapshot-Log der Fake-Runde: Spalte "Zermürbung" hinten, je Tag die Summe (Fixture Anna z. B. 9, 12, 15 von neu nach alt), sortierbar. `GbgExtrasFixture.periodLog()`: Zeitraum-Log mit Spalte "Zermürbung" je Snapshot. Im echten GbG das Snapshot-Log öffnen: die Spalte steht auch dort, im Zeitraum-Log nach Datumswechsel im Datumswähler wieder.
+- `GbgExtrasFixture.cleanup()`: Fenster zu, Fake-Snapshots gelöscht, alte Kartendaten und Einstellungen zurück.
+- Im echten GbG: Live-Box und Karte wie oben; nach Eroberungen (Neuaufbau der Box) bleibt die Hover-Markierung, Balken und Sortierbarkeit sind wieder da.
+- `getState`: GbG-Menü öffnen, während die Gilde nicht angemeldet oder nur angemeldet ist: kein leeres Spieler-Fenster, `history` bekommt keine neue Runde, die Snapshots der letzten Runde bleiben.
+
 **Pop-out**
 - Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.
 - Inhalt aktualisiert sich im Pop-out: PvP Angriffe und Stadtinformationen beim Besuch einer anderen Stadt, LG Fördern und LG Rechner beim Öffnen eines LGs, Mögliche Investitionen beim Öffnen einer Stadtübersicht, Investitionen nach dem Laden, Notizen beim Bearbeiten, Gefechts-Logbuch beim Wechsel des Reiters.
