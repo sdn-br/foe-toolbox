@@ -368,6 +368,18 @@
 	box-shadow: 0 0 1px 1px var(--danger-red);
 }
 
+/* GBG season reward overflow toast, goods icons at text size (gbg-history) */
+.toolbox-gbg-overflow img {
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+}
+
+/* GBG placements of a past round above the player table (gbg-history) */
+#GildPlayersBody .toolbox-gbg-placements {
+	margin-bottom: 5px;
+}
+
 /* counter of future hidden events, bottom right */
 .hud-btn span.hud-counter.hud-future-counter {
 	left: unset;

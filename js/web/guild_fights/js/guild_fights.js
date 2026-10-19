@@ -265,8 +265,9 @@ let Guild_fights = {
 			snapshots: '&[player_id+gbground+time],[gbground+player_id], [date+player_id], gbground',
 			history: '&gbground'
 		});
+		Guild_fights.db.version(22).stores({ guildHistory: '[gbground+time], gbground' }); // TOOLBOX: victory points of the guilds per round (gbg-history), schema as Forge Hammer
 
-		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`], { transformRows: IndexDB.guildFightsLegacyRows }); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
+		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`, `ForgeHammer_GBG_${playerID}`], { transformRows: IndexDB.guildFightsLegacyRows }); // TOOLBOX: one-time copy from the legacy DB (Helfer, toolbox 1.x, then Forge Hammer), see toolbox-indexdb.js
 	},
 
 
