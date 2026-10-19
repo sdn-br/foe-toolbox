@@ -7,8 +7,9 @@
  * - tab "Siegpunkte": victory points of all guilds of a round from GbgHistory (gbg-history),
  *   tooltip with distance to the guilds above and below and points per hour, CSV export,
  *   optional dashed forecast until the end of a running round
- * - tab "Spieler": the toolbox statistics already draw the player chart (source statsGBGPlayers,
- *   same score as Forge Hammer), the tab opens it on the time range of the round
+ * - tab "Spieler": the player chart of the toolbox statistics (source statsGBGPlayers, same score
+ *   as Forge Hammer) on the time range of the round, embedded with StatsEmbed (stats-embed),
+ *   plus a button that opens it in the statistics box
  * - button "Statistiken" in the round bar of the GBG player window (wrapper around
  *   Guild_fights.SetBoxNavigation)
  *
@@ -59,7 +60,7 @@ let GbgStats = {
 
 		if ($(`#${GbgStats.boxId}`).length > 0) {
 			if (gbground === GbgStats.round) {
-				GbgStats.disposeChart();
+				GbgStats.disposeCharts();
 				HTML.CloseOpenBox(GbgStats.boxId);
 				return;
 			}
@@ -79,7 +80,7 @@ let GbgStats = {
 
 			// bound on the box, not on document, so it also works in the pop-out window
 			$(`#${GbgStats.boxId}`)
-				.on('click', `#${GbgStats.boxId}close`, GbgStats.disposeChart)
+				.on('click', `#${GbgStats.boxId}close`, GbgStats.disposeCharts)
 				.on('click', '.settingsbox-wrapper .saveSettings', GbgStats.saveSettings)
 				.on('change', '.gbgstats-round', function () { GbgStats.setRound(parseInt($(this).val())); })
 				.on('click', '.gbgstats-week', function () { GbgStats.setRound($(this).data('week')); })
@@ -129,7 +130,7 @@ let GbgStats = {
 			next = index > 0 ? rounds[index - 1] : null,
 			options = rounds.map(week => `<option value="${week}"${week === round ? ' selected="selected"' : ''}>${moment.unix(week).subtract(11, 'd').format(i18n('Date'))} - ${moment.unix(week).format(i18n('Date'))}</option>`).join('');
 
-		GbgStats.disposeChart();
+		GbgStats.disposeCharts();
 
 		$(`#${GbgStats.boxId}Body`).html(`<div class="gbgstats-roundswitch dark-bg">
 				${i18n('Boxes.GuildMemberStat.GBFRound')}
@@ -147,8 +148,9 @@ let GbgStats = {
 					<div id="GbgStatsChart"></div>
 				</div>
 				<div id="GbgStatsPlayers">
-					<p>${i18n('Boxes.GuildFights.Stats.PlayersHint')}</p>
-					<p><button class="btn gbgstats-players-open"${round ? '' : ' disabled'}>${i18n('Boxes.GuildFights.Stats.PlayersOpen')}</button></p>
+					<div class="gbgstats-players-bar"><button class="btn btn-slim gbgstats-players-open"${round ? '' : ' disabled'}>${i18n('Boxes.GuildFights.Stats.PlayersOpen')}</button></div>
+					<div class="gbgstats-hint" style="display:none"></div>
+					<div id="GbgStatsPlayersChart"></div>
 				</div>
 			</div>`);
 
@@ -158,11 +160,25 @@ let GbgStats = {
 		// a chart sized in a hidden tab ends up 0 px wide, so draw it when the tab is shown
 		tabs.on('_after', () => {
 			GbgStats.activeTab = $('#GbgStatsGuilds').css('display') === 'none' ? 2 : 1;
-			if (GbgStats.guildsShown()) GbgStats.renderGuilds();
-			else GbgStats.disposeChart();
+			GbgStats.renderTab();
 		});
 
-		if (GbgStats.guildsShown()) GbgStats.renderGuilds();
+		GbgStats.renderTab();
+	},
+
+
+	/**
+	 * Draws the chart of the active tab and frees the other one
+	 */
+	renderTab: () => {
+		if (GbgStats.activeTab === 1) {
+			GbgStats.disposePlayers();
+			GbgStats.renderGuilds();
+		}
+		else {
+			GbgStats.disposeChart();
+			GbgStats.renderPlayers();
+		}
 	},
 
 
@@ -170,6 +186,45 @@ let GbgStats = {
 	 * @returns {boolean} window open on the tab "Siegpunkte"
 	 */
 	guildsShown: () => GbgStats.activeTab === 1 && $('#GbgStatsChart').length > 0,
+
+
+	/**
+	 * Player chart of the toolbox statistics for the selected round, as the statistics box
+	 * draws it with source statsGBGPlayers, line view and the time range of the round
+	 *
+	 * @returns {Promise<void>}
+	 */
+	renderPlayers: async () => {
+		let container = document.getElementById('GbgStatsPlayersChart');
+		if (!container) return;
+
+		let hint = $('#GbgStatsPlayers .gbgstats-hint'),
+			range = GbgStats.playerRange();
+
+		if (!range) {
+			StatsEmbed.dispose(container);
+			hint.text(i18n('Boxes.GuildFights.Stats.PlayersNoData')).show();
+			return;
+		}
+
+		let result = await StatsEmbed.render(container, { source: 'statsGBGPlayers', chartType: 'line', from: range.from, to: range.to });
+
+		// null: the round or the tab changed meanwhile, the newer render sets the hint
+		if (result) hint.text(i18n('Boxes.GuildFights.Stats.PlayersNoData')).toggle(result.rows === 0);
+	},
+
+
+	/**
+	 * Time range of the selected round for the player chart: end minus 11 days to the end, or now
+	 *
+	 * @returns {?{from: Date, to: Date}}
+	 */
+	playerRange: () => {
+		if (!GbgStats.round) return null;
+
+		let end = moment.unix(GbgStats.round);
+		return { from: end.clone().subtract(11, 'days').toDate(), to: moment.min(end, moment()).toDate() };
+	},
 
 
 	/**
@@ -548,18 +603,29 @@ let GbgStats = {
 	},
 
 
+	disposePlayers: () => {
+		let container = document.getElementById('GbgStatsPlayersChart');
+		if (container) StatsEmbed.dispose(container);
+	},
+
+
+	disposeCharts: () => {
+		GbgStats.disposeChart();
+		GbgStats.disposePlayers();
+	},
+
+
 	/**
 	 * Opens the toolbox statistics with the GBG player chart on the time range of the round
 	 */
 	openPlayerStats: () => {
-		if (!GbgStats.round) return;
-
-		let end = moment.unix(GbgStats.round);
+		let range = GbgStats.playerRange();
+		if (!range) return;
 
 		Stats.state.source = 'statsGBGPlayers';
 		Stats.state.chartType = 'line';
-		Stats.DatePickerFrom = end.clone().subtract(11, 'days').toDate();
-		Stats.DatePickerTo = moment.min(end, moment()).toDate();
+		Stats.DatePickerFrom = range.from;
+		Stats.DatePickerTo = range.to;
 
 		// with an event the box is rebuilt instead of closed when it is already open
 		Stats.Show(true);

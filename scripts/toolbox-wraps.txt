@@ -52,3 +52,17 @@ PvPArena.CalcBody	js/web/pvparena/js/pvparena.js
 PvPArena.RefreshTable	js/web/pvparena/js/pvparena.js
 # hit test on volcano_archipelago: adds the translate of the map context back (gbg-extras)
 ProvinceMap.getCanvasPoint	js/web/guild_fights/js/parts/province_map.js
+# renders of the statistics box join the queue of the embedded statistics charts (stats-embed)
+Stats.updateCharts	js/web/stats/js/stats.js
+# swapped for the time of one embedded render or one tooltip/data view/CSV call, not wrapped for good (stats-embed)
+Stats.fetchRange	js/web/stats/js/stats.js
+Stats.getChart	js/web/stats/js/stats.js
+Stats.chartToolbox	js/web/stats/js/stats.js
+Stats.timeTooltipFormatter	js/web/stats/js/stats.js
+# read through the swapped globals by the embedded render, a change there can break it (stats-embed)
+Stats.updateCommonChart	js/web/stats/js/stats.js
+Stats.updateRewardCharts	js/web/stats/js/stats.js
+Stats.createGBGSeries	js/web/stats/js/stats.js
+Stats.createRewardSeries	js/web/stats/js/stats.js
+Stats.renderDataTable	js/web/stats/js/stats.js
+Stats.downloadCSV	js/web/stats/js/stats.js

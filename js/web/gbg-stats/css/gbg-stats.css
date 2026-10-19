@@ -31,20 +31,23 @@
 }
 
 /* tabslet hides and shows the tabs inline, shown they fall back to this */
-#GbgStatsGuilds {
+#GbgStatsGuilds,
+#GbgStatsPlayers {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 }
 
-#GbgStatsChart {
+#GbgStatsChart,
+#GbgStatsPlayersChart {
 	flex: 1;
 	min-height: 260px;
 }
 
-#GbgStatsPlayers {
-	padding: 10px;
+#GbgStatsBody .gbgstats-players-bar {
+	padding: 4px 5px 0;
+	text-align: right;
 }
 
 #GbgStatsBody .gbgstats-hint {

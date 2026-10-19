@@ -82,7 +82,7 @@
     "Boxes.GuildFights.Stats.LegendInverse": "Umkehren",
     "Boxes.GuildFights.Stats.NoData": "Noch keine Daten. Öffne im Gefecht die Rangliste der Gilden, dann werden die Siegpunkte gesammelt.",
     "Boxes.GuildFights.Stats.Open": "Statistiken",
-    "Boxes.GuildFights.Stats.PlayersHint": "Das Diagramm der Spieler (Kämpfe plus doppelte Verhandlungen) gibt es schon in der Statistik der Toolbox, Quelle Gildengefechte. Der Knopf öffnet es für den Zeitraum dieser Runde.",
+    "Boxes.GuildFights.Stats.PlayersNoData": "Keine Spielerdaten in dieser Runde. Öffne im Gefecht die Rangliste der Spieler, dann werden Kämpfe und Verhandlungen gesammelt.",
     "Boxes.GuildFights.Stats.PlayersOpen": "In der Statistik öffnen",
     "Boxes.GuildFights.Stats.TabGuilds": "Siegpunkte",
     "Boxes.GuildFights.Stats.TabPlayers": "Spieler",
