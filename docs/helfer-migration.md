@@ -337,6 +337,20 @@ Quelle: `forge-hammer` `js/web/gbg-actionlog` ("Copyright (C) 2026 Forge Hammer 
 - Texte: `Boxes.GBGActionLog.*` und `General.Total` neu in `de.json`, nach der Forge-Hammer-`de.json`; dort halb englische oder falsche Texte (`RangeCap*`, `Toast.PrevLoadTime`, `Toast.CurrLoadTime`, `RedAfterHoursHint`) neu übersetzt.
 - Kein neuer Netzwerkzugriff; Icons der Spalten kommen wie sonst über `srcLinks` vom Spiel-CDN.
 
+## Übernahme aus Forge Hammer: Meine LGs
+
+Quelle: `forge-hammer` `c9eba24e2` (Arklur, Investitionen-Reiter "My GBs"), dazu aus den späteren Commits auf `js/web/investment` nur `1f5963d58` (Spaltenkopf "Spieler" über `General.Player`, deutsche Texte) und `3df341126` (keine "0" ohne Veränderung). Die übrigen betreffen Upstream-Teile, Themes oder die hammerBar.
+
+- Eigenes Modul `js/web/my-gbs` (Objekt `MyGBs`), `investment.js` bleibt Upstream. Reiter per Wrapper um `Investment.BuildBox`: beim Anlegen der Box tritt `#InvestmentTabs` (Klasse `window-body`) an die Stelle des Box-Körpers, darin die Reiterleiste, Upstreams `#InvestmentBody` und `#MyGBsBody`. Upstream schreibt weiter per Id in `#InvestmentBody`. Forge Hammer schreibt die Investitionen in einen eigenen Reiter-Container (`#invest-contributions`), das ginge nur mit Änderungen in `investment.js`.
+- Stand der LGs: bei jedem Spielstart (`StartupService.getData`) Stufe, investierte FP und FP der Stufe aller eigenen LGs, verglichen mit dem Stand des letzten Starts, danach ersetzt. Differenz: gleiche Stufe = Differenz der FP, höhere Stufe = Rest der alten Stufe plus FP der neuen (Kosten übersprungener Stufen fehlen, wie in Forge Hammer). Neu gebaute LGs zählen mit allen FP. "Seit dem letzten Besuch" heißt wie in Forge Hammer: seit dem letzten Laden des Spiels.
+- Eigene Einzahlungen: Forge Hammer überschreibt den gespeicherten Stand bei `CityMapService.updateEntity` mit dem aktuellen LG. Dabei gehen Einzahlungen anderer zwischen Spielstart und eigener Einzahlung verloren, und kommt keine `updateEntity`-Antwort (laut Kommentar in `_main.js` nach Spiel-Update 1.332 möglich, fremde LGs antworten schon mit `reset`), zählen die eigenen FP als fremde. Die Toolbox zählt eigene Einzahlungen (`contributeForgePoints` auf ein eigenes LG) im Stand mit (Feld `own`) und zieht sie beim nächsten Start ab. Betrag: eigene FP in den Rängen nach minus vor der Einzahlung; gibt es keine Ränge dieser Stufe von vorher, der Betrag aus der Anfrage (`requestData[3]`).
+- Mäzene: Ränge aus `getConstruction` (LG geöffnet) und `contributeForgePoints` je LG, der Stand des vorigen Besuchs bleibt für den ganzen Besuch Vergleichsbasis (wie Forge Hammer), nach einem Stufenaufstieg ohne Basis. Nur eigene LGs: die Anfrage enthält `[Entity-Id, Spieler-Id, …]`, die Entity wird nur bei eigener Spieler-Id in der eigenen Stadt gesucht. Forge Hammer suchte jeden Wert der Anfrage in der eigenen Stadt; Entity-Ids fremder Städte überschneiden sich mit den eigenen, so konnte ein fremdes LG als eigenes gespeichert werden. Ränge einer älteren Stufe zeigt die Toolbox nicht an (Hinweis "Öffne das LG im Spiel").
+- Ansicht mit lit-html (`getViewModel`, `view`), Namen werden escaped (Forge Hammer setzte Spielernamen ungeprüft ins HTML). Spalten wie Forge Hammer: LG, Stufe (alt → neu), Fortschritt, Neue FP, Eigene FP, Mäzene; Klick auf eine Zeile klappt die Mäzene auf. Geänderte LGs zuerst (orange), dann nach Name. Neu: Kopfzeile mit Datum des letzten Starts und Summe.
+- Statt der Leiste in der "hammerBar" (gibt es in der Toolbox nicht): grüner Zähler mit der Summe am Menüknopf "Investitionen" (Wrapper um `_menu.investment_Btn`). Er verschwindet, sobald der Reiter geöffnet wurde. Mit Zähler öffnet der Knopf die Box gleich auf "Meine LGs". Einstellung `ShowMyGBsCounter` (Gruppe Boxes, default an, `config.toolbox.json`) statt der Checkbox im Zahnrad, wirkt sofort. Ist der Menüknopf ausgeblendet, gibt es keinen Zähler.
+- Speicher: `localStorage` je Spieler-Id, `MyGBsSnapshot_<id>` und `MyGBsContributors_<id>` (Format im Kopf von `my-gbs.js`). Daten eines parallel installierten Forge Hammer (`Hammer.GreatBuildingsSnapshot.<id>`) werden nicht übernommen.
+- Später live: Einzahlungen anderer kommen als WebSocket `CityMapService.updateEntity` (neue FP, keine Ränge, s. `_main.js`). `MyGBs.progressSince(<Eintrag aus dem Stand>, MyGBs.gbState(<Entity>))` liefert dafür die Differenz seit dem Start, ohne den Stand zu ändern. Noch nicht eingebaut.
+- Kein Netzwerkzugriff, nur mitgelesene Antworten.
+
 ## Notizen lokal
 
 Upstream speichert die Notizen nur auf `api.foe-rechner.de` (`Notice/get|set|sort|del`), also nur mit `GlobalSend` und API-Token. Die Toolbox speichert sie lokal, in eigenen Modulen getrennt vom Helfer.
@@ -542,6 +556,19 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - Einstellungen: Anzeigedauer 0 -> keine Meldung mehr. Im Netzwerk-Tab keine neuen Anfragen außer Bildern vom Spiel-CDN.
 - Migration: Profil mit Forge-Hammer-Daten (`FoeHelperDB_GBG_<id>`), erster Start: die Daten stehen in `FoEToolbox2DB_GBG_<id>`, die Alt-DB ist unverändert, `FH_IndexDBLastMigraion` nennt die Kopie.
 
+**Meine LGs (aus Forge Hammer)**
+- Erster Start mit dieser Version, Investitionen öffnen: Reiter "Investitionen" und "Meine LGs". "Investitionen" funktioniert wie bisher (Sortieren, Ausblenden, Detailzeilen, Zahnrad). "Meine LGs": Hinweis "Der Stand deiner LGs ist gespeichert ...", alle eigenen LGs mit Stufe und Fortschrittsbalken, keine neuen FP. Im localStorage steht `MyGBsSnapshot_<id>`.
+- Box in der Größe ändern, minimieren, als Pop-out öffnen: beide Reiter scrollen in der Box, die Reiterleiste bleibt oben, Tabellenköpfe bleiben stehen.
+- Eigenes LG im Spiel öffnen: in "Meine LGs" sind "Eigene FP" und "Mäzene" gefüllt, ein Klick auf die Zeile zeigt die Mäzene ("Erster Stand der Mäzene ..."), noch einmal klickt sie zu.
+- Fremdes LG öffnen, möglichst eines mit derselben Entity-Id wie ein eigenes (`MainParser.CityMapData`): `MyGBsContributors_<id>` ändert sich nicht.
+- Selbst FP in ein eigenes LG einzahlen: in `MyGBsSnapshot_<id>` steigt `own` dieses LGs um genau den Betrag.
+- Andere zahlen ein (zweites Konto oder abwarten), Spiel neu laden: grüner Zähler mit der Summe am Menüknopf "Investitionen", eigene Einzahlungen zählen nicht mit. Klick öffnet die Box direkt auf "Meine LGs", das LG steht oben (orange) mit "Neue FP", die Kopfzeile nennt Datum und Summe. Danach ist der Zähler weg, der Knopf öffnet wieder "Investitionen".
+- Aufgeklapptes LG nach dem Neuladen im Spiel öffnen: die Mäzene zeigen "Neue FP" seit dem letzten Besuch, neue Einzahler grün.
+- Ein LG, das zwischen zwei Starts gelevelt wurde: Stufe "alt → neu", Neue FP = Rest der alten Stufe plus FP der neuen.
+- Einstellung "Zähler „Meine LGs“" ausschalten: der Zähler verschwindet sofort, der Knopf öffnet "Investitionen". Einschalten: der Zähler kommt zurück, solange der Reiter noch nicht geöffnet war.
+- Die Investitionen öffnen sich weiter automatisch nach dem Rathaus-Abruf (`getContributions`); ist "Meine LGs" offen, bleibt dieser Reiter aktiv.
+- Netzwerk-Tab: keine neuen Anfragen.
+
 **Pop-out**
 - Jedes der acht neuen Fenster hat den Pop-out-Knopf. Klick öffnet das Fenster separat (Picture-in-Picture, sonst Pop-up), Schließen holt die Box zurück ins Spiel.
 - Inhalt aktualisiert sich im Pop-out: PvP Angriffe und Stadtinformationen beim Besuch einer anderen Stadt, LG Fördern und LG Rechner beim Öffnen eines LGs, Mögliche Investitionen beim Öffnen einer Stadtübersicht, Investitionen nach dem Laden, Notizen beim Bearbeiten, Gefechts-Logbuch beim Wechsel des Reiters.
@@ -566,4 +593,5 @@ Vorbereitung: Chrome, `chrome://extensions` -> Entwicklermodus -> "Entpackt lade
 - 12: `startTime` künftiger Ereignisse kommt schon in `HiddenRewardService.getOverview`.
 - 14: keine Upstream-Box liest den Namen aus dem Link-`<a>`.
 - 15: Antwort von `Notice/get` ohne Fehler und ohne `notice` bedeutet Sperre (alte Regel, gilt nur noch für den Notizen-Import); `api.foe-rechner.de` akzeptiert die Anfragen aus dem Background (Host-Permission vorhanden).
+- Meine LGs: die Startdaten liefern je eigenem LG `state.invested_forge_points` und `state.forge_points_for_level_up` (aus Forge Hammer); die Anfrage `contributeForgePoints` ist `[Entity-Id, Spieler-Id, Stufe, FP, …]` (nur der Ersatzweg liest die FP); `MainParser.CityMapData` kennt nach einem eigenen Stufenaufstieg die neue Stufe (sonst landen die Ränge unter der alten Stufe).
 - Notizen lokal: die Antwortform der API (`group_name`, `player_group`, `items` mit `tab`, `title`, `content`, `player_data`) ist aus der Nutzung in `notice.js` abgeleitet, nicht aus einer API-Doku; der Import übernimmt nur diese Felder. Wie der Server bei gleichem `sort` ordnet, ist unbekannt (lokal: danach `id`).
