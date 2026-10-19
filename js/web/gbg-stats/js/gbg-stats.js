@@ -87,6 +87,9 @@ let GbgStats = {
 		}
 
 		await GbgStats.setRound(gbground);
+
+		// opened from the player box, whose click handler (HTML.Box) raises the player box afterwards
+		setTimeout(() => HTML.BringToFront($(`#${GbgStats.boxId}`)), 0);
 	},
 
 
@@ -268,6 +271,8 @@ let GbgStats = {
 				left: 10,
 				right: 80,
 				data: guilds.map(g => g.name),
+				// at the end the buttons ran into the toolbox icons
+				selectorPosition: 'start',
 				selector: [
 					{ type: 'all', title: i18n('Boxes.GuildFights.Stats.LegendAll') },
 					{ type: 'inverse', title: i18n('Boxes.GuildFights.Stats.LegendInverse') },
