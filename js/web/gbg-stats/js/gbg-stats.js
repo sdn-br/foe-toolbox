@@ -269,7 +269,8 @@ let GbgStats = {
 				type: 'scroll',
 				top: 6,
 				left: 10,
-				right: 80,
+				// room for the toolbox icons, also when the legend pages
+				right: 100,
 				data: guilds.map(g => g.name),
 				// at the end the buttons ran into the toolbox icons
 				selectorPosition: 'start',
