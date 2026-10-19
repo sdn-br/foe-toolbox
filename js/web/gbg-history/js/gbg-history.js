@@ -68,6 +68,42 @@ let GbgHistory = {
 
 
 	/**
+	 * Final player standing of an ended round (getState outside a round). Upstream
+	 * Stats.HandlePlayerLeaderboard stored it with the current time on every opening of the
+	 * battlegrounds, the player chart then ran on flat after the round. Stored here in the same
+	 * form, with the round end as date: the date is the key, so a later opening replaces the row.
+	 *
+	 * @param {number} gbground end of the ended round
+	 * @param {Object[]} entries playerLeaderboardEntries
+	 * @returns {Promise<void>}
+	 */
+	handleFinalPlayers: async (gbground, entries) => {
+		if (!gbground || !Array.isArray(entries) || entries.length === 0) return;
+
+		let date = new Date(gbground * 1000),
+			players = {};
+
+		for (let it of entries) {
+			players[it.player.player_id] = {
+				id: it.player.player_id,
+				n: it.negotiationsWon || 0,
+				b: it.battlesWon || 0,
+				r: it.rank || 1
+			};
+		}
+
+		await IndexDB.getDB();
+		await IndexDB.db.statsGBGPlayers.put({ date, players });
+		await IndexDB.db.statsGBGPlayerCache.bulkPut(entries.map(({ player }) => ({
+			id: player.player_id,
+			name: player.name,
+			avatar: player.avatar,
+			date: MainParser.getCurrentDate()
+		})));
+	},
+
+
+	/**
 	 * @param {Object[]} ranking entries of the guild ranking
 	 * @returns {{id: number, name: string, flag: string|null, points: number}[]}
 	 */
