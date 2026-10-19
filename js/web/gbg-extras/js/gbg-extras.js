@@ -308,6 +308,22 @@ let GbgExtras = {
 };
 
 
+// Upstream subtracts half the map size on volcano_archipelago, but the map context keeps its
+// translate to the centre and isPointInPath applies it as well, so the point moved twice and no
+// sector was found (upstream the details on click did not work either). Adding the translate of
+// the context back gives the point in the coordinates isPointInPath compares with.
+{
+	const getCanvasPoint = ProvinceMap.getCanvasPoint;
+
+	ProvinceMap.getCanvasPoint = (e) => {
+		const point = getCanvasPoint(e),
+			transform = ProvinceMap.MapCTX?.getTransform();
+
+		return transform ? { x: point.x + transform.e, y: point.y + transform.f } : point;
+	};
+}
+
+
 {
 	const prepare = ProvinceMap.prepare;
 
