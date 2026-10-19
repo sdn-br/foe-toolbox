@@ -222,8 +222,10 @@ let GbgStats = {
 	playerRange: () => {
 		if (!GbgStats.round) return null;
 
+		// the final standing is stored when the battlegrounds are opened after the round (getState,
+		// Stats.HandlePlayerLeaderboard), so the range runs until the next round can start (3 days later)
 		let end = moment.unix(GbgStats.round);
-		return { from: end.clone().subtract(11, 'days').toDate(), to: moment.min(end, moment()).toDate() };
+		return { from: end.clone().subtract(11, 'days').toDate(), to: moment.min(end.clone().add(3, 'days'), moment()).toDate() };
 	},
 
 
