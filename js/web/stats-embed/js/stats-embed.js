@@ -298,3 +298,12 @@ let StatsEmbed = {
 	// now, a pop-out copies the style sheets of the game page only when it opens
 	HTML.AddCssFile('stats-embed');
 }
+
+
+// the toolbox icons (PNG, data, CSV) at the top right ran into the legend below them,
+// a little higher and smaller they fit beside the centred title
+{
+	const chartToolbox = Stats.chartToolbox;
+
+	Stats.chartToolbox = () => Object.assign(chartToolbox(), { top: 0, itemSize: 13 });
+}

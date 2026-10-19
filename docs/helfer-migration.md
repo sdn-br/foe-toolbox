@@ -382,6 +382,8 @@ Quelle: `forge-hammer` `js/web/stats/js/stats.js` (`ShowGBGCharts`, `buildGBGGui
 
 ## Statistik-Diagramme in anderen Boxen (`stats-embed`)
 
+Symbole der Diagramme (Wrapper um `Stats.chartToolbox`, gilt auch in der Statistik-Box): PNG, Data und CSV stehen ganz oben (`top: 0`) und etwas kleiner (`itemSize: 13`), vorher überlappten sie die Legende darunter.
+
 Modul `js/web/stats-embed` (JS + CSS, Objekt `StatsEmbed`), geladen vor `gbg-stats`. Zeichnet ein Diagramm der Toolbox-Statistik (`js/web/stats`, Upstream) in ein beliebiges Element, genau so, wie die Statistik-Box es mit denselben Einstellungen zeigt. Erster Nutzer: Reiter "Spieler" von "GG Statistiken".
 
 - `StatsEmbed.render(container, config)`: `container` ist das Element des Diagramms (Größe setzt der Aufrufer, den Inhalt verwaltet das Modul, eigene ECharts-Instanz, `ResizeObserver`). `config` enthält die Schlüssel von `Stats.state` (`source`, `chartType` `line`/`streamgraph`/`delta`, `eras`, `isGroupByEra`, `isRenormalize`, `rewardSource`, `filter`), fehlende kommen aus `Stats.state` (ohne Zeitalter wie in `Stats.Show` das aktuelle und das vorige), dazu `from`/`to` (`Date`, beide fehlend = alle Zeilen, nicht der Zeitraum der Statistik-Box). Rückgabe: Promise mit `{ rows }` (Zeilen im Zeitraum; bei 0 wird nichts gezeichnet, das Element ist leer, den Hinweis setzt der Aufrufer) oder `null`, wenn ein neueres `render` oder `dispose` desselben Elements zuvorkam.

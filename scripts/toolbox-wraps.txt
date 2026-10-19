@@ -57,6 +57,7 @@ Stats.updateCharts	js/web/stats/js/stats.js
 # swapped for the time of one embedded render or one tooltip/data view/CSV call, not wrapped for good (stats-embed)
 Stats.fetchRange	js/web/stats/js/stats.js
 Stats.getChart	js/web/stats/js/stats.js
+# also wrapped for good: icons higher and smaller, clear of the legend (stats-embed)
 Stats.chartToolbox	js/web/stats/js/stats.js
 Stats.timeTooltipFormatter	js/web/stats/js/stats.js
 # read through the swapped globals by the embedded render, a change there can break it (stats-embed)
