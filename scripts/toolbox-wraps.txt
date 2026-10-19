@@ -28,3 +28,5 @@ PvPArena.CalcTable	js/web/pvparena/js/pvparena.js
 # load the note texts before the table is drawn (player-note)
 PvPArena.CalcBody	js/web/pvparena/js/pvparena.js
 PvPArena.RefreshTable	js/web/pvparena/js/pvparena.js
+# tab "Meine LGs" around the body of a new Investment box (my-gbs)
+Investment.BuildBox	js/web/investment/js/investment.js
