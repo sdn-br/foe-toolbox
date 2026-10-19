@@ -18,6 +18,11 @@ Guild_fights.ShowPlayerBoxSettings	js/web/guild_fights/js/guild_fights.js
 Guild_fights.PlayerBoxSettingsSaveValues	js/web/guild_fights/js/guild_fights.js
 # button "Statistiken" in the round bar of the player window (gbg-stats)
 Guild_fights.SetBoxNavigation	js/web/guild_fights/js/guild_fights.js
+# province map to tables: hover marks the rows and the earlier opening neighbours, click selects the row (gbg-extras)
+ProvinceMap.prepare	js/web/guild_fights/js/parts/province_map.js
+ProvinceMap.DrawOverlay	js/web/guild_fights/js/parts/province_map.js
+# keeps the map hover mark on the rebuilt rows (gbg-extras)
+Guild_fights.BuildFightContent	js/web/guild_fights/js/guild_fights.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
 MainParser.sendExtMessage	js/web/_main/js/_main.js
 # only with GlobalSend or forceSend (toolbox-main)

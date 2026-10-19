@@ -1,0 +1,8 @@
+/*
+ * FoE Toolbox: small GBG features after Forge Hammer (gbg-extras).
+ */
+
+/* row of the sector under the mouse on the province map */
+#LiveGildFightingBody table.foe-table tr.gbg-map-hover td {
+	background-color: rgba(208, 200, 172, 0.25);
+}
