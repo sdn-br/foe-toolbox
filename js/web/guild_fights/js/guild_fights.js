@@ -1204,9 +1204,13 @@ let Guild_fights = {
 						change = true;
 					}
 
-					if (playerOld['attrition'] < playerNew['attrition'])
+					// TOOLBOX-BEGIN: attrition is reset every day (assumed at midnight): after a reset, the
+					// previous list from another day or a lower value, the new value is the gain since the reset
+					let attrReset = playerNew['attrition'] < playerOld['attrition'] || (Guild_fights.PrevActionTimestamp && !moment.unix(Guild_fights.PrevActionTimestamp).isSame(moment(), 'day'));
+					if (playerNew['attrition'] > 0 && (attrReset || playerNew['attrition'] > playerOld['attrition']))
 					{
-						diffAttr = playerNew['attrition'] - playerOld['attrition'];
+						diffAttr = attrReset ? playerNew['attrition'] : playerNew['attrition'] - playerOld['attrition'];
+					// TOOLBOX-END
 						attritionAddOn = ' <small class="text-success">&#8593; ' + diffAttr + '</small>';
 						change = true;
 					}
