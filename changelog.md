@@ -1,5 +1,27 @@
 ## Changelog - Extension
 
+##### 2.1.0.0
+**Neu**
+- Investitionen: Reiter „Meine LGs“ (aus Forge Hammer) zeigt, wie viele FP andere seit deinem letzten Blick in deine LGs eingezahlt haben, live ohne Neuladen. Zähler am Menüknopf „Investitionen“, Mäzene je LG
+- GbG (aus Forge Hammer)
+    - Ziel-Leiste mit den Fokus-Zielen der eigenen Gilde über der Gefechtskarte, Countdown bis zum nächsten Ziel am Menüknopf „Gildengefechte“
+    - Fenster „GG Statistiken“: Siegpunkte-Verlauf der Gilden mit Prognose, Spieler-Diagramm der Runde
+    - Platzierungen der Gilden vergangener Runden, Warnung, wenn die Saisonbelohnung das Lager überfüllt
+    - Provinzkarte und Tabellen verknüpft: Sektor unter der Maus wird umrandet und in „Nächste“/„Eigene“ markiert, früher öffnende Nachbarn hervorgehoben, Klick wählt die Zeile aus
+    - Fortschrittsbalken im Reiter „Fortschritt“, Reiter „Eigene“ sortierbar, Zermürbung im Snapshot-Log
+- Notizen pro Spieler: in Plünderhilfe, PvP Angriffe und PvP-Arena, gemeinsam mit dem Notizen-Fenster
+
+**Update**
+- Investitionen werden nach dem Level-Up eines fremden LGs sofort aktualisiert
+- Gefechts-Logbuch: Hinweis, wie man an die Daten kommt, solange es leer ist
+
+**Bugfix**
+- GbG
+    - Snapshot Log ließ sich nicht verschieben
+    - Klick auf der Provinzkarte traf auf der Vulkan-Karte keinen Sektor
+    - Spieler-Fenster blieb leer, solange die Gilde für die nächste Runde nur angemeldet war
+    - Zermürbung wird nach dem täglichen Reset richtig gezählt
+
 ##### 2.0.0.0
 **FoE-Helfer**
 - Migration auf FoE Helfer 4.8.3.0 als neue Basis (vorher FoE Helfer 3.1.0.1)
