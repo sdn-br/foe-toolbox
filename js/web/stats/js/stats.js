@@ -23,7 +23,7 @@ FoEproxy.addHandler('ResourceService', 'getResourceDefinitions', (data, postData
 
 FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', async (data, postData) => {
 	if (data.responseData['stateId'] !== 'participating') {
-		Stats.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']);
+		GbgHistory.handleFinalPlayers(parseInt(data.responseData['startsAt']) - 259200, data.responseData['playerLeaderboardEntries']); // TOOLBOX: final standing once at the round end, not a row per opening (gbg-history)
 	}
 });
 

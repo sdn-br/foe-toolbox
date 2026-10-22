@@ -1,0 +1,46 @@
+/*
+ * FoE Toolbox: statistics charts in other boxes (stats-embed).
+ * The data view of Stats.chartToolbox is styled under #stats only (stats.css).
+ */
+
+.stats-embed .chart-data-table {
+	height: 100%;
+	overflow: auto;
+	user-select: text;
+}
+
+.stats-embed .chart-data-table table {
+	border-spacing: 0;
+	border-collapse: separate;
+	width: 100%;
+	background-color: transparent;
+}
+
+.stats-embed .chart-data-table table th {
+	background-color: var(--black-50);
+	position: sticky;
+	top: 0;
+	white-space: nowrap;
+}
+
+.stats-embed .chart-data-table table tbody tr:nth-child(odd) {
+	background-color: var(--white-65);
+}
+
+.stats-embed .chart-data-table table tbody tr:hover {
+	background-color: var(--table-bg-hover);
+}
+
+.stats-embed .chart-data-table table tr th,
+.stats-embed .chart-data-table table tr td {
+	padding: 2px 5px;
+}
+
+.stats-embed .chart-data-table table tr td {
+	border-top: 1px solid var(--border-table-top);
+	border-bottom: 1px solid var(--border-table-bottom);
+}
+
+.stats-embed .sprite-50 {
+	width: 30px;
+}

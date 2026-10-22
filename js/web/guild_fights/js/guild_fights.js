@@ -84,6 +84,7 @@ FoEproxy.addWsHandler('GuildBattlegroundService', 'getParticipantVictoryPoints',
 });
 
 FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData) => {
+	if (data.responseData?.stateId !== 'participating' && !data.responseData?.playerLeaderboardEntries?.length) return; // TOOLBOX: nothing to show without a player ranking (Forge Hammer filtered by state, but "subscribed" after a round still has the ranking of that round)
 	Guild_fights.GlobalRankingTimeout = setTimeout(()=>{
 		if (data.responseData['stateId'] !== 'participating')	{
 			Guild_fights.CurrentGBGRound = parseInt(data.responseData['startsAt']) - 259200;
@@ -93,7 +94,7 @@ FoEproxy.addHandler('GuildBattlegroundStateService', 'getState', (data, postData
 				Guild_fights.curDateEndFilter = moment.unix(Guild_fights.CurrentGBGRound).format('YYYYMMDD');
 			}
 
-			Guild_fights.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']);
+			if (data.responseData['stateId'] !== 'trialSelection') Guild_fights.HandlePlayerLeaderboard(data.responseData['playerLeaderboardEntries']); // TOOLBOX: no player ranking in this state (Forge Hammer)
 		}
 	},500)
 });
@@ -265,8 +266,9 @@ let Guild_fights = {
 			snapshots: '&[player_id+gbground+time],[gbground+player_id], [date+player_id], gbground',
 			history: '&gbground'
 		});
+		Guild_fights.db.version(22).stores({ guildHistory: '[gbground+time], gbground' }); // TOOLBOX: victory points of the guilds per round (gbg-history), schema as Forge Hammer
 
-		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`], { transformRows: IndexDB.guildFightsLegacyRows }); // TOOLBOX: one-time copy from the legacy DB, see toolbox-indexdb.js
+		await IndexDB.openWithLegacyCopy(Guild_fights.db, [`FoeHelperDB_GuildFights_${playerID}`, `ForgeHammer_GBG_${playerID}`], { transformRows: IndexDB.guildFightsLegacyRows }); // TOOLBOX: one-time copy from the legacy DB (Helfer, toolbox 1.x, then Forge Hammer), see toolbox-indexdb.js
 	},
 
 
@@ -1202,9 +1204,15 @@ let Guild_fights = {
 						change = true;
 					}
 
-					if (playerOld['attrition'] < playerNew['attrition'])
+					// TOOLBOX-BEGIN: attrition is reset at server midnight (serverOffset, from the timer
+					// battlegroundsAttrition): after a reset, a previous list from another server day or a lower
+					// value, the new value is the gain since the reset
+					let serverDay = (time) => moment.unix(time - 60 * (Guild_fights.serverOffset || 0)).format('YYYYMMDD'),
+						attrReset = playerNew['attrition'] < playerOld['attrition'] || (Guild_fights.PrevActionTimestamp && serverDay(Guild_fights.PrevActionTimestamp) !== serverDay(moment().unix()));
+					if (playerNew['attrition'] > 0 && (attrReset || playerNew['attrition'] > playerOld['attrition']))
 					{
-						diffAttr = playerNew['attrition'] - playerOld['attrition'];
+						diffAttr = attrReset ? playerNew['attrition'] : playerNew['attrition'] - playerOld['attrition'];
+					// TOOLBOX-END
 						attritionAddOn = ' <small class="text-success">&#8593; ' + diffAttr + '</small>';
 						change = true;
 					}

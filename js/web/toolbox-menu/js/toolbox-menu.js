@@ -102,6 +102,15 @@ _menu.possibleInvestments_Btn = () => {
 }
 
 
+{
+	// countdown to the next locked focus target, filled by gbg-targets.js
+	const gildFightBtn = _menu.gildFight_Btn;
+	_menu.gildFight_Btn = () => gildFightBtn().append(
+		$('<span class="hud-counter toolbox-gbg-target-counter"></span>')
+	);
+}
+
+
 /**
  * The notes button opens the toolbox notes (toolbox-notes) instead of the FoE Helfer notes.
  * Same id, icon and place in the menu, the Helfer module is still loaded but never opened.

@@ -7,6 +7,28 @@ Settings.ApiTokenInput	js/web/settings/js/settings.js
 _menu.notice_Btn	js/web/_menu/js/_menu.js
 # second counter for future events (toolbox-menu)
 _menu.hiddenRewards_Btn	js/web/_menu/js/_menu.js
+# counter span for the countdown to the next GBG focus target (toolbox-menu, filled by gbg-targets)
+_menu.gildFight_Btn	js/web/_menu/js/_menu.js
+# settings "Zeige Markierungen" and their position in the display tab, merged into LiveFightSettings after saving (gbg-targets)
+Guild_fights.ShowLiveFightSettings	js/web/guild_fights/js/guild_fights.js
+Guild_fights.SaveLiveFightSettings	js/web/guild_fights/js/guild_fights.js
+# placements of past rounds above the player table, overflow warning setting in the player box settings (gbg-history)
+Guild_fights.BuildPlayerContent	js/web/guild_fights/js/guild_fights.js
+Guild_fights.ShowPlayerBoxSettings	js/web/guild_fights/js/guild_fights.js
+Guild_fights.PlayerBoxSettingsSaveValues	js/web/guild_fights/js/guild_fights.js
+# button "Statistiken" in the round bar of the player window (gbg-stats)
+Guild_fights.SetBoxNavigation	js/web/guild_fights/js/guild_fights.js
+# province map to tables: hover marks the rows and the earlier opening neighbours, click selects the row (gbg-extras)
+ProvinceMap.prepare	js/web/guild_fights/js/parts/province_map.js
+ProvinceMap.DrawOverlay	js/web/guild_fights/js/parts/province_map.js
+# keeps the map hover mark on the rebuilt rows, progress bars, sortable tab "Eigene" (gbg-extras)
+Guild_fights.BuildFightContent	js/web/guild_fights/js/guild_fights.js
+# progress bars and "highest / needed" in the tab "Fortschritt" after a live update (gbg-extras)
+Guild_fights.RefreshTable	js/web/guild_fights/js/guild_fights.js
+# column "Zermürbung" in the player log and the period log of the snapshot log (gbg-extras)
+Guild_fights.BuildDetailViewContent	js/web/guild_fights/js/guild_fights.js
+# sort keys of the sortable tab "Eigene" after a live update (gbg-extras)
+Guild_fights.UpdateProvinceCells	js/web/guild_fights/js/guild_fights.js
 # send2Api only with GlobalSend, &v= with the Helfer base version (toolbox-main)
 MainParser.sendExtMessage	js/web/_main/js/_main.js
 # only with GlobalSend or forceSend (toolbox-main)
@@ -28,6 +50,23 @@ PvPArena.CalcTable	js/web/pvparena/js/pvparena.js
 # load the note texts before the table is drawn (player-note)
 PvPArena.CalcBody	js/web/pvparena/js/pvparena.js
 PvPArena.RefreshTable	js/web/pvparena/js/pvparena.js
+# hit test on volcano_archipelago: adds the translate of the map context back (gbg-extras)
+ProvinceMap.getCanvasPoint	js/web/guild_fights/js/parts/province_map.js
+# renders of the statistics box join the queue of the embedded statistics charts (stats-embed)
+Stats.updateCharts	js/web/stats/js/stats.js
+# swapped for the time of one embedded render or one tooltip/data view/CSV call, not wrapped for good (stats-embed)
+Stats.fetchRange	js/web/stats/js/stats.js
+Stats.getChart	js/web/stats/js/stats.js
+# also wrapped for good: icons higher and smaller, clear of the legend (stats-embed)
+Stats.chartToolbox	js/web/stats/js/stats.js
+Stats.timeTooltipFormatter	js/web/stats/js/stats.js
+# read through the swapped globals by the embedded render, a change there can break it (stats-embed)
+Stats.updateCommonChart	js/web/stats/js/stats.js
+Stats.updateRewardCharts	js/web/stats/js/stats.js
+Stats.createGBGSeries	js/web/stats/js/stats.js
+Stats.createRewardSeries	js/web/stats/js/stats.js
+Stats.renderDataTable	js/web/stats/js/stats.js
+Stats.downloadCSV	js/web/stats/js/stats.js
 # tab "Meine LGs" around the body of a new Investment box (my-gbs)
 Investment.BuildBox	js/web/investment/js/investment.js
 # counter of the own GB progress, opens the box on the "Meine LGs" tab (my-gbs)
