@@ -4,10 +4,10 @@
  * FoE Toolbox: small GBG features after Forge Hammer (js/web/guildfights).
  * Only wrappers, no change in the upstream files guild_fights.js and parts/province_map.js.
  *
- * - province map to tables: hovering a sector marks its row in "Nächste"/"Eigene" and
- *   highlights the adjacent sectors that open earlier (overlay canvas, wrapper around
- *   ProvinceMap.DrawOverlay), a click selects the row in "Nächste" for copy/Discord
- *   (wrapper around ProvinceMap.prepare)
+ * - province map to tables: hovering a sector outlines it, marks its row in "Nächste"/"Eigene"
+ *   and fills the adjacent sectors that open earlier (overlay canvas, wrapper around
+ *   ProvinceMap.DrawOverlay), a legend below the map explains both while hovering; a click
+ *   selects the row in "Nächste" for copy/Discord (wrapper around ProvinceMap.prepare)
  * - tab "Fortschritt": one bar per attacker (progress / maxProgress) and "highest / needed",
  *   after the build of the box and after every live update of a row (wrapper around
  *   Guild_fights.RefreshTable)
@@ -89,7 +89,35 @@ let GbgExtras = {
 		GbgExtras.adjacentIds = province ? GbgExtras.earlierNeighbours(province.id) : [];
 
 		GbgExtras.markHoveredRows();
+		GbgExtras.renderLegend();
 		ProvinceMap.DrawOverlay();
+	},
+
+
+	/**
+	 * Legend in the corner of the map while a sector is hovered, the outline and the
+	 * filled neighbours are not self-explanatory
+	 */
+	renderLegend: () => {
+		let legend = $('#gbgHoverLegend');
+
+		if (GbgExtras.hoveredId === null) {
+			legend.hide();
+			return;
+		}
+
+		if (legend.length === 0) {
+			legend = $('<div id="gbgHoverLegend" />').appendTo('#ProvinceMapBody');
+		}
+
+		const t = (key) => i18n('Boxes.GuildFights.HoverLegend.' + key);
+
+		legend.empty().append(
+			$('<div />').append('<span class="gbg-legend-outline"></span>', document.createTextNode(t('Sector'))),
+			GbgExtras.adjacentIds.length > 0
+				? $('<div />').append('<span class="gbg-legend-fill"></span>', document.createTextNode(HTML.i18nReplacer(t('Earlier'), { count: GbgExtras.adjacentIds.length })))
+				: ''
+		).show();
 	},
 
 
@@ -129,12 +157,16 @@ let GbgExtras = {
 	},
 
 
+	/** outline of the hovered sector, apart from the white border of the neighbours and the pulse of a table row */
+	hoverColor: '#ffd24d',
+
+
 	/**
-	 * Draws the earlier opening neighbours onto the overlay canvas, after the
-	 * watermarks and the pulse outline of the original DrawOverlay
+	 * Draws the earlier opening neighbours and the outline of the hovered sector onto the
+	 * overlay canvas, after the watermarks and the pulse outline of the original DrawOverlay
 	 */
 	drawAdjacent: () => {
-		if (GbgExtras.adjacentIds.length === 0 || !(ProvinceMap.Overlay instanceof HTMLCanvasElement)) return;
+		if (GbgExtras.hoveredId === null || !(ProvinceMap.Overlay instanceof HTMLCanvasElement)) return;
 
 		const ctx = ProvinceMap.OverlayCTX,
 			mapType = Guild_fights.MapData.map['id'];
@@ -155,6 +187,14 @@ let GbgExtras = {
 			ctx.fill(path);
 			ctx.globalAlpha = 1;
 			ctx.stroke(path);
+		}
+
+		// last, so it stays on top of the neighbours' borders
+		const hovered = ProvinceMap.Provinces.find(p => p.id === GbgExtras.hoveredId);
+		if (hovered) {
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = GbgExtras.hoverColor;
+			ctx.stroke(hovered.drawSectorShape(mapType));
 		}
 
 		ctx.restore();

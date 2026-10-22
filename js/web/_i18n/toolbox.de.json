@@ -73,6 +73,8 @@
     "Boxes.GuildFights.GBGTargetsShow": "Zeige Markierungen",
     "Boxes.GuildFights.GuildResults": "Platzierungen der Gilden",
     "Boxes.GuildFights.HighestOfRequired": "Höchster / Benötigt",
+    "Boxes.GuildFights.HoverLegend.Sector": "Sektor unter der Maus",
+    "Boxes.GuildFights.HoverLegend.Earlier": "__count__ Nachbarsektor(en) öffnen vorher",
     "Boxes.GuildFights.ShowOverflowWarning": "Warnung, wenn die Saisonbelohnung den Vorrat überfüllt",
     "Boxes.GuildFights.Stats.Forecast": "Siegpunkte-Prognose anzeigen",
     "Boxes.GuildFights.Stats.ForecastDesc": "Gestrichelte Linie bis zum Rundenende, berechnet aus den Siegpunkten pro Stunde der letzten 24 Stunden.",

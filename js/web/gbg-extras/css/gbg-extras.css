@@ -20,3 +20,39 @@
 #LiveGildFightingBody #progress .required-progress {
 	white-space: nowrap;
 }
+
+/* legend of the map hover, bottom left (the sector details sit bottom right) */
+#ProvinceMap #gbgHoverLegend {
+	position: absolute;
+	bottom: 0.75em;
+	left: 0.75em;
+	padding: 0.4em 0.6em;
+	background-color: rgba(0, 0, 0, 0.75);
+	border-radius: 5px;
+	color: #fff;
+	font-size: 0.9em;
+	pointer-events: none;
+}
+
+#ProvinceMap #gbgHoverLegend > div {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+#ProvinceMap #gbgHoverLegend .gbg-legend-outline,
+#ProvinceMap #gbgHoverLegend .gbg-legend-fill {
+	display: inline-block;
+	width: 14px;
+	height: 10px;
+	box-sizing: border-box;
+}
+
+#ProvinceMap #gbgHoverLegend .gbg-legend-outline {
+	border: 3px solid #ffd24d;
+}
+
+#ProvinceMap #gbgHoverLegend .gbg-legend-fill {
+	border: 2px solid #fff;
+	background-color: rgba(255, 255, 255, 0.45);
+}
