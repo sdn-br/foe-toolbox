@@ -67,3 +67,7 @@ Stats.createGBGSeries	js/web/stats/js/stats.js
 Stats.createRewardSeries	js/web/stats/js/stats.js
 Stats.renderDataTable	js/web/stats/js/stats.js
 Stats.downloadCSV	js/web/stats/js/stats.js
+# tab "Meine LGs" around the body of a new Investment box (my-gbs)
+Investment.BuildBox	js/web/investment/js/investment.js
+# counter of the own GB progress, opens the box on the "Meine LGs" tab (my-gbs)
+_menu.investment_Btn	js/web/_menu/js/_menu.js

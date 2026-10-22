@@ -33,6 +33,12 @@
 			"doubleoptin": true,
 			"group": "Boxes",
 			"sort": 24
+		},
+		{
+			"name": "ShowMyGBsCounter",
+			"status": true,
+			"group": "Boxes",
+			"sort": 25
 		}
 	]
 }

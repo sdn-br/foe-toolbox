@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 #
-# Checks the toolbox changes in upstream files, mainly after an upstream merge.
+# Checks the toolbox changes in upstream files, mainly after an upstream update.
 #
 # Usage: scripts/toolbox-check.sh [--upstream <old>..<new>] [base]
 #
 #   base        upstream state the toolbox is compared to. Default: merge base
 #               of HEAD and upstream/master, fallback f24d1fd4 (Helfer 4.8.3.0).
 #   --upstream  upstream range for (b) and (c). Default: base..upstream/master,
-#               which is the new upstream work before a merge. After a merge:
-#               $(git merge-base ORIG_HEAD upstream/master)..upstream/master
+#               which is the new upstream work before an update. After the
+#               update commit:
+#               $(git merge-base HEAD^1 upstream/master)..upstream/master
 #
 # Reports:
 #   (a) unmarked changes. For every file that exists in base and HEAD and is not
@@ -42,7 +43,7 @@ base=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--upstream) upstream_range="${2:-}"; shift 2 || { echo "--upstream needs <old>..<new>" >&2; exit 2; } ;;
-		-h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		-h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 		*) base="$1"; shift ;;
 	esac
 done

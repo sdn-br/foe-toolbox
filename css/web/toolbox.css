@@ -497,6 +497,159 @@
 	color: var(--orange);
 }
 
+/* Investment box: tabs "Investitionen" and "Meine LGs" (my-gbs.js). The wrapper takes the place of
+   the box body, upstream #InvestmentBody and #MyGBsBody share its height below the tab bar */
+#Investment #InvestmentTabs {
+	display: flex;
+	flex-direction: column;
+}
+
+#InvestmentTabs > .tabs {
+	flex: none;
+}
+
+#InvestmentTabs > #InvestmentBody,
+#InvestmentTabs > #MyGBsBody {
+	flex: 1 1 0;
+	min-height: 0;
+	height: auto;
+	overflow: auto;
+}
+
+#InvestmentTabs > #MyGBsBody,
+#InvestmentTabs.mygbs-active > #InvestmentBody {
+	display: none;
+}
+
+#InvestmentTabs.mygbs-active > #MyGBsBody {
+	display: block;
+}
+
+#InvestmentTabs > .tabs li a {
+	cursor: url('../images/cursor_hover.cur'), auto;
+}
+
+#MyGBsBody .mygbs-head {
+	padding: 6px 8px;
+}
+
+#MyGBsBody .mygbs-table th,
+#MyGBsBody .mygbs-table td {
+	text-align: center;
+	padding: 3px 5px;
+}
+
+#MyGBsBody .mygbs-table th:first-child,
+#MyGBsBody .mygbs-table td:first-child {
+	text-align: left;
+}
+
+/* stacking context per row, the progress bar (z-index -1) stays above the row background */
+#MyGBsBody .mygbs-table tbody tr {
+	opacity: .999;
+}
+
+#MyGBsBody tr.mygbs-row {
+	cursor: url('../images/cursor_hover.cur'), auto;
+}
+
+#MyGBsBody tr.mygbs-row td:first-child {
+	background-image: url('../images/hud/chevron-left.svg');
+	background-size: 14px 14px;
+	background-position: left center;
+	background-repeat: no-repeat;
+	padding-left: 18px;
+}
+
+#MyGBsBody tr.mygbs-row.open td:first-child {
+	background-image: url('../images/hud/chevron-down.svg');
+}
+
+/* background-color only, the shorthand would reset the chevron */
+#MyGBsBody tr.mygbs-row.open > td {
+	background-color: var(--table-bg-bright);
+}
+
+#MyGBsBody tr.mygbs-row.changed td:first-child,
+#MyGBsBody .mygbs-table td.leveled {
+	color: var(--sunflower);
+	font-weight: bold;
+}
+
+#MyGBsBody .mygbs-table td.progress {
+	position: relative;
+	white-space: nowrap;
+	color: var(--white);
+	border-left: 1px solid var(--border-table-top);
+	border-right: 1px solid var(--border-table-top);
+}
+
+#MyGBsBody tr.mygbs-row.open > td.progress {
+	background-color: transparent;
+}
+
+#MyGBsBody .mygbs-table td.progress .progbar {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background: var(--btn-bg-green);
+	z-index: -1;
+}
+
+#MyGBsBody strong.success {
+	color: var(--success);
+}
+
+#MyGBsBody tr.mygbs-detail > td {
+	padding: 0;
+	background-color: var(--table-bg-darker);
+}
+
+#MyGBsBody .mygbs-note {
+	padding: 4px 8px;
+	color: var(--sunflower);
+	text-align: left;
+}
+
+#MyGBsBody table.mygbs-contrib {
+	width: 100%;
+}
+
+#MyGBsBody table.mygbs-contrib th,
+#MyGBsBody table.mygbs-contrib td {
+	padding: 2px 8px;
+}
+
+#MyGBsBody table.mygbs-contrib th:first-child,
+#MyGBsBody table.mygbs-contrib td:first-child {
+	text-align: left;
+	padding-left: 30px;
+}
+
+#MyGBsBody table.mygbs-contrib tr.new td {
+	background-color: var(--table-bg-success);
+}
+
+#MyGBsBody table.mygbs-contrib tr.own td:first-child {
+	font-style: italic;
+}
+
+/* Investment menu button: FP of other players in the own GBs since the last visit (my-gbs.js) */
+.hud-btn span.hud-counter.mygbs-counter {
+	width: auto;
+	min-width: 15px;
+	padding: 1px 3px;
+	border-radius: 8px;
+	background-color: var(--hud-counter-success);
+	white-space: nowrap;
+}
+
+.hud-bottom .hud-btn span.hud-counter.mygbs-counter {
+	min-width: 12px;
+	padding: 1px 2px;
+}
+
 /* import button of the notes below the API token in the settings */
 .notice-import-btn {
 	margin-top: 8px;
