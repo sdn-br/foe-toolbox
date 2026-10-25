@@ -521,6 +521,14 @@
 	display: none;
 }
 
+/* room for the scrollbar also without one, so the tables keep their width when it appears.
+   The pre-scan box only scrolls as pop-out (popup.css sets overflow: auto there) */
+#InvestmentTabs > #InvestmentBody,
+#InvestmentTabs > #MyGBsBody,
+.popup-mode > #LGInvestmentOverviewBoxBody {
+	scrollbar-gutter: stable;
+}
+
 #InvestmentTabs.mygbs-active > #MyGBsBody {
 	display: block;
 }
