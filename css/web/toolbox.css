@@ -659,3 +659,34 @@
 #PvPArenaBody .player-note.player-note-multi {
 	cursor: pointer;
 }
+
+/* activity of other guilds on the GBG map (gbg-guild-activity.js) */
+#GbgGuildActivityBody .gga-guilds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px;
+}
+
+#GbgGuildActivityBody table.gga-table tr.gga-new td:first-child {
+	font-weight: bold;
+}
+
+/* texts wrap at the width of the table instead of widening the box, without a table
+   (first visit) the box keeps this width */
+#GbgGuildActivityBody {
+	min-width: 280px;
+}
+
+#GbgGuildActivityBody .toolbox-head,
+#GbgGuildActivityBody .gga-hint {
+	width: 0;
+	min-width: 100%;
+	box-sizing: border-box;
+}
+
+#GbgGuildActivityBody .gga-hint {
+	padding: 4px 6px;
+	font-size: 0.85em;
+	opacity: 0.8;
+}
