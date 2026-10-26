@@ -530,7 +530,7 @@ let Discord = {
 			e.url,
 			{
 				username: 'FoE Toolbox', // TOOLBOX: branding
-				avatar_url: 'https://foe-helper.com/theme/img/favicon/apple-touch-icon.png',
+				avatar_url: 'https://raw.githubusercontent.com/sdn-br/foe-toolbox/master/images/app128.png', // TOOLBOX: branding
 				content: e.message
 			}
 		)
