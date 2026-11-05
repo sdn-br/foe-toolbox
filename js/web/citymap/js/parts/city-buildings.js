@@ -23,7 +23,7 @@ let CityBuildings = {
 	 * @returns {Object[]} The bonus list, empty for buildings without bonuses.
 	 */
 	getGBBonuses(data) {
-		return (data.bonuses?.length ? data.bonuses : (data.bonus ? [data.bonus] : []));
+		return MainParser.GetGBBonuses(data);
 	},
 
 
@@ -298,6 +298,8 @@ let CityBuildings = {
 			feature: rawBoost.targetedFeature,
 			type: Boosts.Mapper[rawBoost.type] || [rawBoost.type],
 			value: rawBoost.value,
+			// prestige rework: "multiplies and adds your total attack by X%" instead of a flat bonus
+			isMultiplier: !!(rawBoost.isBonusMultiplier || rawBoost.isBoostMultiplier),
 			...extra
 		});
 
@@ -325,12 +327,13 @@ let CityBuildings = {
 
 			if (metaData.type === 'greatbuilding') {
 				// production bonuses (rework `bonuses` array) are covered by the
-				// production state and must not be counted as boosts
+				// production state and must not be counted as boosts; the targeted
+				// feature and the multiplier flag come from the metadata (getGBBonuses)
 				for (const gbBonus of this.getGBBonuses(data)) {
 					if (!gbBonus.type || gbBonus.type === 'happiness_amount' || gbBonus.type === 'population') continue;
 					if (gbBonus.bonusCategory?.value === 'productionBonus') continue;
 
-					boosts.push(mapBoost({ targetedFeature: 'all', type: gbBonus.type, value: gbBonus.value }));
+					boosts.push(mapBoost({ targetedFeature: gbBonus.targetedFeature || 'all', type: gbBonus.type, value: gbBonus.value, isBonusMultiplier: gbBonus.isBonusMultiplier }));
 				}
 			}
 			else if (metaData.id.includes('CastleSystem')) {
@@ -1136,8 +1139,10 @@ let CityBuildings = {
 			name = this.setRewardNameFromLookupData(lookupData, metaData);
 		}
 		else {
+			// not in the lookup of the building, its chain or set: the production of a
+			// placed building carries name and icon itself, use them instead of a placeholder
 			console.log('setGenericReward() data missing for', metaData.name, metaData, product);
-			name = 'DEFINE NAME';
+			name = product.reward.name || product.reward.id;
 		}
 
 		// units
@@ -1158,10 +1163,10 @@ let CityBuildings = {
 			reward = {
 				id: product.reward.id,
 				name: name,
-				type: lookupData?.type || 'consumable',
-				subType: lookupData?.subType,
+				type: lookupData?.type || product.reward.type || 'consumable',
+				subType: lookupData?.subType || product.reward.subType,
 				amount: amount, // amount can be undefined for blueprints or units if building is not motivated
-				icon: lookupData?.iconAssetName
+				icon: lookupData?.iconAssetName || product.reward.iconAssetName
 			};
 		}
 		// chain attachments with generic production need extra handling

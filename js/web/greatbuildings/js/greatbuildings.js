@@ -22,6 +22,44 @@
 			GreatBuildings.RenderInvest();
 		}, 250);
 	});
+
+	// keep the great building overview of other players (opened in the game)
+	// as a snapshot, so the box can show their buildings as well
+	FoEproxy.addHandler('GreatBuildingsService', 'getOtherPlayerOverview', (data) => {
+		const rows = (Array.isArray(data.responseData) ? data.responseData : []).filter(row => row['city_entity_id'] !== undefined && row['player']?.['player_id'] !== undefined);
+		if (rows.length === 0) return;
+
+		// every row carries the real costs of its current level
+		for (const row of rows) {
+			GreatBuildings.VerifyReworkCosts(row['city_entity_id'], row['level'], row['max_progress']);
+		}
+
+		const playerID = rows[0]['player']['player_id'];
+		if (playerID === ExtPlayerID) return;
+
+		GreatBuildings.Overviews[playerID] = {
+			id: playerID,
+			name: rows[0]['player']['name'] || PlayerDict[playerID]?.['PlayerName'] || String(playerID),
+			time: Date.now(),
+			rows: rows,
+		};
+
+		FoEproxy.triggerFoeHelperHandler('OtherPlayerGBsUpdated');
+	});
+
+	// a great building of another player opened in the game delivers its placed
+	// bonuses, the only exact values the helper gets for foreign buildings
+	FoEproxy.addHandler('OtherPlayerService', 'getOtherPlayerCityMapEntity', (data) => {
+		const entity = data.responseData;
+		if (entity?.['type'] !== 'greatbuilding' || !entity['player_id'] || entity['player_id'] === ExtPlayerID) return;
+
+		(GreatBuildings.OpenedGBs[entity['player_id']] ??= {})[entity['cityentity_id']] = entity;
+		FoEproxy.triggerFoeHelperHandler('OtherPlayerGBsUpdated');
+	});
+
+	FoEproxy.addFoeHelperHandler('OtherPlayerGBsUpdated', () => {
+		if ($('#greatbuildings').length !== 0) GreatBuildings.RenderInvest();
+	});
 }
 
 
@@ -33,6 +71,27 @@
  * and the tier bonuses of the multi-tier rework where the game provides them.
  */
 let GreatBuildings = {
+
+    /**
+     * Great building overviews of other players by player id, filled from the
+     * game's overview window: { name, time (ms), rows (overview rows) }.
+     * @type {Object<number, {name: string, time: number, rows: Object[]}>}
+     */
+    Overviews: {},
+
+    /**
+     * Great buildings of other players opened in the game, by player id and
+     * city entity id: the city map entity with its placed `bonuses`.
+     * @type {Object<number, Object<string, Object>>}
+     */
+    OpenedGBs: {},
+
+    /**
+     * Player whose great buildings the box shows, null for the own city.
+     * Shared by the GB bonus overview, which keeps its own selection.
+     * @type {?number}
+     */
+    PlayerID: null,
 
     /**
      * First place patron reward (in FP) per era and level.
@@ -120,6 +179,9 @@ let GreatBuildings = {
     /** @type {number} Arc bonus in percent, used to calculate the patron rewards */
     ForderBonus: 90,
 
+    /** @type {?number} Arc bonus in percent for gold tier level-ups of the prestige rework, null = the own gold contribution boost */
+    ForderBonusGold: null,
+
     /** @type {boolean} Hide great buildings that are not built yet */
     HideNewGBs: false,
 
@@ -133,6 +195,105 @@ let GreatBuildings = {
 
     /** @type {?number[]} Era independent P1 level curve derived from the Rewards tables (lazy, see BuildP1Curve) */
     P1Curve: null,
+
+    /**
+     * Level cost steps of the prestige rework (see GetReworkCosts): FP added per level in the
+     * segments 10-39, 40-69, 70-99, 100-300 and, for gold buildings, 301-400 and 401+.
+     * Measured on beta (2026-11-05, ranking sweep and per level patron rewards); the totals
+     * match the costs InnoGames announced for level 200 / 500 of every building.
+     * The Shattered Horizon Siphon is missing: it has its own curve (see ReworkLinear).
+     * @type {Object<string, number[]>}
+     */
+    ReworkSteps: {
+        X_AllAge_EasterBonus4: [27, 43, 106, 1472, 17056, 82816], // Observatory
+        X_AllAge_Expedition: [27, 43, 106, 912], // Temple of Relics
+        X_AllAge_Oracle: [33, 37, 112, 911], // Oracle of Delphi
+        X_BronzeAge_Landmark1: [21, 34, 83, 950], // Tower of Babel
+        X_BronzeAge_Landmark2: [21, 34, 83, 1486, 17025, 82847], // Statue of Zeus
+        X_IronAge_Landmark1: [22, 38, 87, 1482, 17035, 82839], // Colosseum
+        X_IronAge_Landmark2: [22, 38, 87, 971], // Lighthouse of Alexandria
+        X_EarlyMiddleAge_Landmark1: [25, 39, 99, 990], // Hagia Sophia
+        X_EarlyMiddleAge_Landmark2: [25, 39, 99, 1477, 17044, 82828], // Cathedral of Aachen
+        X_EarlyMiddleAge_Landmark3: [33, 37, 112, 984], // Galata Tower
+        X_HighMiddleAge_Landmark1: [27, 43, 106, 1472, 17056, 82816], // St. Mark's Basilica
+        X_HighMiddleAge_Landmark3: [27, 43, 106, 1010], // Notre Dame
+        X_LateMiddleAge_Landmark1: [29, 47, 113, 1030], // Saint Basil's Cathedral
+        X_LateMiddleAge_Landmark3: [29, 47, 113, 1468, 17062, 82809], // Castel del Monte
+        X_ColonialAge_Landmark1: [31, 48, 121, 1050], // Frauenkirche of Dresden
+        X_ColonialAge_Landmark2: [31, 48, 121, 1464, 17071, 82799], // Deal Castle
+        X_IndustrialAge_Landmark1: [33, 52, 129, 1459, 17081, 82791], // Royal Albert Hall
+        X_IndustrialAge_Landmark2: [33, 52, 129, 1070], // Capitol
+        X_ProgressiveEra_Landmark1: [34, 56, 133, 1456, 17087, 82782], // Alcatraz
+        X_ProgressiveEra_Landmark2: [34, 56, 133, 1456, 17087, 82782], // Château Frontenac
+        X_ModernEra_Landmark1: [36, 59, 142, 1110], // Space Needle
+        X_ModernEra_Landmark2: [36, 59, 142, 1110], // Atomium
+        X_PostModernEra_Landmark1: [36, 59, 142, 1134], // Cape Canaveral
+        X_PostModernEra_Landmark2: [36, 59, 142, 1134], // The Habitat
+        X_ContemporaryEra_Landmark1: [36, 59, 142, 1451, 17097, 82774], // Lotus Temple
+        X_ContemporaryEra_Landmark2: [36, 59, 142, 1159], // Innovation Tower
+        X_TomorrowEra_Landmark1: [39, 61, 151, 1178], // Voyager V1
+        X_TomorrowEra_Landmark2: [39, 61, 151, 1178], // Truce Tower
+        X_FutureEra_Landmark1: [40, 65, 156, 1443, 17112, 82757], // The Arc
+        X_FutureEra_Landmark2: [40, 65, 156, 1199], // Rain Forest Project
+        X_ArcticFuture_Landmark1: [46, 74, 179, 1210], // Gaea Statue
+        X_ArcticFuture_Landmark2: [46, 74, 179, 1429, 17142, 82729], // Arctic Orangery
+        X_ArcticFuture_Landmark3: [46, 74, 179, 1429, 17142, 82729], // Seed Vault
+        X_OceanicFuture_Landmark1: [48, 77, 188, 1230], // Atlantis Museum
+        X_OceanicFuture_Landmark2: [48, 77, 188, 1424, 17153, 82717], // The Kraken
+        X_OceanicFuture_Landmark3: [48, 77, 188, 1424, 17153, 82717], // The Blue Galaxy
+        X_VirtualFuture_Landmark1: [50, 81, 195, 1420, 17160, 82708], // Terracotta Army
+        X_VirtualFuture_Landmark2: [50, 81, 195, 1420, 17160, 82708], // Himeji Castle
+        X_SpaceAgeMars_Landmark1: [52, 83, 202, 1270], // Star Gazer
+        X_SpaceAgeMars_Landmark2: [52, 83, 202, 1416, 17168, 82701], // The Virgo Project
+        X_SpaceAgeAsteroidBelt_Landmark1: [54, 86, 211, 1411, 17179, 82689], // Space Carrier
+        X_SpaceAgeVenus_Landmark1: [56, 90, 218, 1309], // Flying Island
+        X_SpaceAgeJupiterMoon_Landmark1: [58, 92, 225, 1330], // A.I. Core
+        X_SpaceAgeTitan_Landmark1: [134, 216, 527, 1178], // Saturn VI Gate CENTAURUS
+        X_SpaceAgeTitan_Landmark2: [104, 168, 408, 1247], // Saturn VI Gate PEGASUS
+        X_SpaceAgeTitan_Landmark3: [164, 265, 644, 1109], // Saturn VI Gate HYDRA
+        X_SpaceAgeSpaceHub_Landmark1: [590, 957, 2316, 156], // Stellar Warship
+        X_SpaceAgeSpaceHub_Landmark2: [475, 771, 1864, 420], // Cosmic Catalyst
+    },
+
+    /**
+     * Patron share of the level costs after the prestige rework as [last level, percent],
+     * by the level the level-up reaches.
+     * @type {number[][]}
+     */
+    ReworkShares: [[9, 25], [39, 30], [69, 40], [100, 25], [200, 15], [300, 10], [400, 7], [Infinity, 5]],
+
+    /**
+     * Great buildings whose level costs stay linear after the prestige rework (see
+     * GetReworkLinearCosts). Shattered Horizon Siphon: measured on live (2026-11-05, 26 level
+     * costs of other players and the patron rewards up to level 501); the result contradicts
+     * the announced total, so the game may still change it.
+     * @type {string[]}
+     */
+    ReworkLinear: ['X_StellarAgeDiscovery_Landmark1'],
+
+    /**
+     * Great buildings whose real level costs contradicted the cost curve (see VerifyReworkCosts).
+     * @type {Object<string, boolean>}
+     */
+    ReworkMismatch: {},
+
+    /** @type {number} Shape constant k of the bonus curve between the metadata breakpoints (see MetaBonusValue) */
+    BonusCurve: 3.53612,
+
+    /**
+     * Tier bonus types behind the production targets of the standard mode after the
+     * prestige rework, the most direct one first (chance based bonuses last).
+     * @type {Object<string, string[]>}
+     */
+    StandardBonusTypes: {
+        fp: ['strategy_points', 'spoils_of_war', 'diplomatic_gifts', 'totem_drop'],
+        goods: ['random_goods', 'previous_era_goods', 'special_goods', 'age_reserves', 'mysterious_shards', 'totem_drop', 'spoils_of_war', 'diplomatic_gifts'],
+        supplies: ['supplies'],
+        money: ['money'],
+        medals: ['medals'],
+        clan_goods: ['clan_goods'],
+        units: ['penal_unit'],
+    },
 
     /** @type {string} Value model: 'standard' (per level productions) or 'rework' (multi-tier bonuses) */
     InvestMode: 'standard',
@@ -168,16 +329,19 @@ let GreatBuildings = {
         let ForderBonus = localStorage.getItem('GreatBuildingsForderBonus');
         if (ForderBonus !== null) GreatBuildings.ForderBonus = parseFloat(ForderBonus);
 
+        let ForderBonusGold = localStorage.getItem('GreatBuildingsForderBonusGold');
+        if (ForderBonusGold !== null) GreatBuildings.ForderBonusGold = parseFloat(ForderBonusGold);
+
         GreatBuildings.InvestMode = localStorage.getItem('GreatBuildingsInvestMode') || GreatBuildings.InvestMode;
         GreatBuildings.StandardTarget = localStorage.getItem('GreatBuildingsStandardTarget') || GreatBuildings.StandardTarget;
         GreatBuildings.BonusTarget = localStorage.getItem('GreatBuildingsBonusTarget') || GreatBuildings.BonusTarget;
         GreatBuildings.HideNewGBs = (localStorage.getItem('GreatBuildingsHideNew') === 'true');
         GreatBuildings.InvestSort = JSON.parse(localStorage.getItem('GreatBuildingsSort') || '{"col":"costs","order":"ascending"}');
+        GreatBuildings.PlayerID = null;
 
         HTML.Box({
             id: 'greatbuildings',
             title: i18n('Boxes.GreatBuildings.Title'),
-            ask: i18n('Boxes.GreatBuildings.HelpLink'),
             auto_close: true,
             dragdrop: true,
             minimize: true,
@@ -186,6 +350,12 @@ let GreatBuildings = {
         });
 
         HTML.AddCssFile('greatbuildings');
+
+        $('#greatbuildings').on('change', '#gbInvestPlayer', function () {
+            const value = String($(this).val());
+            GreatBuildings.PlayerID = (value === '' ? null : parseInt(value));
+            GreatBuildings.RenderInvest();
+        });
 
         $('#greatbuildings').on('change', '#gbInvestMode', function () {
             GreatBuildings.InvestMode = String($(this).val());
@@ -208,10 +378,13 @@ let GreatBuildings = {
             GreatBuildings.RenderInvest();
         });
 
-        $('#greatbuildings').on('blur', '#costFactor', function () {
-            GreatBuildings.ForderBonus = parseFloat($(this).val());
-            if (isNaN(GreatBuildings.ForderBonus)) GreatBuildings.ForderBonus = 0;
-            localStorage.setItem('GreatBuildingsForderBonus', GreatBuildings.ForderBonus);
+        // arc bonus of the copper (#costFactor) and the gold tier level-ups (#costFactorGold)
+        $('#greatbuildings').on('blur', '#costFactor, #costFactorGold', function () {
+            const Field = (this.id === 'costFactorGold' ? 'ForderBonusGold' : 'ForderBonus');
+
+            GreatBuildings[Field] = parseFloat($(this).val());
+            if (isNaN(GreatBuildings[Field])) GreatBuildings[Field] = 0;
+            localStorage.setItem('GreatBuildings' + Field, GreatBuildings[Field]);
             GreatBuildings.RenderInvest();
         });
 
@@ -319,7 +492,11 @@ let GreatBuildings = {
                 // only boosts that count everywhere; combined boosts (e.g. attack
                 // and defense of the attacking army) are one value like in the game
                 if (boost['feature'] && boost['feature'] !== 'all') continue;
-                if (boost['type'].some(type => boostTypes.includes(type))) sum += boost['value'];
+                const matching = boost['type'].filter(type => boostTypes.includes(type));
+                if (matching.length === 0) continue;
+
+                // multiplier boosts of the prestige rework count by the percent they add on top of the additive city boosts
+                sum += (boost['isMultiplier'] ? Boosts.AdditiveSum(matching[0], 'all') * boost['value'] / 100 : boost['value']);
             }
             return { amount: sum, average: false };
         }
@@ -331,6 +508,43 @@ let GreatBuildings = {
 
         const production = Productions.getBuildingProductionByCategory(false, building, (key === 'fp' ? 'strategy_points' : key));
         return { amount: production['amount'] || 0, average: production['hasRandomProductions'] };
+    },
+
+
+    /**
+     * Tier bonuses of the prestige rework behind a standard target at the current
+     * and the next level, summed over the matching bonuses that count everywhere
+     * (no feature specific ones, no multipliers). Production targets use the most
+     * direct bonus type the building offers (see StandardBonusTypes).
+     *
+     * @param {Object} meta City entity metadata of the great building
+     * @param {string} key Standard target key
+     * @param {number} level Current level of the building (0 = not built)
+     * @returns {?{now: number, next: number, direct: boolean}} null when no tier bonus feeds the target;
+     *          direct = the bonus is the target value itself, not a chance for it
+     */
+    StandardTierCurve: (meta, key, level) => {
+        const bonuses = (meta['bonuses'] || []).flatMap(tier => tier['bonuses'] || [])
+            .filter(bonus => (bonus['targetedFeature'] || 'all') === 'all' && !bonus['isBonusMultiplier']);
+        const boostTypes = GreatBuildings.StandardBoostTypes[key];
+        let matches;
+
+        if (boostTypes) {
+            matches = bonuses.filter(bonus => (Boosts.Mapper[bonus['type']] || [bonus['type']]).some(type => boostTypes.includes(type)));
+        }
+        else {
+            const type = (GreatBuildings.StandardBonusTypes[key] || []).find(entry => bonuses.some(bonus => bonus['type'] === entry));
+            matches = bonuses.filter(bonus => bonus['type'] === type);
+        }
+        if (matches.length === 0) return null;
+
+        const sum = (atLevel) => matches.reduce((total, bonus) => total + GreatBuildings.MetaBonusValue(bonus, atLevel, false), 0);
+
+        return {
+            now: sum(level),
+            next: sum(level + 1),
+            direct: (!!boostTypes || matches.every(bonus => bonus['bonusCategory']?.['value'] === 'productionBonus')),
+        };
     },
 
 
@@ -420,22 +634,28 @@ let GreatBuildings = {
             if (meta['strategy_points_for_upgrade'] === undefined) continue;
 
             const placed = placedById[meta['id']] || null;
-            if (GreatBuildings.HideNewGBs && !placed) continue;
+            if (GreatBuildings.HidesNew() && !placed) continue;
 
-            const building = (placed ? buildingsByEntityId[meta['id']] : null);
+            // the normalized city data only covers the own city
+            const building = (placed && !placed.foreign ? buildingsByEntityId[meta['id']] : null);
             const GBData = GreatBuildings.GreatBuildingsData.find(data => data.ID === meta['id']);
             const level = (placed ? placed['level'] : 0);
             const values = {};
 
             for (const def of targetDefs) {
                 let value = null;
+                // prestige rework: the static curves are outdated, the tier bonuses of the metadata take over
+                const tierCurve = (GreatBuildings.IsRework(meta['id']) ? GreatBuildings.StandardTierCurve(meta, def.key, level) : null);
 
                 if (building) {
                     const real = GreatBuildings.StandardBuildingValue(building, def.key);
                     if (real.amount > 0) {
-                        // gain of the next level: the real value scaled with the static curve
+                        // gain of the next level: the real value scaled with the curve of the level
                         let delta = null;
-                        if (curveTypes[def.key] && GBData) {
+                        if (tierCurve) {
+                            if (tierCurve.now > 0) delta = real.amount * (tierCurve.next / tierCurve.now - 1);
+                        }
+                        else if (curveTypes[def.key] && GBData && !GreatBuildings.IsRework(meta['id'])) {
                             const curveNow = GreatBuildings.ClassicValue(GBData, curveTypes[def.key], level - 1);
                             const curveNext = GreatBuildings.ClassicValue(GBData, curveTypes[def.key], level);
                             if (curveNow > 0 && curveNext > curveNow) delta = real.amount * (curveNext / curveNow - 1);
@@ -443,10 +663,16 @@ let GreatBuildings = {
                         value = { current: real.amount, delta: delta, avg: real.average };
                     }
                 }
+                else if (tierCurve && tierCurve.direct) {
+                    // unbuilt or foreign building of the prestige rework: the tier bonus itself
+                    if (tierCurve.next > 0) value = { current: Math.round(tierCurve.now), delta: tierCurve.next - tierCurve.now, avg: false };
+                }
                 else if (GBData && curveTypes[def.key] && GreatBuildings.StandardTargetOffered(meta, def.key)) {
-                    const first = GreatBuildings.ClassicValue(GBData, curveTypes[def.key], 0);
-                    if (first > 0) {
-                        value = { current: 0, delta: first, avg: (staticAverages[meta['id']] || []).includes(def.key) };
+                    // unbuilt or foreign building: plain static curve at its level
+                    const now = GreatBuildings.ClassicValue(GBData, curveTypes[def.key], level - 1);
+                    const next = GreatBuildings.ClassicValue(GBData, curveTypes[def.key], level);
+                    if (next > 0) {
+                        value = { current: now, delta: next - now, avg: (staticAverages[meta['id']] || []).includes(def.key) };
                     }
                 }
 
@@ -504,7 +730,7 @@ let GreatBuildings = {
             rows.push({
                 meta: meta,
                 placed: placedById[meta['id']] || null,
-                bonuses: meta['bonuses'].flatMap(tier => tier['bonuses']).map(bonus => ({ key: bonus['type'] + '|' + (bonus['targetedFeature'] || 'all'), bonus: bonus })),
+                bonuses: meta['bonuses'].flatMap(tier => tier['bonuses']).map(bonus => ({ key: GreatBuildings.BonusKey(bonus), bonus: bonus })),
             });
         }
 
@@ -521,13 +747,21 @@ let GreatBuildings = {
         const entries = [];
         for (const row of rows) {
             const match = row.bonuses.find(entry => entry.key === GreatBuildings.BonusTarget);
-            if (!match || (GreatBuildings.HideNewGBs && !row.placed)) continue;
+            if (!match || (GreatBuildings.HidesNew() && !row.placed)) continue;
 
             const bonus = match.bonus;
             const max = bonus['values'][bonus['values'].length - 1];
-            const current = (row.placed
-                ? (CityBuildings.getGBBonuses(row.placed).find(entry => entry['type'] === bonus['type'])?.['value'] || 0)
-                : (bonus['valuesMap'][1]?.['value'] || 0));
+            // other players without an opened building: the value comes from the bonus curve
+            // of the metadata, off the breakpoints it can be off by one
+            let current, approx = false;
+            const live = (row.placed ? CityBuildings.getGBBonuses(row.placed).find(entry => entry['type'] === bonus['type'] && !!entry['isBonusMultiplier'] === !!bonus['isBonusMultiplier']) : null);
+            if (!row.placed) current = (bonus['valuesMap'][1]?.['value'] || 0);
+            else if (live) current = (live['value'] || 0);
+            else if (row.placed.foreign) {
+                current = GreatBuildings.MetaBonusValue(bonus, row.placed['level']);
+                approx = (bonus['valuesMap'][row.placed['level']] === undefined);
+            }
+            else current = 0;
 
             // first level the bonus becomes active on
             const startLevel = Math.min(...Object.keys(bonus['valuesMap']).map(Number).filter(level => bonus['valuesMap'][level]['value'] > 0), Infinity);
@@ -540,6 +774,7 @@ let GreatBuildings = {
                 meta: row.meta,
                 placed: row.placed,
                 current: current,
+                approx: approx,
                 second: max,
                 state: state,
                 startLevel: startLevel,
@@ -616,7 +851,7 @@ let GreatBuildings = {
      *
      * @param {Object} meta City entity metadata of the great building
      * @param {?Object} placed The placed city entity, null when not built yet
-     * @returns {?{level: number, brutto: number, patrons: number, netto: number}} null when no cost data is available
+     * @returns {?{level: number, brutto: number, arc: number, patrons: number, netto: number}} null when no cost data is available
      */
     InvestCosts: (meta, placed) => {
         const level = (placed ? placed['level'] : 0);
@@ -624,11 +859,24 @@ let GreatBuildings = {
         if (brutto === undefined) brutto = GreatBuildings.GetBruttoCosts(meta['id'], level);
         if (brutto === undefined) return null;
 
-        const era = Technologies.Eras[GreatBuildings.GetEraName(meta['asset_id'])];
-        const p1 = GreatBuildings.GetP1(era, level);
-        const patrons = (p1 !== undefined ? GreatBuildings.GetMaezen(p1, GreatBuildings.ForderBonus).reduce((sum, reward) => sum + reward, 0) : 0);
+        // gold tier level-ups have their own arc bonus
+        const arc = GreatBuildings.GetForderBonus(MainParser.IsGoldTier(MainParser.GetGBTierForLevel(meta, level)));
+        const rewards = GreatBuildings.GetPatronRewards(meta['id'], level, arc, brutto);
+        const patrons = (rewards ? rewards.reduce((sum, reward) => sum + reward, 0) : 0);
 
-        return { level: level, brutto: brutto, patrons: patrons, netto: brutto - patrons };
+        return { level: level, brutto: brutto, arc: arc, patrons: patrons, netto: brutto - patrons };
+    },
+
+
+    /**
+     * Configured arc bonus of the investment box for a tier. Gold tier level-ups
+     * use the own gold contribution boost until a value has been set.
+     *
+     * @param {boolean} [Gold=false] Gold tier of the prestige rework
+     * @returns {number} Arc bonus in percent
+     */
+    GetForderBonus: (Gold = false) => {
+        return (Gold ? GreatBuildings.ForderBonusGold ?? MainParser.ArkBonusGold : GreatBuildings.ForderBonus);
     },
 
 
@@ -644,12 +892,13 @@ let GreatBuildings = {
         CityBuildings.createBuildings();
 
         const hasRework = GreatBuildings.HasReworkData();
-        const mode = (hasRework && GreatBuildings.InvestMode === 'rework' ? 'rework' : 'standard');
+        const foreign = (GreatBuildings.PlayerID !== null && GreatBuildings.Overviews[GreatBuildings.PlayerID] !== undefined);
+        // on rework worlds the classic production tables are outdated, other players only get the tier bonuses
+        const mode = (hasRework && (GreatBuildings.InvestMode === 'rework' || foreign) ? 'rework' : 'standard');
 
-        const placedById = {};
-        for (const entity of Object.values(MainParser.CityMapData)) {
-            if (entity['type'] === 'greatbuilding') placedById[entity['cityentity_id']] = entity;
-        }
+        const overview = (GreatBuildings.PlayerID !== null ? GreatBuildings.Overviews[GreatBuildings.PlayerID] : null);
+        if (GreatBuildings.PlayerID !== null && !overview) GreatBuildings.PlayerID = null;
+        const placedById = GreatBuildings.PlacedBuildings(overview);
 
         const harvest = GreatBuildings.DailyHarvest();
         const { targets, entries } = (mode === 'rework'
@@ -688,12 +937,27 @@ let GreatBuildings = {
         });
 
         const selected = (mode === 'rework' ? GreatBuildings.BonusTarget : GreatBuildings.StandardTarget);
+        const [targetType, targetFeature, targetFlag] = GreatBuildings.BonusTarget.split('|');
         const icon = (mode === 'rework'
-            ? GBBonuses.TypeIcon(GreatBuildings.BonusTarget.split('|')[0])
+            ? GBBonuses.TypeIcon(targetType, targetFeature, targetFlag === 'x')
             : GreatBuildings.StandardTargetIcon(GreatBuildings.StandardTarget));
 
         const h = [];
         h.push('<div class="text-center dark-bg header">');
+
+        // player selection: the own city plus every overview opened in the game
+        const players = Object.entries(GreatBuildings.Overviews).sort((a, b) => a[1].name.localeCompare(b[1].name));
+        h.push('<div class="invest-row"><label for="gbInvestPlayer">' + i18n('Boxes.GreatBuildings.Player') + '</label> <select id="gbInvestPlayer" class="game-cursor" title="' + HTML.i18nTooltip(i18n('Boxes.GreatBuildings.PlayerHint')) + '">');
+        h.push('<option value=""' + (overview ? '' : ' selected') + '>' + i18n('Boxes.GreatBuildings.OwnCity') + '</option>');
+        for (const [playerID, entry] of players) {
+            h.push('<option value="' + playerID + '"' + (parseInt(playerID) === GreatBuildings.PlayerID ? ' selected' : '') + '>' + HTML.escapeHtml(entry.name) + '</option>');
+        }
+        if (players.length === 0) h.push('<option disabled>' + i18n('Boxes.GreatBuildings.PlayerHint') + '</option>');
+        h.push('</select>');
+        if (overview) {
+            h.push(' <span class="snapshot-info">' + HTML.i18nReplacer(i18n('Boxes.GreatBuildings.Snapshot'), { time: moment(overview.time).format('LT') }) + '</span>');
+        }
+        h.push('</div>');
 
         h.push('<div class="invest-row"><label for="gbInvestTarget">' + i18n('Boxes.GreatBuildings.InvestTarget') + '</label> <select id="gbInvestTarget" class="game-cursor">');
         for (const [key, label] of targets.entries()) {
@@ -701,7 +965,7 @@ let GreatBuildings = {
         }
         h.push('</select>');
 
-        if (hasRework) {
+        if (hasRework && !overview) {
             h.push(' <select id="gbInvestMode" class="game-cursor">');
             h.push('<option value="standard"' + (mode === 'standard' ? ' selected' : '') + '>' + i18n('Boxes.GreatBuildings.ModeStandard') + '</option>');
             h.push('<option value="rework"' + (mode === 'rework' ? ' selected' : '') + '>' + i18n('Boxes.GreatBuildings.ModeRework') + '</option>');
@@ -709,8 +973,11 @@ let GreatBuildings = {
         }
         h.push('</div>');
 
-        h.push('<div class="invest-row">' + i18n('Boxes.GreatBuildings.ArcBonus') + ' <input type="number" id="costFactor" step="0.1" min="12" max="200" value="' + GreatBuildings.ForderBonus + '">%');
-        h.push(' <span class="invest-hide"><input id="HideNewGBs" class="hidenewgbs game-cursor" type="checkbox"' + (GreatBuildings.HideNewGBs ? ' checked' : '') + '> <label for="HideNewGBs">' + i18n('Boxes.GreatBuildings.HideNewGBs') + '</label></span></div>');
+        // one arc bonus per tier on worlds with the prestige rework
+        const hasGold = MainParser.HasGoldTier();
+        h.push('<div class="invest-row">' + i18n('Boxes.GreatBuildings.ArcBonus') + ' ' + (hasGold ? Calculator.TierMarker(false) : '') + '<input type="number" id="costFactor" step="0.1" min="12" max="200" value="' + GreatBuildings.ForderBonus + '">%');
+        if (hasGold) h.push(' ' + Calculator.TierMarker(true) + '<input type="number" id="costFactorGold" step="0.1" min="0" max="200" value="' + GreatBuildings.GetForderBonus(true) + '">%');
+        h.push(' <span class="invest-hide"' + (overview ? ' title="' + HTML.i18nTooltip(i18n('Boxes.GreatBuildings.ForeignHideNewTT')) + '"' : '') + '><input id="HideNewGBs" class="hidenewgbs game-cursor" type="checkbox"' + (GreatBuildings.HidesNew() ? ' checked' : '') + (overview ? ' disabled' : '') + '> <label for="HideNewGBs">' + i18n('Boxes.GreatBuildings.HideNewGBs') + '</label></span></div>');
 
         // harvest summary the "harvests" column is based on
         let harvestInfo = HTML.i18nReplacer(i18n('Boxes.GreatBuildings.HarvestInfo'), { fp: HTML.Format(Math.round(harvest.total)) });
@@ -746,7 +1013,9 @@ let GreatBuildings = {
                 h.push('<td class="text-center">' + HTML.i18nReplacer(i18n('Boxes.GreatBuildings.PendingFrom'), { lvl: entry.startLevel }) + '</td>');
             }
             else {
-                h.push('<td class="text-center"' + (entry.state === 'maxed' ? ' title="' + HTML.i18nTooltip(i18n('Boxes.GreatBuildings.MaxReached')) + '"' : '') + '>' + avgSign + GBBonuses.FormatValue(entry.cellBonus, entry.current) + (entry.state === 'maxed' ? ' ✔' : '') + '</td>');
+                const approx = (entry.approx && entry.current > 0 && entry.state !== 'maxed');
+                const currentTT = (entry.state === 'maxed' ? 'Boxes.GreatBuildings.MaxReached' : (approx ? 'Boxes.GBBonuses.MinValueTT' : null));
+                h.push('<td class="text-center"' + (currentTT ? ' title="' + HTML.i18nTooltip(i18n(currentTT)) + '"' : '') + '>' + avgSign + (approx ? '≈ ' : '') + GBBonuses.FormatValue(entry.cellBonus, entry.current) + (entry.state === 'maxed' ? ' ✔' : '') + '</td>');
             }
 
             let second = GBBonuses.FormatValue(entry.cellBonus, entry.second);
@@ -754,10 +1023,10 @@ let GreatBuildings = {
             h.push('<td class="text-center">' + (entry.second > 0 ? avgSign : '') + second + '</td>');
 
             if (entry.costs) {
-                const costsTT = HTML.i18nReplacer(i18n('Boxes.GreatBuildings.CostsTT'), {
+                const costsTT = HTML.i18nReplacer(i18n(overview ? 'Boxes.GreatBuildings.CostsTTForeign' : 'Boxes.GreatBuildings.CostsTT'), {
                     level: (entry.costs.level + 1),
                     brutto: HTML.Format(entry.costs.brutto),
-                    arc: GreatBuildings.ForderBonus,
+                    arc: entry.costs.arc,
                     patrons: HTML.Format(entry.costs.patrons),
                     netto: HTML.Format(MainParser.round(entry.costs.netto)),
                 });
@@ -787,6 +1056,120 @@ let GreatBuildings = {
 
 
     /**
+     * Opened great building of another player, as long as it is not older than
+     * the overview row (a lower level than the row means the building levelled
+     * up since it was opened, its bonuses are outdated then).
+     *
+     * @param {number} playerID Owner of the building
+     * @param {Object} row Overview row of the building
+     * @returns {?Object} City map entity or null
+     */
+    OpenedGB: (playerID, row) => {
+        const entity = GreatBuildings.OpenedGBs[playerID]?.[row['city_entity_id']];
+        return (entity && entity['level'] >= (row['level'] || 0) ? entity : null);
+    },
+
+
+    /**
+     * Placed great buildings by city entity id: the own city map entities, or
+     * for another player the rows of their overview snapshot shaped like city
+     * map entities (level and level costs, flagged `foreign`); a building
+     * opened in the game additionally carries its exact `bonuses`.
+     *
+     * @param {?{rows: Object[]}} overview Overview snapshot of another player, null for the own city
+     * @returns {Object<string, Object>}
+     */
+    PlacedBuildings: (overview) => {
+        const placedById = {};
+
+        if (!overview) {
+            for (const entity of Object.values(MainParser.CityMapData)) {
+                if (entity['type'] === 'greatbuilding') placedById[entity['cityentity_id']] = entity;
+            }
+            return placedById;
+        }
+
+        for (const row of overview.rows) {
+            const opened = GreatBuildings.OpenedGB(overview.id, row);
+            placedById[row['city_entity_id']] = {
+                type: 'greatbuilding',
+                foreign: true,
+                cityentity_id: row['city_entity_id'],
+                level: (opened ? opened['level'] : (row['level'] || 0)),
+                bonuses: (opened ? opened['bonuses'] : undefined),
+                state: (opened && opened['level'] > (row['level'] || 0)
+                    ? opened['state']
+                    : { forge_points_for_level_up: row['max_progress'], invested_forge_points: row['current_progress'] }),
+            };
+        }
+        return placedById;
+    },
+
+
+    /**
+     * Whether unbuilt great buildings are hidden: by the user's filter, and
+     * always for other players, whose unbuilt buildings are unknown.
+     *
+     * @returns {boolean}
+     */
+    HidesNew: () => GreatBuildings.HideNewGBs || GreatBuildings.PlayerID !== null,
+
+
+    /**
+     * Bonus value of a tier bonus at a completed level. The metadata only lists
+     * a few level breakpoints, in between every bonus of the game follows the
+     * same curve: a + b * (1 - e^(-k * x^1.2)) with x as the progress within the
+     * tier (copper: levels 1-200, gold: from its first level to the last
+     * breakpoint) and k = BonusCurve. a and b are fitted to the breakpoints.
+     * Their values are rounded, so off the breakpoints the result can be off
+     * by one (measured on beta, 2026-11-05).
+     *
+     * @param {Object} bonus Tier bonus entry with `valuesMap` keyed by level
+     * @param {number} level Completed level of the building
+     * @param {boolean} [rounded=true] false returns the unrounded curve value (for gains between two levels)
+     * @returns {number}
+     */
+    MetaBonusValue: (bonus, level, rounded = true) => {
+        const map = bonus['valuesMap'] || {};
+        if (map[level] !== undefined) return (map[level]['value'] || 0);
+
+        // gold tier bonuses are zero on the first breakpoint (level 1): they start with their tier
+        // and grow up to the last breakpoint, copper ones from level 1 up to level 200
+        const levels = Object.keys(map).map(Number).sort((a, b) => a - b),
+            gold = !(map[levels[0]]?.['value'] > 0),
+            first = levels[gold ? 1 : 0];
+        if (first === undefined || level < first) return 0;
+
+        const start = (gold ? first - 1 : 0),
+            end = (gold ? levels[levels.length - 1] : 200),
+            curve = entry => 1 - Math.exp(-GreatBuildings.BonusCurve * Math.pow(Math.min(Math.max(entry - start, 0) / (end - start), 1), 1.2));
+
+        // breakpoints the bonus still grows on (the levels beyond the end only repeat the maximum)
+        const points = levels.filter((entry, i) => entry >= first && (entry <= end || levels[i - 1] < end));
+        const lower = Math.max(...levels.filter(entry => entry <= level));
+
+        let sumX = 0, sumY = 0, sumXX = 0, sumXY = 0;
+        for (const entry of points) {
+            const x = curve(entry), y = map[entry]['value'];
+            sumX += x;
+            sumY += y;
+            sumXX += x * x;
+            sumXY += x * y;
+        }
+        const divisor = points.length * sumXX - sumX * sumX;
+        if (points.length < 2 || !(divisor > 0)) return (map[lower]['value'] || 0); // no curve: last reached breakpoint
+
+        const b = (points.length * sumXY - sumX * sumY) / divisor,
+            a = (sumY - b * sumX) / points.length,
+            upper = Math.min(...levels.filter(entry => entry > level), Infinity),
+            // never leave the range of the surrounding breakpoints
+            value = Math.min(Math.max(a + b * curve(level), map[lower]['value']), (map[upper]?.['value'] ?? Infinity));
+
+        return (rounded ? Math.round(value) : value);
+    },
+
+
+    /**
      * Checks whether the game data already carries the multi-tier rework
      * metadata (`bonuses` per prestige tier) on the great buildings.
      *
@@ -798,26 +1181,42 @@ let GreatBuildings = {
 
 
     /**
-     * Display name of an investment target: the translated bonus type plus a
-     * short feature suffix for the guild expedition/battleground variants.
+     * Key of an investment target of the rework mode: bonus type, targeted feature
+     * and a marker for the multiplier variant ("type|targetedFeature" or "type|targetedFeature|x").
      *
-     * @param {string} key Investment target as "type|targetedFeature"
+     * @param {Object} bonus GreatBuildingBonus metadata entry
+     * @returns {string}
+     */
+    BonusKey: (bonus) => {
+        return bonus['type'] + '|' + (bonus['targetedFeature'] || 'all') + (bonus['isBonusMultiplier'] ? '|x' : '');
+    },
+
+
+    /**
+     * Display name of an investment target: the translated bonus type plus a
+     * short feature suffix for the guild expedition/battleground variants and
+     * a marker for the multiplier boosts of the prestige rework.
+     *
+     * @param {string} key Investment target as "type|targetedFeature[|x]"
      * @returns {string}
      */
     BonusLabel: (key) => {
-        const [type, feature] = key.split('|');
+        const [type, feature, flag] = key.split('|');
         let label = GBBonuses.TypeName(type);
 
         if (feature === 'guild_expedition') label += ' – ' + i18n('Boxes.GreatBuildings.FeatureGE');
         else if (feature === 'battleground') label += ' – ' + i18n('Boxes.GreatBuildings.FeatureGBG');
+        else if (feature === 'guild_raids') label += ' – ' + i18n('Boxes.GreatBuildings.FeatureQI');
+
+        if (flag === 'x') label += ' (' + i18n('Boxes.GBBonuses.Multiplier') + ')';
 
         return label;
     },
 
 
     /**
-     * Prestige icon (copper/silver/gold) of the multi-tier great buildings as <img>,
-     * falls back to text if the asset is not part of the ForgeHX file index
+     * Prestige icon of the multi-tier great buildings as <img> (the game only has
+     * one for gold), falls back to text if the asset is not part of the ForgeHX file index
      *
      * @param Tier GreatBuildingTier enum, e.g. {value: 'copper'}
      * @returns {string} HTML or empty string
@@ -943,13 +1342,16 @@ let GreatBuildings = {
 
     /**
      * Returns the total FP required to complete a level of a great building.
-     * From level 10 on the costs are extrapolated (+2.5% per level).
+     * Classic worlds extrapolate from level 10 on (+2.5% per level), the
+     * prestige rework has its own cost curve (see GetReworkCosts).
      *
      * @param {string} EntityID Entity id of the great building
      * @param {number} Level Level to look up (0-based)
-     * @returns {number} FP costs of the level
+     * @returns {number|undefined} FP costs of the level, undefined when the rework costs are unknown
      */
     GetBruttoCosts: (EntityID, Level) => {
+        if (GreatBuildings.IsRework(EntityID)) return GreatBuildings.GetReworkCosts(EntityID, Level);
+
         let CityEntity = MainParser.CityEntities[EntityID];
 
         if (Level < 10) {
@@ -958,6 +1360,179 @@ let GreatBuildings = {
         else {
             return Math.ceil(CityEntity['strategy_points_for_upgrade'][9] * Math.pow(1.025, Level - 9));
         }
+    },
+
+
+    /**
+     * Highest level a great building of the prestige rework can reach: copper only
+     * buildings end with the copper tier (200), gold buildings are not capped.
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @returns {number}
+     */
+    GetReworkMaxLevel: (EntityID) => {
+        const Meta = MainParser.CityEntities[EntityID],
+            MaxTier = Meta?.['maxTier']?.['value'] || Meta?.['maxTier'] || 'copper';
+
+        if (MaxTier !== 'copper') return Infinity;
+
+        return MainParser.GetGBTierRanges(Meta).ends['copper'] || 200;
+    },
+
+
+    /**
+     * Total FP of a level-up after the prestige rework. The costs are piecewise
+     * linear: the metadata holds the first ten levels, from then on every segment
+     * adds a fixed step per level (see ReworkSteps). The segments change where the
+     * patron share changes (levels 10, 40, 70) and at levels 100, 300 and 400;
+     * level 100 starts 5% above level 99 (halves rounded up). Buildings listed in
+     * ReworkLinear follow GetReworkLinearCosts instead.
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @returns {number|undefined} FP costs, undefined without step data or beyond the maximum level
+     */
+    GetReworkCosts: (EntityID, Level) => {
+        const Costs = MainParser.CityEntities[EntityID]?.['strategy_points_for_upgrade'],
+            Steps = GreatBuildings.ReworkSteps[EntityID];
+
+        if (!Costs || !(Level >= 0) || Level >= GreatBuildings.GetReworkMaxLevel(EntityID)) return undefined;
+        if (Level < 10) return Costs[Level];
+        if (GreatBuildings.ReworkMismatch[EntityID]) return undefined;
+        if (GreatBuildings.ReworkLinear.includes(EntityID)) return GreatBuildings.GetReworkLinearCosts(Costs[0], Level);
+        if (!Steps) return undefined;
+
+        // [last level of the segment, index of its step]
+        const Segments = [[39, 0], [69, 1], [99, 2], [300, 3], [400, 4], [Infinity, 5]];
+        let Cost = Costs[9],
+            Start = 9;
+
+        for (const [End, Index] of Segments) {
+            if (Steps[Index] === undefined) return undefined;
+
+            if (Start === 99) {
+                Cost = Math.round(Cost * 21 / 20);
+                Start = 100;
+            }
+            if (Level <= End) return Cost + Steps[Index] * (Level - Start);
+
+            Cost += Steps[Index] * (End - Start);
+            Start = End;
+        }
+    },
+
+
+    /**
+     * Total FP of a level-up on the linear cost curve: every level adds the costs of
+     * the first level. Levels 100 and 200 cost one and a half steps extra, the curve
+     * behind each of them continues one step lower.
+     *
+     * @param {number} First FP costs of the first level
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @returns {number} FP costs
+     */
+    GetReworkLinearCosts: (First, Level) => {
+        const Entries = Math.min(2, Math.floor(Level / 100)),
+            Extra = (Level === 100 || Level === 200 ? 1.5 : 0);
+
+        return Math.round(First * (Level + 1 - Entries + Extra));
+    },
+
+
+    /**
+     * Compares real level costs delivered by the game with the cost curve. A
+     * contradiction means the game was rebalanced: the building gets no calculated
+     * costs and rewards any more instead of wrong ones.
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @param {number} Costs Total FP of the level-up as delivered by the game
+     */
+    VerifyReworkCosts: (EntityID, Level, Costs) => {
+        if (!(Costs > 0) || !GreatBuildings.IsRework(EntityID)) return;
+
+        const Expected = GreatBuildings.GetReworkCosts(EntityID, Level);
+        if (Expected === undefined || Expected === Costs) return;
+
+        GreatBuildings.ReworkMismatch[EntityID] = true;
+        console.warn(`GreatBuildings: level costs of ${EntityID} changed (level ${Level}: ${Costs} instead of ${Expected})`);
+    },
+
+
+    /**
+     * Number of rewarded patron places of a level-up: five on classic worlds and in
+     * the copper tier, seven as soon as the level-up reaches a gold tier level.
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @returns {number}
+     */
+    GetPlaceCount: (EntityID, Level) => {
+        if (!GreatBuildings.IsRework(EntityID)) return 5;
+
+        const Meta = MainParser.CityEntities[EntityID],
+            MaxTier = Meta['maxTier']?.['value'] || Meta['maxTier'] || 'copper',
+            GoldStart = MainParser.GetGBTierRanges(Meta).starts['gold'] || 101;
+
+        return (MaxTier === 'gold' && Level + 1 >= GoldStart ? 7 : 5);
+    },
+
+
+    /**
+     * Patron base rewards (without contribution boost) of a level-up after the
+     * prestige rework. The patrons share a fixed percentage of the level costs
+     * (see ReworkShares), place n gets 1/n! of the first place. The game hands
+     * out FP packages, therefore rewards of 1 and 3 FP become 2 and 4.
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @param {number} [Costs] Total FP of the level-up, calculated when omitted
+     * @returns {number[]|undefined} Reward per place, undefined when the costs are unknown
+     */
+    GetReworkRewards: (EntityID, Level, Costs) => {
+        if (Costs === undefined) Costs = GreatBuildings.GetReworkCosts(EntityID, Level);
+        if (!(Costs >= 0)) return undefined;
+
+        const Share = GreatBuildings.ReworkShares.find(([End]) => Level + 1 <= End)[1],
+            Count = GreatBuildings.GetPlaceCount(EntityID, Level),
+            Weights = [];
+
+        // integer weights Count!/n! instead of 1/n!
+        for (let i = Count, Weight = 1; i >= 1; i--) {
+            Weights[i - 1] = Weight;
+            Weight *= i;
+        }
+        const Sum = Weights.reduce((sum, Weight) => sum + Weight, 0);
+
+        return Weights.map(Weight => {
+            // pool times the share of the place: this order reproduces the rounding of the game at exact halves
+            const Reward = Math.round(Costs * Share / 100 * (Weight / Sum));
+
+            return (Reward === 1 || Reward === 3 ? Reward + 1 : Reward);
+        });
+    },
+
+
+    /**
+     * Patron rewards of a level-up including the contribution boost, for classic
+     * worlds (reward table, see GetP1) and the prestige rework (see GetReworkRewards).
+     *
+     * @param {string} EntityID Entity id of the great building
+     * @param {number} Level Level the level-up starts from (0-based)
+     * @param {number|number[]} [ArcBoni=0] Contribution boost in percent — a single value for all places or one value per place
+     * @param {number} [Costs] Total FP of the level-up when known (prestige rework only)
+     * @returns {number[]|undefined} Reward per place, undefined when no data is available
+     */
+    GetPatronRewards: (EntityID, Level, ArcBoni = 0, Costs) => {
+        if (!GreatBuildings.IsRework(EntityID)) {
+            const P1 = GreatBuildings.GetP1(Technologies.Eras[GreatBuildings.GetEraName(EntityID)], Level);
+
+            return (P1 !== undefined ? GreatBuildings.GetMaezen(P1, ArcBoni) : undefined);
+        }
+
+        const Rewards = GreatBuildings.GetReworkRewards(EntityID, Level, Costs);
+
+        return (Rewards ? GreatBuildings.ApplyArcBonus(Rewards, ArcBoni) : undefined);
     },
 
 
@@ -971,6 +1546,18 @@ let GreatBuildings = {
      */
     GetLevel: (EntityID, TotalFP) => {
         let CityEntity = MainParser.CityEntities[EntityID];
+
+        // prestige rework: walk the curve up to the matching level; the linear curve
+        // drops once behind levels 100 and 200, so one higher value does not end the search
+        if (GreatBuildings.IsRework(EntityID)) {
+            for (let Level = 0, Above = 0; ; Level++) {
+                const Costs = GreatBuildings.GetReworkCosts(EntityID, Level);
+
+                if (Costs === undefined) return undefined;
+                if (Costs === TotalFP) return (Level + 1);
+                if (Costs > TotalFP && ++Above > 1) return undefined;
+            }
+        }
 
         let Level10 = CityEntity['strategy_points_for_upgrade'][9];
 
@@ -990,35 +1577,51 @@ let GreatBuildings = {
 
 
     /**
-     * Calculates the patron rewards of the places 1-5 including arc bonus.
+     * Whether a great building carries the prestige rework metadata (`bonuses` per tier).
+     *
+     * @param {string} EntityID City entity id of the great building
+     * @returns {boolean}
+     */
+    IsRework: (EntityID) => {
+        const meta = MainParser.CityEntities?.[EntityID];
+
+        return !!(meta && Array.isArray(meta['bonuses']) && meta['bonuses'].length > 0);
+    },
+
+
+    /**
+     * Calculates the patron rewards of the five places of a classic world
+     * including arc bonus. Place n gets the reward of place n-1 divided by n,
+     * rounded to multiples of 5.
      *
      * @param {number} P1 Base reward of the first place (without arc bonus)
      * @param {number|number[]} ArcBoni Arc bonus in percent — a single value for all places or one value per place
-     * @returns {number[]} Rewards of the places 1-5
+     * @returns {number[]} Rewards of the places
      */
     GetMaezen: (P1, ArcBoni) => {
-        let Ret = [];
+        let Ret = [P1];
 
-        let arcs = [];
-        for (let i = 0; i < 5; i++) {
-            if (ArcBoni.length) { //Array
-                arcs[i] = 1 + (ArcBoni[i] / 100);
-            }
-            else {
-                arcs[i] = 1 + (ArcBoni / 100);
-            }
-        }
-
-        Ret[0] = P1;
         for (let i = 1; i < 5; i++) {
             Ret[i] = MainParser.round(Ret[i - 1] / (i + 1) / 5) * 5;
         }
 
-        for (let i = 0; i < 5; i++) {
-            Ret[i] = MainParser.round(Ret[i] * arcs[i]);
-        }
+        return GreatBuildings.ApplyArcBonus(Ret, ArcBoni);
+    },
 
-        return Ret;
+
+    /**
+     * Adds the contribution boost to the base rewards of the patron places.
+     *
+     * @param {number[]} Rewards Base reward per place
+     * @param {number|number[]} ArcBoni Boost in percent — a single value for all places or one value per place
+     * @returns {number[]} Boosted reward per place
+     */
+    ApplyArcBonus: (Rewards, ArcBoni) => {
+        return Rewards.map((Reward, i) => {
+            const Bonus = (Array.isArray(ArcBoni) ? (ArcBoni[i] ?? ArcBoni[ArcBoni.length - 1]) : ArcBoni);
+
+            return MainParser.round(Reward * (1 + ((parseFloat(Bonus) || 0) / 100)));
+        });
     },
 
 

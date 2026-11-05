@@ -55,7 +55,7 @@ let Auction = {
     timeout:null,
 
     updateClipboard: () => {
-        newBid = Math.floor(Math.max(Auction.fak[Auction.index] * Auction.current, Auction.current + Auction.diff[Auction.index]));
+        let newBid = Math.floor(Math.max(Auction.fak[Auction.index] * Auction.current, Auction.current + Auction.diff[Auction.index]));
         helper.str.copyToClipboard(newBid);
     },
 
@@ -65,7 +65,6 @@ let Auction = {
 			HTML.Box({
 				id: 'auctionSettingsBox',
 				title: i18n('Boxes.AuctionSettings.Title'),
-				//ask: i18n('Boxes.AuctionSettings.HelpLink'),
 				auto_close: true,
 				dragdrop: true,
 				minimize: true,

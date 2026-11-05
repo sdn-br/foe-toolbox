@@ -151,7 +151,6 @@ let CityMap = {
 				resize: true,
 				minimize: true,
 				popout: () => MainParser.PopOut('citymap-main', 1100, 580),
-				ask: i18n('Boxes.CityMap.HelpLink'),
 			});
 
 			setTimeout(() => {
@@ -257,6 +256,7 @@ let CityMap = {
 			menu.append($('<div class="btn-group" />')
 				.append($('<button class="btn ml-auto" id="copy-meta-infos" onclick="CityMap.copyMetaInfos()" style="margin-left:auto" />').text(i18n('Boxes.CityMap.CopyMetaInfos')))
 				.append($('<button class="btn ml-auto" id="download-meta-infos" onclick="CityMap.downloadMetaInfos()" />').text(i18n('Boxes.CityMap.DownloadMetaInfos')))
+				.append($('<button class="btn ml-auto" id="show-submit-box" onclick="CityMap.showSubmitBox()" />').text(i18n('Boxes.CityMap.ShowSubmitBox')))
 			);
 			$('#sidebar').append(CityMap.showQIBuildingList());
 		}
@@ -940,7 +940,7 @@ let CityMap = {
 			$('#map-buildings').append(f);
 		}
 
-		CityMap.metrics.area = ((unlockedAreas?.length || 1) - 1) * 16 + 256; // x * (4*4) + 16*16
+		CityMap.metrics.area = (unlockedAreas || []).reduce((sum, area) => sum + (area.width || 4) * (area.length || 4), 0) || 256; // sum of all unlocked areas (start area 16*16, expansions usually 4*4)
 		CityMap.metrics.areaAvailable = CityMap.metrics.area - CityMap.metrics.areaOccupied;
 
 		const StreetsUsed = CityMap.metrics.buildingAreas['street'] || 0;
@@ -1003,7 +1003,7 @@ let CityMap = {
 	 */
 	getAreas: () => {
 		const unlockedAreas = (ActiveMap === 'OtherPlayer' ? CityMap.OtherPlayer.unlockedAreas : CityMap.Main.unlockedAreas);
-		const total = ((unlockedAreas?.length || 1) - 1) * 16 + 256, // x * (4*4) + 16*16
+		const total = (unlockedAreas || []).reduce((sum, area) => sum + (area.width || 4) * (area.length || 4), 0) || 256, // sum of all unlocked areas (start area 16*16, expansions usually 4*4)
 			occupied = CityMap.metrics.areaOccupied,
 			txtFree = total - occupied;
 
@@ -1035,7 +1035,8 @@ let CityMap = {
 		areaStats.push('<ul>');
 		for (const [type, count] of sortedBldTypes) {
 			const TypeName = i18n('Boxes.CityMap.' + type);
-			const pct = (100 * count / CityMap.metrics.buildings).toFixed(1);
+			// the type list includes streets, so relate the share to buildings and streets together
+			const pct = (100 * count / (CityMap.metrics.buildings + CityMap.metrics.roads)).toFixed(1);
 
 			let str = `<span data-original-title="${pct}%"><span class="square ${type}"></span>${count}x ${TypeName}</span> <span>${expansionIcon}${CityMap.metrics.buildingAreas[type]}</span>`;
 
@@ -1241,6 +1242,7 @@ let CityMap = {
 				],
 				type: 'error',
 				hideAfter: 10000,
+				show: true, // the user clicked something - show it even with notifications switched off
 			});
 
 			return;
@@ -1310,7 +1312,8 @@ let CityMap = {
 				blockedAreas: CityMap.removeDoubleUnderscoreKeys(blockedAreas),
 				goods: GoodsData,
 				cityEntities: CityMap.removeDoubleUnderscoreKeys(MainParser.CityEntities),
-				allEntities: CityMap.removeDoubleUnderscoreKeys(Outposts.Advancements),
+				// settlement catalog only, the QI buildings are already part of cityEntities
+				allEntities: (ActiveMap === 'guild_raids' ? null : CityMap.removeDoubleUnderscoreKeys(Outposts.Advancements)),
 				mainEntities: (CityMap.isOutpostMap() ? CityMap.removeDoubleUnderscoreKeys(MainParser.CityMapData) : null),
 				selectionKits: MainParser.SelectionKits || null,
 			};

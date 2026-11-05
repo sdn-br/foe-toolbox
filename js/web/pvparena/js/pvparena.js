@@ -179,7 +179,13 @@ const PvPArena = {
         PvPArena.LostAttackFights = PvPArena.AllLostAttackFights.filter(fight => !hidden.includes(fight.playerName));
 
         if (refreshOnly) return PvPArena.RefreshBox(); // TOOLBOX: see refreshOnly
-        PvPArena.Show();
+
+        // Show() toggles the box, so an already open box is only refreshed
+        if ($('#PvPArena').length > 0) {
+            PvPArena.RefreshBox();
+        } else {
+            PvPArena.Show();
+        }
     },
 
     /**
