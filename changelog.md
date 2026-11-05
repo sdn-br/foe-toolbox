@@ -1,5 +1,21 @@
 ## Changelog - Extension
 
+##### 2.2.0.0
+**FoE-Helfer**
+- Update auf FoE Helfer 4.8.7.0 (vorher 4.8.3.0)
+    - LG-Umbau des Spiels: Kupfer- und Gold-Stufen mit eigenem Mäzen-Bonus für Gold, Kosten und Belohnungen bis zu 7 Plätzen in Kostenrechner, Eigenanteilsrechner, Power-Leveling und Investitionen
+    - Eigene Prozent-Listen für Gold-Stufen in Kostenrechner und Eigenanteilsrechner
+    - LG-Bonus-Übersicht, Investitionen zeigen auch die LGs anderer Spieler
+    - Hilfe-Links in den Fenstern, Neuigkeiten-Box (abschaltbar in den Einstellungen)
+    - Bugfixes u.a. für Kits und Stadtkarte, Verbündete, Alarme, Inventar und die Serverzeit in GbG
+
+**Neu**
+- GbG: Aktivität anderer Gilden. Mehrere Klicks auf das Hauptquartier einer Gilde zeigen, welche Mitglieder dazwischen gekämpft haben (in den Einstellungen einschalten)
+
+**Update**
+- Eigenanteilsrechner: mit „Bonuseinstellung pro LG speichern“ werden die Arche-Prozente je LG und Stufe (Kupfer/Gold) gespeichert
+- Mögliche Investitionen rechnen mit den Belohnungen und dem Arche-Bonus des neuen LG-Systems
+
 ##### 2.1.0.0
 **Neu**
 - Investitionen: Reiter „Meine LGs“ (aus Forge Hammer) zeigt, wie viele FP andere seit deinem letzten Blick in deine LGs eingezahlt haben, live ohne Neuladen. Zähler am Menüknopf „Investitionen“, Mäzene je LG
