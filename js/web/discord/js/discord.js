@@ -42,7 +42,6 @@ let Discord = {
 			HTML.Box({
 				id: 'Discord',
 				title: i18n('Boxes.Discord.Title'),
-				ask: i18n('Boxes.Discord.HelpLink'),
 				auto_close: true,
 				dragdrop: true,
 				resize: true
@@ -565,7 +564,10 @@ let Discord = {
 
 	createGBGMessage: (sector) => {
 		let timeAt = moment.unix(sector.lockedUntil - 2)/1000;
-		let battleColor = (Guild_fights.showTileColors != 0 ? (sector.isAttackBattleType ? '🔴' : '🔵') : '');
+		// follows the "attack colors" copy setting of the GBG box, which replaced showTileColors
+		let LiveFightSettings = JSON.parse(localStorage.getItem('LiveFightSettings'));
+		let copyTileColors = LiveFightSettings?.copyTileColors ?? LiveFightSettings?.showTileColors ?? 1;
+		let battleColor = (copyTileColors !== 0 ? (sector.isAttackBattleType ? '🔴' : '🔵') : '');
 		let msg = battleColor +" **" + sector.title + "** <t:" + timeAt + ":t>, <t:" + timeAt + ":R>";
 
 		return msg;
@@ -574,8 +576,9 @@ let Discord = {
 	createGBGCustomMessage: (sector,tpl) => {
 		const vars = Guild_fights.GetSectorVars(sector);
 
-		let msg = (tpl != '') ? Discord.WebHooks.find(x => x.name == tpl).message
-			: '#battletype **#name** @ <t:#name:R> - #attrition%*\n-# :medal:`#vp)`';
+		// a deleted or renamed template falls back to the default message
+		let msg = Discord.WebHooks.find(x => tpl != '' && x.name == tpl)?.message
+			?? '#battletype **#name** @ <t:#time:R> - #attrition%*\n-# :medal:`#vp`';
 
 		msg = Object.entries(vars).reduce(
 			(str, [placeholder, value]) => str.replaceAll(placeholder, value ?? ''),
@@ -620,7 +623,6 @@ let Discord = {
 	sendGBGSectorsCustom: () => {
 		let msg = "";
 		for (let sector of Guild_fights.discordCache) {
-			console.log(sector.name);
 			msg += Discord.createGBGCustomMessage(sector,Guild_fights.discordWebhook.bulkTemplate) + "\n";
 		}
 

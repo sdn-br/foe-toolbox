@@ -31,7 +31,6 @@ let Infoboard = {
     DebugWebSocket: false,
     History: [],
     MaxEntries: 0,
-    GbgProvShortNameFl: true,
     OriginalDocumentTitle: document.title,
     TitleBlinkEvent: null,
 
@@ -119,7 +118,7 @@ let Infoboard = {
         h.push('<li><label><input type="checkbox" data-type="trade" class="filter-msg" ' + (Infoboard.SavedFilter.includes("trade") ? "checked" : "") + '> ' + i18n('Boxes.Infobox.FilterTrade') + '</label></li>');
         h.push('<li><label><input type="checkbox" data-type="level" class="filter-msg" ' + (Infoboard.SavedFilter.includes("level") ? "checked" : "") + '> ' + i18n('Boxes.Infobox.FilterLevel') + '</label></li>');
         h.push('<li><label><input type="checkbox" data-type="msg" class="filter-msg" ' + (Infoboard.SavedFilter.includes("msg") ? "checked" : "") + '> ' + i18n('Boxes.Infobox.FilterMessage') + '</label></li>');
-        h.push('<li><label><input type="text" data-type="text" placeholder="1.9|A1: M" class="textfilter filter-msg" value=' + (Infoboard.SavedFilter.includes("text") ? Infoboard.SavedTextFilter : "") + '></label></li>');
+        h.push('<li><label><input type="text" data-type="text" placeholder="1.9|A1: M" class="textfilter filter-msg" value="' + (Infoboard.SavedFilter.includes("text") ? String(Infoboard.SavedTextFilter).replace(/"/g, '&quot;') : "") + '"></label></li>');
         h.push('</ul>');
         h.push('</div>');
 
@@ -246,7 +245,7 @@ let Infoboard = {
                         <small><em>${moment(bd.date).format('HH:mm:ss')}</em></small>
                         <div>${msg}</div>
                         <span class="clickable fav ${favActive !== false ? favActive : ''}"
-                            data-original-title="${favActive !== false ? 'Remove from favorites' : 'Add to favorites'}">
+                            data-original-title="${favActive !== false ? i18n('Boxes.General.FavoritesRemove') : i18n('Boxes.General.FavoritesAdd')}">
                             ${favActive !== false ? '★' : '☆'}
                         </span>
                     </div>
@@ -483,7 +482,7 @@ let Info = {
 
         let message = '<div><strong class="bright">' + i18n('Boxes.Infobox.UnknownConversation') + '</strong></div>';
         return {
-            class: 'message',
+            class: 'msg',
             type: i18n('Boxes.Infobox.FilterMessage'),
             msg: message
         };
@@ -599,17 +598,18 @@ let Info = {
      */
     OtherPlayerService_newEventgreat_building_contribution: (d) => {
         let newFP = -1;
-        if (d['rank'] >= 6)
+        let Entity = Object.values(MainParser.CityEntities).find(obj => (obj['name'] === d['great_building_name'])),
+            EntityID = Entity?.['id'];
+
+        if (!EntityID)
             newFP = 0;
         else {
-            let Entity = Object.values(MainParser.CityEntities).find(obj => (obj['name'] === d['great_building_name']));
-                EntityID = Entity['id'],
-                EraName = EraName = GreatBuildings.GetEraName(EntityID),
-                Era = Technologies.Eras[EraName],
-                P1 = GreatBuildings.GetP1(Era, d['level']-1) || 0,
-                FPRewards = GreatBuildings.GetMaezen(P1, MainParser.ArkBonus);
+            let Level = d['level'] - 1,
+                Tier = MainParser.GetGBTierForLevel(Entity, Level), // gold tier level-ups use the gold contribution boost
+                FPRewards = GreatBuildings.GetPatronRewards(EntityID, Level, MainParser.GetArkBonus(Tier));
 
-                newFP = FPRewards[d['rank'] - 1];
+            // ranks beyond the reward places (five, seven on gold tier levels) get nothing
+            if (FPRewards) newFP = FPRewards[d['rank'] - 1] || 0;
         }
 
         let PlayerLink = MainParser.GetPlayerLink(d['other_player']['player_id'], d['other_player']['name']);

@@ -22,6 +22,13 @@
 			GBBonuses.RenderList();
 		}, 250);
 	});
+
+	// another player's GB overview was opened in the game (stored by GreatBuildings)
+	FoEproxy.addFoeHelperHandler('OtherPlayerGBsUpdated', () => {
+		if ($('#gbBonuses').length === 0) return;
+		GBBonuses.FillPlayerSelect();
+		GBBonuses.RenderList();
+	});
 }
 
 
@@ -35,8 +42,10 @@
  * @property {Object[]} tiers `bonuses` metadata: one entry per prestige tier with
  *                            its GreatBuildingBonus list and level breakpoints
  * @property {string} maxTier highest available prestige tier (copper/silver/gold)
- * @property {?number} level current level when built in the own city
- * @property {?number} maxLevel unlocked levels when built in the own city
+ * @property {?number} level current level when built in the shown city
+ * @property {?number} maxLevel unlocked levels when built in the shown city
+ * @property {?string} tier current prestige tier of another player's building
+ * @property {boolean} foreign building of another player (live values only once opened in the game)
  * @property {Object[]} currentBonuses live bonus values of the placed building
  */
 
@@ -44,10 +53,14 @@
  * Bonus overview of all great buildings after the multi-tier rework: the level
  * breakpoint values of every bonus per prestige tier straight from the
  * `city_entities` metadata, combined with the own progress (current level,
- * unlocked levels and live bonus values) of the buildings in the own city.
+ * unlocked levels and live bonus values) of the buildings in the own city or
+ * the progress of another player from their GB overview snapshot.
  * @namespace
  */
 let GBBonuses = {
+
+	/** @type {?number} player whose buildings are shown, null for the own city */
+	PlayerID: null,
 
 	/** @type {string} current name filter */
 	SearchText: '',
@@ -78,19 +91,25 @@ let GBBonuses = {
 		random_goods: 'goods',
 		previous_era_goods: 'previous_era_good_production',
 		clan_goods: 'guild_goods',
+		clan_goods_extended: 'guild_goods_adjacent_era',
 		happiness: 'happy',
 		double_collection: 'double_collect',
 		quest_boost: 'scroll',
+		allies_quest_boost: 'scroll',
 		aid_boost: 'aid_blueprints',
+		totem_drop: 'relic_hunt',
 	},
 
 	// passive bonuses displayed as a percentage, everything else is an absolute amount
 	PercentTypes: new Set([
 		'attack_boost', 'attacker_defense_boost', 'defender_attack_boost', 'defense_boost',
-		'military_boost', 'fierce_resistance', 'advanced_tactics', 'critical_hit_chance',
-		'first_strike', 'double_collection', 'missile_launch', 'plunder_and_pillage',
-		'plunder_goods', 'plunder_repel', 'spoils_of_war', 'helping_hands', 'algorithmic_core',
-		'money_boost', 'supplies_boost', 'aid_boost', 'quest_boost', 'contribution_boost',
+		'military_boost', 'fierce_resistance', 'advanced_tactics', 'critical_hit_chance', 'all_units_critical_hit_chance',
+		'first_strike', 'second_strike', 'double_collection', 'guild_raids_double_collection',
+		'missile_launch', 'missile_launch_wave_2', 'plunder_and_pillage', 'plunder_repel',
+		'spoils_of_war', 'spoils_of_war_enhanced', 'helping_hands', 'helping_hands_boosted', 'algorithmic_core',
+		'money_boost', 'supplies_boost', 'goods_production_boost', 'special_goods_production_boost',
+		'aid_boost', 'quest_boost', 'allies_quest_boost', 'contribution_boost', 'contribution_boost_gold',
+		'totem_drop', 'mysterious_shards', 'diplomatic_gifts',
 	]),
 
 
@@ -104,6 +123,7 @@ let GBBonuses = {
 		}
 
 		HTML.AddCssFile('gbbonus');
+		GBBonuses.PlayerID = null;
 
 		HTML.Box({
 			id: 'gbBonuses',
@@ -126,6 +146,15 @@ let GBBonuses = {
 	BuildBox: () => {
 		$('#gbBonusesBody').append(
 			$('<div />').attr('id', 'gbBonusesTopbar').append(
+				$('<select />').attr({
+					id: 'gbBonusesPlayer',
+					class: 'game-cursor',
+					title: i18n('Boxes.GreatBuildings.PlayerHint')
+				}).on('change', () => {
+					const value = String($('#gbBonusesPlayer').val());
+					GBBonuses.PlayerID = (value === '' ? null : parseInt(value));
+					GBBonuses.RenderList();
+				}),
 				$('<input />').attr({
 					id: 'gbBonusesSearch',
 					class: 'game-cursor',
@@ -168,8 +197,43 @@ let GBBonuses = {
 			})
 		);
 
+		GBBonuses.FillPlayerSelect();
 		GBBonuses.FillTypeSelect();
 		GBBonuses.RenderList();
+	},
+
+
+	/**
+	 * Fills the player dropdown: the own city plus every player whose GB
+	 * overview has been opened in the game, sorted by name.
+	 */
+	FillPlayerSelect: () => {
+		const players = Object.entries(GreatBuildings.Overviews).sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+		const select = $('#gbBonusesPlayer').empty().append(
+			$('<option />').attr('value', '').text(i18n('Boxes.GreatBuildings.OwnCity'))
+		);
+		for (const [playerID, entry] of players) {
+			select.append($('<option />').attr('value', playerID).text(entry.name));
+		}
+		if (players.length === 0) {
+			select.append($('<option />').attr('disabled', true).text(i18n('Boxes.GreatBuildings.PlayerHint')));
+		}
+
+		select.val(GBBonuses.PlayerID !== null ? String(GBBonuses.PlayerID) : '');
+	},
+
+
+	/**
+	 * GB overview snapshot of the selected player, null for the own city.
+	 * @returns {?{name: string, time: number, rows: Object[]}}
+	 */
+	Overview: () => {
+		if (GBBonuses.PlayerID === null) return null;
+
+		const overview = GreatBuildings.Overviews[GBBonuses.PlayerID];
+		if (!overview) GBBonuses.PlayerID = null;
+		return overview || null;
 	},
 
 
@@ -179,9 +243,27 @@ let GBBonuses = {
 	 * @returns {GBBonusCard[]}
 	 */
 	CollectGBs: () => {
+		const overview = GBBonuses.Overview();
 		const own = {};
-		for (const entity of Object.values(MainParser.CityMapData || {})) {
-			if (entity.type === 'greatbuilding') own[entity.cityentity_id] = entity;
+
+		if (overview) {
+			for (const row of overview.rows) {
+				// a building opened in the game carries its exact bonuses
+				const opened = GreatBuildings.OpenedGB(overview.id, row);
+				own[row.city_entity_id] = {
+					foreign: true,
+					cityentity_id: row.city_entity_id,
+					level: (opened ? opened.level : (row.level || 0)),
+					max_level: (opened?.max_level ?? row.maxLevel),
+					tier: (row.currentTier?.value || row.currentTier || null),
+					bonuses: (opened ? opened.bonuses : undefined),
+				};
+			}
+		}
+		else {
+			for (const entity of Object.values(MainParser.CityMapData || {})) {
+				if (entity.type === 'greatbuilding') own[entity.cityentity_id] = entity;
+			}
 		}
 
 		const cards = [];
@@ -201,7 +283,9 @@ let GBBonuses = {
 				tiers: meta.bonuses,
 				maxTier: meta.maxTier?.value || 'copper',
 				level: (placed ? placed.level : null),
-				maxLevel: (placed ? placed.max_level : null),
+				maxLevel: (placed ? (placed.max_level ?? null) : null),
+				tier: (placed?.foreign ? placed.tier : null),
+				foreign: !!placed?.foreign,
 				currentBonuses: (placed ? CityBuildings.getGBBonuses(placed) : []),
 			});
 		}
@@ -276,6 +360,27 @@ let GBBonuses = {
 
 
 	/**
+	 * Current value of one bonus of a built card: the live value of the placed
+	 * building (own city, or another player's building opened in the game),
+	 * otherwise the value of the metadata bonus curve, which can be off by one
+	 * off the breakpoints.
+	 * @param {GBBonusCard} card
+	 * @param {Object} bonus GreatBuildingBonus metadata entry
+	 * @returns {{value: (number|undefined), exact: boolean}}
+	 */
+	CurrentValue: (card, bonus) => {
+		const current = card.currentBonuses.find(entry => entry.type === bonus.type && !!entry.isBonusMultiplier === !!bonus.isBonusMultiplier);
+		if (current) return {value: current.value, exact: true};
+
+		if (card.foreign) {
+			return {value: GreatBuildings.MetaBonusValue(bonus, card.level), exact: bonus.valuesMap[card.level] !== undefined};
+		}
+
+		return {value: undefined, exact: true};
+	},
+
+
+	/**
 	 * Renders the filtered card list and the counter.
 	 */
 	RenderList: () => {
@@ -289,11 +394,14 @@ let GBBonuses = {
 
 		$('#gbBonusesInner').html(cards.map(card => GBBonuses.BuildCard(card)).join(''));
 
+		const overview = GBBonuses.Overview();
+		const snapshot = (overview ? ' <span class="gbb-snapshot">' + HTML.i18nReplacer(i18n('Boxes.GreatBuildings.Snapshot'), {time: moment(overview.time).format('LT')}) + '</span>' : '');
+
 		$('#gbBonusesBottombar').html(
 			'<span>' + HTML.i18nReplacer(i18n('Boxes.GBBonuses.Count'), {
 				count: cards.length,
 				built: cards.filter(card => card.level !== null).length
-			}) + '</span>' +
+			}) + snapshot + '</span>' +
 			'<span class="gbb-export">' +
 				'<button class="btn btn-slim gbb-export-btn" data-format="csv">' + i18n('Boxes.General.ExportCSV') + '</button>' +
 				'<button class="btn btn-slim gbb-export-btn" data-format="json">' + i18n('Boxes.General.ExportJSON') + '</button>' +
@@ -331,7 +439,9 @@ let GBBonuses = {
 					for (const level of breakpoints) {
 						row['level_' + level] = bonus.valuesMap[level]?.value ?? '';
 					}
-					row.current = (card.level !== null ? (card.currentBonuses.find(entry => entry.type === bonus.type)?.value ?? '') : '');
+					const current = (card.level !== null ? GBBonuses.CurrentValue(card, bonus) : null);
+					row.current = (current ? (current.value ?? '') : '');
+					row.current_exact = (current ? current.exact : '');
 					rows.push(row);
 				}
 			}
@@ -349,7 +459,8 @@ let GBBonuses = {
 
 		// with UTF-8 BOM, like HTML.ExportTable
 		const blob = new Blob(['\ufeff' + content], { type: 'application/octet-binary;charset=ANSI' });
-		MainParser.ExportFile(blob, 'GBBonuses-' + moment().format('YYYY-MM-DD') + '.' + format);
+		const player = GBBonuses.Overview()?.name.replace(/[^\p{L}\p{N}_-]+/gu, '_');
+		MainParser.ExportFile(blob, 'GBBonuses-' + (player ? player + '-' : '') + moment().format('YYYY-MM-DD') + '.' + format);
 	},
 
 
@@ -379,8 +490,10 @@ let GBBonuses = {
 			const percent = (card.maxLevel > 0 ? Math.min(100, 100 * card.level / card.maxLevel) : 0);
 			h.push('<div class="gbb-progress">');
 			h.push(`<span class="gbb-level">${i18n('General.Level')} ${card.level}</span>`);
-			h.push(`<span class="gbb-unlocked">${HTML.i18nReplacer(i18n('Boxes.GBBonuses.Unlocked'), {max: HTML.Format(card.maxLevel)})}</span>`);
-			h.push(`<span class="gbb-bar"><span style="width:${percent}%"></span></span>`);
+			if (card.maxLevel !== null) {
+				h.push(`<span class="gbb-unlocked">${HTML.i18nReplacer(i18n('Boxes.GBBonuses.Unlocked'), {max: HTML.Format(card.maxLevel)})}</span>`);
+				h.push(`<span class="gbb-bar"><span style="width:${percent}%"></span></span>`);
+			}
 			h.push('</div>');
 		}
 		else {
@@ -421,7 +534,7 @@ let GBBonuses = {
 		for (const level of breakpoints) {
 			h.push(`<th class="text-center${level === reached ? ' current-col' : ''}">${HTML.i18nReplacer(i18n('Boxes.GBBonuses.ColLevel'), {lvl: level})}</th>`);
 		}
-		if (card.level !== null) h.push(`<th class="text-center gbb-current">${i18n('Boxes.GBBonuses.ColCurrent')}</th>`);
+		if (card.level !== null) h.push(`<th class="text-center gbb-current"${card.foreign ? ` title="${HTML.i18nTooltip(i18n('Boxes.GBBonuses.MinValueTT'))}"` : ''}>${i18n('Boxes.GBBonuses.ColCurrent')}</th>`);
 		h.push('</tr></thead><tbody>');
 
 		for (const tier of card.tiers) {
@@ -434,7 +547,7 @@ let GBBonuses = {
 					h.push(`<td class="gbb-tier-cell" rowspan="${tier.bonuses.length}">${GreatBuildings.TierBadge(tier.tier)}</td>`);
 					firstRow = false;
 				}
-				h.push(`<td class="gbb-bonus-name">${GBBonuses.TypeIcon(bonus.type)}${GBBonuses.TypeName(bonus.type)}</td>`);
+				h.push(`<td class="gbb-bonus-name">${GBBonuses.TypeIcon(bonus.type, bonus.targetedFeature, bonus.isBonusMultiplier)}${GBBonuses.TypeName(bonus.type)}${GBBonuses.MultiplierMark(bonus)}</td>`);
 
 				for (const level of breakpoints) {
 					const value = bonus.valuesMap[level]?.value;
@@ -442,8 +555,8 @@ let GBBonuses = {
 				}
 
 				if (card.level !== null) {
-					const current = card.currentBonuses.find(entry => entry.type === bonus.type);
-					h.push(`<td class="text-center gbb-current">${GBBonuses.FormatValue(bonus, current?.value)}</td>`);
+					const current = GBBonuses.CurrentValue(card, bonus);
+					h.push(`<td class="text-center gbb-current">${(!current.exact && current.value ? '≈ ' : '') + GBBonuses.FormatValue(bonus, current.value)}</td>`);
 				}
 				h.push('</tr>');
 			}
@@ -464,6 +577,7 @@ let GBBonuses = {
 	 */
 	CurrentTier: (card) => {
 		if (card.level === null) return card.maxTier;
+		if (card.tier) return card.tier;
 
 		let current = 'copper';
 		for (const tier of card.tiers) {
@@ -493,17 +607,27 @@ let GBBonuses = {
 
 	/**
 	 * Game icon of a bonus type as <img>, empty string when the asset is not
-	 * part of the ForgeHX file index.
+	 * part of the ForgeHX file index. Military boosts have feature specific
+	 * (_gbg/_gex/_gr) and multiplier (_multiplier) variants like in the game,
+	 * missing variants fall back to the plain icon of the type.
 	 * @param {string} type e.g. 'fierce_resistance'
+	 * @param {string} [feature='all'] targeted feature (battleground, guild_expedition, guild_raids)
+	 * @param {boolean} [isMultiplier=false] multiplier variant of the prestige rework
 	 * @returns {string} HTML or empty string
 	 */
-	TypeIcon: (type) => {
-		const file = GBBonuses.IconMap[type] || type;
-		const link = srcLinks.get(`/city/gui/great_building_bonus_icons/great_building_bonus_${file}.png`, true, true);
+	TypeIcon: (type, feature = 'all', isMultiplier = false) => {
+		const base = GBBonuses.IconMap[type] || type;
+		const suffix = ({ battleground: '_gbg', guild_expedition: '_gex', guild_raids: '_gr' })[feature] || '';
+		const candidates = [...new Set([base + suffix + (isMultiplier ? '_multiplier' : ''), base + suffix, base])];
 
-		if (link.includes('antiquedealer_flag') || link.includes('-undefined.')) return '';
+		for (const file of candidates) {
+			const link = srcLinks.get(`/city/gui/great_building_bonus_icons/great_building_bonus_${file}.png`, true, true);
+			if (link.includes('antiquedealer_flag') || link.includes('-undefined.')) continue;
 
-		return `<img class="gbb-bonus-icon" src="${link}" alt="">`;
+			return `<img class="gbb-bonus-icon" src="${link}" alt="">`;
+		}
+
+		return '';
 	},
 
 
@@ -521,10 +645,23 @@ let GBBonuses = {
 		if (bonus.bonusCategory?.value === 'productionBonus') {
 			return `${HTML.Format(value)}<span class="per-day">${i18n('Boxes.GBBonuses.PerDay')}</span>`;
 		}
-		if (GBBonuses.PercentTypes.has(bonus.type)) {
-			return `+${HTML.Format(value)}%`;
+		if (GBBonuses.PercentTypes.has(bonus.type) || bonus.isBonusMultiplier) {
+			return `+${HTML.Format(value)}%${GBBonuses.MultiplierMark(bonus)}`;
 		}
 
 		return HTML.Format(value);
+	},
+
+
+	/**
+	 * Marker for the multiplier boosts of the prestige rework ("multiplies and adds
+	 * your total attack by X%"), empty for additive bonuses.
+	 * @param {Object} bonus GreatBuildingBonus metadata entry
+	 * @returns {string} HTML or empty string
+	 */
+	MultiplierMark: (bonus) => {
+		if (!bonus?.isBonusMultiplier) return '';
+
+		return ` <span class="gbb-multiplier" title="${HTML.i18nTooltip(i18n('Boxes.GBBonuses.MultiplierTT'))}">×</span>`;
 	},
 };

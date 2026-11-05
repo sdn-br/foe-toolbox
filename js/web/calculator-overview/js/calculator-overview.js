@@ -137,8 +137,6 @@ Object.assign(Calculator, {
 	 * @returns {Promise<Object>}
 	 */
 	getOverviewViewModel: async (PlayerID) => {
-		const arc = ((parseFloat(MainParser.ArkBonus) + 100) / 100);
-
 		// player name and activity (players already known are also loaded from the db)
 		await MainParser.loadPlayerIntoDict(PlayerID);
 		await IndexDB.getDB();
@@ -157,6 +155,8 @@ Object.assign(Calculator, {
 		Calculator.Overview.forEach((Row, i) => {
 			const EntityID = Row['city_entity_id'],
 				GBLevel = Row['level'],
+				// own contribution boost of the tier of this level-up (gold tier of the prestige rework has its own)
+				arc = ((parseFloat(MainParser.GetArkBonus(Row['currentTier'])) + 100) / 100),
 				MaxProgress = Row['max_progress'],
 				CurrentProgress = Row['current_progress'] || 0;
 
@@ -175,8 +175,8 @@ Object.assign(Calculator, {
 				Profit = MainParser.round(BestRateNetFP * arc) - BestRateCosts;
 			}
 
-			const Era = Technologies.Eras[GreatBuildings.GetEraName(EntityID)],
-				P1 = (Era !== undefined ? (GreatBuildings.GetP1(Era, GBLevel) || 0) : 0);
+			// reward of the first place, from the cost curve on worlds with the prestige rework
+			const P1 = GreatBuildings.GetPatronRewards(EntityID, GBLevel, 0, MaxProgress)?.[0] || 0;
 
 			// no own contribution yet and a profit is theoretically possible
 			if (Row['rank'] !== undefined || P1 * arc < (MaxProgress - CurrentProgress) / 2) return;
